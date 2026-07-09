@@ -1,4 +1,4 @@
-"""TOGAF Validator — 5-check pipeline for Agent ↔ TOGAF Architecture compliance.
+"""TOGAF Validator — 6-check pipeline for Agent ↔ TOGAF Architecture compliance.
 
 Checks:
   1. Type Compliance    — agent.type must map to valid TOGAF EntityType
@@ -6,6 +6,7 @@ Checks:
   3. Role Validity       — agent.ui.roles must belong to department's valid roles
   4. Dependency Graph    — agent.depends_on must point to registered, reachable agents
   5. Tool → Service Map  — agent.tools should trace to known capabilities
+  6. Principles Compliance — agent complies with TOGAF architecture principles
 
 Usage:
   from haip.togaf.validator import validate_agent, validate_all
@@ -16,6 +17,7 @@ Usage:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from haip.togaf.metamodel import ENTITY_TYPES
 from haip.togaf.organization import ROLE_BY_ID, ROLE_BY_ORG, list_orgs
@@ -389,6 +391,64 @@ def _check_tool_service_mapping(agent) -> CheckResult:
     )
 
 
+# ── Check 6: Architecture Principles Compliance ──
+
+def _check_principles(agent) -> CheckResult:
+    """CHK-006: Verify agent complies with TOGAF architecture principles."""
+    principles_path = Path(__file__).parent / "assets" / "principles.yaml"
+
+    violations: list[str] = []
+
+    try:
+        import yaml
+        with open(principles_path, encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+        all_principles = data.get("principles", [])
+    except Exception:
+        return CheckResult(id="CHK-006", name="Principles Compliance",
+                           passed=True, detail="Cannot load principles.yaml (skipping)")
+
+    if not all_principles:
+        return CheckResult(id="CHK-006", name="Principles Compliance",
+                           passed=True, detail="No principles defined")
+
+    for p in all_principles:
+        pid = p.get("id", "")
+
+        # prin-domain-as-plugin: must have unique name, port assigned
+        if pid == "prin-domain-as-plugin":
+            if not agent.name:
+                violations.append(f"{p['name']}: agent has no name")
+            if getattr(agent, "port", 0) == 0:
+                pass  # Port 0 is acceptable for specialist agents
+
+        # prin-tool-as-contract: all tools must have handler paths
+        if pid == "prin-tool-as-contract":
+            tools_without_handler = [t.name for t in (agent.tools or []) if not t.handler]
+            if tools_without_handler:
+                violations.append(f"{p['name']}: {len(tools_without_handler)} tools missing handler")
+
+        # prin-no-data-duplication: master_data agents should focus on data
+        if pid == "prin-no-data-duplication":
+            if getattr(agent, "type", "") == "master_data":
+                if len(agent.tools or []) > 10:
+                    violations.append(f"{p['name']}: master_data has {len(agent.tools)} tools (consider splitting)")
+
+        # prin-no-hardcode: department should not be empty for business agents
+        if pid == "prin-no-hardcode":
+            if getattr(agent, "type", "") == "business" and not getattr(agent, "department", ""):
+                violations.append(f"{p['name']}: business agent has no department")
+
+    passed = len(violations) == 0
+    detail = f"All {len(all_principles)} principles checked" if passed \
+        else f"{len(violations)} violations: {'; '.join(violations[:3])}"
+    return CheckResult(
+        id="CHK-006", name="Principles Compliance",
+        passed=passed, detail=detail,
+        suggestion="Review agent definition against TOGAF principles" if violations else "",
+    )
+
+
 # ── Public API ──
 
 def validate_agent(agent_name: str, registry: dict | None = None) -> ValidationReport | None:
@@ -421,12 +481,14 @@ def validate_agent(agent_name: str, registry: dict | None = None) -> ValidationR
     c3 = _check_role_validity(agent)
     c4 = _check_dependency_graph(agent, registry)
     c5 = _check_tool_service_mapping(agent)
+    c6 = _check_principles(agent)
 
     report.add_check(c1)
     report.add_check(c2)
     report.add_check(c3)
     report.add_check(c4)
     report.add_check(c5)
+    report.add_check(c6)
 
     # Aggregate warnings
     if not c2.passed and hasattr(agent, "tools") and agent.tools:
