@@ -1,0 +1,87 @@
+name: pharmacy
+cn_name: 药剂科智能体
+version: "1.0.0"
+type: business
+department: 药剂科
+port: 8770
+aliases: [药剂科, 药房, pharmacy agent]
+
+prompt:
+  system: |
+    你是南方医院药剂科AI助手，负责营养风险评估、TPN全肠外营养配比计算、
+    处方审核和药品信息查询。请基于临床指南（ESPEN、CSPEN、ADA 等）给出专业建议。
+    使用中文回答。
+  temperature: 0.3
+  max_tokens: 4096
+
+depends_on:
+  - agent: medical-record
+    version: ">=1.0"
+
+tools:
+  - name: assess_nutrition
+    description: 评估患者营养风险（NRS2002 + 再喂养综合征 + 电解质监测 + 肝功能）
+    handler: pharmacy.assessment.assess_nutrition_risk
+    input:
+      patient_id: str
+      weight_kg: float
+      height_cm: float
+      lab_results: dict
+
+  - name: calculate_tpn
+    description: 计算TPN全肠外营养配比（氨基酸/脂肪乳/葡萄糖/电解质/维生素/微量元素）
+    handler: pharmacy.tpn_calculator.compute
+    input:
+      patient_id: str
+      weight_kg: float
+      energy_kcal: float
+
+  - name: review_prescription
+    description: 审核处方合理性（17条风险规则：配伍禁忌/剂量/溶媒/抗菌药物/抗凝）
+    handler: pharmacy.prescription_review.check
+    input:
+      patient_id: str
+      prescription_items: list
+
+  - name: recommend_nutrition_route
+    description: 推荐肠内营养（EN）vs 肠外营养（PN）途径
+    handler: pharmacy.nutrition_consultation.route
+    input:
+      patient_id: str
+      gi_function: str
+
+  - name: list_medications
+    description: 查询药品数据库 (通用名/商品名/规格/医保类别)
+    handler: pharmacy.drug_db.search
+    input:
+      keyword: str
+
+  - name: full_prescription_review
+    description: 完整处方审核 (17条药物交互规则)
+    handler: pharmacy.drug_rules.full_review
+    input:
+      patient_id: str
+      prescription_items: list
+
+guard:
+  triggers: [药物交互, 处方审核]
+  high_risk_scenarios:
+    - 抗凝药物相互作用
+    - TPN渗透压超过1200mOsm/L
+    - 再喂养综合征高风险
+    - 氨基糖苷类与利尿剂联用
+
+ui:
+  template: chat-with-role-switcher
+  roles:
+    - {id: pharmacist, label: 药师, default: true}
+    - {id: clinical_pharmacist, label: 临床药师}
+    - {id: review_pharmacist, label: 审方药师}
+    - {id: iv_compounding_pharmacist, label: 静配药师}
+    - {id: attending, label: 主治医师}
+    - {id: dietitian, label: 营养师}
+  sidebar:
+    - {category: 营养评估, tools: [assess_nutrition, recommend_nutrition_route]}
+    - {category: TPN配比, tools: [calculate_tpn]}
+    - {category: 处方审核, tools: [review_prescription]}
+    - {category: 药品查询, tools: [list_medications]}

@@ -1,0 +1,47 @@
+# ============================================================
+# Guideline Asset: 4th Universal Definition of Myocardial Infarction (2018)
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-umi-2018"
+name: "4th Universal Definition of Myocardial Infarction"
+abbr: "UDMI 4th"
+version: "2018"
+publisher: "ESC/ACC/AHA/WHF"
+doi: "10.1093/eurheartj/ehy462"
+language: en
+trust_level: T1
+admin_priority: 10
+
+description: >
+  The 4th Universal Definition of MI establishes the clinical and pathological
+  criteria for myocardial infarction types 1-5. Used by cardiology specialist
+  agent for perioperative MI risk stratification (Type 2 MI relevant in surgical
+  patients).
+
+key_sections:
+  - id: "§4"
+    title: "MI criteria — cTnI/cTnT thresholds"
+    pages: "6-10"
+    stage_ids: [S5]
+    rule_ids: [timing-cardiac]
+
+  - id: "§5"
+    title: "Type 2 MI (supply-demand mismatch)"
+    pages: "11-14"
+    stage_ids: [S5]
+    rule_ids: [timing-cardiac]
+
+  - id: "§6"
+    title: "ECG patterns in MI"
+    pages: "15-20"
+    stage_ids: [S5]
+    rule_ids: [timing-cardiac]
+
+rule_sets_covered:
+  - timing
+
+derived_rule_count: 8
+last_updated: 2026-07-01
+supersedes: "3rd UDMI (2012)"
+superseded_by: ""

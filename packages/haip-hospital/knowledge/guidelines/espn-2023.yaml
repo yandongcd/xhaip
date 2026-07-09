@@ -1,0 +1,45 @@
+# ============================================================
+# Guideline Asset: ESPEN Guidelines on Clinical Nutrition
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+name: "ESPEN Guidelines on Clinical Nutrition"
+abbr: "ESPEN 2023"
+version: "2023"
+publisher: "European Society for Clinical Nutrition and Metabolism (ESPEN)"
+journal: "Clinical Nutrition (multiple issues)"
+url: "https://www.espen.org/guidelines"
+language: en
+trust_level: T1
+
+description: >
+  ESPEN是全球临床营养领域最权威的指南体系。2023版涵盖:
+  1. ESPEN Guidelines on EN (肠内营养指南)
+  2. ESPEN Guidelines on PN (肠外营养指南)
+  3. ESPEN Practical Guideline on Refeeding Syndrome (再喂养综合征实践指南)
+
+sub_guidelines:
+  - id: espn-en-2023
+    name: "ESPEN Guidelines on Enteral Nutrition"
+    description: "EN适应证/禁忌证/途径/配方选择/耐受性监测"
+    rule_ids: [R035-R042, R055-R058]
+
+  - id: espn-pn-2023
+    name: "ESPEN Guidelines on Parenteral Nutrition"
+    description: "PN适应证/禁忌证/TPN配方/电解质管理/监测"
+    rule_ids: [R017-R019, R047-R054]
+
+  - id: espn-refeeding-2023
+    name: "ESPEN Practical Guideline on Refeeding Syndrome"
+    description: "再喂养综合征风险分层/起始方案/监测/电解质补充"
+    rule_ids: [R005-R007]
+
+rule_sets_covered:
+  - refeeding (R005-R007)
+  - lipid (R017-R019)
+  - en_complications (R035-R042)
+  - formulation (R047-R054)
+  - route_decision (R055-R058)
+
+derived_rule_count: 15
+last_updated: 2026-07-01

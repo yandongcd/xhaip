@@ -1,0 +1,28 @@
+name: pain-rehab
+cn_name: 疼痛康复管理
+version: "1.0.0"
+type: specialist
+aliases: [疼痛康复, pain-rehab]
+parent: pain-hub
+
+prompt:
+  system: |
+    你是疼痛康复管理专家，负责康复运动处方制定、功能恢复进展评估
+    和合并症管理（抑郁/焦虑/自杀风险）。
+  temperature: 0.3
+
+tools:
+  - name: exercise_rx
+    description: 康复运动处方 (部位/强度/频率)
+    handler: pain_rehab.exercise
+    input: {patient_id: str, pain_location: str, odi_score: int}
+
+  - name: assess_progress
+    description: 功能恢复进展评估
+    handler: pain_rehab.progress
+    input: {patient_id: str, baseline_odi: int, current_odi: int, compliance_pct: int}
+
+  - name: comorbidity
+    description: 合并症评估 (抑郁/焦虑/自杀风险)
+    handler: pain_rehab.comorbid
+    input: {patient_id: str, phq9_score: int, gad7_score: int}

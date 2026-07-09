@@ -1,0 +1,77 @@
+rule_set:
+  id: rcri
+  domain: cardiology
+  decision_points:
+    - rcri_score
+    - rcri_risk_class
+  sources:
+    - rcri-original-1999
+  version: "1.0"
+  trust_level: T2
+  owner: anesthesiology
+
+rules:
+  - id: rcri-ischaemia
+    decision_point: rcri_score
+    condition_eval: "$has_diagnosis_keyword(context.past_history, ['冠心病','心绞痛','心梗','心肌梗死','冠脉支架','冠脉搭桥'])"
+    conclusion: "RCRI +1: 缺血性心脏病"
+    rule_type: deterministic
+    certainty: strong
+    evidence: []
+
+  - id: rcri-chf
+    decision_point: rcri_score
+    condition_eval: "$has_diagnosis_keyword(context.past_history, ['心衰','心力衰竭','肺水肿'])"
+    conclusion: "RCRI +1: 充血性心衰"
+    rule_type: deterministic
+    certainty: strong
+
+  - id: rcri-cerebrovascular
+    decision_point: rcri_score
+    condition_eval: "$has_diagnosis_keyword(context.past_history, ['脑梗','脑梗死','脑出血','卒中','TIA','短暂性脑缺血'])"
+    conclusion: "RCRI +1: 脑血管病"
+    rule_type: deterministic
+    certainty: strong
+
+  - id: rcri-insulin
+    decision_point: rcri_score
+    condition_eval: "$has_medication_keyword(context.medications, ['胰岛素'])"
+    conclusion: "RCRI +1: 胰岛素治疗"
+    rule_type: deterministic
+    certainty: moderate
+
+  - id: rcri-creatinine
+    decision_point: rcri_score
+    condition_expr: "context.creatinine > 177"
+    conclusion: "RCRI +1: 肾功能不全 (Cr>177umol/L)"
+    rule_type: threshold
+    certainty: strong
+
+  - id: rcri-class-4
+    decision_point: rcri_risk_class
+    condition_expr: "context.rcri_score >= 3"
+    conclusion: "RCRI IV级 — MACE风险>11%，极高风险"
+    rule_type: threshold
+    certainty: strong
+    evidence: []
+
+  - id: rcri-class-3
+    decision_point: rcri_risk_class
+    condition_expr: "context.rcri_score == 2"
+    conclusion: "RCRI III级 — MACE风险6-11%，高风险"
+    rule_type: threshold
+    certainty: strong
+
+  - id: rcri-class-2
+    decision_point: rcri_risk_class
+    condition_expr: "context.rcri_score == 1"
+    conclusion: "RCRI II级 — MACE风险2-5%，中风险"
+    rule_type: threshold
+    certainty: strong
+
+  - id: rcri-class-1
+    decision_point: rcri_risk_class
+    condition_expr: "context.rcri_score == 0"
+    conclusion: "RCRI I级 — MACE风险<2%，低风险"
+    rule_type: threshold
+    certainty: strong

@@ -1,0 +1,71 @@
+# 疼痛科评估量表定义
+scales:
+  NRS:
+    name: "数字评分法 (Numeric Rating Scale)"
+    range: [0, 10]
+    levels:
+      - {range: [0, 0], label: "无痛", color: "green"}
+      - {range: [1, 3], label: "轻度疼痛", color: "yellow"}
+      - {range: [4, 6], label: "中度疼痛", color: "orange"}
+      - {range: [7, 10], label: "重度疼痛", color: "red"}
+  VAS:
+    name: "视觉模拟评分"
+    range: [0, 100]
+  ODI:
+    name: "Oswestry 功能障碍指数"
+    range: [0, 100]
+    levels:
+      - {range: [0, 20], label: "轻度功能障碍"}
+      - {range: [21, 40], label: "中度功能障碍"}
+      - {range: [41, 60], label: "重度功能障碍"}
+      - {range: [61, 80], label: "严重功能障碍"}
+      - {range: [81, 100], label: "卧床/夸大症状"}
+  NDI:
+    name: "颈部功能障碍指数"
+    range: [0, 50]
+    levels:
+      - {range: [0, 4], label: "无残疾"}
+      - {range: [5, 14], label: "轻度残疾"}
+      - {range: [15, 24], label: "中度残疾"}
+      - {range: [25, 34], label: "重度残疾"}
+      - {range: [35, 50], label: "完全残疾"}
+  DN4:
+    name: "神经病理性疼痛 DN4 问卷"
+    range: [0, 10]
+    description: "≥4分=神经病理性疼痛"
+    questions:
+      - {text: "烧灼样疼痛", score: 1}
+      - {text: "寒冷样疼痛", score: 1}
+      - {text: "电击样疼痛", score: 1}
+      - {text: "针刺感", score: 1}
+      - {text: "麻木感", score: 1}
+      - {text: "瘙痒感", score: 1}
+      - {text: "触摸痛觉减退", score: 1}
+      - {text: "针刺痛觉减退", score: 1}
+      - {text: "触摸诱发疼痛", score: 1}
+      - {text: "刷擦诱发疼痛", score: 1}
+  PHQ2:
+    name: "PHQ-2 抑郁快速筛查"
+    range: [0, 6]
+    cutoff: {value: 3, label: "阳性"}
+  GAD2:
+    name: "GAD-2 焦虑快速筛查"
+    range: [0, 6]
+    cutoff: {value: 3, label: "阳性"}
+  PHQ9:
+    name: "PHQ-9 抑郁筛查"
+    range: [0, 27]
+    levels:
+      - {range: [0, 4], label: "无抑郁"}
+      - {range: [5, 9], label: "轻度抑郁"}
+      - {range: [10, 14], label: "中度抑郁"}
+      - {range: [15, 19], label: "中重度抑郁"}
+      - {range: [20, 27], label: "重度抑郁"}
+  GAD7:
+    name: "GAD-7 焦虑筛查"
+    range: [0, 21]
+    levels:
+      - {range: [0, 4], label: "正常"}
+      - {range: [5, 9], label: "轻度焦虑"}
+      - {range: [10, 14], label: "中度焦虑"}
+      - {range: [15, 21], label: "重度焦虑"}

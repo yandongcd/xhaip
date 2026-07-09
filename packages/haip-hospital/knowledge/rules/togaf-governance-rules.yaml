@@ -1,0 +1,187 @@
+# ============================================================
+# TOGAF Class: Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+name: togaf-governance-rules
+version: "1.0"
+description: TOGAF 元模型与 HAIP Agent 代码之间的架构治理规则
+last_updated: 2026-07-04
+
+rules:
+  # ── ValueStream 治理 ──
+
+  - id: gov-vs-001
+    name: ValueStream 抽象不约束代码
+    category: architecture-governance
+    statement: |
+      ValueStream 是 Business Architecture 的抽象建模工具。
+      其抽象层次（阶段数、颗粒度）的改变 AT NO POINT
+      要求 agent 代码同步修改。
+    rationale: |
+      ValueStream 属于 Phase B (Business Architecture) 的战略视图层，
+      agent 代码属于 Phase C/D (IS/Technology Architecture) 的实现层。
+      两者通过 BusinessProcess 解耦。
+      G178 明确定义 ValueStream 为高抽象的端到端价值创造活动集合，
+      不深入具体流程细节。此原则防止战略层变更穿透到实现层。
+    implications:
+      - ValueStream YAML 可独立迭代，不触发 agent 重构
+      - agent 代码中 value_stages 列表保持现状
+      - 架构审计检查两者之间不存在不必要的紧耦合
+    applies_to: all_agents
+    toggaf_refs:
+      - G178 (Value Streams)
+
+  # ── BusinessProcess 治理 ──
+
+  - id: gov-bp-001
+    name: BusinessProcess 来自指南，不由代码反推
+    category: architecture-governance
+    statement: |
+      BusinessProcess 基于临床指南和科室操作规程定义，
+      AT NO POINT 由 agent 代码结构反向推导。
+    rationale: |
+      BusinessProcess 是业务架构的实质性产出，
+      描述"从临床指南角度，每个 Role 在哪个 Stage 做什么、做什么决策"。
+      agent 代码是 BusinessProcess 的数字化实现，不是其定义源。
+      G211 V2 新增的能力-流程映射章节明确了两者关系：
+      Process 实现 Capability（HOW realizes WHAT）。
+    implications:
+      - 新增 BusinessProcess YAML 必须填写 guideline_refs
+      - agent 工具链变更不自动触发 BusinessProcess 更新
+      - 代码中函数命名可自由变化，不受 BusinessProcess 影响
+    applies_to: all_agents
+    toggaf_refs:
+      - G211 V2 (Business Capabilities — capability-to-process mapping)
+
+  # ── Application 边界治理 ──
+
+  - id: gov-ap-001
+    name: Application 与 ApplicationComponent 的边界
+    category: architecture-governance
+    statement: |
+      独立 Web UI + 完整 MCP 工具链 + 自有 Role 体系的 Agent
+      映射为 Application。
+      被 A2A 调用的技能型/数据型 Agent 映射为 ApplicationComponent。
+    rationale: |
+      TOGAF 10 元模型中 Application Architecture 域的核心 ABB
+      为 ApplicationComponent，代表可被组合使用的模块级组件。
+      完整的业务 Agent 作为 Application 承载组件之间的编排逻辑。
+      区分两者对架构可视化和依赖管理至关重要。
+    implications:
+      - pharmacy、orthopedic_surgery、cardio_surgery → Application
+      - cardio-risk、anesthesia_risk、medical-record/demo → ApplicationComponent
+      - 新增 Agent 时需在 ASSET_REGISTRY.md 中标注映射类型
+      - agents validate --togaf 检查 Application ↔ ApplicationComponent 调用方向合法性
+    applies_to: all_agents
+    toggaf_refs:
+      - TOGAF 10 Architecture Content Framework (Application Architecture domain)
+
+  # ── BusinessCapability 治理 ──
+
+  - id: gov-cap-001
+    name: 每个科室定义一系列能力（非 1:1）
+    category: architecture-governance
+    statement: |
+      每个临床科室应定义 L1-L4 一系列 BusinessCapability，
+      而非一个科室仅对应一个能力。
+    rationale: |
+      G211 定义 BusinessCapability 为"组织做什么"的能力抽象。
+      一个科室承载多种能力，一种能力可被多个科室实现。
+      映射为 1:1 是对元模型的误用。
+    implications:
+      - 每个科室的 capabilities YAML 至少包含 L2-L3 级 3-6 个能力
+      - 跨科室共享的能力在全局能力目录中定义
+    applies_to: all_departments
+    toggaf_refs:
+      - G211 (Business Capabilities V2, §Stratification L1-L4)
+
+  - id: gov-cap-002
+    name: 能力必须有 ValueStage 落脚点
+    category: architecture-governance
+    statement: |
+      每个 BusinessCapability 必须标注它支撑哪个 ValueStage。
+      如果某个能力找不到它在 ValueStream 中为利益相关者创造价值的
+      落脚点，则该能力定义无效。
+    rationale: |
+      G211 定义能力为"组织做什么"(WHAT)。
+      G178 定义 ValueStream 为"为利益相关者创造什么价值"(WHY)。
+      两者通过 G233 的关系映射连接：
+      ValueStream Stage → requires → BusinessCapability。
+      缺乏 ValueStage 映射的能力是"无目的的能力"——
+      知道 WHAT 但不知道 WHY，违背 G211 和 G178 的联合设计意图。
+    implications:
+      - 每个能力 YAML 必须包含 value_stages 字段
+      - value_stages 的值必须来自已注册的 ValueStage
+      - 一个能力可支撑多个 ValueStage
+      - agents validate --togaf 检查所有能力的 value_stages 非空
+    applies_to: all_capabilities
+     toggaf_refs:
+       - G178 (Value Streams)
+       - G211 (Business Capabilities V2)
+       - G233 (Business Capability Planning, §Value Stream-to-Capability Mapping)
+
+  # ── BusinessProcess 实现治理 ──
+
+  - id: gov-bp-002
+    name: Process 步骤必须有模块覆盖
+    category: architecture-governance
+    statement: |
+      每个 ProcessStep 的 implementation 字段必须指定至少一个
+      Python 模块作为其数字化实现。有决策点的步骤还需验证
+      分支覆盖率 ≥ total。
+    rationale: |
+      Process YAML 是 BA 层的需求规格，Agent 代码是 AA 层的实现。
+      implementation.module 建立两者之间的静态追溯链，
+      使 Process 成为可验证的开发规格而非纯文档。
+    implications:
+      - 每个 step 必须填写 implementation.module
+      - 无决策点步骤：import module 成功即通过
+      - 有决策点步骤：额外检查 decision_coverage.covered >= decision_coverage.total
+      - 未覆盖的分支在 validate 输出中以 [WARN] 列出
+      - module 路径使用 Python 模块格式（如 pharmacy.core.review）
+    applies_to: all_business_processes
+    check_method: |
+      对于每个 ProcessStep：
+      1. 如果 decision 为 null：
+         importlib.import_module(step.implementation.module) → PASS/FAIL
+      2. 如果 decision 不为 null：
+         a. importlib.import_module(step.implementation.module) → PASS/FAIL
+         b. step.implementation.decision_coverage.covered >= total → PASS/WARN
+         c. 如果 covered < total，输出缺失分支数
+      所有 import 使用 mock 包裹以避免副作用。
+
+  - id: gov-bp-003
+    name: Process 必须引用临床指南
+    category: architecture-governance
+    statement: |
+      每个 BusinessProcess 的 guideline_refs 必须非空，
+      且每条引用必须在 assets/guidelines/ 中存在对应文件。
+    rationale: |
+      BusinessProcess 从临床指南推导，不是从代码结构反推。
+      guideline_refs 是 Process 定义的必要组成部分，
+      也是 gov-bp-001（Process 来自指南）在资产层的具体落实。
+    implications:
+      - guideline_refs 至少包含 1 条引用
+      - 每条引用的 ID 必须在 assets/guidelines/ 中存在
+      - 新增指南引用无需代码变更
+    applies_to: all_business_processes
+    check_method: |
+      读取每个 BusinessProcess YAML 的 guideline_refs 列表。
+      对每条 ID，检查 assets/guidelines/{id}.yaml 是否存在。
+
+  - id: gov-bp-004
+    name: Process 数据实体引用必须有效
+    category: architecture-governance
+    statement: |
+      每个 ProcessStep 的 data_used 字段中引用的数据实体，
+      必须在 assets/data_entities/ 中存在对应定义。
+    rationale: |
+      ProcessStep → uses → DataEntity 是 TOGAF 元模型的
+      标准关系。data_used 字段使这个关系可被校验。
+    implications:
+      - data_used 中的每条 ID 必须在 assets/data_entities/ 中存在
+      - 如果该步骤不使用任何数据实体，data_used 可以为空
+    applies_to: all_business_processes
+    check_method: |
+      遍历每个 ProcessStep 的 data_used 列表。
+      对每条 ID，检查 assets/data_entities/{id}.yaml 是否存在。

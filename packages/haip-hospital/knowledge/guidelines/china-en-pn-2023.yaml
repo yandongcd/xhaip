@@ -1,0 +1,55 @@
+# ============================================================
+# Guideline Asset: 中国成人患者肠外肠内营养临床应用指南
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+name: "中国成人患者肠外肠内营养临床应用指南"
+abbr: "中国EN/PN指南2023"
+version: "2023"
+publisher: "中华医学会肠外肠内营养学分会 (CSPEN)"
+journal: "中华医学杂志 2023;103(14):1041-1054"
+doi: "10.3760/cma.j.cn112137-20230301-00331"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国成人(≥18岁)患者肠外肠内营养临床实践的权威指南。依据GRADE系统制定推荐等级。
+  覆盖营养筛查/途径选择/能量蛋白目标/电解质管理/监测计划全流程。
+
+key_sections:
+  - id: §4
+    title: 营养风险筛查与评估
+    pages: "1048-1050"
+    rule_ids: [R001-R004, R028-R034]
+
+  - id: §5
+    title: 营养支持途径选择(EN/PN/SPN)
+    pages: "1050-1052"
+    rule_ids: [R043-R046, R055-R058]
+
+  - id: §6
+    title: 肠内营养实施与耐受性监测
+    pages: "1052-1054"
+    rule_ids: [R035-R042]
+
+  - id: §7
+    title: 代谢监测与并发症防治
+    pages: "1054-1056"
+    rule_ids: [R001-R004, R025-R027]
+
+  - id: §8
+    title: 特殊疾病营养支持
+    pages: "1056-1060"
+    rule_ids: [R020-R024]
+
+rule_sets_covered:
+  - glucose (R001-R004)
+  - hepatorenal (R020-R024)
+  - fluid_balance (R025-R027)
+  - inflammation (R028-R034)
+  - en_complications (R035-R042)
+  - spn_criteria (R043-R046)
+  - route_decision (R055-R058)
+
+derived_rule_count: 30
+last_updated: 2026-07-01

@@ -1,0 +1,40 @@
+# ============================================================
+# Guideline Asset: 成人肠外营养脂肪乳注射液临床应用指南
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+name: "成人肠外营养脂肪乳注射液临床应用指南"
+abbr: "脂肪乳指南2023"
+version: "2023"
+publisher: "中华医学会肠外肠内营养学分会 (CSPEN)"
+journal: "中华外科杂志 2023;61(3):193-204"
+doi: "10.3760/cma.j.cn112139-20230101-00001"
+language: zh-CN
+trust_level: T1
+
+description: >
+  国内首个脂肪乳专项指南。覆盖脂肪乳的分类/适应证/禁忌证/剂量/监测。
+  基于GRADE系统，对长链/中链/鱼油/橄榄油/结构脂肪乳等各品种做了推荐。
+
+key_sections:
+  - id: §4
+    title: 脂肪乳的剂量与监测
+    pages: "197-199"
+    rule_ids: [R017-R019]
+
+  - id: §5
+    title: 脂肪乳不良反应与处理
+    pages: "199-201"
+    rule_ids: [R017-R019, R054]
+
+  - id: §6
+    title: 特殊患者脂肪乳应用
+    pages: "201-203"
+    rule_ids: [R054]
+
+rule_sets_covered:
+  - lipid (R017-R019)
+  - formulation (R054)
+
+derived_rule_count: 4
+last_updated: 2026-07-01

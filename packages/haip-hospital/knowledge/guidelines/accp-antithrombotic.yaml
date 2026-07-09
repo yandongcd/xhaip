@@ -1,0 +1,46 @@
+# ============================================================
+# Guideline Asset: ACCP Antithrombotic Therapy Guidelines (2024)
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-accp-2024"
+name: "ACCP Antithrombotic Therapy Guidelines"
+abbr: "ACCP 2024"
+version: "2024"
+publisher: "American College of Chest Physicians"
+doi: "10.1016/j.chest.2023.07.018"
+language: en
+trust_level: T1
+admin_priority: 11
+
+description: >
+  ACCP guidelines for antithrombotic therapy. Used by anesthesiology specialist
+  agent for perioperative anticoagulation management, bridging protocols, and
+  reversal strategies in hip fracture patients.
+
+key_sections:
+  - id: "§4.2"
+    title: "Perioperative management of VKAs"
+    pages: "22-28"
+    stage_ids: [S6]
+    rule_ids: [timing-anticoagulation]
+
+  - id: "§4.3"
+    title: "Perioperative management of NOACs"
+    pages: "29-35"
+    stage_ids: [S6]
+    rule_ids: [timing-anticoagulation]
+
+  - id: "§4.4"
+    title: "Perioperative management of antiplatelets"
+    pages: "36-42"
+    stage_ids: [S6]
+    rule_ids: [timing-anticoagulation]
+
+rule_sets_covered:
+  - timing
+
+derived_rule_count: 6
+last_updated: 2026-07-01
+supersedes: "ACCP 2021"
+superseded_by: ""

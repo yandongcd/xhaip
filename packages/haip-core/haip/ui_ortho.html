@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+
+<head>
+
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>xhaip — 创伤骨科智能体</title>
+
+<style>
+
+/* ===== Gold Standard Design Tokens (radiology-cockpit SKILL) ===== */
+
+:root{--bg:#1c1c1e;--card-bg:#2c2c2e;--text:#f5f5f7;--text-secondary:#a1a1a6;--accent:#0a84ff;--danger:#ff453a;--warning:#ff9f0a;--success:#30d158;--purple:#bf5af2;--green:#30d158;--yellow:#ff9f0a;--red:#ff453a;--border:#38383a;--glow:rgba(10,132,255,.08);--bg-gradient:radial-gradient(ellipse at 50% 0%,var(--card-bg) 0%,var(--bg) 60%)}
+
+body.light{--bg:#f2f2f7;--card-bg:#ffffff;--text:#1c1c1e;--text-secondary:#6e6e73;--accent:#007aff;--danger:#ff3b30;--warning:#ff9500;--success:#34c759;--purple:#af52de;--green:#34c759;--yellow:#ff9500;--red:#ff3b30;--border:#e5e5ea;--bg-gradient:radial-gradient(ellipse at 50% 0%,#ffffff 0%,#f2f2f7 60%)}
+
+body.light .sidebar{background:var(--card-bg);border-right:1px solid var(--border)}
+
+body.light .sidebar h2,.body.light .sidebar .meta,.body.light .sidebar .foot{color:var(--text-secondary)}
+
+body.light .tab{color:var(--text-secondary)}body.light .tab.active{color:#fff}
+
+body.light .tab:hover:not(.active){color:var(--text);background:rgba(0,122,255,.04)}
+
+body.light .result-box{background:var(--bg);color:var(--text);border:1px solid var(--border)}
+
+body.light .tag-h{background:rgba(255,59,48,.12)}body.light .tag-m{background:rgba(255,149,0,.12)}body.light .tag-l{background:rgba(52,199,89,.12)}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+::selection{background:var(--accent);color:#fff}
+
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text','PingFang SC','Microsoft YaHei','Helvetica Neue',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;background:var(--bg-gradient);color:var(--text);line-height:1.47;display:flex;height:100vh;overflow:hidden;letter-spacing:-.01em;transition:background .3s ease,color .3s ease}
+
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+.sidebar{width:200px;background:linear-gradient(180deg,#1a1a1a,#2B2B2B);color:#fff;overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column}
+
+.sidebar h2{padding:14px;font-size:15px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:6px}
+
+.sidebar .meta{padding:8px 14px;font-size:10px;color:rgba(255,255,255,.4)}
+
+.tab{display:block;padding:8px 14px;color:rgba(255,255,255,.6);cursor:pointer;font-size:12px;border-left:2px solid transparent;transition:all .15s ease}
+
+.tab:hover{color:#fff;background:rgba(255,255,255,.05)}
+
+.tab.active{color:#fff;border-left-color:var(--accent);background:rgba(10,132,255,.15)}
+
+.sidebar .foot{padding:8px 14px;font-size:10px;color:rgba(255,255,255,.3);margin-top:auto;border-top:1px solid rgba(255,255,255,.1)}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+.main-h{height:52px;padding:0 20px;background:var(--card-bg);border-bottom:1px solid var(--border);font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+
+.content{flex:1;display:flex;overflow:hidden}
+
+.left{flex:1;padding:16px 20px;overflow-y:auto}
+
+.right{width:360px;padding:16px;background:var(--card-bg);border-left:1px solid var(--border);overflow-y:auto;flex-shrink:0}
+
+.panel{display:none}.panel.active{display:block;animation:fadeIn .2s ease}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+.panel h3{font-size:14px;font-weight:600;color:var(--accent);margin:8px 0}
+
+.form-group{margin:6px 0}.form-group label{font-size:11px;color:var(--text-secondary);display:block;margin-bottom:3px;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+
+.form-group input,.form-group select,.form-group textarea{padding:7px 12px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:12px;width:100%;font-family:inherit;outline:none;transition:border-color .15s}
+
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(10,132,255,.12)}
+
+.form-group textarea{height:60px;resize:vertical;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;line-height:1.5}
+
+.btn{padding:7px 18px;border:none;border-radius:8px;font-size:12px;font-weight:590;cursor:pointer;font-family:inherit;transition:all .12s ease}
+
+.btn:active{transform:scale(.96)}
+
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{opacity:.9;box-shadow:0 4px 12px rgba(10,132,255,.3)}
+
+.btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--accent);color:var(--accent);background:rgba(10,132,255,.04)}
+
+.result-box{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px 16px;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-size:11px;line-height:1.5;white-space:pre-wrap;max-height:400px;overflow-y:auto;margin-top:8px}
+
+.result-box .ok{color:var(--success)}.result-box .err{color:var(--danger)}.result-box .key{color:var(--accent)}
+
+.row{display:flex;gap:8px;margin:6px 0;flex-wrap:wrap}
+
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;margin:2px}
+
+.tag-h{background:rgba(255,69,58,.12);color:var(--danger)}.tag-m{background:rgba(255,159,10,.12);color:var(--warning)}.tag-l{background:rgba(48,209,88,.12);color:var(--success)}
+
+.header-btn{padding:5px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card-bg);color:var(--text);cursor:pointer;font-size:11px;font-weight:500;font-family:inherit;transition:all .15s}
+
+.header-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:scale(1.02)}
+
+.ortho-desc{font-size:11px;color:var(--text-secondary);margin-bottom:6px;line-height:1.5}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;color:#060d14}
+.badge-green{background:var(--green)}.badge-yellow{background:var(--warning)}.badge-red{background:var(--red)}.badge-purple{background:var(--purple)}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="sidebar">
+
+  <h2>🏥 创伤骨科智能体</h2>
+
+  <div class="meta">orthopedic-surgery | business | port:8765</div>
+
+          <div class="tab active" onclick="showTab('classify_fracture')">骨折分型评估</div>
+
+          <div class="tab" onclick="showTab('preop_assessment')">术前综合评估</div>
+
+          <div class="tab" onclick="showTab('surgical_plan')">手术方案推荐</div>
+
+          <div class="tab" onclick="showTab('complication_risk')">并发症风险预?/div>
+
+          <div class="tab" onclick="showTab('timing_decision')">T2 层次手术时机决策</div>
+
+          <div class="tab" onclick="showTab('nursing_plan')">围术期护理计?/div>
+
+          <div class="tab" onclick="showTab('followup_plan')">术后随访计划</div>
+
+          <div class="tab" onclick="showTab('quality_audit')">6阶段18检查点质控审计</div>
+
+          <div class="tab" onclick="showTab('checklist')">11项术前检查清?/div>
+
+          <div class="tab" onclick="showTab('completeness')">14项术前检查完备性评?/div>
+
+          <div class="tab" onclick="showTab('rehab_track')">4阶段康复跟踪 + ?/div>
+
+          <div class="tab" onclick="showTab('osteoporosis_mgmt')">FRAX评估 + 骨?/div>
+
+          <div class="tab" onclick="showTab('analyze_xray')">X光骨折分?/div>
+
+          <div class="tab" onclick="showTab('parse_clinical')">自然语言临床文本解析</div>
+
+          <div class="tab" onclick="showTab('harris_score')">Harris髋关节评?/div>
+
+
+
+  <div class="foot">15 tools | 业务智能体</div>
+
+</div>
+
+<div class="main">
+
+  <div class="main-h"><span id="panel-title">classify_fracture</span><div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--text-secondary)">创伤骨科智能体 工作台</span><button class="header-btn" onclick="toggleTheme()" id="btn-theme">🌙 黑夜</button></div></div>
+
+  <div class="content">
+
+    <div class="left">
+
+        <div class="panel active" id="panel-classify_fracture">
+
+          <h3>骨折分型评估</h3>
+
+          <p class="ortho-desc">骨折分型评估 (Garden/Evans/AO)</p>
+
+          <div class="form-group"><label>patient_id</label><input class="inp-classify_fracture" data-field="patient_id" value="str"></div>
+
+          <div class="form-group"><label>xray_findings</label><input class="inp-classify_fracture" data-field="xray_findings" value="dict"></div>
+
+          <div class="row"><button class="btn btn-primary" onclick="callTool('classify_fracture')">执行 骨折分型评估</button><button class="btn btn-secondary" onclick="runGuard('classify_fracture')">Guard</button></div>
+
+          <div class="result-box" id="result-classify_fracture">点击执行...</div>
+
+        </div>
+
+        <div class="panel" id="panel-preop_assessment">
+
+          <h3>术前综合评估</h3>
+
+          <p class="ortho-desc">术前综合评估 (合并症/药物/营养/认知)</p>
+
+          <div class="form-group"><label>patient_id</label><input class="inp-preop_assessment" data-field="patient_id" value="str"></div>
+
+          <div class="row"><button class="btn btn-primary" onclick="callTool('preop_assessment')">执行 术前综合评估</button><button class="btn btn-secondary" onclick="runGuard('preop_assessment')">Guard</button></div>
+
+          <div class="result-box" id="result-preop_assessment">点击执行...</div>
+
+        </div>
+
+        <div class="panel" id="panel-surgical_plan">
+
+          <h3>手术方案推荐</h3>
+
+          <p class="ortho-desc">手术方案推荐 (THA/HA/PFNA/DHS)</p>
+
+          <div class="form-group"><label>patient_id</label><input class="inp-surgical_plan" data-field="patient_id" value="str"></div>
+
+          <div class="form-group"><label>fracture_type</label><input class="inp-surgical_plan" data-field="fracture_type" value="str"></div>
+
+          <div class="form-group"><label>age</label><input class="inp-surgical_plan" data-field="age" value="int"></div>
+
+          <div class="row"><button class="btn btn-primary" onclick="callTool('surgical_plan')">执行 手术方案推荐</button><button class="btn btn-secondary" onclick="runGuard('surgical_plan')">Guard</button></div>
+
+          <div class="result-box" id="result-surgical_plan">点击执行...</div>
+
+        </div>
+
+        <div class="panel" id="panel-complication_risk">
+
+          <h3>并发症风险预测</h3>
+
+          <p class="ortho-desc">并发症风险预测 (DVT/感染/心脏/跌倒谵妄 4维)</p>
+
+          <div class="form-group"><label>patient_id</label><input class="inp-complication_risk" data-field="patient_id" value="str"></div>
+
+          <div class="form-group"><label>age</label><input class="inp-complication_risk" data-field="age" value="int"></div>
+
+          <div class="form-group"><label>labs</label><input class="inp-complication_risk" data-field="labs" value="dict"></div>
+
+          <div class="form-group"><label>conditions</label><input class="inp-complication_risk" data-field="conditions" value="list"></div>
+
+          <div class="row"><button class="btn btn-primary" onclick="callTool('complication_risk')">执行 并发症风险预测</button><button class="btn btn-secondary" onclick="runGuard('complication_risk')">Guard</button></div>
+
+          <div class="result-box" id="result-complication_risk">点击执行...</div>
+
+        </div>
+
+        <div class="panel" id="panel-timing_decision">
+
+          <h3>T2 层次手术时机决策</h3>
+
+          <p class="ortho-desc">T2 层次手术时机决策 (8因素 → emergency/urgent/elective)</p>
+
+          <div class="form-group"><label>patient_id</label><input class="inp-timing_decision" data-field="patient_id" value="str"></div>
+
+          <div class="form-group"><label>labs</label><input class="inp-timing_decision" data-field="labs" value="dict"></div>
+
+          <div class="form-group"><label>ecg_findings</label><input class="inp-timing_decision" data-field="ecg_findings" value="str"></div>
+
+          <div class="form-group"><label>conditions</label><input class="inp-timing_decision" data-field="conditions" value="list"></div>
+
+          <div class="form-group"><label>meds</label><input class="inp-timing_decision" data-field="meds" value="list"></div>
+
+          <div class="row"><button class="btn btn-primary" onclick="callTool('timing_decision')">执行 T2 层次手术时机决策</button><button class="btn btn-secondary" onclick="runGuard('timing_decision')">Guard</button></div>
+
+          <div class="result-box" id="result-timing_decision">点击执行...</div>
+
+        </div>
+
+        <div class="panel" id="panel-nursing_plan">
+
+          <h3>围术期护理计划</h3>
+
+          <p class="ortho-desc">围术期护理计划 (4阶段25项)</p>
+
+          <div class="form-group"><label>patient_id</label><input class="inp-nursing_plan" data-field="patient_id" value="str"></div>
+
+          <div class="form-group"><label>age</label><input class="inp-nursing_plan" data-field="age" value="int"></div>
+
+          <div class="form-group"><label>conditions</label><input class="inp-nursing_plan" data-field="conditions" value="list"></div>
+
+          <div class="row"><button class="btn btn-primary" onclick="callTool('nursing_plan')">执行 围术期护理计划</button><button class="btn btn-secondary" onclick="runGuard('nursing_plan')">Guard</button></div>
+
+          <div class="result-box" id="result-nursing_plan">点击执行...</div>
+
+        </div>
+
+        <div class="panel" id="panel-followup_plan">
+
+          <h3>术后随访计划</h3>
+
+          <p class="ortho-desc">术后随访计划 (1/3/6/12月 + 红旗症状 + 骨质疏松管理)</p>
+
+          <div class="form-group"><label>patient_id</label><input class="inp-followup_plan" data-field="patient_id" value="str"></div>
+
+          <div class="form-group"><label>procedure</label><input class="inp-followup_plan" data-field="procedure" value="str"></div>
+
+          <div class="row"><button class="btn btn-primary" onclick="callTool('followup_plan')">执行 术后随访计划</button><button class="btn btn-secondary" onclick="runGuard('followup_plan')">Guard</button></div>
+
+          <div class="result-box" id="result-followup_plan">点击执行...</div>
+
+        </div>
+
+        <div class="panel" id="panel-quality_audit">
+
+          <h3>6阶段18检查点质控审计</h3>
+
+          <p class="ortho-desc">6阶段18检查点质控审计</p>
+
+          <div class="form-group"><label>patient_id</label><input class="inp-quality_audit" data-field="patient_id" value="str"></div>
+
+          <div class="form-group"><label>compliance</label><input class="inp-quality_audit" data-field="compliance" value="dict"></div>
+
+          <div class="row"><button class="btn btn-primary" onclick="callTool('quality_audit')">执行 6阶段18检查点质控审计</button><button class="btn btn-secondary" onclick="runGuard('quality_audit')">Guard</button></div>
+
+          <div class="result-box" id="result-quality_audit">点击执行...</div>
+
+        </div>
+
+        <div class="panel" id="panel-checklist">
+
+          <h3>11项术前检查清单</h3>
+
+          <p class="ortho-desc">11项术前检查清单 (急诊分诊)</p>
+
+          <div class="form-group"><label>patient_id</label><input class="inp-checklist" data-field="patient_id" value="str"></div>
+
+          <div class="form-group"><label>symptoms</label><input class="inp-checklist" data-field="symptoms" value="list"></div>
+
+          <div class="form-group"><label>conditions</label><input class="inp-checklist" data-field="conditions" value="list"></div>
+
+          <div class="form-group"><label>age</label><input class="inp-checklist" data-field="age" value="int"></div>
+
+          <div class="row"><button class="btn btn-primary" onclick="callTool('checklist')">执行 11项术前检查清单</button><button class="btn btn-secondary" onclick="runGuard('checklist')">Guard</button></div>
+
+          <div class="result-box" id="result-checklist">点击执行...</div>
+
+        </div>
+
+        <div class="panel" id="panel-completeness">
+
+          <h3>14项术前检查完备性评估</h3>
+
+          <p class="ortho-desc">14项术前检查完备性评估</p>
+
+          <div class="form-group"><label>patient_id</label><input class="inp-completeness" data-field="patient_id" value="str"></div>
+
+          <div class="form-group"><label>completed_tests</label><input class="inp-completeness" data-field="completed_tests" value="list"></div>
+
+          <div class="row"><button class="btn btn-primary" onclick="callTool('completeness')">执行 14项术前检查完备性评估</button><button class="btn btn-secondary" onclick="runGuard('completeness')">Guard</button></div>
+
+          <div class="result-box" id="result-completeness">点击执行...</div>
+
+        </div>
+
+        <div class="panel" id="panel-rehab_track">
+
+          <h3>4阶段康复跟踪 + …</h3>
+
+          <p class="ortho-desc">4阶段康复跟踪 + Harris 评分</p>
+
+          <div class="form-group"><label>patient_id</label><input class="inp-rehab_track" data-field="patient_id" value="str"></div>
+
+          <div class="form-group"><label>procedure</label><input class="inp-rehab_track" data-field="procedure" value="str"></div>
+
+          <div class="row"><button class="btn btn-primary" onclick="callTool('rehab_track')">执行 4阶段康复跟踪 + …</button><button class="btn btn-secondary" onclick="runGuard('rehab_track')">Guard</button></div>
+
+          <div class="result-box" id="result-rehab_track">点击执行...</div>
+
+        </div>
+
+        <div class="panel" id="panel-osteoporosis_mgmt">
+
+          <h3>FRAX评估 + 骨…</h3>
+
+          <p class="ortho-desc">FRAX评估 + 骨质疏松治疗方案</p>
+
+          <div class="form-group"><label>patient_id</label><input class="inp-osteoporosis_mgmt" data-field="patient_id" value="str"></div>
+
+          <div class="form-group"><label>age</label><input class="inp-osteoporosis_mgmt" data-field="age" value="int"></div>
+
+          <div class="form-group"><label>gender</label><input class="inp-osteoporosis_mgmt" data-field="gender" value="str"></div>
+
+          <div class="form-group"><label>conditions</label><input class="inp-osteoporosis_mgmt" data-field="conditions" value="list"></div>
+
+          <div class="row"><button class="btn btn-primary" onclick="callTool('osteoporosis_mgmt')">执行 FRAX评估 + 骨…</button><button class="btn btn-secondary" onclick="runGuard('osteoporosis_mgmt')">Guard</button></div>
+
+          <div class="result-box" id="result-osteoporosis_mgmt">点击执行...</div>
+
+        </div>
+
+        <div class="panel" id="panel-analyze_xray">
+
+          <h3>X光骨折分析</h3>
+
+          <p class="ortho-desc">X光骨折分析 (Evans/Garden/AO分型)</p>
+
+          <div class="form-group"><label>patient_id</label><input class="inp-analyze_xray" data-field="patient_id" value="str"></div>
+
+          <div class="form-group"><label>view</label><input class="inp-analyze_xray" data-field="view" value="str"></div>
+
+          <div class="form-group"><label>findings</label><input class="inp-analyze_xray" data-field="findings" value="dict"></div>
+
+          <div class="row"><button class="btn btn-primary" onclick="callTool('analyze_xray')">执行 X光骨折分析</button><button class="btn btn-secondary" onclick="runGuard('analyze_xray')">Guard</button></div>
+
+          <div class="result-box" id="result-analyze_xray">点击执行...</div>
+
+        </div>
+
+        <div class="panel" id="panel-parse_clinical">
+
+          <h3>自然语言临床文本解析</h3>
+
+          <p class="ortho-desc">自然语言临床文本解析 (规则引擎)</p>
+
+          <div class="form-group"><label>text</label><input class="inp-parse_clinical" data-field="text" value="str"></div>
+
+          <div class="row"><button class="btn btn-primary" onclick="callTool('parse_clinical')">执行 自然语言临床文本解析</button><button class="btn btn-secondary" onclick="runGuard('parse_clinical')">Guard</button></div>
+
+          <div class="result-box" id="result-parse_clinical">点击执行...</div>
+
+        </div>
+
+        <div class="panel" id="panel-harris_score">
+
+          <h3>Harris髋关节评分</h3>
+
+          <p class="ortho-desc">Harris髋关节评分 (100分制)</p>
+
+          <div class="form-group"><label>pain</label><input class="inp-harris_score" data-field="pain" value="str"></div>
+
+          <div class="form-group"><label>gait</label><input class="inp-harris_score" data-field="gait" value="str"></div>
+
+          <div class="form-group"><label>support</label><input class="inp-harris_score" data-field="support" value="str"></div>
+
+          <div class="form-group"><label>distance</label><input class="inp-harris_score" data-field="distance" value="str"></div>
+
+          <div class="row"><button class="btn btn-primary" onclick="callTool('harris_score')">执行 Harris髋关节评分</button><button class="btn btn-secondary" onclick="runGuard('harris_score')">Guard</button></div>
+
+          <div class="result-box" id="result-harris_score">点击执行...</div>
+
+        </div>
+
+    </div>
+
+    <div class="right">
+
+      <h3 style="font-size:12px;margin-bottom:8px">高危触发</h3><div style="font-size:11px;color:var(--text-secondary);line-height:1.8"><span class="tag tag-h">手术决策</span> <span class="tag tag-h">心梗评估</span> <span class="tag tag-h">MDT分歧</span></div>
+
+      <h3 style="font-size:12px;margin:12px 0 8px">调用历史</h3>
+
+      <div id="history-list"></div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+(function(){var t=localStorage.getItem('xhaip_theme')||'dark';if(t==='light'){document.body.classList.add('light');document.getElementById('btn-theme').textContent='☀ 白天'}})();
+
+function toggleTheme(){var isLight=document.body.classList.toggle('light');localStorage.setItem('xhaip_theme',isLight?'light':'dark');document.getElementById('btn-theme').textContent=isLight?'☀ 白天':'🌙 黑夜'}
+
+var AGENT='orthopedic-surgery';var TOOLS=[{"name": "classify_fracture", "description": "骨折分型评估 (Garden/Evans/AO)", "input": {"patient_id": "str", "xray_findings": "dict"}}, {"name": "preop_assessment", "description": "术前综合评估 (合并症/药物/营养/认知)", "input": {"patient_id": "str"}}, {"name": "surgical_plan", "description": "手术方案推荐 (THA/HA/PFNA/DHS)", "input": {"patient_id": "str", "fracture_type": "str", "age": "int"}}, {"name": "complication_risk", "description": "并发症风险预测 (DVT/感染/心脏/跌倒谵妄 4维)", "input": {"patient_id": "str", "age": "int", "labs": "dict", "conditions": "list"}}, {"name": "timing_decision", "description": "T2 层次手术时机决策 (8因素 → emergency/urgent/elective)", "input": {"patient_id": "str", "labs": "dict", "ecg_findings": "str", "conditions": "list", "meds": "list"}}, {"name": "nursing_plan", "description": "围术期护理计划 (4阶段25项)", "input": {"patient_id": "str", "age": "int", "conditions": "list"}}, {"name": "followup_plan", "description": "术后随访计划 (1/3/6/12月 + 红旗症状 + 骨质疏松管理)", "input": {"patient_id": "str", "procedure": "str"}}, {"name": "quality_audit", "description": "6阶段18检查点质控审计", "input": {"patient_id": "str", "compliance": "dict"}}, {"name": "checklist", "description": "11项术前检查清单 (急诊分诊)", "input": {"patient_id": "str", "symptoms": "list", "conditions": "list", "age": "int"}}, {"name": "completeness", "description": "14项术前检查完备性评估", "input": {"patient_id": "str", "completed_tests": "list"}}, {"name": "rehab_track", "description": "4阶段康复跟踪 + Harris 评分", "input": {"patient_id": "str", "procedure": "str"}}, {"name": "osteoporosis_mgmt", "description": "FRAX评估 + 骨质疏松治疗方案", "input": {"patient_id": "str", "age": "int", "gender": "str", "conditions": "list"}}, {"name": "analyze_xray", "description": "X光骨折分析 (Evans/Garden/AO分型)", "input": {"patient_id": "str", "view": "str", "findings": "dict"}}, {"name": "parse_clinical", "description": "自然语言临床文本解析 (规则引擎)", "input": {"text": "str"}}, {"name": "harris_score", "description": "Harris髋关节评分 (100分制)", "input": {"pain": "str", "gait": "str", "support": "str", "distance": "str"}}];var HISTORY=[];
+
+function showTab(t){document.querySelectorAll('.tab').forEach(function(e){e.classList.remove('active')});document.querySelectorAll('.panel').forEach(function(e){e.classList.remove('active')});var el=document.querySelector('.tab[onclick*="'+t+'"]');if(el)el.classList.add('active');var p=document.getElementById('panel-'+t);if(p)p.classList.add('active');document.getElementById('panel-title').textContent=el?el.textContent.trim():t}
+
+async function callTool(tool){
+
+  var params={};var toolDef=TOOLS.find(function(t){return t.name===tool});
+
+  if(toolDef&&Object.keys(toolDef.input||{}).length){
+
+    for(var k in toolDef.input){params[k]=document.querySelector('.inp-'+tool+'[data-field="'+k+'"]')?.value||toolDef.input[k]}
+
+  }else{
+
+    try{var el=document.querySelector('.inp-'+tool);if(el)params=JSON.parse(el.value||'{}')}catch(e){}
+
+  }
+
+  var el=document.getElementById('result-'+tool);el.textContent='执行中...';
+
+  try{
+
+    var r=await fetch('/api/call',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent:AGENT,tool:tool,params:params})});
+
+    var d=await r.json();el.textContent=JSON.stringify(d,null,2);
+
+    addHistory(tool,d.status||'ok');
+
+  }catch(e){el.textContent='Error: '+e.message}
+
+}
+
+async function runGuard(tool){
+
+  var output=document.getElementById('result-'+tool)?.textContent||'';
+
+  var r=await fetch('/api/guard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({output:output,agent:AGENT})});
+
+  var d=await r.json();document.getElementById('result-'+tool).textContent='GUARD:\n'+JSON.stringify(d,null,2)
+
+}
+
+function addHistory(tool,status){
+
+  HISTORY.unshift({tool:tool,time:new Date().toLocaleTimeString(),status:status});
+
+  if(HISTORY.length>10)HISTORY.pop();
+
+  document.getElementById('history-list').innerHTML=HISTORY.map(function(e){return '<div style="font-size:11px;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--accent)">'+e.tool+'</span> <span style="color:'+(e.status==='ok'?'var(--success)':'var(--danger)')+'">'+e.status+'</span> <span style="color:var(--text-secondary)">'+e.time+'</span></div>'}).join('')
+
+}
+
+</script>
+
+</body>
+
+</html>

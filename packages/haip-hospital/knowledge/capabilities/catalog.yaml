@@ -1,0 +1,277 @@
+# ============================================================
+# TOGAF Class: BusinessCapability (Extension ABB)
+# Source: G211 Business Capabilities V2
+# Trust Level: T1
+# ============================================================
+name: southern-hospital-capability-catalog
+version: "1.0"
+description: 南方医院全院 L1-L2 业务能力目录 — 按服务类型展开 (G211 跨组织原则)
+source: 南方医院章程第六条～第十节
+value_stream: 救死扶伤
+
+# ── L1 能力域（6 个，从章程推导）──────────────────────────
+
+catalog:
+  # ═══════════════════════════════════════════════════════
+  # 1. Patient Care — 章程第六条 临床医疗
+  # ═══════════════════════════════════════════════════════
+  - id: cap-l1-patient-care
+    name: Patient Care
+    level: L1
+    description: 为患者提供诊断、治疗、护理、康复全流程临床服务
+    source: 南方医院章程第六条
+    value_stages:
+      - 急诊救治
+      - 明确诊断
+      - 有效治疗
+      - 康复回归
+
+    l2_capabilities:
+      - id: cap-l2-emergency
+        name: Emergency & Critical Care
+        description: 急诊预检分诊、抢救复苏、ICU 重症监护
+        cross_departments:
+          - emergency（急诊科）
+          - icu（重症医学科）
+          - anesthesiology（麻醉科）
+        capability_tree: 待定义
+
+      - id: cap-l2-diagnostics
+        name: Diagnostic Services
+        description: 实验室检验、医学影像、病理诊断、心电/脑电功能检查
+        cross_departments:
+          - lab_med（检验科）
+          - radiology（影像科）
+          - pathology（病理科）
+          - cardiology（心血管内科 — ECG/MI/HTN 评估）
+          - neurology（神经内科 — EEG）
+        capability_tree: 待定义
+        notes: cardio-risk agent 作为技能 Agent 实现此 L2 下的 Cardiac Risk Assessment 能力
+
+      - id: cap-l2-surgical
+        name: Surgical Services
+        description: 择期/急诊手术、围术期管理、日间手术
+        cross_departments:
+          - general_surgery（普通外科）
+          - orthopedic_surgery（创伤骨科）
+          - neurosurgery（神经外科）
+          - cardio_surgery（心血管外科）
+          - thoracic_surgery（胸外科）
+          - hepatobiliary_surgery（肝胆外科）
+          - burns_plastic（烧伤整形外科）
+          - vascular_surgery（血管外科）
+          - colorectal_surgery（肛肠外科）
+          - interventional_therapy（介入治疗科）
+          - anesthesiology（麻醉科 — 手术麻醉支撑）
+        capability_tree: 待定义（创伤骨科部分已定义）
+        existing_ref: assets/capabilities/orthopedic-surgery-capabilities.yaml
+
+      - id: cap-l2-medical
+        name: Medical Services
+        description: 内科疾病诊断与药物治疗、慢病管理
+        cross_departments:
+          - cardiology（心血管内科）
+          - respiratory（呼吸内科）
+          - gastroenterology（消化内科）
+          - nephrology（肾内科）
+          - hematology（血液内科）
+          - endocrinology（内分泌代谢科）
+          - rheumatology（风湿免疫科）
+          - infectious_disease（感染内科）
+          - geriatrics（老年病科）
+          - dermatology（皮肤科）
+          - psychiatry（精神心理科）
+        capability_tree: 待定义
+
+      - id: cap-l2-pharmacy
+        name: Pharmacy Services
+        description: 处方审核、药品调剂、肠内肠外营养支持、治疗药物监测
+        cross_departments:
+          - pharmacy（药剂科 — 核心承载）
+          - 各临床科室（病房备药）
+        capability_tree: assets/capabilities/pharmacy-capabilities.yaml
+
+      - id: cap-l2-obstetric-pediatric
+        name: Obstetric & Pediatric Care
+        description: 孕产期保健、分娩、新生儿诊疗、儿童疾病诊疗
+        cross_departments:
+          - obgyn（妇产科）
+          - pediatrics（儿科）
+        capability_tree: 待定义
+
+      - id: cap-l2-oncology
+        name: Oncology Care
+        description: 肿瘤筛查、化疗、放疗、肿瘤外科、姑息治疗
+        cross_departments:
+          - oncology（肿瘤科）
+          - radiology（放射科 — 放疗）
+          - general_surgery（肿瘤外科）
+        capability_tree: 待定义
+
+      - id: cap-l2-rehabilitation
+        name: Rehabilitation Care
+        description: 物理治疗、作业治疗、言语治疗、功能恢复训练
+        cross_departments:
+          - rehabilitation（康复医学科）
+          - neurology（神经内科 — 卒中康复）
+          - orthopedic_surgery（创伤骨科 — 骨折术后康复）
+        capability_tree: 待定义
+
+      - id: cap-l2-nursing
+        name: Nursing Care
+        description: 病房护理、围术期护理、专科护理（压疮/跌倒/管道/疼痛）
+        cross_departments:
+          - 护理部（所有临床科室的护理单元）
+        capability_tree: 待定义（创伤骨科部分已定义于 orthopedic-surgery-capabilities.yaml）
+
+      - id: cap-l2-tcm
+        name: TCM Care
+        description: 中医辨证论治、针灸推拿、中西医结合诊疗
+        cross_departments:
+          - tcm（中医科）
+        capability_tree: 待定义
+
+      - id: cap-l2-ent-ophthalmology-stomatology
+        name: ENT, Ophthalmology & Stomatology Care
+        description: 耳鼻喉、眼科、口腔疾病诊疗
+        cross_departments:
+          - ent（耳鼻咽喉头颈外科）
+          - ophthalmology（眼科）
+          - stomatology（口腔科）
+        capability_tree: 待定义
+
+  # ═══════════════════════════════════════════════════════
+  # 2. Medical Education — 章程第六条 医学教育
+  # ═══════════════════════════════════════════════════════
+  - id: cap-l1-medical-education
+    name: Medical Education
+    level: L1
+    description: 医学教育 — 院校教育、毕业后教育、继续教育，培养医学人才
+    source: 南方医院章程第六条
+    value_stages: []  # 教育不直接面向患者价值流，支撑 Patient Care 的长期可持续
+
+    l2_capabilities:
+      - id: cap-l2-undergraduate
+        name: Undergraduate Clinical Teaching
+        description: 医学院本科生的临床理论教学和见习/实习指导
+        capability_tree: 待定义
+
+      - id: cap-l2-residency
+        name: Residency Training
+        description: 住院医师规范化培训、专科医师规范化培训
+        capability_tree: 待定义
+
+      - id: cap-l2-cme
+        name: Continuing Medical Education
+        description: 在职医务人员的继续教育和职业发展
+        capability_tree: 待定义
+
+  # ═══════════════════════════════════════════════════════
+  # 3. Medical Research — 章程第六条 医学科研
+  # ═══════════════════════════════════════════════════════
+  - id: cap-l1-medical-research
+    name: Medical Research
+    level: L1
+    description: 基础研究、临床研究、转化研究，推动医学科技进步
+    source: 南方医院章程第六条
+    value_stages: []  # 研究不直接面向患者价值流，支撑 Patient Care 的创新
+
+    l2_capabilities:
+      - id: cap-l2-basic-research
+        name: Basic Medical Research
+        description: 实验室基础研究，探索疾病机制和潜在靶点
+        capability_tree: 待定义
+
+      - id: cap-l2-clinical-trials
+        name: Clinical Trials
+        description: 临床试验设计、执行、数据管理和统计分析
+        capability_tree: 待定义
+
+      - id: cap-l2-translational-research
+        name: Translational Research
+        description: 基础研究成果向临床应用的转化
+        capability_tree: 待定义
+
+  # ═══════════════════════════════════════════════════════
+  # 4. Preventive Healthcare — 章程第六条 预防保健
+  # ═══════════════════════════════════════════════════════
+  - id: cap-l1-preventive-health
+    name: Preventive Healthcare
+    level: L1
+    description: 健康体检、疾病筛查、疫苗接种、健康教育与科普
+    source: 南方医院章程第六条
+    value_stages: []  # 预防保健是独立价值流，不属于"救死扶伤"患者诊疗链
+
+    l2_capabilities:
+      - id: cap-l2-health-screening
+        name: Health Screening
+        description: 常规体检套餐、专项筛查（肿瘤/心血管/代谢病）
+        capability_tree: 待定义
+
+      - id: cap-l2-vaccination
+        name: Vaccination & Immunization
+        description: 疫苗接种服务和管理
+        capability_tree: 待定义
+
+      - id: cap-l2-health-education
+        name: Public Health Education
+        description: 面向社区和公众的健康知识普及与健康行为干预
+        capability_tree: 待定义
+
+  # ═══════════════════════════════════════════════════════
+  # 5. Quality, Safety & Compliance — 章程第六十三条等
+  # ═══════════════════════════════════════════════════════
+  - id: cap-l1-quality-safety
+    name: Quality, Safety & Compliance
+    level: L1
+    description: 医疗质量管理、患者安全、不良事件报告、法规遵从与评审认证
+    source: 南方医院章程第六十三条至第七十条
+    value_stages: []  # 支撑所有 ValueStage 的质量保障
+
+    l2_capabilities:
+      - id: cap-l2-quality-management
+        name: Clinical Quality Management
+        description: 院科两级质控、质量指标监测、临床路径管理
+        capability_tree: 待定义
+
+      - id: cap-l2-patient-safety
+        name: Patient Safety & Incident Management
+        description: 不良事件报告、根因分析、安全风险防范
+        capability_tree: 待定义
+
+      - id: cap-l2-compliance
+        name: Regulatory Compliance & Accreditation
+        description: 三级甲等医院评审、JCI 认证、依法执业管理
+        capability_tree: 待定义
+
+  # ═══════════════════════════════════════════════════════
+  # 6. Hospital Operations — 章程第八、九、十节
+  # ═══════════════════════════════════════════════════════
+  - id: cap-l1-operations
+    name: Hospital Operations
+    level: L1
+    description: 医院运营管理 — 财务资产、后勤保障、设备物资、信息技术
+    source: 南方医院章程第八节（财务资产管理）、第九节（后勤设备物资信息管理）
+    value_stages: []  # 运营支撑，保障全院运转
+
+    l2_capabilities:
+      - id: cap-l2-finance
+        name: Financial Management
+        description: 预算管理、成本核算、收入循环、采购与国有资产管理
+        capability_tree: 待定义
+
+      - id: cap-l2-supply-chain
+        name: Supply Chain & Logistics
+        description: 药品耗材供应链、库存管理、院内物流
+        capability_tree: 待定义
+
+      - id: cap-l2-facilities
+        name: Facilities & Equipment Management
+        description: 建筑设施运维、医疗设备全生命周期管理、环境与能源管理
+        capability_tree: 待定义
+
+      - id: cap-l2-informatics
+        name: Health Informatics & IT
+        description: 医院信息系统（HIS/EMR/LIS/PACS）、信息安全、互联互通
+        capability_tree: 待定义
+        notes: NX agent 的 TOGAF 全景图属于此能力域的信息系统可视化

@@ -1,0 +1,55 @@
+# ============================================================
+# Guideline Asset: 老年股骨转子间骨折诊疗指南（2020）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-intertroch-2020"
+name: "老年股骨转子间骨折诊疗指南"
+abbr: "转子间指南2020"
+version: "2020"
+publisher: "中华医学会骨科学分会创伤骨科学组"
+doi: "10.3760/cma.j.cn112139-20200227-00128"
+language: zh-CN
+trust_level: T1
+admin_priority: 5
+
+description: >
+  中国老年股骨转子间骨折诊疗的专项指南。覆盖Evans分型、PFNA/InterTAN
+  内固定选择、围术期管理要点等。
+
+key_sections:
+  - id: "§3"
+    title: "骨折分型与稳定性判断"
+    pages: "6-10"
+    stage_ids: [S3]
+    rule_ids:
+      - surgery-type-004
+      - surgery-type-005
+
+  - id: "§4"
+    title: "手术方式选择"
+    pages: "11-18"
+    stage_ids: [S9]
+    rule_ids:
+      - surgery-type-004
+      - surgery-type-005
+      - surgery-type-006
+      - surgery-type-007
+
+  - id: "§5"
+    title: "围术期并发症防治"
+    pages: "19-24"
+    stage_ids: [S8, S10]
+    rule_ids:
+      - complication-dvt
+      - complication-infection
+
+rule_sets_covered:
+  - surgery_type
+  - complication
+  - nursing
+
+derived_rule_count: 12
+last_updated: 2026-07-01
+supersedes: ""
+superseded_by: ""

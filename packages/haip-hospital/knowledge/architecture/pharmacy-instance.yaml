@@ -1,0 +1,229 @@
+﻿# ── 药剂科 TOGAF 10 架构实例 ──
+# 真实关系：代码中已验证的调用和数据使用关系
+# 推演关系：架构设计中合理的分层抽象
+
+view_name: "药剂科V2.0实例"
+description: "药剂科智能体架构实例化"
+vw: 900
+vh: 500
+
+nodes:
+  - id: org-pharm
+    label: 药剂科
+    type: Organization
+    agent_type: null
+    color: "#0a84ff"
+    icon: "💊"
+    x: 450
+    y: 50
+    big: true
+    detail:
+      title: "💊 药剂科 (Organization 实例)"
+      fields:
+        - ["组织", "南方医科大学南方医院·药剂科"]
+        - ["服务范围", "肠内肠外营养评估 · TPN配比 · 处方审核"]
+        - ["角色体系", "6角色(药师/临床药师/审方药师/静配药师/主治/营养师)"]
+        - ["架构域", "业务架构 (Business Architecture)"]
+        - ["TOGAF实体", "Organization — 组织单元"]
+
+  - id: agent-pharm
+    label: 药剂科智能体
+    type: ApplicationComponent
+    agent_type: business
+    color: "#30d158"
+    icon: "⚗️"
+    x: 450
+    y: 145
+    detail:
+      title: "⚗️ 药剂科智能体 (ApplicationComponent 实例)"
+      fields:
+        - ["域名", "pharmacy"]
+        - ["版本", "v0.1.0"]
+        - ["端口", "8770"]
+        - ["核心引擎", "NRS2002/TPN计算/54规则/处方点评"]
+        - ["风险规则", "54条(R001-R054)"]
+        - ["角色", "6角色(药师/临床药师/审方/静配/主治/营养师)"]
+        - ["架构域", "应用架构 (Application Architecture)"]
+
+  - id: de-drug
+    label: 药品数据库
+    type: DataEntity
+    agent_type: null
+    color: "#5e5ce6"
+    icon: "💊"
+    x: 150
+    y: 260
+    detail:
+      title: "💊 药品数据库 (DataEntity 实例)"
+      fields:
+        - ["类型", "DataEntity"]
+        - ["内容", "21种PN药物 + 5种肠内产品"]
+        - ["来源", "Excel基线 + JSON覆盖(CRUD)"]
+        - ["架构域", "数据架构 (Data Architecture)"]
+
+  - id: de-rx
+    label: 处方数据
+    type: DataEntity
+    agent_type: null
+    color: "#5e5ce6"
+    icon: "📋"
+    x: 450
+    y: 260
+    detail:
+      title: "📋 处方数据 (DataEntity 实例)"
+      fields:
+        - ["类型", "DataEntity"]
+        - ["内容", "处方案例(含TPN配比参数)"]
+        - ["关联", "由药剂科智能体生成处方参数"]
+        - ["架构域", "数据架构 (Data Architecture)"]
+
+  - id: de-nutrition
+    label: 营养评估数据
+    type: DataEntity
+    agent_type: null
+    color: "#5e5ce6"
+    icon: "📊"
+    x: 750
+    y: 260
+    detail:
+      title: "📊 营养评估数据 (DataEntity 实例)"
+      fields:
+        - ["类型", "DataEntity"]
+        - ["内容", "NRS2002评分 · 实验室指标 · 风险等级"]
+        - ["评估维度", "7项子评估(电解质/血糖/血脂/肝功/蛋白/炎症/再喂养)"]
+        - ["架构域", "数据架构 (Data Architecture)"]
+
+  - id: bm-agent
+    label: Benchmark
+    type: ApplicationComponent
+    agent_type: master_data
+    color: "#0a84ff"
+    icon: "🤖"
+    x: 450
+    y: 365
+    detail:
+      title: "🤖 Benchmark (ApplicationComponent 实例)"
+      fields:
+        - ["域名", "medical_record"]
+        - ["端口", "8766"]
+        - ["角色", "患者数据中心"]
+        - ["A2A工具", "get_full_patient / get_labs / get_pharmacy_input / search"]
+        - ["架构域", "应用架构 (Application Architecture)"]
+
+  - id: platform
+    label: Nexent智能体平台
+    type: TechnologyService
+    agent_type: null
+    color: "#ff453a"
+    icon: "☁️"
+    x: 450
+    y: 455
+    detail:
+      title: "☁️ Nexent智能体平台 (TechnologyService 实例)"
+      fields:
+        - ["类型", "Agent Runtime 平台"]
+        - ["架构域", "技术架构 (Technology Architecture)"]
+        - ["TOGAF实体", "TechnologyService — 技术服务"]
+
+edges:
+  - sid: org-pharm
+    tid: agent-pharm
+    label: 包含
+    color: "#0a84ff"
+    confidence: real
+    detail:
+      title: "包含 (Organization → ApplicationComponent)"
+      fields:
+        - ["TOGAF关系", "包含 (has)"]
+        - ["源", "药剂科 (Organization)"]
+        - ["目标", "药剂科智能体 (ApplicationComponent)"]
+        - ["可信度", "真实"]
+        - ["说明", "药剂科组织包含药剂科智能体作为其应用组件"]
+
+  - sid: agent-pharm
+    tid: de-drug
+    label: 使用
+    color: "#30d158"
+    confidence: real
+    detail:
+      title: "使用 (ApplicationComponent → DataEntity)"
+      fields:
+        - ["TOGAF关系", "使用 (accesses)"]
+        - ["源", "药剂科智能体"]
+        - ["目标", "药品数据库"]
+        - ["可信度", "真实"]
+        - ["证据", "drug_db.py CRUD实现"]
+        - ["说明", "药剂科智能体读取药品信息进行处方计算"]
+
+  - sid: agent-pharm
+    tid: de-rx
+    label: 生成
+    color: "#30d158"
+    confidence: real
+    detail:
+      title: "生成 (ApplicationComponent → DataEntity)"
+      fields:
+        - ["TOGAF关系", "生成 (produces)"]
+        - ["源", "药剂科智能体"]
+        - ["目标", "处方数据"]
+        - ["可信度", "真实"]
+        - ["证据", "prescription_review.py 处方点评逻辑"]
+        - ["说明", "药剂科智能体生成处方参数"]
+
+  - sid: agent-pharm
+    tid: de-nutrition
+    label: 使用
+    color: "#30d158"
+    confidence: real
+    detail:
+      title: "使用 (ApplicationComponent → DataEntity)"
+      fields:
+        - ["TOGAF关系", "使用 (accesses)"]
+        - ["源", "药剂科智能体"]
+        - ["目标", "营养评估数据"]
+        - ["可信度", "真实"]
+        - ["证据", "assessment.py 7项子评估"]
+        - ["说明", "药剂科智能体存储/读取营养评估结果"]
+
+  - sid: agent-pharm
+    tid: bm-agent
+    label: A2A通信
+    color: "#bf5af2"
+    confidence: real
+    detail:
+      title: "A2A通信 (Application → Application)"
+      fields:
+        - ["TOGAF关系", "通信 (communicates_via)"]
+        - ["源", "药剂科智能体"]
+        - ["目标", "Benchmark"]
+        - ["可信度", "真实"]
+        - ["证据", "get_pharmacy_input() A2A工具"]
+        - ["说明", "药剂科通过A2A获取患者数据进行营养评估"]
+
+  - sid: agent-pharm
+    tid: platform
+    label: 运行于
+    color: "#30d158"
+    confidence: real
+    detail:
+      title: "运行于 (ApplicationComponent → TechnologyService)"
+      fields:
+        - ["TOGAF关系", "运行于 (runs_on)"]
+        - ["源", "药剂科智能体"]
+        - ["目标", "Nexent智能体平台"]
+        - ["可信度", "真实"]
+        - ["说明", "药剂科智能体运行在Nexent智能体平台上"]
+
+  - sid: bm-agent
+    tid: platform
+    label: 运行于
+    color: "#0a84ff"
+    confidence: real
+    detail:
+      title: "运行于 (ApplicationComponent → TechnologyService)"
+      fields:
+        - ["TOGAF关系", "运行于 (runs_on)"]
+        - ["源", "Benchmark"]
+        - ["目标", "Nexent智能体平台"]
+        - ["可信度", "真实"]
+        - ["说明", "Benchmark运行在Nexent智能体平台上"]

@@ -1,0 +1,40 @@
+# ============================================================
+# Guideline Asset: ADA Standards of Care in Diabetes (2025)
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-ada-2025"
+name: "ADA Standards of Care in Diabetes"
+abbr: "ADA 2025"
+version: "2025"
+publisher: "American Diabetes Association"
+doi: "10.2337/dc25-SINT"
+language: en
+trust_level: T1
+admin_priority: 12
+
+description: >
+  The ADA Standards of Care provides comprehensive guidelines for diabetes
+  management. Used by anesthesiology specialist agent for perioperative glucose
+  management and DKA/HHS assessment in hip fracture patients.
+
+key_sections:
+  - id: "§14"
+    title: "Perioperative glycemic management"
+    pages: "142-148"
+    stage_ids: [S4]
+    rule_ids: [timing-glucose]
+
+  - id: "§16"
+    title: "Diabetes in the hospital"
+    pages: "156-162"
+    stage_ids: [S4]
+    rule_ids: [timing-glucose]
+
+rule_sets_covered:
+  - timing
+
+derived_rule_count: 5
+last_updated: 2026-07-01
+supersedes: "ADA 2024"
+superseded_by: ""

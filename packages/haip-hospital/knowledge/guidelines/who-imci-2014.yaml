@@ -1,0 +1,18 @@
+# ============================================================
+# Guideline Asset: WHO IMCI 2014 — 儿童疾病综合管理
+# TOGAF Class: Reference Library
+# Trust Level: T1
+# ============================================================
+name: guideline-who-imci-2014
+publisher: World Health Organization
+version: "2014"
+title: Integrated Management of Childhood Illness (IMCI)
+trust_level: T1
+admin_priority: 95
+description: >
+  WHO 儿童疾病综合管理指南。覆盖肺炎(呼吸频率+胸廓凹陷分级)、
+  腹泻(脱水三度分类)、发热、营养不良等儿童常见病的标准化评估与治疗方案。
+derived_rules:
+  - rule-pediatrics-pneumonia
+  - rule-pediatrics-diarrhea
+scope: pediatrics

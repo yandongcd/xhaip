@@ -1,0 +1,103 @@
+# 惠侨医疗中心 ??????
+# TOGAF Business Architecture ? Auto-generated from template
+# Template: 其他科室
+# Generated: 2026-07-10
+
+department: 惠侨医疗中心
+template_type: 其他科室
+guidelines: [??????]
+version: "1.0.0"
+
+value_streams:
+  - id: vs-reception
+    name: 接诊评估
+    stage: 1
+    trigger: 就诊
+    outcome: 初步诊断
+  - id: vs-diagnosis
+    name: 确诊分型
+    stage: 2
+    trigger: 评估完成
+    outcome: 明确诊断
+  - id: vs-treatment
+    name: 治疗执行
+    stage: 3
+    trigger: 诊断确认
+    outcome: 治疗完成
+  - id: vs-recovery
+    name: 康复管理
+    stage: 4
+    trigger: 治疗完成
+    outcome: 功能恢复
+  - id: vs-followup
+    name: 随访跟踪
+    stage: 5
+    trigger: 康复
+    outcome: 长期管理
+
+business_processes:
+  - id: bp-reception
+    name: 接诊评估
+    order: 1
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-exam
+    name: 检查检验
+    order: 2
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-diagnosis
+    name: 诊断确认
+    order: 3
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-treatment
+    name: 治疗执行
+    order: 4
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-followup
+    name: 随访管理
+    order: 5
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????

@@ -1,0 +1,29 @@
+name: metrics
+cn_name: 全院指标数据中心
+version: "1.0.0"
+type: master_data
+department: 全院
+port: 8767
+aliases: [指标中心, 数据指标, metrics]
+
+prompt:
+  system: |
+    你是全院指标数据中心，提供医院运营指标、质量指标和效率指标的
+    统一查询与对比分析服务。
+  temperature: 0.1
+
+tools:
+  - name: get_department_metrics
+    description: 获取科室运营指标
+    handler: metrics.department
+    input: {department: str, month: str}
+
+  - name: get_quality_metrics
+    description: 获取质量安全指标 (感染率/死亡率/再入院率)
+    handler: metrics.quality
+    input: {department: str, year: int}
+
+  - name: get_efficiency_metrics
+    description: 获取效率指标 (平均住院日/床位使用率)
+    handler: metrics.efficiency
+    input: {department: str, month: str}

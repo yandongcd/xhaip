@@ -1,0 +1,75 @@
+# ============================================================
+# Rule Asset: 围术期心梗(MI)评估规则
+# TOGAF Class: Constraint (Extension ABB)
+# Trust Level: T1 (基于4th Universal Definition of MI)
+# ============================================================
+name: perioperative-mi-assessment-rules
+version: "1.0"
+description: 围术期心梗风险评估规则集 — 心肌酶 + ECG + 临床表现综合判定
+owner: cardiology_consultant
+guideline_ref: 4th Universal Definition of MI (2018, ESC/ACC/AHA/WHF)
+last_updated: 2026-06-27
+
+# 心肌酶阈值规则 (高敏肌钙蛋白)
+troponin_rules:
+  - id: mi-trop-001
+    name: "肌钙蛋白正常"
+    condition: "hs-cTnI < 0.04 ng/mL"
+    risk_level: low
+    action: "排除急性MI，继续监测"
+
+  - id: mi-trop-002
+    name: "肌钙蛋白轻度升高"
+    condition: "0.04 <= hs-cTnI < 0.5 ng/mL"
+    risk_level: intermediate
+    action: "需结合ECG和临床表现"
+    requires_ecg: true
+
+  - id: mi-trop-003
+    name: "肌钙蛋白显著升高"
+    condition: "hs-cTnI >= 0.5 ng/mL"
+    risk_level: high
+    action: "急性MI可能，立即心内科会诊"
+
+# ECG 判读规则
+ecg_rules:
+  - id: mi-ecg-001
+    name: "ST段抬高"
+    condition: "ST elevation >= 2mm in contiguous leads"
+    classification: "STEMI"
+    urgency: emergency
+    action: "急诊PCI or 溶栓"
+
+  - id: mi-ecg-002
+    name: "ST段压低"
+    condition: "ST depression >= 1mm in >= 2 leads"
+    classification: "NSTEMI (需酶学确认)"
+    urgency: urgent
+    action: "抗缺血治疗 + 心内科评估"
+
+  - id: mi-ecg-003
+    name: "T波倒置"
+    condition: "New T wave inversion >= 3mm in >= 2 leads"
+    classification: "心肌缺血可能 (需结合酶学)"
+    urgency: intermediate
+    action: "连续ECG + 肌钙蛋白q3h"
+
+# MI分型规则 (Type 1/2)
+mi_type_classification:
+  - id: mi-type-001
+    name: "Type 1 MI (动脉粥样硬化血栓性)"
+    conditions:
+      - "肌钙蛋白升高 + 动态变化"
+      - "ECG: ST-T改变"
+      - "临床: 胸痛/胸闷"
+    action: "抗血小板 + 抗凝 → 冠脉造影评估"
+
+  - id: mi-type-002
+    name: "Type 2 MI (供需失衡)"
+    conditions:
+      - "肌钙蛋白升高(通常轻度)"
+      - "存在明确诱发因素: 低血压/贫血/心动过速/低氧"
+      - "ECG: 非特异性改变或无改变"
+      - "临床: 无典型胸痛"
+    action: "纠正诱因 → 优化血流动力学 → 密切监测"
+    note: "Type2 MI在围术期常见，优先纠正诱因而非抗栓"

@@ -1,0 +1,86 @@
+# TOGAF 10 — Architecture Principles Catalog
+# 来源: docs/architecture/architecture.md
+
+principles:
+  # ══ Harness Engineering 核心 ══
+  - id: prin-domain-as-plugin
+    name: 领域即插件
+    statement: 每个科室 Agent 是独立的 Python 子包
+    rationale: 支持独立开发、独立部署、独立扩缩容
+    implementation: DomainPlugin.register()
+
+  - id: prin-asset-as-truth
+    name: 资产即真相
+    statement: 所有规则/指南/配置存于 assets/ YAML，代码不复制阈值
+    rationale: 规则变更不触发代码部署
+    implementation: assets/rules/, assets/guidelines/
+
+  - id: prin-tool-as-contract
+    name: 工具即契约
+    statement: 所有 Agent 间能力通过 MCP 暴露，无直接 import
+    rationale: 跨容器不能依赖进程内调用
+    implementation: A2ADispatcher → Nexent MCP Registry
+
+  - id: prin-no-hardcode
+    name: 无硬编码
+    statement: 路径/端口/版本均从配置加载
+    rationale: 避免跨环境崩溃
+    implementation: agent_config.json, paths.py
+
+  # ══ 架构解耦准则 ══
+  - id: prin-no-direct-import
+    name: Agent 间不得直接 import
+    statement: 跨 Agent 调用统一走 MCP (A2A → Nexent MCP)
+    rationale: Nexent 独立容器部署要求
+    enforcement: NexentIsolation linter (WARN)
+
+  - id: prin-no-data-duplication
+    name: 数据不复制
+    statement: 患者数据唯一来源为 Master Data Agent
+    rationale: 避免数据不一致和同步问题
+    implementation: medical_record Agent (端口 8766)
+
+  - id: prin-rules-independent
+    name: 规则独立部署
+    statement: 修改 assets/rules/*.yaml 不触发 Agent 代码部署
+    rationale: 临床规则频繁迭代，不应影响 Agent 代码发布
+    implementation: rules/assets/ YAML + hot-reload
+
+  - id: prin-independent-upgrade
+    name: 独立可升级
+    statement: 每个 Agent 独立的 Docker 镜像 + 独立版本号 + 独立扩缩容
+    rationale: 单个 Agent 的变更不影响其他 Agent 的线上服务
+    implementation: Nexent MCP 容器部署
+
+  # ══ T1/T2 可信度原则 ══
+  - id: prin-t1-readonly
+    name: T1 外部权威只读
+    statement: T1 (公开发布的国际/国家标准) 只读引用，不可修改
+    rationale: 外部标准是权威来源，程序不应修改
+    enforcement: T1Readonly linter (FAIL)
+
+  - id: prin-t2-override
+    name: T2 指标级覆盖
+    statement: T2 (南医临床修正) 覆盖 T1 的单个指标，而非整个文件
+    rationale: 精确控制每一处本地化，避免无意覆盖
+    enforcement: T2Annotation linter (WARN)
+
+  # ══ Skill 渐进引用原则 ══
+  - id: prin-skill-stage
+    name: Skill 按 Value Stage 拆分
+    statement: 每个 Skill 对应 TOGAF 价值流的一个阶段
+    rationale: 颗粒度统一，可渐进引用
+    implementation: skills/SKILL.md with prerequisite field
+
+  - id: prin-mcp-specialist
+    name: Specialist Agent 通过 MCP 访问
+    statement: 技能型 Agent 必须通过 MCP/A2A 调用，不得直接 import
+    rationale: Nexent 部署时 Specialist 是独立容器
+    enforcement: SkillAgentIsolation linter (FAIL)
+
+  # ══ 资产分类原则 ══
+  - id: prin-asset-taxonomy
+    name: 五类资产分类
+    statement: 每个资产必须归入 Shared Library / MCP Shared / MCP Skill / Mock / Domain-Specific 之一
+    rationale: 决定部署形态和访问方式
+    implementation: docs/architecture/architecture.md §10

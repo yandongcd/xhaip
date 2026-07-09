@@ -1,0 +1,88 @@
+# TOGAF 10 — Constraint Catalog
+# 映射 South Hospital T2 临床约束到 TOGAF Constraint ABB
+# 每个 Constraint 对应一个 rules/assets/nanfang/*.yaml 中的 T2 覆盖
+
+constraints:
+  # ══ 创伤骨科 — 围术期心脏约束 ══
+  - id: con-ortho-mi-threshold
+    name: 围术期心肌损伤阈值
+    description: 5 项心肌酶指标 (cTnI/CK-MB/CK/LDH/cTnT) 的围术期高危阈值
+    type: T2
+    source: rules/assets/nanfang/orthopedic.yaml
+    applies_to: [orthopedic_surgery]
+    affected_capability: cap-cardio-mi-assessment
+    affected_value_stage: vs-assess-1
+
+  - id: con-ortho-ecg-patterns
+    name: 围术期 ECG 高危模式
+    description: 8 种 ECG 高危模式 (ST段抬高/压低/Q波/LBBB/房颤/室速/III度AVB)
+    type: T2
+    source: rules/assets/nanfang/orthopedic.yaml
+    applies_to: [orthopedic_surgery, cardio_risk]
+    affected_capability: cap-cardio-ecg-interpretation
+    affected_value_stage: vs-assess-1
+
+  # ══ 药剂科 — 营养约束 ══
+  - id: con-pharm-electrolyte
+    name: 营养支持电解质阈值
+    description: ESPEN 营养关注阈值覆盖 WS/T 404 通用区间 (K/Na/P/Mg)
+    type: T2
+    source: rules/assets/nanfang/pharmacy.yaml
+    applies_to: [pharmacy]
+    affected_capability: cap-pharmacy-nutrition
+    affected_value_stage: vs-assess-1
+
+  - id: con-pharm-refeeding
+    name: 再喂养综合征风险标准
+    description: NICE 2006 再喂养风险判断标准 + 管理方案
+    type: T2
+    source: rules/assets/nanfang/pharmacy.yaml
+    applies_to: [pharmacy, icu]
+    affected_capability: cap-pharmacy-nutrition
+    affected_value_stage: vs-treatment
+
+  - id: con-pharm-glim
+    name: GLIM 营养不良诊断标准
+    description: 表型+病因双步法营养不良诊断
+    type: T2
+    source: rules/assets/nanfang/pharmacy.yaml
+    applies_to: [pharmacy]
+    affected_capability: cap-pharmacy-nutrition
+    affected_value_stage: vs-assess-1
+
+  # ══ 心血管外科 — 抗凝约束 ══
+  - id: con-cardio-cha2ds2
+    name: CHA2DS2-VASc 评分标准
+    description: 8 项风险因子加权评分 (0-9分)
+    type: T2
+    source: rules/assets/nanfang/cardio.yaml
+    applies_to: [cardio_surgery]
+    affected_capability: cap-cardio-surgery-anticoagulation
+    affected_value_stage: vs-treatment
+
+  - id: con-cardio-hasbled
+    name: HAS-BLED 评分标准
+    description: 9 项出血风险因子评分
+    type: T2
+    source: rules/assets/nanfang/cardio.yaml
+    applies_to: [cardio_surgery]
+    affected_capability: cap-cardio-surgery-anticoagulation
+    affected_value_stage: vs-treatment
+
+  - id: con-cardio-inr-target
+    name: INR 治疗目标范围
+    description: 不同瓣膜类型的 INR 目标区间 (2.0-3.5)
+    type: T2
+    source: rules/assets/nanfang/cardio.yaml
+    applies_to: [cardio_surgery]
+    affected_capability: cap-cardio-surgery-anticoagulation
+    affected_value_stage: vs-treatment
+
+  - id: con-cardio-inr-alert
+    name: INR 异常告警阈值
+    description: INR <1.5 / >5.0 / >8.0 三级告警及处理方案
+    type: T2
+    source: rules/assets/nanfang/cardio.yaml
+    applies_to: [cardio_surgery]
+    affected_capability: cap-cardio-surgery-anticoagulation
+    affected_value_stage: vs-treatment

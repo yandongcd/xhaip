@@ -1,0 +1,34 @@
+name: cancer-pain
+cn_name: 癌性疼痛管理
+version: "1.0.0"
+type: specialist
+aliases: [癌性疼痛, cancer-pain]
+parent: pain-hub
+
+prompt:
+  system: |
+    你是癌性疼痛管理专家，基于WHO三阶梯止痛原则，提供癌痛评估、
+    阿片类药物安全管理、爆发痛处理和姑息治疗转介建议。
+  temperature: 0.3
+
+tools:
+  - name: assess_cancer
+    description: 癌痛评估 (WHO阶梯+爆发痛+神经病理)
+    handler: cancer_pain.assess
+    input: {patient_id: str, vas_score: int, current_opioid_mg: int}
+
+  - name: opioid_safety
+    description: 阿片类药物安全评估 (过量/DDI/器官功能)
+    handler: cancer_pain.safety
+    input: {patient_id: str, daily_me_mg: int, concurrent_meds: list}
+
+  - name: palliative_refer
+    description: 姑息治疗转介评估
+    handler: cancer_pain.palliative
+    input: {patient_id: str, cancer_stage: str, ecog: int, prognosis_months: int}
+
+guard:
+  triggers: [药物交互]
+  high_risk_scenarios:
+    - 阿片类药物过量
+    - 苯二氮卓类联用风险

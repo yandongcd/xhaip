@@ -1,0 +1,119 @@
+# ============================================================
+# Business Process: 老年髋部骨折手术时机决策流程
+# TOGAF Class: Business Process + ProcessStep (Core ABB)
+# Trust Level: T1
+# ============================================================
+name: bp-timing-decision
+version: "2.0"
+description: 老年髋部骨折手术时机决策 — 跨Agent编排级流程（父），外科内部时机引擎见 bp-ortho-surgical-timing（子）
+owner: 主治医生 + 麻醉科医生
+value_stages:
+  - 有效治疗
+guideline_refs:
+  - nhc-2022
+  - nice-ng37
+  - aaos-2022
+sub_processes:
+  - bp-ortho-surgical-timing
+
+steps:
+  - id: bp-timing-1
+    name: 手术必要性判定
+    actor: 主治医生
+    description: 完成骨折分型和11项HAIP Checklist评估，结合年龄与合并症判定手术指征
+    data_used: [de-exam-results, de-patient]
+    decision: "是否具备手术指征？→ 是 | 否(保守治疗)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.assess
+      tool: orthopedic.assess
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-timing-2a
+    name: 心内科风险评估
+    actor: 心内科会诊医生
+    description: MI风险分层、高血压分级与靶器官评估、围术期心律失常评估、术前心脏优化方案
+    data_used: [de-lab-results, de-exam-results, de-risk-assessment]
+    decision: "心脏延迟因素？→ 有 | 无"
+    implementation:
+      module: agents.domains.haip.cardio_risk.root
+      tool: cardiology.assess_mi
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-timing-2b
+    name: 麻醉科风险评估
+    actor: 麻醉科医生
+    description: ASA分级、气道评估、抗凝药物管理（桥接方案）、凝血功能评估、肾功能评估
+    data_used: [de-lab-results, de-exam-results, de-risk-assessment]
+    decision: "麻醉延迟因素？→ 有 | 无"
+    implementation:
+      module: agents.domains.haip.anesthesia_risk.root
+      tool: anesthesiology.assess_asa
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-timing-3
+    name: 延迟因素汇总与分类
+    actor: 主治医生 + 麻醉科医生
+    description: 汇总六类延迟因素（心脏/抗凝/贫血/肾功/感染/血糖），按可纠正/不可纠正分类。内部委派 bp-ortho-surgical-timing（子流程）的 timing_engine 四步内核执行
+    data_used: [de-risk-assessment]
+    decision: "延迟因素计数 → 0项 | 1-2项 | >=3项"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.timing_engine
+      tool: orthopedic.assess_timing
+      decision_coverage:
+        total: 3
+        covered: 3
+
+  - id: bp-timing-4
+    name: MDT联合决策
+    actor: MDT团队
+    description: 创伤骨科+心内科+麻醉科联合裁定手术时机
+    data_used: [de-risk-assessment, de-mdt-decision, de-patient]
+    decision: "手术时机 → 急诊(48h) | 限期(3-7d) | 延迟(>7d)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.timing_engine
+      tool: orthopedic.assess_timing
+      decision_coverage:
+        total: 3
+        covered: 3
+
+  - id: bp-timing-5
+    name: 围术期护理计划
+    actor: 护士长
+    description: 术前护理（健康教育/皮肤准备/禁食）、术后当日护理、术后1-3天护理、恢复期护理
+    data_used: [de-surgery-record, de-rehab-record]
+    decision: null
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.nursing_care
+      tool: orthopedic.generate_nursing
+
+  - id: bp-timing-6
+    name: 术前优化执行
+    actor: MDT团队
+    description: 按MDT决策执行术前优化：心内科→心脏优化，麻醉科→抗凝桥接+贫血纠正，护士长→DVT预防
+    data_used: [de-risk-assessment, de-mdt-decision]
+    decision: "优化是否达标？→ 达标 | 未达标(继续优化)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.timing_engine
+      tool: orthopedic.assess_timing
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-timing-7
+    name: 出院随访规划
+    actor: 主治医生 + 护士长
+    description: 随访时间表(1/3/6/12月)、影像复查计划、功能评估节点、抗骨质疏松方案、跌倒预防指导
+    data_used: [de-surgery-record, de-followup]
+    decision: "是否需社区转诊/康复机构？→ 需要 | 不需要"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.followup
+      tool: orthopedic.plan_followup
+      decision_coverage:
+        total: 2
+        covered: 2

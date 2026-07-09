@@ -1,0 +1,56 @@
+# ============================================================
+# Guideline Asset: NICE Guideline NG37: Hip fracture management
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-nice-ng37"
+name: "NICE Guideline NG37: Hip fracture management"
+abbr: "NICE NG37"
+version: "2023"
+publisher: "National Institute for Health and Care Excellence (UK)"
+doi: "10.1136/bmj.l2244"
+language: en
+trust_level: T1
+admin_priority: 2
+
+description: >
+  This guideline covers managing hip fracture in adults aged 18 and over.
+  Key recommendations: surgery within 48 hours, multidisciplinary assessment,
+  orthogeriatric collaboration, and secondary fracture prevention.
+
+key_sections:
+  - id: "§1.2"
+    title: "Assessment and diagnosis"
+    pages: "8-12"
+    stage_ids: [S2, S4]
+    rule_ids: [triage-001, completeness-001, completeness-002]
+
+  - id: "§1.3"
+    title: "Timing of surgery"
+    pages: "13-15"
+    stage_ids: [S7]
+    rule_ids: [timing-cardiac, timing-rule-001]
+
+  - id: "§1.4"
+    title: "Multidisciplinary management"
+    pages: "16-22"
+    stage_ids: [S7, S10]
+    rule_ids: [complication-dvt, nursing-001, nursing-002]
+
+  - id: "§1.5"
+    title: "Secondary prevention"
+    pages: "23-28"
+    stage_ids: [S11]
+    rule_ids: [followup-001, followup-004]
+
+rule_sets_covered:
+  - triage
+  - completeness
+  - timing
+  - nursing
+  - followup
+
+derived_rule_count: 25
+last_updated: 2026-07-01
+supersedes: "NICE CG124 (2011)"
+superseded_by: ""

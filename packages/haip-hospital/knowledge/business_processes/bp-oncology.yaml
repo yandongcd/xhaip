@@ -1,0 +1,116 @@
+# 肿瘤科 ??????
+# TOGAF Business Architecture ? Auto-generated from template
+# Template: 内科
+# Generated: 2026-07-10
+
+department: 肿瘤科
+template_type: 内科
+guidelines: [中国临床肿瘤学会 CSCO 指南 (2024)]
+version: "1.0.0"
+
+value_streams:
+  - id: vs-reception
+    name: 接诊登记
+    stage: 1
+    trigger: 患者到达
+    outcome: 初步评估
+  - id: vs-assessment
+    name: 综合评估
+    stage: 2
+    trigger: 接诊完成
+    outcome: 明确诊断 + 分期分级
+  - id: vs-diagnosis
+    name: 确诊分型
+    stage: 3
+    trigger: 评估完成
+    outcome: 鉴别诊断确认
+  - id: vs-treatment
+    name: 治疗执行
+    stage: 4
+    trigger: 诊断确认
+    outcome: 治疗方案完成
+  - id: vs-followup
+    name: 随访管理
+    stage: 5
+    trigger: 治疗完成
+    outcome: 长期管理计划
+
+business_processes:
+  - id: bp-reception
+    name: 接诊与初步评估
+    order: 1
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-exam
+    name: 辅助检查
+    order: 2
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-diagnosis
+    name: 确诊与分型分期
+    order: 3
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-plan
+    name: 治疗方案制定
+    order: 4
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-treatment
+    name: 治疗执行与监测
+    order: 5
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-followup
+    name: 随访与长期管理
+    order: 6
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????

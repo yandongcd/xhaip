@@ -1,0 +1,113 @@
+# ============================================================
+# Rule Asset: 老年股骨转子间骨折 Evans 分型判定规则
+# TOGAF Class: Constraint (Extension ABB)
+# Trust Level: T1 (基于老年股骨转子间骨折诊疗指南 2020)
+# ============================================================
+name: hip-fracture-evans-rules
+version: "1.0"
+description: >
+  OpenCV 图像分析驱动的 Evans 分型判定规则。基于骨折线密度、ROI 区域分布、
+  骨折线角度和穿程度，自动判定 IA/IB/IC/ID/II 型。
+owner: orthopedic_surgery
+guideline_ref:
+  - "guideline-intertroch-2020"
+  - "guideline-nhc-2022"
+last_updated: 2026-07-01
+
+# ──────────────────────────────────────────────
+# Evans 分型决策规则（由 fracture_analyzer.py 加载执行）
+# 从上到下匹配，第一个符合条件的即为判定结果
+# ──────────────────────────────────────────────
+
+rules:
+  - id: evans-none
+    type: IA/无
+    description: "未见明确骨折线"
+    conditions:
+      line_count_lt: 2
+    result:
+      fracture_type: "未见明确骨折线"
+      evans_type: null
+      stability: "—"
+      surgery: "保守治疗"
+      confidence: "低"
+
+  - id: evans-II
+    type: "II"
+    description: "逆转子骨折 — 骨折线方向与转子间线反向"
+    conditions:
+      has_reverse: true
+      max_length_gt_pct: 0.12
+      penetration_gt: 50
+    result:
+      fracture_type: "股骨转子间骨折(逆转子)"
+      stability: "极不稳定"
+      surgery: "长PFNA/钢板"
+      confidence: "高"
+
+  - id: evans-ID
+    type: "ID"
+    description: "转子下延伸 — 骨折线延伸至小转子以下"
+    conditions:
+      line_count_ge: 8
+      roi_lower_pct_gt: 0.14
+    result:
+      fracture_type: "股骨转子间骨折(转子下延伸)"
+      stability: "极不稳定"
+      surgery: "长PFNA/InterTAN"
+      confidence: "高"
+
+  - id: evans-IC-complex
+    type: "IC"
+    description: "后内侧破裂 — 复杂性骨折"
+    conditions:
+      line_count_ge: 8
+      roi_lower_pct_le: 0.14
+      roi_medial_ge_dynamic:
+        base: 3
+        when_line_count_lt: 100
+        else: 2
+    result:
+      fracture_type: "股骨转子间骨折(后内侧破裂)"
+      stability: "不稳定"
+      surgery: "PFNA/InterTAN"
+      confidence: "中"
+
+  - id: evans-IC-fallback
+    type: "IC"
+    description: "粉碎性骨折（高复杂度）"
+    conditions:
+      line_count_ge: 8
+      roi_lower_pct_le: 0.14
+      roi_medial_lt_dynamic:
+        base: 3
+        when_line_count_lt: 100
+        else: 2
+    result:
+      fracture_type: "股骨转子间骨折(粉碎性)"
+      stability: "不稳定"
+      surgery: "PFNA/InterTAN"
+      confidence: "中"
+
+  - id: evans-IB
+    type: "IB"
+    description: "移位骨折 — 骨折线贯穿，后内侧完整"
+    conditions:
+      line_count_ge: 4
+      line_count_lt: 8
+    result:
+      fracture_type: "股骨转子间骨折(移位)"
+      stability: "稳定"
+      surgery: "PFNA"
+      confidence: "中"
+
+  - id: evans-IA
+    type: "IA"
+    description: "无移位骨折"
+    conditions:
+      line_count_lt: 4
+    result:
+      fracture_type: "股骨转子间骨折(无移位)"
+      stability: "稳定"
+      surgery: "PFNA"
+      confidence: "低"

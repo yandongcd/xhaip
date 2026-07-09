@@ -1,0 +1,489 @@
+view_name: 药剂科 TOGAF 4A 架构实例
+description: 药剂科 Agent 实现链路
+vw: 1000
+vh: 640
+nodes:
+- id: bp-pharm-review
+  label: 处方审核流程
+  type: BusinessProcess
+  domain: ba
+  color: '#5e5ce6'
+  icon: 🔄
+  x: 400
+  y: 200
+  detail:
+    title: 🔄 处方审核 (BusinessProcess)
+    fields:
+    - - TOGAF 实体
+      - BusinessProcess (Core ABB)
+    - - Owner
+      - review_pharmacist（审方药师）
+    - - 步骤数
+      - '4'
+    - - 步骤
+      - ①接收处方 → ②配伍禁忌检查 → ③适应证审核 → ④出具意见
+    - - 关键决策
+      - 配伍禁忌？→ 退回/通过
+    - - 指南
+      - china-compounding-2018, china-en-pn-2023
+  subtype: Process
+  subtype_cn: 业务流程
+  big: false
+- id: bp-pharm-tpn
+  label: TPN配制流程
+  type: BusinessProcess
+  domain: ba
+  color: '#5e5ce6'
+  icon: 🔄
+  x: 400
+  y: 320
+  detail:
+    title: 🔄 TPN无菌配制 (BusinessProcess)
+    fields:
+    - - TOGAF 实体
+      - BusinessProcess (Core ABB)
+    - - Owner
+      - iv_compounding_pharmacist
+    - - 步骤数
+      - '6'
+    - - 步骤
+      - ①参数计算→②电解质配方→③脂乳添加→④渗透压终审→⑤无菌配制→⑥质控发放
+    - - 关键决策
+      - 电解质/渗透压达标？→ 达标/调整
+    - - 指南
+      - china-compounding-2018, china-electrolyte-2024, china-fat-emulsion-2023
+  subtype: Process
+  subtype_cn: 业务流程
+  big: false
+- id: bp-pharm-nutrition
+  label: 营养途径选择流程
+  type: BusinessProcess
+  domain: ba
+  color: '#5e5ce6'
+  icon: 🔄
+  x: 400
+  y: 440
+  detail:
+    title: 🔄 营养支持途径选择 (BusinessProcess)
+    fields:
+    - - TOGAF 实体
+      - BusinessProcess (Core ABB)
+    - - Owner
+      - clinical_pharmacist + dietitian
+    - - 步骤数
+      - '5'
+    - - 步骤
+      - ①NRS2002筛查→②肠道评估→③能量计算→④EN制剂选择→⑤PN适应证确认
+    - - 关键决策
+      - NRS2002≥3？肠道可用？→ EN / PN / SPN
+    - - 指南
+      - china-en-pn-2023, espn-2023
+  subtype: Process
+  subtype_cn: 业务流程
+  big: false
+- id: role-review-pharmacist
+  label: 审方药师
+  type: Role
+  domain: ba
+  color: '#bf5af2'
+  icon: 👤
+  x: 120
+  y: 160
+  detail:
+    title: 👤 审方药师 (Role)
+    fields:
+    - - TOGAF 实体
+      - Role (Core ABB)
+    - - 所属科室
+      - 药剂科
+    - - 职责
+      - 处方审核、配伍禁忌检查、适应证审核
+    - - 执行 Process
+      - bp-pharm-prescription-verification
+    - - Agent 工具
+      - pharmacy.review
+  subtype: Role
+  subtype_cn: 角色
+  big: false
+- id: role-clinical-pharmacist
+  label: 临床药师
+  type: Role
+  domain: ba
+  color: '#bf5af2'
+  icon: 👤
+  x: 120
+  y: 240
+  detail:
+    title: 👤 临床药师 (Role)
+    fields:
+    - - TOGAF 实体
+      - Role (Core ABB)
+    - - 所属科室
+      - 药剂科
+    - - 职责
+      - 营养评估、处方参数计算、治疗方案制定
+    - - 执行 Process
+      - bp-pharm-nutrition-route
+    - - Agent 工具
+      - pharmacy.assess, pharmacy.prescribe
+  subtype: Role
+  subtype_cn: 角色
+  big: false
+- id: role-iv-pharmacist
+  label: 静脉配置药师
+  type: Role
+  domain: ba
+  color: '#bf5af2'
+  icon: 👤
+  x: 120
+  y: 320
+  detail:
+    title: 👤 静脉配置药师 (Role)
+    fields:
+    - - TOGAF 实体
+      - Role (Core ABB)
+    - - 所属科室
+      - 药剂科
+    - - 职责
+      - TPN处方设计、产品选择、无菌配制操作
+    - - 执行 Process
+      - bp-pharm-tpn-compounding
+    - - Agent 工具
+      - pharmacy.tpn, pharmacy.compound
+  subtype: Role
+  subtype_cn: 角色
+  big: false
+- id: role-dispensing-pharmacist
+  label: 调剂药师
+  type: Role
+  domain: ba
+  color: '#bf5af2'
+  icon: 👤
+  x: 120
+  y: 400
+  detail:
+    title: 👤 调剂药师 (Role)
+    fields:
+    - - TOGAF 实体
+      - Role (Core ABB)
+    - - 所属科室
+      - 药剂科
+    - - 职责
+      - 药品调配、发放、库存管理
+    - - 关联能力
+      - Drug Dispensing
+  subtype: Role
+  subtype_cn: 角色
+  big: false
+- id: role-pharmacist
+  label: 药剂师
+  type: Role
+  domain: ba
+  color: '#bf5af2'
+  icon: 👤
+  x: 120
+  y: 480
+  detail:
+    title: 👤 药剂师 (Role)
+    fields:
+    - - TOGAF 实体
+      - Role (Core ABB)
+    - - 所属科室
+      - 药剂科
+    - - 职责
+      - 通用药品服务、患者用药咨询
+    - - 关联能力
+      - Drug Dispensing
+  subtype: Role
+  subtype_cn: 角色
+  big: false
+- id: role-dietitian
+  label: 营养师
+  type: Role
+  domain: ba
+  color: '#bf5af2'
+  icon: 👤
+  x: 120
+  y: 560
+  detail:
+    title: 👤 营养师 (Role)
+    fields:
+    - - TOGAF 实体
+      - Role (Core ABB)
+    - - 所属科室
+      - 营养科
+    - - 职责
+      - 营养筛查、营养咨询、报告生成
+    - - 执行 Process
+      - bp-pharm-nutrition-route
+    - - 跨科室协作
+      - 与药剂科临床药师联合决策营养方案
+  subtype: Role
+  subtype_cn: 角色
+  big: false
+- id: org-pharm
+  label: 药剂科
+  type: Organization
+  domain: ba
+  color: '#0a84ff'
+  icon: 🏥
+  x: 500
+  y: 60
+  big: false
+  detail:
+    title: 🏥 药剂科 (Organization)
+    fields:
+    - - TOGAF 实体
+      - Organization (Core ABB)
+    - - 组织
+      - 南方医科大学南方医院·药剂科
+    - - 角色
+      - 6角色体系(药师/临床药师/审方药师/静配药师/主治/营养师)
+    - - 服务范围
+      - 肠内肠外营养评估 · TPN配比 · 处方审核
+    - - 架构域
+      - Business Architecture
+  subtype: Organization
+  subtype_cn: 组织
+- id: de-drug
+  label: 药品数据库
+  type: DataEntity
+  domain: da
+  color: '#FF9500'
+  icon: 📊
+  x: 720
+  y: 200
+  detail:
+    title: 📊 药品数据库 (DataEntity)
+    fields:
+    - - TOGAF 实体
+      - DataEntity (Core ABB)
+    - - 敏感度
+      - 中
+    - - 属性
+      - drug_id, drug_name, category, incompatibility, dosage
+    - - 来源系统
+      - 医院药品管理系统
+    - - 架构域
+      - Data Architecture
+  subtype: DataEntity
+  subtype_cn: 数据实体
+  big: false
+- id: de-rx
+  label: 处方数据
+  type: DataEntity
+  domain: da
+  color: '#FF9500'
+  icon: 📊
+  x: 720
+  y: 300
+  detail:
+    title: 📊 处方数据 (DataEntity)
+    fields:
+    - - TOGAF 实体
+      - DataEntity (Core ABB)
+    - - 敏感度
+      - 高
+    - - 属性
+      - rx_id, drug_list, dosage, review_status
+    - - 来源系统
+      - HIS / CPOE
+    - - 架构域
+      - Data Architecture
+  subtype: DataEntity
+  subtype_cn: 数据实体
+  big: false
+- id: de-patient
+  label: 患者主数据
+  type: DataEntity
+  domain: da
+  color: '#FF9500'
+  icon: 📊
+  x: 720
+  y: 420
+  detail:
+    title: 📊 患者主数据 (DataEntity)
+    fields:
+    - - TOGAF 实体
+      - DataEntity (Core ABB)
+    - - 敏感度
+      - 高
+    - - 属性
+      - patient_id, name, age, weight, height, diagnosis
+    - - 来源系统
+      - HIS
+    - - 架构域
+      - Data Architecture
+  subtype: DataEntity
+  subtype_cn: 数据实体
+  big: false
+- id: agent-pharm
+  label: 药剂科智能体
+  type: ApplicationComponent
+  agent_type: business
+  domain: aa
+  color: '#ff9f0a'
+  icon: ⚗️
+  x: 520
+  y: 520
+  big: false
+  detail:
+    title: ⚗️ 药剂科智能体 (Application)
+    fields:
+    - - TOGAF 实体
+      - Application (full business agent)
+    - - 端口
+      - '8770'
+    - - MCP 工具
+      - assess, tpn, drugs, rules, prescribe, review
+    - - 支撑 Process
+      - bp-pharm-prescription-verification, bp-pharm-tpn-compounding, bp-pharm-nutrition-route
+    - - 架构域
+      - Application Architecture
+  subtype: Application
+  subtype_cn: 应用
+- id: platform
+  label: Nexent平台
+  type: TechnologyService
+  domain: ta
+  color: '#ff453a'
+  icon: ☁️
+  x: 720
+  y: 560
+  detail:
+    title: ☁️ Nexent智能体平台 (TechnologyService)
+    fields:
+    - - TOGAF 实体
+      - TechnologyService
+    - - 类型
+      - Agent Runtime 平台
+    - - 承载
+      - 所有 Agent 运行于此平台
+    - - 架构域
+      - Technology Architecture
+  subtype: Technology
+  subtype_cn: 技术
+  big: false
+- id: infra
+  label: 基础设施
+  type: TechnologyComponent
+  domain: ta
+  color: '#8b949e'
+  icon: 🖥️
+  x: 880
+  y: 560
+  detail:
+    title: 🖥️ 基础设施 (TechnologyComponent)
+    fields:
+    - - TOGAF 实体
+      - TechnologyComponent
+    - - 类型
+      - 计算/存储/网络
+    - - 包含
+      - 服务器 · 存储阵列 · 交换机
+    - - 架构域
+      - Technology Architecture
+  subtype: Technology
+  subtype_cn: 技术
+  big: false
+edges:
+- sid: bp-pharm-review
+  tid: role-review-pharmacist
+  label: actor
+  color: '#bf5af2'
+  confidence: real
+- sid: bp-pharm-tpn
+  tid: role-iv-pharmacist
+  label: actor
+  color: '#bf5af2'
+  confidence: real
+- sid: bp-pharm-nutrition
+  tid: role-clinical-pharmacist
+  label: actor
+  color: '#bf5af2'
+  confidence: real
+- sid: bp-pharm-nutrition
+  tid: role-dietitian
+  label: actor
+  color: '#bf5af2'
+  confidence: real
+- sid: org-pharm
+  tid: role-review-pharmacist
+  label: contains
+  color: '#0a84ff'
+  confidence: real
+- sid: org-pharm
+  tid: role-clinical-pharmacist
+  label: contains
+  color: '#0a84ff'
+  confidence: real
+- sid: org-pharm
+  tid: role-iv-pharmacist
+  label: contains
+  color: '#0a84ff'
+  confidence: real
+- sid: org-pharm
+  tid: role-dispensing-pharmacist
+  label: contains
+  color: '#0a84ff'
+  confidence: real
+- sid: org-pharm
+  tid: role-pharmacist
+  label: contains
+  color: '#0a84ff'
+  confidence: real
+- sid: bp-pharm-review
+  tid: de-drug
+  label: uses
+  color: '#FF9500'
+  confidence: real
+- sid: bp-pharm-review
+  tid: de-rx
+  label: uses
+  color: '#FF9500'
+  confidence: real
+- sid: bp-pharm-tpn
+  tid: de-patient
+  label: uses
+  color: '#FF9500'
+  confidence: real
+- sid: bp-pharm-tpn
+  tid: de-rx
+  label: uses
+  color: '#FF9500'
+  confidence: real
+- sid: bp-pharm-tpn
+  tid: de-drug
+  label: uses
+  color: '#FF9500'
+  confidence: real
+- sid: bp-pharm-nutrition
+  tid: de-patient
+  label: uses
+  color: '#FF9500'
+  confidence: real
+- sid: bp-pharm-review
+  tid: agent-pharm
+  label: supported by
+  color: '#ff9f0a'
+  confidence: real
+- sid: bp-pharm-tpn
+  tid: agent-pharm
+  label: supported by
+  color: '#ff9f0a'
+  confidence: real
+- sid: bp-pharm-nutrition
+  tid: agent-pharm
+  label: supported by
+  color: '#ff9f0a'
+  confidence: real
+- sid: agent-pharm
+  tid: platform
+  label: runs on
+  color: '#ff453a'
+  confidence: real
+- sid: platform
+  tid: infra
+  label: deployed on
+  color: '#8b949e'
+  confidence: designed

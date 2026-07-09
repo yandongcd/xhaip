@@ -1,0 +1,105 @@
+# ============================================================
+# Business Process: 术前评估与风险分层
+# TOGAF Class: BusinessProcess + ProcessStep (Core ABB)
+# Trust Level: T1
+# ============================================================
+name: bp-ortho-preoperative-assessment
+version: "1.0"
+description: 术前评估与风险分层流程 — 完成14项检查并进行六大因素风险分层
+owner: 主治医生
+value_stages:
+  - 明确诊断
+guideline_refs:
+  - nhc-2022
+  - efort-2021
+  - nanfang-hip-fracture-triage
+
+steps:
+  - id: bp-pa-1
+    name: 14 项术前检查完整性校验
+    actor: 主治医生
+    description: |
+      逐项核对术前必须完成的 14 项检查：
+      血常规、凝血功能、肝肾功能、电解质、血糖、
+      心电图、胸片、心脏超声、下肢静脉超声、
+      骨密度、血型鉴定、感染筛查、血气分析、营养评估
+    data_used: [de-lab-results, de-exam-results, de-patient]
+    decision: "所有14项检查是否完成？→ 完成 | 未完成(补充检查)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.assess
+      tool: orthopedic.assess
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-pa-2
+    name: 六大因素逐项评估
+    actor: 主治医生
+    description: |
+      按照六大因素维度逐项评估术前风险：
+      1. 心脏功能（ECG + 心脏超声 + 肌钙蛋白）
+      2. 抗凝状态（PT/APTT/INR + 抗凝用药史）
+      3. 贫血程度（Hb + Hct）
+      4. 肾功能（eGFR + Cr + BUN）
+      5. 感染状态（WBC + CRP + PCT + 体温）
+      6. 血糖控制（空腹血糖 + HbA1c）
+      每项标记为"正常/可控/延迟因素"
+    data_used: [de-lab-results, de-exam-results, de-patient]
+    decision: "每项 → 正常 | 可控(术前优化可纠正) | 延迟因素"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.assess
+      tool: orthopedic.assess_timing
+      decision_coverage:
+        total: 3
+        covered: 3
+
+  - id: bp-pa-3
+    name: 心脏风险评估（跨专科协作）
+    actor: 心内科会诊医生
+    description: |
+      由心内科完成围术期心脏风险评估：
+      1. MI 风险分层（cTnI/CK-MB + ECG）
+      2. 心功能评估（EF值 + NYHA 分级）
+      3. 高血压靶器官评估
+      4. 围术期心律失常风险评估
+    data_used: [de-lab-results, de-exam-results, de-risk-assessment]
+    decision: "心脏风险等级 → 低危 | 中危 | 高危(需术前优化)"
+    implementation:
+      module: agents.domains.haip.cardio_risk.root
+      tool: cardiology.assess_mi
+      decision_coverage:
+        total: 3
+        covered: 3
+
+  - id: bp-pa-4
+    name: 麻醉风险评估（跨专科协作）
+    actor: 麻醉科医生
+    description: |
+      由麻醉科完成围术期麻醉风险评估：
+      1. ASA 分级
+      2. 气道评估（Mallampati 分级）
+      3. 抗凝药物管理（桥接方案）
+      4. 凝血功能评估
+    data_used: [de-lab-results, de-exam-results, de-risk-assessment]
+    decision: "ASA 分级 → I-II | III | IV-V(极高危)"
+    implementation:
+      module: agents.domains.haip.anesthesia_risk.root
+      tool: anesthesiology.assess_asa
+      decision_coverage:
+        total: 3
+        covered: 3
+
+  - id: bp-pa-5
+    name: 风险综合分层
+    actor: 主治医生
+    description: |
+      汇总六大因素评估结果 + 心脏评估 + 麻醉评估：
+      统计延迟因素数量，按南方医院分诊规则判断风险等级
+    data_used: [de-risk-assessment, de-patient]
+    decision: "风险等级 → 常规 | 需MDT(≥1高危因素) | 极高危(暂缓手术)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.timing_engine
+      tool: orthopedic.assess_timing
+      decision_coverage:
+        total: 3
+        covered: 3

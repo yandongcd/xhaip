@@ -1,0 +1,535 @@
+﻿# ── HAIP V2.0 合并实例 — 多Agent级联架构 ──
+# confidence: real = 代码可验证的真实关系
+# confidence: designed = V2.0架构设计的推演关系
+#
+# 实体类型区分:
+#   ApplicationComponent + agent_type: business/specialist/master_data/rules/architecture = Agent
+#   Application (无 agent_type) = IT系统 (HIS/LIS)
+
+view_name: "HAIP V2.0 智能体实例"
+description: "骨外科 + 药剂科 + 技能型Agent + 数据型Agent 级联架构"
+vw: 1300
+vh: 700
+
+nodes:
+  # ── Row 0: Organizations ──
+  - id: org-ortho
+    label: 创伤骨科
+    type: Organization
+    color: "#0a84ff"
+    icon: "🏥"
+    x: 220
+    y: 55
+    big: true
+    detail:
+      title: "🏥 创伤骨科 (Organization 实例)"
+      fields:
+        - ["组织", "南方医科大学南方医院·创伤骨科"]
+        - ["科室主任", "余斌"]
+        - ["架构域", "业务架构"]
+
+  - id: org-pharm
+    label: 药剂科
+    type: Organization
+    color: "#0a84ff"
+    icon: "💊"
+    x: 1080
+    y: 55
+    big: true
+    detail:
+      title: "💊 药剂科 (Organization 实例)"
+      fields:
+        - ["组织", "南方医科大学南方医院·药剂科"]
+        - ["服务范围", "肠内肠外营养评估 · TPN配比 · 处方审核"]
+        - ["角色", "6角色体系"]
+        - ["架构域", "业务架构"]
+
+  # ── Row 1: Business Agents ──
+  - id: agent-ortho
+    label: 骨外科智能体
+    type: ApplicationComponent
+    agent_type: business
+    color: "#ff9f0a"
+    icon: "🦴"
+    x: 220
+    y: 150
+    detail:
+      title: "🦴 骨外科智能体 (业务Agent)"
+      fields:
+        - ["域名", "orthopedic_surgery"]
+        - ["版本", "v0.5.0"]
+        - ["端口", "8765"]
+        - ["模块数", "33"]
+        - ["A2A工具", "10个"]
+
+  - id: agent-pharm
+    label: 药剂科智能体
+    type: ApplicationComponent
+    agent_type: business
+    color: "#30d158"
+    icon: "⚗️"
+    x: 1080
+    y: 150
+    detail:
+      title: "⚗️ 药剂科智能体 (业务Agent)"
+      fields:
+        - ["域名", "pharmacy"]
+        - ["版本", "v0.1.0"]
+        - ["端口", "8770"]
+        - ["风险规则", "54条"]
+        - ["角色", "6角色"]
+
+  # ── Row 2: Skill Agents ──
+  - id: skill-cardio
+    label: 心内科智能体
+    type: ApplicationComponent
+    agent_type: skill
+    color: "#ff453a"
+    icon: "❤️"
+    x: 220
+    y: 260
+    detail:
+      title: "❤️ 心内科智能体 (技能型Agent)"
+      fields:
+        - ["域名", "cardiology"]
+        - ["端口", "8801"]
+        - ["提供技能", "MI风险评估 · 高血压评估 · ECG判读"]
+        - ["调用方", "骨外科(分级诊疗)"]
+        - ["可信度", "真实"]
+
+  - id: skill-anes
+    label: 麻醉科智能体
+    type: ApplicationComponent
+    agent_type: skill
+    color: "#bf5af2"
+    icon: "💉"
+    x: 450
+    y: 260
+    detail:
+      title: "💉 麻醉科智能体 (技能型Agent)"
+      fields:
+        - ["域名", "anesthesiology"]
+        - ["端口", "8829"]
+        - ["提供技能", "ASA分级 · 抗凝评估 · 气道评估 · RCRI"]
+        - ["调用方", "骨外科(分级诊疗)"]
+        - ["可信度", "真实"]
+
+  # ── Row 3: Data Agent (center) ──
+  - id: data-agent
+    label: 数据型Agent
+    type: ApplicationComponent
+    agent_type: data
+    color: "#5e5ce6"
+    icon: "🗄️"
+    x: 650
+    y: 350
+    detail:
+      title: "🗄️ 数据型Agent (数据层协调器)"
+      fields:
+        - ["类型", "数据服务层协调器"]
+        - ["包含", "病例Agent"]
+        - ["对接", "HIS / LIS (IT系统)"]
+        - ["可信度", "推演(V2.0设计概念)"]
+
+  # ── Row 4: Case Agent ──
+  - id: case-agent
+    label: 病例Agent
+    type: ApplicationComponent
+    agent_type: data
+    color: "#0a84ff"
+    icon: "📁"
+    x: 650
+    y: 440
+    detail:
+      title: "📁 病例Agent (数据Agent)"
+      fields:
+        - ["域名", "medical_record"]
+        - ["端口", "8766"]
+        - ["角色", "患者数据中心"]
+        - ["病例数", "100+模拟 + 14真实"]
+        - ["可信度", "推演(V2.0设计概念)"]
+
+  # ── Row 5: IT Systems ──
+  - id: his
+    label: HIS系统
+    type: Application
+    color: "#5e5ce6"
+    icon: "🏛️"
+    x: 520
+    y: 530
+    detail:
+      title: "🏛️ HIS (IT系统)"
+      fields:
+        - ["类型", "Application (IT系统)"]
+        - ["系统", "医院信息系统"]
+        - ["数据范围", "病历 · 医嘱 · 挂号 · 入出院"]
+        - ["可信度", "推演(V2.0设计概念)"]
+
+  - id: lis
+    label: LIS系统
+    type: Application
+    color: "#5e5ce6"
+    icon: "📊"
+    x: 780
+    y: 530
+    detail:
+      title: "📊 LIS (IT系统)"
+      fields:
+        - ["类型", "Application (IT系统)"]
+        - ["系统", "检验信息系统"]
+        - ["数据范围", "详细检验数据 · 质控 · 趋势分析"]
+        - ["可信度", "推演(V2.0设计概念)"]
+
+  # ── Row 6: Platform ──
+  - id: platform
+    label: Nexent智能体平台
+    type: TechnologyService
+    color: "#ff453a"
+    icon: "☁️"
+    x: 650
+    y: 625
+    detail:
+      title: "☁️ Nexent智能体平台"
+      fields:
+        - ["类型", "Agent Runtime 平台"]
+        - ["承载", "所有Agent运行于此平台"]
+
+  # ── Row 7: Infra ──
+  - id: infra
+    label: 基础设施
+    type: TechnologyComponent
+    color: "#8b949e"
+    icon: "🖥️"
+    x: 650
+    y: 700
+    detail:
+      title: "🖥️ 基础设施"
+      fields:
+        - ["类型", "计算/存储/网络"]
+        - ["包含", "服务器 · 存储阵列 · 交换机"]
+
+  # ── Row 4: Business Processes (骨科全流程 8 个 BP) ──
+  - id: bp-registration
+    label: ①患者注册
+    type: BusinessProcess
+    domain: ba
+    color: "#5e5ce6"
+    icon: "🔄"
+    x: 400
+    y: 20
+    detail:
+      title: "🔄 患者注册与数据采集"
+      fields:
+        - ["步骤", "5"]
+        - ["Owner", "分诊护士+住院总"]
+  - id: bp-classification
+    label: ②骨折分型
+    type: BusinessProcess
+    domain: ba
+    color: "#5e5ce6"
+    icon: "🔄"
+    x: 530
+    y: 20
+    detail:
+      title: "🔄 骨折分型"
+      fields:
+        - ["步骤", "4"]
+        - ["Owner", "主治医生"]
+  - id: bp-assessment
+    label: ③术前评估
+    type: BusinessProcess
+    domain: ba
+    color: "#5e5ce6"
+    icon: "🔄"
+    x: 660
+    y: 20
+    detail:
+      title: "🔄 术前评估与风险分层"
+      fields:
+        - ["步骤", "5"]
+        - ["Owner", "主治医生"]
+  - id: bp-timing
+    label: ④手术时机
+    type: BusinessProcess
+    domain: ba
+    color: "#5e5ce6"
+    icon: "🔄"
+    x: 790
+    y: 20
+    detail:
+      title: "🔄 手术时机决策"
+      fields:
+        - ["步骤", "7"]
+        - ["Owner", "主治医生+麻醉科"]
+  - id: bp-complication
+    label: ⑤并发症预测
+    type: BusinessProcess
+    domain: ba
+    color: "#5e5ce6"
+    icon: "🔄"
+    x: 920
+    y: 20
+    detail:
+      title: "🔄 并发症风险预测"
+      fields:
+        - ["步骤", "5"]
+        - ["Owner", "主治医生+护士长"]
+  - id: bp-surgery-plan
+    label: ⑥手术方案
+    type: BusinessProcess
+    domain: ba
+    color: "#5e5ce6"
+    icon: "🔄"
+    x: 1050
+    y: 20
+    detail:
+      title: "🔄 手术方案推荐"
+      fields:
+        - ["步骤", "5"]
+        - ["Owner", "主治医生+主刀"]
+  - id: bp-followup
+    label: ⑦出院随访
+    type: BusinessProcess
+    domain: ba
+    color: "#5e5ce6"
+    icon: "🔄"
+    x: 1180
+    y: 20
+    detail:
+      title: "🔄 出院随访"
+      fields:
+        - ["步骤", "5"]
+        - ["Owner", "主治医生"]
+
+edges:
+  # ═══════════════════════════════════
+  # 真实关系 (confidence: real)
+  # ═══════════════════════════════════
+  - sid: org-ortho
+    tid: agent-ortho
+    label: 包含
+    color: "#0a84ff"
+    confidence: real
+    detail:
+      title: "包含 (Organization → ApplicationComponent)"
+      fields: [["可信度", "真实"], ["证据", "__init__.py 注册domain"]]
+
+  - sid: org-pharm
+    tid: agent-pharm
+    label: 包含
+    color: "#0a84ff"
+    confidence: real
+    detail:
+      title: "包含 (Organization → ApplicationComponent)"
+      fields: [["可信度", "真实"], ["证据", "__init__.py 注册domain"]]
+
+  - sid: agent-ortho
+    tid: skill-cardio
+    label: A2A调用
+    color: "#ff9f0a"
+    confidence: real
+    detail:
+      title: "A2A调用 (业务→技能)"
+      fields: [["可信度", "真实"], ["证据", "ortho.bat 预启 cardio-risk"]]
+
+  - sid: agent-ortho
+    tid: skill-anes
+    label: A2A调用
+    color: "#ff9f0a"
+    confidence: real
+    detail:
+      title: "A2A调用 (业务→技能)"
+      fields: [["可信度", "真实"], ["证据", "ortho.bat 预启 anesthesia-risk"]]
+
+  - sid: agent-pharm
+    tid: de-drug
+    label: 使用
+    color: "#30d158"
+    confidence: real
+    detail:
+      title: "使用 (应用→数据)"
+      fields: [["可信度", "真实"], ["证据", "drug_db.py CRUD"]]
+
+  - sid: agent-pharm
+    tid: de-rx
+    label: 生成
+    color: "#30d158"
+    confidence: real
+    detail:
+      title: "生成 (应用→数据)"
+      fields: [["可信度", "真实"], ["证据", "prescription_review.py"]]
+
+  - sid: agent-pharm
+    tid: de-nutrition
+    label: 使用
+    color: "#30d158"
+    confidence: real
+    detail:
+      title: "使用 (应用→数据)"
+      fields: [["可信度", "真实"], ["证据", "assessment.py 7项评估"]]
+
+  - sid: agent-pharm
+    tid: bm-agent
+    label: A2A通信
+    color: "#bf5af2"
+    confidence: real
+    detail:
+      title: "A2A通信 (应用→应用)"
+      fields: [["可信度", "真实"], ["证据", "get_pharmacy_input()"]]
+
+  - sid: agent-ortho
+    tid: platform
+    label: 运行于
+    color: "#ff9f0a"
+    confidence: real
+    detail:
+      title: "运行于 (应用→平台)"
+      fields: [["可信度", "真实"]]
+
+  - sid: agent-pharm
+    tid: platform
+    label: 运行于
+    color: "#30d158"
+    confidence: real
+    detail:
+      title: "运行于 (应用→平台)"
+      fields: [["可信度", "真实"]]
+
+  - sid: bm-agent
+    tid: platform
+    label: 运行于
+    color: "#0a84ff"
+    confidence: real
+    detail:
+      title: "运行于 (应用→平台)"
+      fields: [["可信度", "真实"]]
+
+  # ═══════════════════════════════════
+  # 推演关系 (confidence: designed)
+  # ═══════════════════════════════════
+  - sid: agent-ortho
+    tid: data-agent
+    label: A2A调用
+    color: "#ff9f0a"
+    confidence: designed
+    detail:
+      title: "A2A调用 (推演)"
+      fields: [["可信度", "推演"], ["说明", "V2.0架构：业务Agent→数据Agent"]]
+
+  - sid: agent-pharm
+    tid: data-agent
+    label: A2A调用
+    color: "#30d158"
+    confidence: designed
+    detail:
+      title: "A2A调用 (推演)"
+      fields: [["可信度", "推演"], ["说明", "V2.0架构：业务Agent→数据Agent"]]
+
+  - sid: data-agent
+    tid: case-agent
+    label: 包含
+    color: "#5e5ce6"
+    confidence: designed
+    detail:
+      title: "包含 (推演)"
+      fields: [["可信度", "推演"], ["说明", "数据Agent→病例Agent"]]
+
+  - sid: case-agent
+    tid: his
+    label: 对接
+    color: "#0a84ff"
+    confidence: designed
+    detail:
+      title: "对接 (推演)"
+      fields: [["可信度", "推演"], ["说明", "病例Agent对接HIS系统获取病历数据"]]
+
+  - sid: his
+    tid: lis
+    label: 对接
+    color: "#0a84ff"
+    confidence: designed
+    detail:
+      title: "对接 (推演)"
+      fields: [["可信度", "推演"], ["说明", "HIS系统对接LIS系统获取检验数据"]]
+
+  - sid: case-agent
+    tid: platform
+    label: 运行于
+    color: "#0a84ff"
+    confidence: designed
+    detail:
+      title: "运行于 (推演)"
+      fields: [["可信度", "推演"], ["说明", "病例Agent运行于Nexent平台"]]
+
+  - sid: platform
+    tid: infra
+    label: 部署于
+    color: "#8b949e"
+    confidence: designed
+    detail:
+      title: "部署于 (推演)"
+      fields: [["可信度", "推演"]]
+
+  # ── BP 流程流转 ──
+  - sid: bp-registration
+    tid: bp-classification
+    label: "→"
+    color: "#5e5ce6"
+    confidence: real
+  - sid: bp-classification
+    tid: bp-assessment
+    label: "→"
+    color: "#5e5ce6"
+    confidence: real
+  - sid: bp-assessment
+    tid: bp-timing
+    label: "→"
+    color: "#5e5ce6"
+    confidence: real
+  - sid: bp-assessment
+    tid: bp-complication
+    label: "→"
+    color: "#5e5ce6"
+    confidence: real
+  - sid: bp-timing
+    tid: bp-surgery-plan
+    label: "→"
+    color: "#5e5ce6"
+    confidence: real
+  - sid: bp-surgery-plan
+    tid: bp-followup
+    label: "→"
+    color: "#5e5ce6"
+    confidence: real
+
+  # ── BP → Agent ──
+  - sid: bp-timing
+    tid: agent-ortho
+    label: supported by
+    color: "#ff9f0a"
+    confidence: real
+  - sid: bp-assesment
+    tid: skill-cardio
+    label: A2A
+    color: "#ff453a"
+    confidence: real
+  - sid: bp-assesment
+    tid: skill-anes
+    label: A2A
+    color: "#bf5af2"
+    confidence: real
+  - sid: bp-complication
+    tid: agent-ortho
+    label: supported by
+    color: "#ff9f0a"
+    confidence: real
+  - sid: bp-surgery-plan
+    tid: agent-ortho
+    label: supported by
+    color: "#ff9f0a"
+    confidence: real
+  - sid: bp-followup
+    tid: agent-ortho
+    label: supported by
+    color: "#ff9f0a"
+    confidence: real

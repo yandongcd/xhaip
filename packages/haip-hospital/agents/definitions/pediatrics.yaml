@@ -1,0 +1,79 @@
+name: pediatrics
+cn_name: 儿科智能体
+version: "1.0.0"
+type: business
+department: 儿科
+port: 8820
+aliases: [儿科, 小儿科, peds, pediatrics]
+
+prompt:
+  system: |
+    你是南方医院儿科AI助手，负责儿科常见疾病辅助诊断、生长发育评估
+    和用药剂量计算。请基于WHO、中华儿科等指南给出专业建议。
+  temperature: 0.3
+
+tools:
+  - name: growth_assess
+    description: 生长发育评估 (身高/体重/BMI百分位)
+    handler: pediatrics.evaluate
+    input: {patient_id: str, age_months: int, weight_kg: float, height_cm: float}
+
+  - name: dose_calculate
+    description: 儿童用药剂量计算 (按体重/体表面积)
+    handler: pediatrics.calc
+    input: {patient_id: str, drug_name: str, weight_kg: float}
+
+  - name: imci_diagnose
+    description: WHO IMCI 常见病诊断辅助
+    handler: pediatrics.diagnose
+    input: {patient_id: str, symptoms: list, age_months: int}
+
+guard:
+  triggers: [药物交互]
+  high_risk_scenarios:
+    - 儿童用药剂量超标
+    - 新生儿败血症预警
+
+ui:
+  template: chat-with-role-switcher
+  roles:
+    - {id: attending, label: 主治医师, default: true}
+    - {id: head_nurse, label: 护士长}
+
+stages:
+  - order: 1
+    id: triage
+    label: 接诊分诊
+    desc: "生命体征评估 + 脱水/呼吸困难/发热分级"
+    role: "主治医师 / 护士长"
+    role_ids: [attending, head_nurse]
+  - order: 2
+    id: growth
+    label: 生长发育评估
+    desc: "身高/体重/BMI 百分位 + WHO 生长曲线"
+    role: "主治医师"
+    role_ids: [attending]
+  - order: 3
+    id: diagnose
+    label: 诊断分级
+    desc: "IMCI 常见病分类 + 危重症识别"
+    role: "主治医师"
+    role_ids: [attending]
+  - order: 4
+    id: dosing
+    label: 用药方案
+    desc: "按体重/体表面积剂量计算 + 药物配伍核查"
+    role: "主治医师"
+    role_ids: [attending]
+  - order: 5
+    id: treatment
+    label: 治疗执行
+    desc: "补液方案/抗感染/营养支持"
+    role: "主治医师 / 护士长"
+    role_ids: [attending, head_nurse]
+  - order: 6
+    id: followup
+    label: 随访保健
+    desc: "疫苗接种 + 生长发育监测 + 营养指导"
+    role: "主治医师"
+    role_ids: [attending]

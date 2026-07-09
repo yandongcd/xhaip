@@ -1,0 +1,40 @@
+# ============================================================
+# Guideline Asset: ASA Physical Status Classification System
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-asa-classification"
+name: "ASA Physical Status Classification System"
+abbr: "ASA分级"
+version: "2025"
+publisher: "American Society of Anesthesiologists"
+doi: "10.1097/ALN.0000000000005021"
+language: en
+trust_level: T1
+admin_priority: 13
+
+description: >
+  The ASA Physical Status classification system provides a standardized
+  framework for preoperative health assessment. Used by anesthesiology
+  specialist agent for perioperative risk stratification.
+
+key_sections:
+  - id: "§2"
+    title: "ASA I-VI definitions"
+    pages: "3-6"
+    stage_ids: [S6]
+    rule_ids: [timing-cardiac]
+
+  - id: "§3"
+    title: "ASA in geriatric hip fracture"
+    pages: "7-9"
+    stage_ids: [S6]
+    rule_ids: [timing-cardiac]
+
+rule_sets_covered:
+  - timing
+
+derived_rule_count: 4
+last_updated: 2026-07-01
+supersedes: "ASA 2020"
+superseded_by: ""

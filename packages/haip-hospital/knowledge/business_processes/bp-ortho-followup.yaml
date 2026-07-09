@@ -1,0 +1,106 @@
+# ============================================================
+# Business Process: 出院随访与二次骨折预防
+# TOGAF Class: BusinessProcess + ProcessStep (Core ABB)
+# Trust Level: T1
+# ============================================================
+name: bp-ortho-followup
+version: "1.0"
+description: 出院随访与二次骨折预防流程 — 制定随访计划并进行长期出院后管理
+owner: 主治医生
+value_stages:
+  - 康复回归
+guideline_refs:
+  - nhc-2022
+  - nice-ng37
+  - dvt-consensus-2024
+
+steps:
+  - id: bp-fu-1
+    name: 出院计划制定
+    actor: 主治医生 + 护士长
+    description: |
+      制定个性化出院计划：
+      1. 随访时间表（术后1/3/6/12月）
+      2. 影像复查计划
+      3. 功能评估节点
+      4. 抗骨质疏松治疗方案
+      5. 跌倒预防指导
+    data_used: [de-surgery-record, de-rehab-record, de-patient]
+    decision: "是否需要社区转诊/康复机构？→ 需要 | 不需要(家庭康复)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.followup
+      tool: orthopedic.plan_followup
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-fu-2
+    name: 术后 1 月复诊
+    actor: 主治医生
+    description: |
+      首次复诊评估：
+      1. 伤口愈合情况
+      2. X 线复查（骨折愈合早期评估）
+      3. 疼痛评分（VAS）
+      4. 早期功能恢复（坐起/站立/辅助行走）
+      5. DVT 预防延续（如需继续抗凝）
+    data_used: [de-exam-results, de-followup]
+    decision: "愈合进展 → 正常 | 延迟愈合(加强随访)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.followup
+      tool: orthopedic.plan_followup
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-fu-3
+    name: 术后 3 月复诊
+    actor: 主治医生
+    description: |
+      中期功能评估：
+      1. X 线复查（骨痂形成评估）
+      2. 髋关节功能评分（Harris）
+      3. 独立行走能力评估
+      4. 骨质疏松药物治疗依从性检查
+    data_used: [de-exam-results, de-followup, de-rehab-record]
+    decision: "功能恢复 → 良好 | 一般(加强康复) | 不良(排查并发症)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.followup
+      tool: orthopedic.plan_followup
+      decision_coverage:
+        total: 3
+        covered: 3
+
+  - id: bp-fu-4
+    name: 术后 6 月复诊
+    actor: 主治医生
+    description: |
+      骨折愈合确认：
+      1. X 线复查（骨折愈合确认）
+      2. 内固定/假体位置评估
+      3. 髋关节功能最终评估
+      4. 骨质疏松治疗长期方案确认
+    data_used: [de-exam-results, de-followup]
+    decision: "骨折愈合 → 已愈合(进入年度随访) | 未愈合(继续跟踪)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.followup
+      tool: orthopedic.plan_followup
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-fu-5
+    name: 术后 12 月年度随访
+    actor: 主治医生 + 随访护士
+    description: |
+      长期预后评估：
+      1. 生存率统计
+      2. 二次骨折发生率
+      3. 髋关节功能远期评估
+      4. 骨质疏松治疗的长期效果评估
+      5. 跌倒预防效果评估
+    data_used: [de-followup, de-rehab-record, de-patient]
+    decision: null
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.followup
+      tool: orthopedic.plan_followup

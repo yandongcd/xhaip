@@ -1,0 +1,103 @@
+# ============================================================
+# Value Stream: 老年髋部骨折围术期全流程价值流
+# TOGAF Class: Value Stream + Value Stage (Extension ABB)
+# Trust Level: T1
+# ============================================================
+name: vs-hip-fracture-care
+version: "1.0"
+description: 老年髋部骨折患者从受伤到康复的5阶段价值流。8个BusinessProcess覆盖全流程：注册(1)→分型(2)→术前评估(3)→时机决策(4-5)→并发症预测(6)→手术方案(7)→随访(8)
+owner: trauma_ortho
+business_processes:
+  - bp-ortho-patient-registration
+  - bp-ortho-fracture-classification
+  - bp-ortho-preoperative-assessment
+  - bp-timing-decision
+  - bp-ortho-surgical-timing
+  - bp-ortho-complication-prediction
+  - bp-ortho-surgery-planning
+  - bp-ortho-followup
+
+stages:
+  - id: vs-hip-1
+    name: 患者分诊与登记
+    description: 患者到达后的初步分诊、信息登记和急诊优先级判定
+    business_processes:
+      - bp-ortho-patient-registration
+    entry_criteria: 患者到达急诊/门诊
+    exit_criteria: 分诊级别确定 (I-IV级) + 电子病历建档
+    participants:
+      - 分诊护士 (emergency)
+      - 急诊医生 (emergency)
+      - Master Agent (数据登记)
+    kpis:
+      - 分诊时间 < 5分钟
+      - 分诊准确率 > 95%
+
+  - id: vs-hip-2
+    name: 病情评估与风险分层
+    description: 医生进行全面病史采集、体格检查、实验室和影像学检查，进行多维度风险分层
+    business_processes:
+      - bp-ortho-fracture-classification
+      - bp-ortho-preoperative-assessment
+      - bp-ortho-complication-prediction
+    entry_criteria: 电子病历建档完成
+    exit_criteria: 全部检查结果回报 + 风险等级确定
+    participants:
+      - 主治医生 (orthopedic_surgery)
+      - 心内科Agent (cardiology)
+      - 麻醉科Agent (anesthesiology)
+      - Master Agent (检验/检查数据)
+      - 检验科 (lab_med)
+      - 影像科 (radiology)
+    kpis:
+      - 急诊检查回报 < 30分钟
+      - MI评估 < 15分钟
+      - 风险分层准确率 > 95%
+
+  - id: vs-hip-3
+    name: 诊疗决策与资源协调
+    description: 多学科团队(MDT)联合决策、手术时机确定、资源调度和患者知情同意
+    business_processes:
+      - bp-timing-decision
+      - bp-ortho-surgical-timing
+      - bp-ortho-surgery-planning
+    entry_criteria: 风险等级确定
+    exit_criteria: MDT方案确定 + 知情同意签署
+    participants:
+      - 主治医生 (orthopedic_surgery)
+      - 心内科Agent (cardiology)
+      - 麻醉科Agent (anesthesiology)
+      - 业务Agent规则引擎 (timing_rules.yaml)
+    kpis:
+      - MDT启动 < 24小时
+      - 决策时间 < 48小时
+
+  - id: vs-hip-4
+    name: 治疗执行与监护
+    description: 手术或保守治疗的执行、围术期监护、并发症管理
+    entry_criteria: 术前准备完成
+    exit_criteria: 治疗完成，病情稳定
+    participants:
+      - 主刀医生 (orthopedic_surgery)
+      - 麻醉科医生 (anesthesiology)
+      - 护士长 (orthopedic_surgery)
+      - 业务Agent (护理方案)
+    kpis:
+      - 手术时间达标率 > 90%
+      - 并发症率 < 基线
+
+  - id: vs-hip-5
+    name: 康复管理与长期随访
+    description: 术后康复、功能恢复训练、骨质疏松管理、长期随访
+    business_processes:
+      - bp-ortho-followup
+    entry_criteria: 达到出院标准
+    exit_criteria: 完成1年随访
+    participants:
+      - 康复治疗师 (rehabilitation)
+      - 主治医生 (orthopedic_surgery)
+      - 护士长 (orthopedic_surgery)
+      - 业务Agent (随访计划)
+    kpis:
+      - 30天再入院率 < 10%
+      - 1年随访率 > 80%

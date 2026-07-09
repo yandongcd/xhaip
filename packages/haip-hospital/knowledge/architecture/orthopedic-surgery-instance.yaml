@@ -1,0 +1,186 @@
+# ── 骨外科 TOGAF 10 架构实例 ──
+# 真实关系：代码中已验证的A2A调用和包含关系
+# 推演关系：架构设计中合理的分层抽象
+
+view_name: "骨外科V2.0实例"
+description: "创伤骨科分级诊疗智能体架构实例化"
+vw: 900
+vh: 500
+
+nodes:
+  - id: org-ortho
+    label: 创伤骨科
+    type: Organization
+    agent_type: null
+    color: "#0a84ff"
+    icon: "🏥"
+    x: 450
+    y: 50
+    big: true
+    detail:
+      title: "🏥 创伤骨科 (Organization 实例)"
+      fields:
+        - ["组织", "南方医科大学南方医院·创伤骨科"]
+        - ["科室主任", "余斌"]
+        - ["架构域", "业务架构 (Business Architecture)"]
+        - ["TOGAF实体", "Organization — 组织单元"]
+
+  - id: agent-ortho
+    label: 骨外科智能体
+    type: ApplicationComponent
+    agent_type: business
+    color: "#ff9f0a"
+    icon: "🦴"
+    x: 450
+    y: 145
+    detail:
+      title: "🦴 骨外科智能体 (ApplicationComponent 实例)"
+      fields:
+        - ["域名", "orthopedic_surgery"]
+        - ["版本", "v0.5.0"]
+        - ["端口", "8765"]
+        - ["模块数", "33 核心模块"]
+        - ["ASSET", "9个(7规则+1技能+1工具)"]
+        - ["A2A工具", "10个(评估/分型/质控/护理/随访/风险)"]
+        - ["架构域", "应用架构 (Application Architecture)"]
+
+  - id: skill-cardio
+    label: 心内科智能体
+    type: ApplicationComponent
+    agent_type: specialist
+    color: "#ff453a"
+    icon: "❤️"
+    x: 180
+    y: 255
+    detail:
+      title: "❤️ 心内科智能体 (SkillAgent 实例)"
+      fields:
+        - ["域名", "cardiology"]
+        - ["端口", "8801"]
+        - ["提供技能", "MI风险评估 · 高血压评估 · ECG判读"]
+        - ["调用方", "骨外科(分级诊疗评估)"]
+        - ["架构域", "技能层 (Skill Layer)"]
+        - ["可信度", "真实 — bat文件中预启"]
+
+  - id: skill-anes
+    label: 麻醉科智能体
+    type: ApplicationComponent
+    agent_type: specialist
+    color: "#bf5af2"
+    icon: "💉"
+    x: 720
+    y: 255
+    detail:
+      title: "💉 麻醉科智能体 (SkillAgent 实例)"
+      fields:
+        - ["域名", "anesthesiology"]
+        - ["端口", "8829"]
+        - ["提供技能", "ASA分级 · 抗凝评估 · 气道评估 · RCRI"]
+        - ["调用方", "骨外科(分级诊疗评估)"]
+        - ["架构域", "技能层 (Skill Layer)"]
+        - ["可信度", "真实 — bat文件中预启"]
+
+  - id: data-agent
+    label: 数据型Agent
+    type: ApplicationComponent
+    agent_type: master_data
+    color: "#5e5ce6"
+    icon: "🗄️"
+    x: 450
+    y: 355
+    detail:
+      title: "🗄️ 数据型Agent (DataAgent 实例)"
+      fields:
+        - ["类型", "数据服务层协调器"]
+        - ["包含子系统", "病例Agent · HIS Agent · Lab Agent · LIS Agent"]
+        - ["协议", "A2A + MCP"]
+        - ["架构域", "数据层 (Data Layer)"]
+        - ["可信度", "推演 — V2.0架构设计概念"]
+
+  - id: platform
+    label: Nexent智能体平台
+    type: TechnologyService
+    agent_type: null
+    color: "#ff453a"
+    icon: "☁️"
+    x: 450
+    y: 450
+    detail:
+      title: "☁️ Nexent智能体平台 (TechnologyService 实例)"
+      fields:
+        - ["类型", "Agent Runtime 平台"]
+        - ["架构域", "技术架构 (Technology Architecture)"]
+        - ["TOGAF实体", "TechnologyService — 技术服务"]
+
+edges:
+  - sid: org-ortho
+    tid: agent-ortho
+    label: 包含
+    color: "#0a84ff"
+    confidence: real
+    detail:
+      title: "包含 (Organization → ApplicationComponent)"
+      fields:
+        - ["TOGAF关系", "包含 (has)"]
+        - ["源", "创伤骨科 (Organization)"]
+        - ["目标", "骨外科智能体 (ApplicationComponent)"]
+        - ["可信度", "真实"]
+        - ["说明", "创伤骨科组织包含骨外科智能体作为其应用组件"]
+
+  - sid: agent-ortho
+    tid: skill-cardio
+    label: A2A调用
+    color: "#ff9f0a"
+    confidence: real
+    detail:
+      title: "A2A调用 (Application → SkillAgent)"
+      fields:
+        - ["TOGAF关系", "通信 (communicates_via)"]
+        - ["源", "骨外科智能体"]
+        - ["目标", "心内科智能体"]
+        - ["可信度", "真实"]
+        - ["证据", "orthopedic_surgery.bat 预启 cardio-risk"]
+        - ["说明", "骨外科调用心内科获取MI/血压评估"]
+
+  - sid: agent-ortho
+    tid: skill-anes
+    label: A2A调用
+    color: "#ff9f0a"
+    confidence: real
+    detail:
+      title: "A2A调用 (Application → SkillAgent)"
+      fields:
+        - ["TOGAF关系", "通信 (communicates_via)"]
+        - ["源", "骨外科智能体"]
+        - ["目标", "麻醉科智能体"]
+        - ["可信度", "真实"]
+        - ["证据", "orthopedic_surgery.bat 预启 anesthesia-risk"]
+        - ["说明", "骨外科调用麻醉科获取ASA/抗凝评估"]
+
+  - sid: agent-ortho
+    tid: data-agent
+    label: A2A调用
+    color: "#ff9f0a"
+    confidence: designed
+    detail:
+      title: "A2A调用 (Application → DataAgent)"
+      fields:
+        - ["TOGAF关系", "通信 (communicates_via)"]
+        - ["源", "骨外科智能体"]
+        - ["目标", "数据型Agent"]
+        - ["可信度", "推演"]
+        - ["说明", "V2.0架构设计：业务Agent通过数据型Agent获取患者数据"]
+
+  - sid: agent-ortho
+    tid: platform
+    label: 运行于
+    color: "#ff9f0a"
+    confidence: real
+    detail:
+      title: "运行于 (ApplicationComponent → TechnologyService)"
+      fields:
+        - ["TOGAF关系", "运行于 (runs_on)"]
+        - ["源", "骨外科智能体"]
+        - ["目标", "Nexent智能体平台"]
+        - ["可信度", "真实"]
+        - ["说明", "骨外科智能体运行在Nexent智能体平台上"]

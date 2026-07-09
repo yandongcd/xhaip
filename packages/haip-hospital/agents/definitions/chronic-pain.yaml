@@ -1,0 +1,28 @@
+name: chronic-pain
+cn_name: 慢性疼痛综合评估
+version: "1.0.0"
+type: specialist
+aliases: [慢性疼痛, chronic-pain]
+parent: pain-hub
+
+prompt:
+  system: |
+    你是慢性疼痛管理专家，负责慢性疼痛的生物-心理-社会模型综合评估、
+    疼痛量表评分和阶梯治疗方案推荐。
+  temperature: 0.3
+
+tools:
+  - name: assess_chronic
+    description: 慢性疼痛综合评估 (生物-心理-社会模型)
+    handler: chronic_pain.assess
+    input: {patient_id: str, pain_duration_months: int, vas_score: int}
+
+  - name: assess_scales
+    description: 疼痛量表评分 (ODI/NDI/DN4/PHQ9/GAD7)
+    handler: chronic_pain.scales
+    input: {patient_id: str, odi_score: int, phq9_score: int}
+
+  - name: stepped_care
+    description: 阶梯治疗推荐 (阶梯1-3)
+    handler: chronic_pain.care
+    input: {patient_id: str, vas_score: int, odi_score: int, failed_prev: bool}

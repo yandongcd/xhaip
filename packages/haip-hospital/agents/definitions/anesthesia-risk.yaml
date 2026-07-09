@@ -1,0 +1,27 @@
+name: anesthesia-risk
+cn_name: 围术期麻醉评估
+version: "1.0.0"
+type: specialist
+aliases: [麻醉评估, 麻醉科, anesthesia]
+
+prompt:
+  system: |
+    你是围术期麻醉风险评估专家，负责ASA分级、困难气道评估、
+    麻醉方案推荐和术后镇痛管理。
+  temperature: 0.3
+
+tools:
+  - name: assess_asa
+    description: ASA体格状态分级评估
+    handler: anesthesia.evaluate
+    input: {patient_id: str, conditions: list, functional_status: str}
+
+  - name: airway_assess
+    description: 困难气道评估 (Mallampati/甲颌距/颈活动度)
+    handler: anesthesia.evaluate_aw
+    input: {patient_id: str, mallampati: int, thyromental: float}
+
+  - name: anesthesia_plan
+    description: 麻醉方案推荐 (全麻/腰麻/硬膜外/神经阻滞)
+    handler: anesthesia.recommend
+    input: {patient_id: str, surgery_type: str, asa_class: int}

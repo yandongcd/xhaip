@@ -1,0 +1,75 @@
+# ============================================================
+# Rule Asset: 围术期风险告警规则
+# TOGAF Class: Constraint (Extension ABB)
+# Trust Level: T1 (4th UDMI + 南方医院规范)
+# ============================================================
+name: perioperative-risk-alert-rules
+version: "1.0"
+description: 心梗阈值 + ECG告警模式 + 告警级别
+guideline_refs: [universal-mi-4th, nhc-2022]
+
+mi_thresholds:
+  - test: cTnI
+    label: 肌钙蛋白I
+    unit: ng/mL
+    high: 0.04
+    message: 肌钙蛋白升高,存在心肌损伤可能
+    action: 心内科会诊,动态监测cTnI,考虑冠脉评估
+  - test: cTnT
+    label: 肌钙蛋白T
+    unit: ng/mL
+    high: 0.1
+    message: 肌钙蛋白T升高,存在心肌损伤可能
+    action: 心内科会诊,动态监测cTnT
+  - test: CKMB
+    label: 心型肌酸激酶
+    unit: U/L
+    high: 25
+    message: CK-MB升高,警惕心肌损伤
+    action: 结合cTnI综合判断
+  - test: CK
+    label: 肌酸激酶
+    unit: U/L
+    high: 200
+    message: CK升高(可能肌肉损伤/心肌损伤)
+    action: 查CK-MB排除心肌来源
+  - test: LDH
+    label: 乳酸脱氢酶
+    unit: U/L
+    high: 250
+    message: LDH升高
+    action: 结合肌钙蛋白综合判断
+
+ecg_alerts:
+  - pattern: ST段抬高
+    level: 🔴 危急
+    message: ST段抬高,STEMI可能
+    action: 立即心内科急会诊,暂停择期手术
+  - pattern: ST段压低
+    level: 🟡 警告
+    message: ST段压低,NSTEMI/心肌缺血可能
+    action: 心内科会诊,动态监测肌钙蛋白
+  - pattern: 室性心动过速
+    level: 🔴 危急
+    message: 室速,严重心律失常
+    action: 急请心内科,可能需电复律
+  - pattern: 心室颤动
+    level: 🔴 危急
+    message: 室颤,致命性心律失常
+    action: 立即抢救,电除颤
+  - pattern: 三度AVB
+    level: 🔴 危急
+    message: 完全性房室传导阻滞
+    action: 心内科急会诊,可能需临时起搏器
+  - pattern: 房颤
+    level: 🟡 警告
+    message: 心房颤动
+    action: 评估心率+抗凝方案
+  - pattern: T波高尖
+    level: 🟡 警告
+    message: T波高尖,警惕高钾/急性心梗超急性期
+    action: 急查电解质,动态监测ECG
+  - pattern: QTc延长
+    level: 🟡 警告
+    message: QTc>460ms(女)/>440ms(男)
+    action: 排查电解质异常/药物因素,避免致QT延长药物

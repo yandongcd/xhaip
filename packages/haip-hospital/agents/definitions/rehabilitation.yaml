@@ -1,0 +1,80 @@
+name: rehabilitation
+cn_name: 康复医学科智能体
+version: "1.0.0"
+type: business
+department: 康复医学科
+port: 8812
+aliases: [康复医学科, rehabilitation]
+
+prompt:
+  system: |
+    你是南方医院康复医学科AI助手，负责康复医学科常见疾病的诊疗评估和管理。
+    请基于相关临床指南给出专业建议。
+  temperature: 0.3
+
+tools:
+  - name: bp_reception
+    description: 接诊评估
+    handler: rehabilitation.bp_reception
+    input: {patient_id: str}
+
+  - name: bp_exam
+    description: 检查检验
+    handler: rehabilitation.bp_exam
+    input: {patient_id: str}
+
+  - name: bp_diagnosis
+    description: 诊断确认
+    handler: rehabilitation.bp_diagnosis
+    input: {patient_id: str}
+
+  - name: bp_treatment
+    description: 治疗执行
+    handler: rehabilitation.bp_treatment
+    input: {patient_id: str}
+
+  - name: bp_followup
+    description: 随访管理
+    handler: rehabilitation.bp_followup
+    input: {patient_id: str}
+
+
+ui:
+  template: chat-with-role-switcher
+  roles:
+    - {id: attending, label: 主治医师, default: true}
+    - {id: resident, label: 住院医师}
+    - {id: head_nurse, label: 护士长}
+    - {id: head, label: 科主任}
+
+stages:
+  - order: 1
+    id: bp-reception
+    label: 接诊评估
+    desc: "接诊评估流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 2
+    id: bp-exam
+    label: 检查检验
+    desc: "检查检验流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 3
+    id: bp-diagnosis
+    label: 诊断确认
+    desc: "诊断确认流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 4
+    id: bp-treatment
+    label: 治疗执行
+    desc: "治疗执行流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 5
+    id: bp-followup
+    label: 随访管理
+    desc: "随访管理流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']

@@ -1,0 +1,143 @@
+# ============================================================
+# Rule Asset: 骨折亚型手术方式选择规则
+# TOGAF Class: Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+name: hip-fracture-surgery-type-rules
+version: "1.0"
+description: 基于骨折类型+年龄+活动能力+骨质量的10类手术方式推荐
+owner: attending
+guideline_ref:
+  - "guideline-femoral-neck-2018"
+  - "guideline-intertroch-2020"
+  - "guideline-aaos-2022"
+  - "guideline-nhc-2022"
+last_updated: 2026-07-01
+
+decision_matrix:
+  - id: surgery-type-001
+    name: "股骨颈 Garden I-II, 活跃"
+    fracture_type: "femoral_neck"
+    garden: [1, 2]
+    age_max: 70
+    activity: "活跃"
+    bone_quality: "正常"
+    recommended_surgery: "空心钉内固定"
+    alternative_surgery: "THA"
+    anesthesia: "腰麻/全麻"
+    special_notes: "早期负重,防内固定失败"
+    guideline_ref: "guideline-femoral-neck-2018"
+
+  - id: surgery-type-002
+    name: "股骨颈 Garden III-IV, <70岁活跃"
+    fracture_type: "femoral_neck"
+    garden: [3, 4]
+    age_max: 70
+    activity: "活跃"
+    bone_quality: "正常"
+    recommended_surgery: "THA"
+    alternative_surgery: "HA"
+    anesthesia: "全麻/腰麻"
+    special_notes: "后外侧入路,防脱位"
+    guideline_ref: "guideline-femoral-neck-2018"
+
+  - id: surgery-type-003
+    name: "股骨颈 Garden III-IV, ≥70岁"
+    fracture_type: "femoral_neck"
+    garden: [3, 4]
+    age_min: 70
+    activity: "可活动"
+    bone_quality: "骨质疏松"
+    recommended_surgery: "HA(人工股骨头置换)"
+    alternative_surgery: "THA"
+    anesthesia: "腰麻"
+    special_notes: "骨水泥型防松动,防脱位"
+    guideline_ref: "guideline-aaos-2022"
+
+  - id: surgery-type-004
+    name: "转子间 Evans I, 稳定型"
+    fracture_type: "intertrochanteric"
+    evans: ["IA"]
+    stability: "稳定"
+    bone_quality: null
+    recommended_surgery: "PFNA"
+    alternative_surgery: "DHS"
+    anesthesia: "腰麻"
+    special_notes: "注意复位质量"
+    guideline_ref: "guideline-intertroch-2020"
+
+  - id: surgery-type-005
+    name: "转子间 Evans II-IV, 不稳定型"
+    fracture_type: "intertrochanteric"
+    evans: ["IB", "IC", "ID"]
+    stability: "不稳定"
+    bone_quality: null
+    recommended_surgery: "PFNA/InterTAN"
+    alternative_surgery: "PCCP"
+    anesthesia: "腰麻"
+    special_notes: "内侧支撑重建"
+    guideline_ref: "guideline-intertroch-2020"
+
+  - id: surgery-type-006
+    name: "转子间 Evans II(逆转子)"
+    fracture_type: "intertrochanteric"
+    evans: ["II"]
+    stability: "不稳定"
+    bone_quality: null
+    recommended_surgery: "长PFNA/钢板"
+    alternative_surgery: "InterTAN"
+    anesthesia: "全麻"
+    special_notes: "防内翻塌陷"
+    guideline_ref: "guideline-intertroch-2020"
+
+  - id: surgery-type-007
+    name: "股骨颈+转子间联合骨折"
+    fracture_type: "combined"
+    garden: null
+    evans: null
+    stability: "极不稳定"
+    bone_quality: null
+    recommended_surgery: "长PFNA/THA"
+    alternative_surgery: null
+    anesthesia: "全麻"
+    special_notes: "MDT决策,个体化方案"
+    guideline_ref: "guideline-nhc-2022"
+
+  - id: surgery-type-008
+    name: "病理骨折"
+    fracture_type: "pathologic"
+    garden: null
+    evans: null
+    stability: null
+    bone_quality: null
+    recommended_surgery: "个体化(内固定/置换)"
+    alternative_surgery: null
+    anesthesia: "个体化"
+    special_notes: "原发灶处理优先"
+    guideline_ref: "guideline-nhc-2022"
+
+  - id: surgery-type-009
+    name: "假体周围骨折"
+    fracture_type: "periprosthetic"
+    garden: null
+    evans: null
+    stability: null
+    bone_quality: null
+    recommended_surgery: "翻修/内固定"
+    alternative_surgery: null
+    anesthesia: "全麻"
+    special_notes: "Vancouver分型决定术式"
+    guideline_ref: "guideline-nhc-2022"
+
+  - id: surgery-type-010
+    name: "高龄股骨颈 III-IV, ≥80岁"
+    fracture_type: "femoral_neck"
+    garden: [3, 4]
+    age_min: 80
+    activity: "受限"
+    bone_quality: "严重疏松"
+    recommended_surgery: "HA(骨水泥型)"
+    alternative_surgery: null
+    anesthesia: "腰麻"
+    special_notes: "快速康复路径+多模式镇痛"
+    guideline_ref: "guideline-aaos-2022"

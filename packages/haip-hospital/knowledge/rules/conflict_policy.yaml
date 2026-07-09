@@ -1,0 +1,21 @@
+# ============================================================
+# 冲突仲裁策略配置
+# 管理规则冲突时的裁决顺序和覆盖策略
+# ============================================================
+arbitration:
+  default_strategy: conservative
+  logging: full
+
+  # 仲裁优先级（从上到下逐级比较）
+  strategy_order:
+    - admin_priority    # 管理员指定优先级（数字越小越优先）
+    - source_tier       # 指南层级 (L1 > L2 > ...)
+    - publish_date      # 同层级内：发布越新越优先
+    - certainty         # 确定性 (strong > moderate > weak)
+    - conservative      # 仍冲突：选对患者最安全的结论
+
+  # 管理员可手动覆盖特定规则的冲突仲裁
+  override_rules: []
+
+  # 管理员可设置特定指南来源的全局优先级
+  # 存储于 assets/guideline_sources/registry.yaml

@@ -1,0 +1,132 @@
+# ============================================================
+# Guideline Asset: 老年髋部骨折诊疗与管理指南（2022年版）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-nhc-2022"
+name: "老年髋部骨折诊疗与管理指南（2022年版）"
+abbr: "卫健委2022版"
+version: "2022"
+publisher: "国家卫生健康委员会"
+doi: "—"
+language: zh-CN
+trust_level: T1
+admin_priority: 1
+
+description: >
+  全国老年髋部骨折诊疗的权威行业标准。适用范围: 各级医疗机构老年髋部骨折
+  (股骨颈/转子间/转子下)患者的全流程管理。共45页，7个章节。
+  覆盖急诊评估→术前准备→手术时机→术式选择→康复随访全流程。
+
+key_sections:
+  - id: "§2"
+    title: "急诊评估与分诊"
+    pages: "4-8"
+    stage_ids: [S1, S2]
+    rule_ids: [triage-001, triage-002]
+
+  - id: "§3"
+    title: "术前准备与评估"
+    pages: "9-15"
+    stage_ids: [S4]
+    rule_ids:
+      - completeness-001
+      - completeness-002
+      - completeness-003
+      - completeness-004
+      - completeness-005
+      - completeness-006
+      - completeness-007
+      - completeness-008
+      - completeness-009
+      - completeness-010
+      - completeness-011
+      - completeness-012
+      - completeness-013
+      - completeness-014
+
+  - id: "§4"
+    title: "手术时机决策"
+    pages: "16-20"
+    stage_ids: [S7]
+    rule_ids:
+      - timing-cardiac
+      - timing-anticoagulation
+      - timing-anemia
+      - timing-renal
+      - timing-infection
+      - timing-glucose
+      - timing-rule-001
+      - timing-rule-002
+      - timing-rule-003
+
+  - id: "§5"
+    title: "手术方式选择"
+    pages: "21-30"
+    stage_ids: [S9]
+    rule_ids:
+      - surgery-type-001
+      - surgery-type-002
+      - surgery-type-003
+      - surgery-type-004
+      - surgery-type-005
+      - surgery-type-006
+      - surgery-type-007
+      - surgery-type-008
+      - surgery-type-009
+      - surgery-type-010
+
+  - id: "§6"
+    title: "围术期管理"
+    pages: "31-40"
+    stage_ids: [S8, S10]
+    rule_ids:
+      - complication-dvt
+      - complication-infection
+      - complication-cardiac
+      - complication-fall
+      - nursing-001
+      - nursing-002
+      - nursing-003
+      - nursing-004
+      - nursing-005
+      - nursing-006
+      - nursing-007
+      - nursing-008
+      - nursing-009
+      - nursing-010
+      - nursing-011
+      - nursing-012
+      - nursing-013
+      - nursing-014
+      - nursing-015
+      - nursing-016
+      - nursing-017
+      - nursing-018
+      - nursing-019
+      - nursing-020
+      - nursing-021
+
+  - id: "§7"
+    title: "康复与随访"
+    pages: "41-45"
+    stage_ids: [S11]
+    rule_ids:
+      - followup-001
+      - followup-002
+      - followup-003
+      - followup-004
+
+rule_sets_covered:
+  - triage (triage-001, triage-002)
+  - completeness (completeness-001..completeness-014)
+  - timing (timing-cardiac, timing-anticoag, timing-anemia, timing-renal, timing-infection, timing-glucose, timing-rule-001..003)
+  - surgery_type (surgery-type-001..surgery-type-010)
+  - complication (complication-dvt, complication-infection, complication-cardiac, complication-fall)
+  - nursing (nursing-001..nursing-021)
+  - followup (followup-001..followup-004)
+
+derived_rule_count: 65
+last_updated: 2026-07-01
+supersedes: ""
+superseded_by: ""

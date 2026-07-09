@@ -1,0 +1,68 @@
+{
+  "version": "2.0",
+  "project": "xhaip",
+  "project_name": "HAIP v1.0 Hospital AI Platform",
+  "project_root": "D:\\FC\\xhaip",
+  "skills_dir": ".openharness\\skills",
+  "runtime_dir": ".openharness\\runtime",
+  "snapshots_dir": ".openharness\\runtime\\snapshots",
+  "agents": {
+    "definitions_dir": "packages\\haip-hospital\\agents\\definitions",
+    "count": 14,
+    "types": {"business": 5, "specialist": 7, "master_data": 2}
+  },
+  "engine": {
+    "package": "packages\\haip-core",
+    "modules": ["agent", "a2a", "llm", "tools", "guard", "orchestrator", "knowledge", "loop", "cli", "matcher"],
+    "coverage_target": 90
+  },
+  "assets": {
+    "guidelines": 26,
+    "rules": 22,
+    "business_processes": 11,
+    "capabilities": 3,
+    "value_streams": 1,
+    "architecture": 6,
+    "roles": 1,
+    "guideline_sources": 1,
+    "total": 71
+  },
+  "tests": {
+    "unit_dir": "packages\\haip-core\\tests",
+    "integration_dir": "tests\\integration",
+    "total": 196,
+    "coverage_pct": 93
+  },
+  "quality": {
+    "ruff": true,
+    "mypy": true,
+    "ci": ".github\\workflows\\ci.yml"
+  },
+  "skills": [
+    {"name": "xhaip-core", "type": "architecture", "trust_level": "T1"},
+    {"name": "xhaip-pharmacy", "type": "guideline", "trust_level": "T1"},
+    {"name": "xhaip-orthopedic", "type": "guideline", "trust_level": "T1"},
+    {"name": "xhaip-cardio", "type": "guideline", "trust_level": "T1"},
+    {"name": "xhaip-anesthesia", "type": "guideline", "trust_level": "T1"},
+    {"name": "xhaip-pain", "type": "guideline", "trust_level": "T1"},
+    {"name": "xhaip-pediatrics", "type": "guideline", "trust_level": "T1"},
+    {"name": "xhaip-masterdata", "type": "guideline", "trust_level": "T1"}
+  ],
+  "principles": [
+    "YAML-driven Agent definition (30 lines YAML + pure business logic)",
+    "Engine as independent pip package (haip-core)",
+    "LLM Provider abstraction (1-line config swap)",
+    "Knowledge base SQLite/YAML sync"
+  ],
+  "enhanced_modules": {
+    "orthopedics": {"lines": 392, "functions": 9, "features": ["T2 timing engine (8-factor)", "4-dimension complication predictor", "4-stage nursing plan", "4-timepoint followup plan", "fracture classifier", "surgery planner"]},
+    "cardio_risk": {"lines": 153, "functions": 3, "features": ["RCRI scoring", "ECG pattern library (6 patterns)", "Periop MI classification"]},
+    "anesthesia": {"lines": 116, "functions": 4, "features": ["ASA grading", "Difficult airway assessment", "Anticoagulation bridge plan", "Anesthesia plan"]},
+    "cardio_surgery": {"lines": 94, "functions": 3, "features": ["EuroSCORE II", "Anticoagulation plan (warfarin/NOAC)", "Postop management"]},
+    "pediatrics": {"lines": 151, "functions": 3, "features": ["Growth assessment", "Pediatric dosing (8 drugs)", "IMCI decision tree (8 rules)"]},
+    "acute_pain": {"lines": 99, "functions": 3, "features": ["NRS/VAS + neuropathic detection", "PCA dosing (age/renal/liver adjusted)", "Crisis detection (compartment/arterial/nerve)"]},
+    "cancer_pain": {"lines": 92, "functions": 3, "features": ["WHO 3-step ladder", "Opioid safety (OD/DDI/renal/liver)", "Palliative referral"]},
+    "medical_record": {"lines": 115, "functions": 4, "features": ["5 sample patients (P001-P005)", "Lab results query", "Exam reports query", "Patient search"]}
+  },
+  "last_snapshot": "2026-07-09T16:50:00"
+}

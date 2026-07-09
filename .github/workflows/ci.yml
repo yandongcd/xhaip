@@ -1,0 +1,32 @@
+name: xhaip CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install haip-core
+        run: pip install -e "packages/haip-core[dev]"
+
+      - name: Lint (ruff)
+        run: python -m ruff check packages/haip-core/haip/
+
+      - name: Type check (mypy)
+        run: python -m mypy packages/haip-core/haip/ --show-error-codes --no-error-summary
+
+      - name: Unit tests + coverage
+        run: python -m pytest packages/haip-core/tests/ --cov=packages/haip-core/haip --cov-report=term --cov-fail-under=70
+
+      - name: Integration tests
+        run: python -m pytest tests/integration/ -v

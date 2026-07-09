@@ -1,0 +1,282 @@
+# TOGAF 10 — Business Service Catalog
+# 全院 MCP 工具清单 — 每个 MCP Tool 对应一个 TOGAF Business Service ABB
+# 来源: 各 agent TOOL_MANIFEST
+
+services:
+  # ══ cardio_risk (Skill Agent) ══
+  - id: svc-assess-cardiac
+    name: 综合心脏评估
+    agent: cardio_risk
+    agent_type: specialist
+    mcp_tool: assess_cardiac
+    input: patient (object)
+    output: rhythm + structure + coronary
+    consumers: [orthopedic_surgery, anesthesia_risk]
+
+  - id: svc-assess-mi
+    name: 心梗风险评估
+    agent: cardio_risk
+    agent_type: specialist
+    mcp_tool: assess_mi
+    input: patient (object)
+    output: risk_level + cardiac_enzymes + killip_class
+    consumers: [orthopedic_surgery]
+
+  - id: svc-assess-hypertension
+    name: 高血压评估
+    agent: cardio_risk
+    agent_type: specialist
+    mcp_tool: assess_hypertension
+    input: patient (object)
+    output: bp_grade + risk_level + recommendations
+    consumers: [orthopedic_surgery]
+
+  - id: svc-interpret-ecg
+    name: ECG 判读
+    agent: cardio_risk
+    agent_type: specialist
+    mcp_tool: interpret_ecg
+    input: patient (object) + ecg_text (string, optional)
+    output: findings + high_risk_count
+    consumers: [orthopedic_surgery, anesthesia_risk]
+
+  # ══ anesthesia_risk (Skill Agent) ══
+  - id: svc-assess-anesthesia
+    name: 综合麻醉风险评估
+    agent: anesthesia_risk
+    agent_type: specialist
+    mcp_tool: assess_anesthesia
+    input: patient (object)
+    output: risk_level + asa + anticoagulation + airway
+    consumers: [orthopedic_surgery]
+
+  - id: svc-assess-asa
+    name: ASA 分级评估
+    agent: anesthesia_risk
+    agent_type: specialist
+    mcp_tool: assess_asa
+    input: patient (object)
+    output: class + modifier + mortality_risk
+    consumers: [orthopedic_surgery]
+
+  - id: svc-assess-anticoagulation
+    name: 围术期抗凝管理
+    agent: anesthesia_risk
+    agent_type: specialist
+    mcp_tool: assess_anticoagulation
+    input: patient (object)
+    output: medications + bridging_plan
+    consumers: [orthopedic_surgery, cardio_surgery]
+
+  - id: svc-assess-airway
+    name: 气道评估
+    agent: anesthesia_risk
+    agent_type: specialist
+    mcp_tool: assess_airway
+    input: patient (object)
+    output: mallampati + difficult_airway_risk
+    consumers: [orthopedic_surgery]
+
+  # ══ pharmacy (Business Agent) ══
+  - id: svc-nutrition-nrs2002
+    name: NRS-2002 营养筛查
+    agent: pharmacy
+    agent_type: business
+    mcp_tool: nutrition.nrs2002
+    input: patient (object)
+    output: total_score + risk_level + recommendation
+    consumers: [orthopedic_surgery, icu]
+
+  - id: svc-nutrition-glim
+    name: GLIM 营养不良诊断
+    agent: pharmacy
+    agent_type: business
+    mcp_tool: nutrition.glim
+    input: patient (object) + nrs_total (optional)
+    output: diagnosis + severity + criteria
+    consumers: [orthopedic_surgery]
+
+  - id: svc-nutrition-tpn-calculate
+    name: TPN 处方计算
+    agent: pharmacy
+    agent_type: business
+    mcp_tool: nutrition.tpn_calculate
+    input: patient (object)
+    output: total_energy + glucose + fat + aa + cn_ratio
+    consumers: [icu, general_surgery]
+
+  - id: svc-nutrition-refeeding
+    name: 再喂养风险评估
+    agent: pharmacy
+    agent_type: business
+    mcp_tool: nutrition.refeeding_risk
+    input: patient (object)
+    output: risk_level + risk_factors + recommendations
+    consumers: [icu]
+
+  # ══ cardio_surgery (Business Agent) ══
+  - id: svc-anticoag-cha2ds2
+    name: CHA2DS2-VASc 卒中风险评分
+    agent: cardio_surgery
+    agent_type: business
+    mcp_tool: anticoagulation.cha2ds2_vasc
+    input: age, gender, hypertension, diabetes, etc.
+    output: score + risk_str + recommendation
+    consumers: [orthopedic_surgery, anesthesia_risk]
+
+  - id: svc-anticoag-hasbled
+    name: HAS-BLED 出血风险评分
+    agent: cardio_surgery
+    agent_type: business
+    mcp_tool: anticoagulation.has_bled
+    input: hypertension, renal, liver, etc.
+    output: score + risk_str + recommendation
+    consumers: [orthopedic_surgery]
+
+  - id: svc-anticoag-simulate
+    name: 居家抗凝 INR 模拟
+    agent: cardio_surgery
+    agent_type: business
+    mcp_tool: anticoagulation.simulate
+    input: patient (object) + weeks (optional)
+    output: inr_history + ttr + risk_assessment
+    consumers: [cardio_surgery]
+
+  - id: svc-coag-inr-assess
+    name: INR 快速评估
+    agent: cardio_surgery
+    agent_type: business
+    mcp_tool: coagulation.inr_assess
+    input: inr (number)
+    output: inr_level + bleeding_risk + recommendation
+    consumers: [orthopedic_surgery]
+
+  # ══ medical_record (Master Data) ══
+  - id: svc-patient-get
+    name: 患者全量数据查询
+    agent: medical_record
+    agent_type: master_data
+    mcp_tool: medical-record.get_patient
+    input: patient_id (string)
+    output: full patient record
+    consumers: [all agents]
+
+  - id: svc-patient-search
+    name: 患者搜索
+    agent: medical_record
+    agent_type: master_data
+    mcp_tool: medical-record.search_patients
+    input: keyword (string)
+    output: patient list
+    consumers: [all agents]
+
+  - id: svc-patient-list
+    name: 患者列表
+    agent: medical_record
+    agent_type: master_data
+    mcp_tool: medical-record.list_patients
+    input: page, page_size, dept (optional)
+    output: paginated patient list
+    consumers: [all agents]
+
+  # ══ metrics (Master Data) ══
+  - id: svc-indicator-trends
+    name: 指标趋势查询
+    agent: metrics
+    agent_type: master_data
+    mcp_tool: metrics.get_trends
+    input: patient_id, indicators (list)
+    output: time series data
+    consumers: [all agents]
+
+  - id: svc-indicator-panel
+    name: 指标面板查询
+    agent: metrics
+    agent_type: master_data
+    mcp_tool: metrics.get_panel
+    input: patient_id, panel_id
+    output: panel data with alerts
+    consumers: [orthopedic_surgery, pharmacy, cardio_surgery]
+
+  - id: svc-indicator-alerts
+    name: 预警查询
+    agent: metrics
+    agent_type: master_data
+    mcp_tool: metrics.get_alerts
+    input: patient_id
+    output: alert list
+    consumers: [all agents]
+
+  # ══ rules (Master Data) ══
+  - id: svc-rules-check-lab
+    name: 检验值判定 (T2 > T1 优先级)
+    agent: rules
+    agent_type: master_data
+    mcp_tool: rules.check_lab
+    input: name, value, dept (optional)
+    output: abnormal + direction + message + source
+    consumers: [all agents]
+
+  - id: svc-rules-query
+    name: 规则查询
+    agent: rules
+    agent_type: master_data
+    mcp_tool: rules.query
+    input: dept, diagnosis (optional)
+    output: sources + rules
+    consumers: [all agents]
+
+  - id: svc-rules-list-sources
+    name: 规则来源列表
+    agent: rules
+    agent_type: master_data
+    mcp_tool: rules.list_sources
+    input: dept (optional)
+    output: source catalog
+    consumers: [all agents]
+
+  # ══ togaf (Infrastructure) ══
+  - id: svc-togaf-metamodel
+    name: TOGAF 元模型查询
+    agent: togaf
+    agent_type: infrastructure
+    mcp_tool: metamodel.list
+    input: entity_type (optional)
+    output: entity_types + relationship_types
+    consumers: [nx, all agents]
+
+  - id: svc-togaf-architecture
+    name: 4A 架构实例构建
+    agent: togaf
+    agent_type: infrastructure
+    mcp_tool: architecture.build
+    input: dept (string)
+    output: value_streams + business_processes + data + apps
+    consumers: [all agents]
+
+  - id: svc-togaf-layout
+    name: 力导向布局计算
+    agent: togaf
+    agent_type: infrastructure
+    mcp_tool: layout.graph
+    input: nodes, edges
+    output: [{id, x, y}]
+    consumers: [nx, pharmacy, orthopedic_surgery]
+
+  - id: svc-togaf-template-render
+    name: EA 模板渲染
+    agent: togaf
+    agent_type: infrastructure
+    mcp_tool: template.render
+    input: name, version, theme (optional)
+    output: HTML string
+    consumers: [all agents]
+
+  - id: svc-togaf-audit
+    name: 部署环境架构审计
+    agent: togaf
+    agent_type: infrastructure
+    mcp_tool: audit.environment
+    input: null
+    output: architecture landscape
+    consumers: [nx]

@@ -1,0 +1,29 @@
+name: medical-record
+cn_name: 患者数据中心
+version: "1.0.0"
+type: master_data
+department: 全院
+port: 8766
+aliases: [病历, 患者数据, medical-record]
+
+prompt:
+  system: |
+    你是患者数据中心，作为全院患者数据的单一真相源。
+    提供患者基本信息、病历、检验检查结果的统一查询服务。
+  temperature: 0.1
+
+tools:
+  - name: get_patient
+    description: 获取患者基本信息与病历摘要
+    handler: medical_record.get_patient
+    input: {patient_id: str}
+
+  - name: get_labs
+    description: 获取患者检验结果
+    handler: medical_record.get_labs
+    input: {patient_id: str, days: int}
+
+  - name: get_exams
+    description: 获取患者影像检查报告
+    handler: medical_record.get_exams
+    input: {patient_id: str}

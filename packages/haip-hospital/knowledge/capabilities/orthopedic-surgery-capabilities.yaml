@@ -1,0 +1,161 @@
+# ============================================================
+# TOGAF Class: BusinessCapability (Extension ABB)
+# Source: G211 Business Capabilities V2
+# Trust Level: T1
+# ============================================================
+name: orthopedic-surgery-capabilities
+version: "1.0"
+description: 创伤骨科业务能力树 — 从临床指南推导，按 ValueStage 组织
+department: trauma_ortho（创伤骨科）
+value_stream: 救死扶伤
+
+# ── L1: 全院统一，由 catalog.yaml 定义 ──
+# L1 = Patient Care（患者诊疗）
+
+capabilities:
+  # ── ValueStage: 明确诊断 ──
+
+  - id: cap-ortho-classification
+    name: Fracture Classification
+    level: L3
+    description: 对骨折进行 Garden/Evans/AO 分型，确定骨折类型和稳定性
+    value_stages:
+      - 明确诊断
+    enabling_roles:
+      - attending（主治医生）
+      - ortho_doctor（骨科医生）
+    guideline_refs:
+      - nhc-2022
+      - csco-femoral-neck-2018
+      - csco-intertroch-2020
+      - aaos-2022
+
+  - id: cap-ortho-comorbidity
+    name: Comorbidity Assessment
+    level: L3
+    description: 评估患者合并症（心脏/肺部/脑血管/肾脏/内分泌），为术前风险分层提供依据
+    value_stages:
+      - 明确诊断
+    enabling_roles:
+      - attending（主治医生）
+    guideline_refs:
+      - nhc-2022
+      - efort-2021
+      - nanfang-hip-fracture-triage
+
+  - id: cap-ortho-stability
+    name: Stability Judgment
+    level: L3
+    description: 判断骨折稳定性，指导治疗方案选择（保守/手术）
+    value_stages:
+      - 明确诊断
+    enabling_roles:
+      - attending（主治医生）
+      - ortho_doctor（骨科医生）
+    guideline_refs:
+      - csco-intertroch-2020
+
+  # ── ValueStage: 有效治疗 ──
+
+  - id: cap-ortho-timing
+    name: Surgical Timing Decision
+    level: L3
+    description: 综合 6 因子（心脏/抗凝/贫血/肾/感染/血糖）判断手术时机，决定是否启动 MDT
+    value_stages:
+      - 有效治疗
+    enabling_roles:
+      - attending（主治医生）
+      - anesthesiologist（麻醉科医生）
+    guideline_refs:
+      - nhc-2022
+      - nice-ng37
+      - aaos-2022
+      - efort-2021
+      - nanfang-hip-fracture-triage
+
+  - id: cap-ortho-surgery
+    name: Surgical Treatment
+    level: L2
+    description: 对骨折进行手术治疗，包括方案制定（THA/HA/PFNA）和手术执行
+    value_stages:
+      - 有效治疗
+    enabling_roles:
+      - surgeon（主刀医生）
+      - attending（主治医生）
+      - anesthesiologist（麻醉科医生）
+    guideline_refs:
+      - nhc-2022
+      - aaos-2022
+      - csco-femoral-neck-2018
+      - csco-intertroch-2020
+
+  - id: cap-ortho-nursing
+    name: Perioperative Nursing
+    level: L2
+    description: 围术期全程护理，含 DVT 预防、感染防控、疼痛、体位、压疮、管道、跌倒、心理护理
+    value_stages:
+      - 有效治疗
+      - 康复回归
+    enabling_roles:
+      - head_nurse（护士长）
+      - nurse（护士）
+    guideline_refs:
+      - nhc-2022
+      - frailty-nursing-consensus
+      - dvt-consensus-2024
+
+  - id: cap-ortho-mdt
+    name: Multidisciplinary Consultation
+    level: L3
+    description: 组织和管理涉及心内/麻醉/老年/神经等多个专科的 MDT 会诊
+    value_stages:
+      - 有效治疗
+    enabling_roles:
+      - attending（主治医生）
+    guideline_refs:
+      - nice-ng37
+      - efort-2021
+      - nanfang-hip-fracture-triage
+
+  # ── ValueStage: 康复回归 ──
+
+  - id: cap-ortho-rehab
+    name: Postoperative Rehabilitation
+    level: L3
+    description: 术后功能恢复训练，含早期活动和分阶段康复方案
+    value_stages:
+      - 康复回归
+    enabling_roles:
+      - rehab_therapist（康复治疗师）
+      - physiotherapist（物理治疗师）
+    guideline_refs:
+      - nhc-2022
+      - aaos-2022
+      - csco-femoral-neck-2018
+
+  - id: cap-ortho-followup
+    name: Patient Follow-up
+    level: L3
+    description: 出院后长期随访管理，监控恢复进展和二次骨折预防
+    value_stages:
+      - 康复回归
+    enabling_roles:
+      - attending（主治医生）
+      - followup_nurse（随访护士）
+    guideline_refs:
+      - nhc-2022
+      - nice-ng37
+      - dvt-consensus-2024
+
+  - id: cap-ortho-fall-prevention
+    name: Fall Prevention
+    level: L3
+    description: 预防老年髋部骨折患者住院期间和出院后跌倒
+    value_stages:
+      - 康复回归
+    enabling_roles:
+      - nurse（护士）
+      - head_nurse（护士长）
+    guideline_refs:
+      - nhc-2022
+      - frailty-nursing-consensus

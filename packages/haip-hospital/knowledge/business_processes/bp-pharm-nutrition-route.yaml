@@ -1,0 +1,97 @@
+# ============================================================
+# Business Process: 营养支持途径选择
+# TOGAF Class: BusinessProcess + ProcessStep (Core ABB)
+# Trust Level: T1
+# ============================================================
+name: bp-pharm-nutrition-route
+version: "1.0"
+description: 营养支持途径选择流程 — NRS2002 筛查后决定 EN vs PN vs SPN
+owner: 临床药师 + 营养师
+value_stages:
+  - 有效治疗
+guideline_refs:
+  - china-en-pn-2023
+  - espn-2023
+
+steps:
+  - id: bp-nr-1
+    name: NRS2002 营养风险筛查
+    actor: 临床药师 + 营养师
+    description: |
+      完成 NRS2002 量表评估：
+      1. 营养状态评分（BMI/体重下降/进食量）
+      2. 疾病严重程度评分
+      3. 年龄评分（≥70岁加1分）
+      总分≥3分为有营养风险，启动营养支持
+    data_used: [de-patient, de-lab-results]
+    decision: "NRS2002 ≥ 3？→ 是(启动营养支持) | 否(7天后复筛)"
+    implementation:
+      module: agents.domains.haip.pharmacy.core.assessment
+      tool: pharmacy.assess
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-nr-2
+    name: 肠道功能评估
+    actor: 临床药师 + 营养师
+    description: |
+      评估患者肠道可用性：
+      1. 肠道是否通畅（无梗阻/穿孔/严重缺血）
+      2. 肠道吸收功能是否存在
+      3. 是否有 EN 禁忌证（活动性消化道出血/严重腹胀/肠瘘）
+    data_used: [de-patient, de-clinical-record, de-lab-results]
+    decision: "肠道是否可用？→ 可用(EN) | 不可用(PN)"
+    implementation:
+      module: agents.domains.haip.pharmacy.core.assessment
+      tool: pharmacy.assess
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-nr-3
+    name: 能量目标与蛋白质需求计算
+    actor: 临床药师
+    description: |
+      根据患者状态计算营养目标：
+      1. 基础能量消耗（Harris-Benedict 公式）
+      2. 应激系数校正
+      3. 蛋白质需求（1.2-2.0 g/kg/d 视病情）
+    data_used: [de-patient, de-lab-results]
+    decision: null
+    implementation:
+      module: agents.domains.haip.pharmacy.core.energy_calculator
+      tool: pharmacy.prescribe
+
+  - id: bp-nr-4
+    name: 肠内营养途径与制剂选择
+    actor: 临床药师 + 营养师
+    description: |
+      肠道可用时选择 EN 路径：
+      1. 途径选择：口服/鼻胃管/鼻肠管/PEG
+      2. 制剂选择：标准配方/高蛋白/糖尿病专用/免疫增强
+      3. 输注方式：推注/间歇滴注/持续泵入
+    data_used: [de-patient, de-lab-results]
+    decision: "EN 制剂类型 → 标准 | 高蛋白 | 糖尿病 | 免疫增强"
+    implementation:
+      module: agents.domains.haip.pharmacy.core.en_selector
+      tool: pharmacy.prescribe
+      decision_coverage:
+        total: 4
+        covered: 4
+
+  - id: bp-nr-5
+    name: 肠外营养适应证确认
+    actor: 临床药师
+    description: |
+      肠道不可用时确认 PN 适应证：
+      1. 肠道完全不可用 → 全肠外营养（TPN）
+      2. 肠道部分可用但不足 → 补充性肠外营养（SPN）
+    data_used: [de-patient, de-lab-results]
+    decision: "PN 类型 → TPN(全肠外) | SPN(补充性)"
+    implementation:
+      module: agents.domains.haip.pharmacy.core.assessment
+      tool: pharmacy.prescribe
+      decision_coverage:
+        total: 2
+        covered: 2

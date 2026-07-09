@@ -1,0 +1,233 @@
+rule_set:
+  id: hip_fracture_timing
+  domain: orthopedic_surgery
+  decision_points:
+    - cardiac_delay
+    - anticoagulation_delay
+    - anemia_delay
+    - renal_delay
+    - infection_delay
+    - glucose_delay
+    - surgical_timing
+  sources:
+    - nice-ng37
+    - weiwei-2022
+    - aaos-2022
+    - universal-mi-definition-2018
+    - accp-antithrombotic
+    - kdigo-ckd
+    - ada-standards-2025
+  version: "2.0"
+  trust_level: T1
+  owner: attending
+
+rules:
+  - id: cardiac-ctni-high
+    decision_point: cardiac_delay
+    condition_expr: "context.troponin_I > 0.04 OR context.troponin_T > 0.1"
+    conclusion: "心脏延迟因素触发 — 肌钙蛋白升高"
+    rule_type: threshold
+    certainty: strong
+    evidence:
+      - source_id: universal-mi-definition-2018
+        chapter: "§4"
+        confidence: 0.95
+    exceptions: ["慢性肾病终末期肌钙蛋白持续轻度升高"]
+
+  - id: cardiac-ckmb-high
+    decision_point: cardiac_delay
+    condition_expr: "context.ckmb > 25"
+    conclusion: "心脏延迟因素触发 — CK-MB升高"
+    rule_type: threshold
+    certainty: strong
+    evidence:
+      - source_id: universal-mi-definition-2018
+        chapter: "§4"
+        confidence: 0.90
+
+  - id: cardiac-ecg-high-risk
+    decision_point: cardiac_delay
+    condition_eval: "$ecg_high_risk(context.ecg_text)"
+    conclusion: "心脏延迟因素触发 — ECG高危模式"
+    rule_type: deterministic
+    certainty: strong
+    evidence:
+      - source_id: universal-mi-definition-2018
+        chapter: "§3"
+        confidence: 0.90
+
+  - id: cardiac-diagnosis-keyword
+    decision_point: cardiac_delay
+    condition_eval: "$has_diagnosis_keyword(context.diagnosis, ['急性心肌梗死','NSTEMI','STEMI','急性冠脉综合征','不稳定性心绞痛'])"
+    conclusion: "心脏延迟因素触发 — 诊断含ACS关键词"
+    rule_type: deterministic
+    certainty: strong
+    evidence:
+      - source_id: universal-mi-definition-2018
+        chapter: "§2"
+        confidence: 0.85
+
+  - id: anticoag-warfarin-inr
+    decision_point: anticoagulation_delay
+    condition_expr: "context.INR > 1.5"
+    conclusion: "抗凝延迟因素触发 — 华法林+INR升高"
+    rule_type: threshold
+    certainty: strong
+    evidence:
+      - source_id: accp-antithrombotic
+        chapter: "§桥接治疗"
+        confidence: 0.90
+    exceptions: ["INR治疗性范围且可急诊手术"]
+
+  - id: anticoag-drug-keyword
+    decision_point: anticoagulation_delay
+    condition_eval: "$has_medication_keyword(context.medications, ['华法林','利伐沙班','达比加群','阿哌沙班','氯吡格雷','替格瑞洛'])"
+    conclusion: "抗凝延迟因素触发 — 使用抗凝/抗血小板药物"
+    rule_type: deterministic
+    certainty: moderate
+    evidence:
+      - source_id: accp-antithrombotic
+        chapter: "§围术期抗凝管理"
+        confidence: 0.85
+
+  - id: anemia-severe
+    decision_point: anemia_delay
+    condition_expr: "context.hemoglobin < 80"
+    conclusion: "贫血延迟因素触发 — 重度贫血"
+    rule_type: threshold
+    certainty: strong
+    evidence:
+      - source_id: weiwei-2022
+        chapter: "§3.2"
+        confidence: 0.90
+
+  - id: anemia-moderate-with-cardiac
+    decision_point: anemia_delay
+    condition_expr: "context.hemoglobin < 100 AND $has_cardiac_history(context.past_history)"
+    conclusion: "贫血延迟因素触发 — 中度贫血合并心脏病"
+    rule_type: threshold
+    certainty: moderate
+    evidence:
+      - source_id: weiwei-2022
+        chapter: "§3.2"
+        confidence: 0.80
+
+  - id: renal-egfr-severe
+    decision_point: renal_delay
+    condition_expr: "context.eGFR < 30"
+    conclusion: "肾功能延迟因素触发 — eGFR严重下降"
+    rule_type: threshold
+    certainty: strong
+    evidence:
+      - source_id: kdigo-ckd
+        chapter: "§CKD分期"
+        confidence: 0.95
+
+  - id: renal-egfr-moderate
+    decision_point: renal_delay
+    condition_expr: "context.eGFR < 60 AND context.needs_contrast == true"
+    conclusion: "肾功能延迟因素触发 — 中度减退+需造影"
+    rule_type: threshold
+    certainty: moderate
+    evidence:
+      - source_id: kdigo-ckd
+        chapter: "§造影剂肾病预防"
+        confidence: 0.80
+
+  - id: renal-creatinine-high
+    decision_point: renal_delay
+    condition_expr: "context.creatinine > 133"
+    conclusion: "肾功能延迟因素触发 — 血肌酐升高"
+    rule_type: threshold
+    certainty: moderate
+    evidence:
+      - source_id: kdigo-ckd
+        chapter: "§肾功能评估"
+        confidence: 0.80
+
+  - id: infection-wbc
+    decision_point: infection_delay
+    condition_expr: "context.WBC > 12"
+    conclusion: "感染延迟因素触发 — 白细胞升高"
+    rule_type: threshold
+    certainty: moderate
+    evidence:
+      - source_id: weiwei-2022
+        chapter: "§感染控制"
+        confidence: 0.80
+
+  - id: infection-crp
+    decision_point: infection_delay
+    condition_expr: "context.CRP > 100"
+    conclusion: "感染延迟因素触发 — CRP显著升高"
+    rule_type: threshold
+    certainty: moderate
+    evidence:
+      - source_id: weiwei-2022
+        chapter: "§感染控制"
+        confidence: 0.80
+
+  - id: infection-diagnosis
+    decision_point: infection_delay
+    condition_eval: "$has_diagnosis_keyword(context.diagnosis, ['肺炎','肺部感染','泌尿系感染','尿路感染','蜂窝织炎','切口感染','败血症','脓毒症'])"
+    conclusion: "感染延迟因素触发 — 诊断含感染关键词"
+    rule_type: deterministic
+    certainty: strong
+    evidence:
+      - source_id: weiwei-2022
+        chapter: "§感染控制"
+        confidence: 0.85
+
+  - id: glucose-high
+    decision_point: glucose_delay
+    condition_expr: "context.glucose > 13.9"
+    conclusion: "血糖延迟因素触发 — 空腹血糖升高"
+    rule_type: threshold
+    certainty: strong
+    evidence:
+      - source_id: ada-standards-2025
+        chapter: "§围术期血糖管理"
+        confidence: 0.90
+
+  - id: glucose-dka
+    decision_point: glucose_delay
+    condition_eval: "$has_diagnosis_keyword(context.diagnosis, ['糖尿病酮症酸中毒','DKA','高渗高血糖状态','HHS'])"
+    conclusion: "血糖延迟因素触发 — DKA/HHS"
+    rule_type: deterministic
+    certainty: strong
+    evidence:
+      - source_id: ada-standards-2025
+        chapter: "§糖尿病急性并发症"
+        confidence: 0.95
+
+  - id: timing-emergency
+    decision_point: surgical_timing
+    condition_expr: "context.delay_factor_count == 0"
+    conclusion: "48小时内急诊手术"
+    certainty: strong
+    evidence:
+      - source_id: nice-ng37
+        chapter: "1.3.1"
+        quote: "Surgery should be performed within 48 hours"
+        confidence: 0.95
+    exceptions: ["急性心梗未稳定"]
+
+  - id: timing-urgent
+    decision_point: surgical_timing
+    condition_expr: "1 <= context.delay_factor_count <= 2"
+    conclusion: "积极优化可逆因素后3-7天限期手术"
+    certainty: moderate
+    evidence:
+      - source_id: weiwei-2022
+        chapter: "§4.2"
+        confidence: 0.90
+
+  - id: timing-elective
+    decision_point: surgical_timing
+    condition_expr: "context.delay_factor_count >= 3"
+    conclusion: "7天以上延迟手术，多学科协作管理"
+    certainty: moderate
+    evidence:
+      - source_id: weiwei-2022
+        chapter: "§4.3"
+        confidence: 0.90

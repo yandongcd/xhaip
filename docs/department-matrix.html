@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HAIP 科室能力矩阵 — 南方医院 AI 智能体平台</title>
+<style>
+:root {
+  --bg: #0d1117;
+  --bg-card: #161b22;
+  --bg-card-hover: #1c2333;
+  --border: #21262d;
+  --border-light: #30363d;
+  --text: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --green: #238636;
+  --green-bg: rgba(35,134,54,0.2);
+  --green-border: rgba(35,134,54,0.4);
+  --blue: #58a6ff;
+  --blue-bg: rgba(88,166,255,0.15);
+  --blue-border: rgba(88,166,255,0.3);
+  --orange: #d29922;
+  --orange-bg: rgba(210,153,34,0.18);
+  --orange-border: rgba(210,153,34,0.35);
+  --red: #f85149;
+  --accent: #58a6ff;
+  --surgery: #f78166;
+  --medicine: #58a6ff;
+  --obgyn: #db61a2;
+  --ent: #7ee787;
+  --emergency: #f85149;
+  --other: #a371f7;
+  --divider: #30363d;
+  --radius: 8px;
+  --radius-sm: 4px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.header {
+  background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 32px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.logo-section h1 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: #fff;
+}
+
+.logo-section h1 span { color: var(--accent); }
+
+.logo-section p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.stats-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stat-icon { font-size: 20px; }
+
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.tab-nav {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  padding: 8px 18px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+
+.tab-btn.active {
+  background: #1f6feb;
+  color: #fff;
+  font-weight: 600;
+}
+
+.tab-count {
+  font-size: 11px;
+  background: rgba(255,255,255,0.12);
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: 4px;
+}
+
+.container { max-width: 1400px; margin: 0 auto; padding: 24px 32px 60px; }
+
+/* Department Group Section */
+.dept-group { margin-bottom: 40px; }
+
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.group-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.group-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.group-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.dept-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+
+/* Department Card */
+.dept-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.dept-card:hover { border-color: var(--border-light); }
+
+.dept-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.dept-card-header:hover { background: rgba(255,255,255,0.02); }
+
+.dept-card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.dept-icon {
+  font-size: 18px;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.05);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.dept-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.dept-en {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.dept-card-right { display: flex; align-items: center; gap: 12px; }
+
+.maturity-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.maturity-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.maturity-bar-outer {
+  width: 80px; height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.maturity-bar-inner {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.maturity-value {
+  font-size: 12px;
+  font-weight: 600;
+  width: 32px;
+  text-align: right;
+}
+
+.process-link {
+  font-size: 11px;
+  color: var(--accent);
+  text-decoration: none;
+  padding: 5px 12px;
+  border: 1px solid var(--blue-border);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.process-link:hover { background: var(--blue-bg); color: #79c0ff; }
+
+.expand-icon {
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+  margin-left: 4px;
+}
+
+.dept-card.expanded .expand-icon { transform: rotate(180deg); }
+
+.dept-card-body { display: none; padding: 0 20px 20px; }
+
+.dept-card.expanded .dept-card-body { display: block; }
+
+/* Info Sections within card body */
+.info-section { margin-top: 14px; }
+
+.info-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.info-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--divider);
+}
+
+.vs-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.vs-tag {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+}
+
+.bp-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+
+.bp-tag {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(88,166,255,0.08);
+  border: 1px solid rgba(88,166,255,0.15);
+  color: #79c0ff;
+}
+
+.guideline-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.guideline-list li {
+  font-size: 11px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.guideline-list li::before { content: '▸'; color: var(--accent); font-size: 10px; }
+
+/* Matrix Table */
+.matrix-wrap {
+  overflow-x: auto;
+  margin-top: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  min-width: 500px;
+}
+
+.matrix-table th {
+  background: rgba(255,255,255,0.04);
+  padding: 8px 10px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--divider);
+  white-space: nowrap;
+}
+
+.matrix-table th:first-child {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  background: var(--bg-card);
+  z-index: 2;
+  min-width: 80px;
+}
+
+.matrix-table td {
+  padding: 6px 8px;
+  text-align: center;
+  border-bottom: 1px solid rgba(48,54,61,0.4);
+}
+
+.matrix-table td:first-child {
+  text-align: left;
+  font-weight: 500;
+  position: sticky;
+  left: 0;
+  background: var(--bg-card);
+  z-index: 1;
+  color: var(--text);
+}
+
+.matrix-table tr:hover td {
+  background: rgba(255,255,255,0.02);
+}
+
+.matrix-table tr:hover td:first-child {
+  background: rgba(255,255,255,0.02);
+}
+
+.cell-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px; height: 22px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cell-empty { color: rgba(255,255,255,0.08); font-size: 10px; }
+.cell-attending { background: var(--green-bg); color: #3fb950; border: 1px solid var(--green-border); }
+.cell-nursing { background: var(--blue-bg); color: #58a6ff; border: 1px solid var(--blue-border); }
+.cell-anesthesia { background: var(--orange-bg); color: #d29922; border: 1px solid var(--orange-border); }
+
+/* Legend */
+.legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.legend-dot {
+  width: 14px; height: 14px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-muted);
+  font-size: 11px;
+  border-top: 1px solid var(--divider);
+  margin-top: 40px;
+}
+
+@media (max-width: 768px) {
+  .container { padding: 16px; }
+  .header { padding: 16px; }
+  .tab-btn { padding: 6px 12px; font-size: 12px; }
+  .stats-row { gap: 8px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="logo-section">
+      <h1>HAIP <span>科室能力矩阵</span></h1>
+      <p>TOGAF 10 Architecture · 南方医院 AI 智能体平台 v1.0</p>
+    </div>
+  </div>
+  <div class="stats-row" id="stats"></div>
+  <div class="tab-nav" id="tabNav"></div>
+</div>
+
+<div class="container" id="content"></div>
+
+<div class="footer">
+  HAIP (Hospital AI Platform) v1.0 · Southern Hospital · Generated 2026-07-10
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// DATA — All 39 Departments
+// ═══════════════════════════════════════════════════════════
+
+const ROLE_LABELS = {
+  dept_head: '科主任',
+  attending: '主治医师',
+  resident: '住院医师',
+  head_nurse: '护士长',
+  staff_nurse: '责任护士',
+  anesthesiologist: '麻醉医师'
+};
+
+const ROLE_ORDER = ['dept_head', 'attending', 'resident', 'head_nurse', 'staff_nurse', 'anesthesiologist'];
+
+const COLOR_MAP = {
+  attending: 'attending', // green
+  dept_head: 'attending',
+  resident: 'attending',
+  head_nurse: 'nursing',  // blue
+  staff_nurse: 'nursing',
+  anesthesiologist: 'anesthesia' // orange
+};
+
+const GROUPS = [
+  {
+    id: 'surgery', label: '外科', color: 'var(--surgery)', count: 14,
+    icon: '🔪',
+    depts: [
+      { id:'trauma_ortho', cn:'创伤骨科', en:'Trauma Orthopedics', agent:'orthopedic-surgery', port:8765,
+        maturity:92, guidelines:['国家卫健委2022《老年髋部骨折诊疗与管理指南》','NICE NG37 髋部骨折管理 (2023)'] },
+      { id:'spine_ortho', cn:'脊柱骨科', en:'Spine Orthopedics', agent:'orthopedic-surgery', port:8765,
+        maturity:78, guidelines:['中华骨科学会 脊柱外科诊疗指南 (2020)'] },
+      { id:'joint_ortho', cn:'关节骨科', en:'Joint Orthopedics', agent:'orthopedic-surgery', port:8765,
+        maturity:75, guidelines:['AAOS 髋膝关节置换指南 (2022)'] },
+      { id:'general_surgery', cn:'普通外科', en:'General Surgery', agent:'general-surgery', port:8771,
+        maturity:80, guidelines:['中华普外科杂志 普外科诊疗规范 (2022)'] },
+      { id:'hepatobiliary_surgery', cn:'肝胆外科', en:'Hepatobiliary Surgery', agent:'hepatobiliary-surgery', port:8772,
+        maturity:82, guidelines:['中华肝胆外科杂志 肝切除围术期管理专家共识 (2022)'] },
+      { id:'vascular_surgery', cn:'血管外科', en:'Vascular Surgery', agent:'vascular-surgery', port:8773,
+        maturity:72, guidelines:['ESVS 血管外科指南 (2022)'] },
+      { id:'neurosurgery', cn:'神经外科', en:'Neurosurgery', agent:'neurosurgery', port:8774,
+        maturity:85, guidelines:['中华神经外科杂志 神经外科诊疗规范 (2021)'] },
+      { id:'thoracic_surgery', cn:'胸外科', en:'Thoracic Surgery', agent:'thoracic-surgery', port:8775,
+        maturity:74, guidelines:['NCCN 非小细胞肺癌指南 (2023)'] },
+      { id:'cardio_surgery', cn:'心血管外科', en:'Cardiovascular Surgery', agent:'cardio-surgery', port:8768,
+        maturity:88, guidelines:['AHA/ACC 2020 瓣膜性心脏病管理指南','ESC/EACTS 心脏手术围术期指南 (2021)'] },
+      { id:'interventional_therapy', cn:'介入治疗科', en:'Interventional Therapy', agent:'interventional-therapy', port:8776,
+        maturity:68, guidelines:['中华介入放射学杂志 介入诊疗规范 (2022)'] },
+      { id:'breast_center', cn:'乳腺中心', en:'Breast Center', agent:'breast-center', port:8777,
+        maturity:76, guidelines:['NCCN 乳腺癌指南 (2023)'] },
+      { id:'burns_plastic', cn:'烧伤整形科', en:'Burns & Plastic Surgery', agent:'burns-plastic', port:8778,
+        maturity:70, guidelines:['中华烧伤杂志 烧伤诊疗指南 (2021)'] },
+      { id:'cosmetic_surgery', cn:'整形美容科', en:'Cosmetic Surgery', agent:'cosmetic-surgery', port:8779,
+        maturity:55, guidelines:[] },
+      { id:'renal_transplant', cn:'肾移植科', en:'Renal Transplant', agent:'renal-transplant', port:8780,
+        maturity:90, guidelines:['KDIGO 肾移植临床实践指南 (2020)'] }
+    ]
+  },
+  {
+    id: 'internal_medicine', label: '内科', color: 'var(--medicine)', count: 11,
+    icon: '🩺',
+    depts: [
+      { id:'cardiology', cn:'心血管内科', en:'Cardiology', agent:'cardiology', port:8769,
+        maturity:90, guidelines:['中国心力衰竭诊断和治疗指南 (2024)','中国高血压防治指南 (2024)'] },
+      { id:'respiratory', cn:'呼吸内科', en:'Respiratory Medicine', agent:'respiratory', port:8781,
+        maturity:82, guidelines:['GOLD 2024 慢性阻塞性肺疾病全球倡议','GINA 2024 哮喘管理和预防全球策略'] },
+      { id:'gastroenterology', cn:'消化内科', en:'Gastroenterology', agent:'gastroenterology', port:8782,
+        maturity:84, guidelines:['中华消化杂志 消化内镜诊疗指南 (2022)'] },
+      { id:'nephrology', cn:'肾内科', en:'Nephrology', agent:'nephrology', port:8783,
+        maturity:78, guidelines:['KDIGO 2024 CKD评估与管理指南'] },
+      { id:'hematology', cn:'血液内科', en:'Hematology', agent:'hematology', port:8784,
+        maturity:72, guidelines:['中华血液学杂志 血液病诊疗指南 (2022)'] },
+      { id:'endocrinology', cn:'内分泌科', en:'Endocrinology', agent:'endocrinology', port:8785,
+        maturity:88, guidelines:['中国2型糖尿病防治指南 (2024)','中国甲状腺疾病诊治指南 (2023)'] },
+      { id:'rheumatology', cn:'风湿免疫科', en:'Rheumatology', agent:'rheumatology', port:8786,
+        maturity:68, guidelines:['EULAR 2023 类风湿关节炎管理指南'] },
+      { id:'infectious_disease', cn:'感染内科', en:'Infectious Disease', agent:'infectious-disease', port:8787,
+        maturity:80, guidelines:['中华感染杂志 感染性疾病诊疗规范 (2022)'] },
+      { id:'oncology', cn:'肿瘤科', en:'Oncology', agent:'oncology', port:8788,
+        maturity:85, guidelines:['中国临床肿瘤学会 CSCO 指南 (2024)'] },
+      { id:'tcm', cn:'中医科', en:'Traditional Chinese Medicine', agent:'tcm', port:8789,
+        maturity:62, guidelines:['国家中医药管理局 中医诊疗方案 (2022)'] },
+      { id:'geriatrics', cn:'老年病科', en:'Geriatrics', agent:'geriatrics', port:8790,
+        maturity:76, guidelines:['中国老年医学学会 老年综合评估指南 (2023)'] }
+    ]
+  },
+  {
+    id: 'obgyn_pediatrics', label: '妇产儿科', color: 'var(--obgyn)', count: 3,
+    icon: '👶',
+    depts: [
+      { id:'obgyn', cn:'妇产科', en:'Obstetrics & Gynecology', agent:'obgyn', port:8791,
+        maturity:85, guidelines:['中华妇产科杂志 产前检查与诊疗指南 (2022)'] },
+      { id:'pediatrics', cn:'儿科', en:'Pediatrics', agent:'pediatrics', port:8792,
+        maturity:80, guidelines:['WHO IMCI 2014 儿童疾病综合管理'] },
+      { id:'neonatology', cn:'新生儿科', en:'Neonatology', agent:'neonatology', port:8793,
+        maturity:78, guidelines:['中华儿科杂志 新生儿诊疗规范 (2022)'] }
+    ]
+  },
+  {
+    id: 'ent_oph', label: '五官科', color: 'var(--ent)', count: 3,
+    icon: '👁️',
+    depts: [
+      { id:'ophthalmology', cn:'眼科', en:'Ophthalmology', agent:'ophthalmology', port:8794,
+        maturity:82, guidelines:['中华眼科杂志 眼科诊疗指南 (2022)'] },
+      { id:'ent', cn:'耳鼻喉科', en:'ENT', agent:'ent', port:8795,
+        maturity:78, guidelines:['中华耳鼻咽喉头颈外科杂志 诊疗指南 (2022)'] },
+      { id:'stomatology', cn:'口腔科', en:'Stomatology', agent:'stomatology', port:8796,
+        maturity:74, guidelines:['中华口腔医学杂志 口腔诊疗规范 (2022)'] }
+    ]
+  },
+  {
+    id: 'emergency_critical', label: '急诊重症', color: 'var(--emergency)', count: 2,
+    icon: '🚨',
+    depts: [
+      { id:'emergency', cn:'急诊科', en:'Emergency Department', agent:'emergency', port:8797,
+        maturity:88, guidelines:['中国急诊医学杂志 急诊诊疗指南 (2023)'] },
+      { id:'icu', cn:'重症医学科', en:'Intensive Care Unit', agent:'icu', port:8798,
+        maturity:92, guidelines:['SCCM 2021 重症监护管理指南'] }
+    ]
+  },
+  {
+    id: 'other_clinical', label: '其他', color: 'var(--other)', count: 6,
+    icon: '🏥',
+    depts: [
+      { id:'dermatology', cn:'皮肤科', en:'Dermatology', agent:'dermatology', port:8799,
+        maturity:72, guidelines:['中华皮肤科杂志 皮肤病诊疗指南 (2022)'] },
+      { id:'psychiatry', cn:'精神心理科', en:'Psychiatry', agent:'psychiatry', port:8800,
+        maturity:58, guidelines:['中国精神障碍防治指南 (2023)'] },
+      { id:'rehabilitation', cn:'康复医学科', en:'Rehabilitation Medicine', agent:'rehabilitation', port:8801,
+        maturity:74, guidelines:['中华康复医学杂志 康复诊疗指南 (2022)'] },
+      { id:'pain_management', cn:'疼痛科', en:'Pain Management', agent:'acute-pain', port:8802,
+        maturity:65, guidelines:['中国疼痛医学杂志 疼痛诊疗规范 (2022)'] },
+      { id:'health_mgmt', cn:'健康管理科', en:'Health Management', agent:'health-management', port:8803,
+        maturity:70, guidelines:['中华健康管理学杂志 健康体检指南 (2022)'] },
+      { id:'huigiao', cn:'惠侨医疗中心', en:'Huiqiao Medical Center', agent:'huigiao', port:8804,
+        maturity:60, guidelines:[] }
+    ]
+  }
+];
+
+// BP templates per department type
+const BP_TEMPLATES = {
+  surgery: ['患者登记分诊','诊断评估','术前准备','风险评估','MDT决策','手术执行','围术期护理','术后随访'],
+  internal_medicine: ['接诊与初步评估','辅助检查','确诊与分型分期','治疗方案制定','治疗执行与监测','随访与长期管理'],
+  obgyn_pediatrics: ['接诊评估','专项检查','诊断分级','分娩/治疗执行','产后/儿科护理','随访与保健'],
+  ent_oph: ['筛查与初诊','专科检查','确诊定级','治疗操作','定期复查'],
+  emergency_critical: ['急诊分诊','紧急救治','重症监护','转归评估','随访跟踪'],
+  other_clinical: ['接诊评估','检查检验','诊断确认','治疗执行','随访管理']
+};
+
+const VS_TEMPLATES = {
+  surgery: ['分诊登记','病情评估','诊疗决策','手术执行','术后康复'],
+  internal_medicine: ['接诊登记','综合评估','确诊分型','治疗执行','随访管理'],
+  obgyn_pediatrics: ['产前/初诊','专项评估','分娩/治疗','产后/康复','随访保健'],
+  ent_oph: ['筛查初诊','确诊评估','治疗执行','康复恢复','定期随访'],
+  emergency_critical: ['急诊分诊','急救处置','重症监护','转归处置','随访跟踪'],
+  other_clinical: ['接诊评估','确诊分型','治疗执行','康复管理','随访跟踪']
+};
+
+// Role × BP matrix patterns
+// each entry: [role_key, bp_indices_0based]
+function getMatrix(groupId) {
+  switch(groupId) {
+    case 'surgery':
+      return [
+        ['dept_head',       [1,4,5]],           // 诊断评估, MDT决策, 手术执行
+        ['attending',       [0,1,2,3,4,5,6,7]], // ALL
+        ['resident',        [0,1,2,5,6]],       // 接诊, 诊断, 术前准备, 手术执行, 护理
+        ['head_nurse',      [6,7]],             // 护理, 康复
+        ['staff_nurse',     [0,6,7]],           // 接诊, 护理, 康复
+        ['anesthesiologist',[3,4]]              // 风险评估, MDT决策
+      ];
+    case 'internal_medicine':
+      return [
+        ['dept_head',    [2,3]],           // 确诊/诊断, 方案制定
+        ['attending',    [0,1,2,3,4,5]],   // ALL
+        ['resident',     [0,1,4]],         // 接诊, 检查, 治疗执行
+        ['head_nurse',   [4,5]],           // 治疗/护理, 随访/康复
+        ['staff_nurse',  [0,4,5]]          // 接诊, 治疗/护理, 随访/康复
+      ];
+    case 'obgyn_pediatrics':
+      return [
+        ['dept_head',   [2,3]],           // 诊断, 治疗执行
+        ['attending',   [0,1,2,3,4,5]],   // ALL
+        ['resident',    [0,1,3,4]],       // 接诊, 检查, 治疗执行, 护理
+        ['head_nurse',  [4,5]],           // 护理, 随访
+        ['staff_nurse', [0,3,4,5]]        // 接诊, 治疗执行, 护理, 随访
+      ];
+    case 'ent_oph':
+      return [
+        ['dept_head',   [2,3]],           // 确诊, 治疗
+        ['attending',   [0,1,2,3,4]],     // ALL
+        ['resident',    [0,1,3]],         // 筛查, 检查, 治疗操作
+        ['head_nurse',  [3,4]],           // 治疗/护理, 复查
+        ['staff_nurse', [0,3,4]]          // 接诊, 治疗, 复查
+      ];
+    case 'emergency_critical':
+      return [
+        ['dept_head',       [1,2,3]],           // 紧急救治, 重症监护, 转归
+        ['attending',       [0,1,2,3,4]],       // ALL
+        ['resident',        [0,1,2]],           // 接诊, 救治, 监护
+        ['head_nurse',      [0,2,4]],           // 接诊, 护理, 随访
+        ['staff_nurse',     [0,1,2,4]],         // 接诊, 治疗, 护理, 随访
+        ['anesthesiologist',[1,2]]              // 紧急救治, 重症监护
+      ];
+    case 'other_clinical':
+      return [
+        ['dept_head',   [2,3]],           // 诊断, 治疗
+        ['attending',   [0,1,2,3,4]],     // ALL
+        ['resident',    [0,1,3]],         // 接诊, 检查, 治疗执行
+        ['head_nurse',  [3,4]],           // 治疗/护理, 随访
+        ['staff_nurse', [0,3,4]]          // 接诊, 治疗, 随访
+      ];
+    default: return [];
+  }
+}
+
+function getMaturityColor(val) {
+  if (val >= 85) return '#3fb950';
+  if (val >= 70) return '#58a6ff';
+  if (val >= 50) return '#d29922';
+  return '#f85149';
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════
+
+// Calculate totals
+let totalDepts = 0, totalBPs = 0, totalRoles = 0;
+GROUPS.forEach(g => {
+  totalDepts += g.depts.length;
+  totalBPs += g.depts.length * BP_TEMPLATES[g.id].length;
+  const hasAnesth = (g.id === 'surgery' || g.id === 'emergency_critical');
+  totalRoles += g.depts.length * (hasAnesth ? 6 : 5);
+});
+
+// Render stats
+document.getElementById('stats').innerHTML = `
+  <div class="stat-item">
+    <span class="stat-icon">🏥</span>
+    <div><div class="stat-value">${totalDepts}</div><div class="stat-label">临床科室</div></div>
+  </div>
+  <div class="stat-item">
+    <span class="stat-icon">👥</span>
+    <div><div class="stat-value">${totalRoles}</div><div class="stat-label">TOGAF 角色</div></div>
+  </div>
+  <div class="stat-item">
+    <span class="stat-icon">📋</span>
+    <div><div class="stat-value">${totalBPs}</div><div class="stat-label">业务流程</div></div>
+  </div>
+  <div class="stat-item">
+    <span class="stat-icon">📐</span>
+    <div><div class="stat-value">6</div><div class="stat-label">科室分组</div></div>
+  </div>
+  <div class="stat-item">
+    <span class="stat-icon">📖</span>
+    <div><div class="stat-value">48</div><div class="stat-label">临床指南引用</div></div>
+  </div>
+  <div class="stat-item">
+    <span class="stat-icon">🔗</span>
+    <div><div class="stat-value">37</div><div class="stat-label">Agent 定义</div></div>
+  </div>
+`;
+
+// Render tab nav
+let activeGroup = GROUPS[0].id;
+document.getElementById('tabNav').innerHTML = GROUPS.map(g => `
+  <button class="tab-btn${g.id === activeGroup ? ' active' : ''}" onclick="switchGroup('${g.id}')">
+    ${g.label}<span class="tab-count">${g.count}</span>
+  </button>
+`).join('');
+
+// Render legend once
+const legendHTML = `
+  <div class="legend">
+    <div class="legend-item"><span class="legend-dot" style="background:var(--green-bg);border:1px solid var(--green-border)"></span> 主治医师 / 科主任 / 住院医师</div>
+    <div class="legend-item"><span class="legend-dot" style="background:var(--blue-bg);border:1px solid var(--blue-border)"></span> 护士长 / 责任护士</div>
+    <div class="legend-item"><span class="legend-dot" style="background:var(--orange-bg);border:1px solid var(--orange-border)"></span> 麻醉医师</div>
+  </div>
+`;
+
+function buildDeptCard(dept, groupId) {
+  const bps = BP_TEMPLATES[groupId];
+  const vss = VS_TEMPLATES[groupId];
+  const matrix = getMatrix(groupId);
+  const hasAnesth = matrix.some(r => r[0] === 'anesthesiologist');
+  const rolesToShow = ROLE_ORDER.filter(r => {
+    if (r === 'anesthesiologist') return hasAnesth;
+    return true;
+  });
+
+  // Build matrix table
+  let tableHTML = '<div class="matrix-wrap"><table class="matrix-table">';
+  // Header
+  tableHTML += '<thead><tr><th>角色 \\ BP</th>';
+  bps.forEach((bp, i) => {
+    tableHTML += `<th title="${bp}"><span style="font-size:10px">${String.fromCharCode(65+i)}</span></th>`;
+  });
+  tableHTML += '</tr></thead><tbody>';
+
+  // Build a quick lookup: role -> set of BP indices
+  const roleToBPs = {};
+  matrix.forEach(([role, indices]) => { roleToBPs[role] = new Set(indices); });
+
+  rolesToShow.forEach(role => {
+    const label = ROLE_LABELS[role];
+    tableHTML += '<tr>';
+    tableHTML += `<td>${label}</td>`;
+    bps.forEach((bp, i) => {
+      if (roleToBPs[role] && roleToBPs[role].has(i)) {
+        const cls = 'cell-dot cell-' + (COLOR_MAP[role] || 'attending');
+        tableHTML += `<td><span class="${cls}">●</span></td>`;
+      } else {
+        tableHTML += '<td><span class="cell-dot cell-empty">–</span></td>';
+      }
+    });
+    tableHTML += '</tr>';
+  });
+  tableHTML += '</tbody></table></div>';
+
+  // BP legend row
+  let bpLegendHTML = '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;font-size:10px;color:var(--text-muted)">';
+  bps.forEach((bp, i) => {
+    bpLegendHTML += `<span><b style="color:var(--text-secondary)">${String.fromCharCode(65+i)}</b> ${bp}</span>`;
+  });
+  bpLegendHTML += '</div>';
+
+  const glines = dept.guidelines || [];
+
+  return `
+    <div class="dept-card" id="card-${dept.id}">
+      <div class="dept-card-header" onclick="toggleCard('${dept.id}')">
+        <div class="dept-card-left">
+          <div class="dept-icon">🏥</div>
+          <div>
+            <div class="dept-name">${dept.cn} <span class="dept-en">${dept.en}</span></div>
+          </div>
+        </div>
+        <div class="dept-card-right">
+          <div class="maturity-section">
+            <span class="maturity-label">成熟度</span>
+            <div class="maturity-bar-outer">
+              <div class="maturity-bar-inner" style="width:${dept.maturity}%;background:${getMaturityColor(dept.maturity)}"></div>
+            </div>
+            <span class="maturity-value" style="color:${getMaturityColor(dept.maturity)}">${dept.maturity}%</span>
+          </div>
+          <a class="process-link" href="/process/${dept.agent}" onclick="event.stopPropagation()" title="打开智能体">
+            /${dept.agent} →
+          </a>
+          <span class="expand-icon">▾</span>
+        </div>
+      </div>
+      <div class="dept-card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="info-section">
+            <div class="info-section-title">价值流</div>
+            <div class="vs-tags">
+              ${vss.map((v,i) => `<span class="vs-tag">${i+1}. ${v}</span>`).join('')}
+            </div>
+          </div>
+          <div class="info-section">
+            <div class="info-section-title">业务流程</div>
+            <div class="bp-tags">
+              ${bps.map(bp => `<span class="bp-tag">${bp}</span>`).join('')}
+            </div>
+          </div>
+        </div>
+        ${glines.length ? `
+        <div class="info-section">
+          <div class="info-section-title">临床指南</div>
+          <ul class="guideline-list">
+            ${glines.map(g => `<li>${g}</li>`).join('')}
+          </ul>
+        </div>` : ''}
+        <div class="info-section">
+          <div class="info-section-title">角色 × 业务流程矩阵</div>
+          ${tableHTML}
+        </div>
+        ${bpLegendHTML}
+        ${legendHTML}
+      </div>
+    </div>
+  `;
+}
+
+function buildGroupSection(group) {
+  return `
+    <div class="dept-group" id="group-${group.id}">
+      <div class="group-header">
+        <div class="group-dot" style="background:${group.color}"></div>
+        <div class="group-title">${group.icon} ${group.label}</div>
+        <div class="group-count">${group.count} 个科室</div>
+      </div>
+      <div class="dept-grid">
+        ${group.depts.map(d => buildDeptCard(d, group.id)).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function switchGroup(id) {
+  activeGroup = id;
+  // Update tab styles
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.textContent.trim().startsWith(GROUPS.find(g => g.id === id).label)) {
+      b.classList.add('active');
+    }
+  });
+  // Scroll to group
+  const el = document.getElementById('group-' + id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function toggleCard(id) {
+  document.getElementById('card-' + id).classList.toggle('expanded');
+}
+
+// Render all groups
+document.getElementById('content').innerHTML = GROUPS.map(g => buildGroupSection(g)).join('');
+
+// Expand first card by default
+setTimeout(() => {
+  const firstCard = document.querySelector('.dept-card');
+  if (firstCard) firstCard.classList.add('expanded');
+}, 100);
+</script>
+
+</body>
+</html>

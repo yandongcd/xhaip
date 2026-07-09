@@ -1,0 +1,49 @@
+# ============================================================
+# Guideline Asset: 成人股骨颈骨折诊治指南（2018）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-femoral-neck-2018"
+name: "成人股骨颈骨折诊治指南"
+abbr: "股骨颈指南2018"
+version: "2018"
+publisher: "中华医学会骨科学分会创伤骨科学组"
+doi: "10.3760/cma.j.issn.0253-2352.2018.12.001"
+language: zh-CN
+trust_level: T1
+admin_priority: 4
+
+description: >
+  中国成人股骨颈骨折诊治的行业指南。覆盖Garden分型、手术方式选择
+  （内固定/半髋/全髋）、复位标准、康复指导等核心内容。
+
+key_sections:
+  - id: "§3"
+    title: "骨折分型"
+    pages: "5-8"
+    stage_ids: [S3]
+    rule_ids: [surgery-type-001]
+
+  - id: "§4"
+    title: "治疗原则"
+    pages: "9-16"
+    stage_ids: [S9]
+    rule_ids:
+      - surgery-type-001
+      - surgery-type-002
+      - surgery-type-003
+
+  - id: "§5"
+    title: "术后康复"
+    pages: "17-20"
+    stage_ids: [S11]
+    rule_ids: [followup-001, followup-002]
+
+rule_sets_covered:
+  - surgery_type
+  - followup
+
+derived_rule_count: 10
+last_updated: 2026-07-01
+supersedes: ""
+superseded_by: ""

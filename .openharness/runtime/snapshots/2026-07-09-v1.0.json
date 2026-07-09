@@ -1,0 +1,42 @@
+{
+  "snapshot": "2026-07-09T16:50:00",
+  "version": "1.0.0",
+  "project": "xhaip",
+  "state": {
+    "agents": {
+      "total": 14,
+      "business": ["pharmacy", "orthopedic-surgery", "cardio-surgery", "pediatrics", "pain-hub"],
+      "specialist": ["cardio-risk", "anesthesia-risk", "acute-pain", "chronic-pain", "cancer-pain", "interventional-pain", "pain-rehab"],
+      "master_data": ["medical-record", "metrics"]
+    },
+    "engine_modules": ["agent", "agent/matcher", "a2a", "a2a/router", "llm", "llm/deepseek", "llm/mock", "tools", "tools/registry", "guard", "guard/citation", "guard/confidence", "guard/verifier", "orchestrator", "knowledge", "loop", "cli"],
+    "data_assets": {
+      "guidelines": 26,
+      "rules": 22,
+      "business_processes": 11,
+      "capabilities": 3,
+      "value_streams": 1,
+      "architecture": 6,
+      "roles": 1,
+      "guideline_sources": 1,
+      "total": 71
+    },
+    "quality": {
+      "tests": 196,
+      "coverage": 93,
+      "ruff": 0,
+      "mypy": 0,
+      "ci_configured": true
+    }
+  },
+  "enhanced_modules": {
+    "orthopedics": {"lines": 392, "functions": 9},
+    "cardio_risk": {"lines": 153, "functions": 3},
+    "anesthesia": {"lines": 116, "functions": 4},
+    "cardio_surgery": {"lines": 94, "functions": 3},
+    "pediatrics": {"lines": 151, "functions": 3},
+    "acute_pain": {"lines": 99, "functions": 3},
+    "cancer_pain": {"lines": 92, "functions": 3},
+    "medical_record": {"lines": 115, "functions": 4}
+  }
+}

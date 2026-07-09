@@ -1,0 +1,103 @@
+# ============================================================
+# 指南来源注册表
+# 所有临床规则的依据来源统一在此管理
+# ============================================================
+sources:
+  - id: nice-ng37
+    name: "NICE Guideline NG37: Hip fracture management"
+    tier: L1
+    version: "2023"
+    publish_date: "2023-05-10"
+    publisher: "National Institute for Health and Care Excellence"
+    language: en
+    admin_priority: 1
+    status: active
+    superseded_by: ""
+
+  - id: weiwei-2022
+    name: "卫健委老年髋部骨折诊疗与管理指南（2022年版）"
+    tier: L2
+    version: "2022"
+    publish_date: "2022-12-01"
+    publisher: "国家卫生健康委员会"
+    language: zh
+    admin_priority: 2
+    status: active
+    superseded_by: ""
+
+  - id: aaos-2022
+    name: "AAOS Management of Hip Fractures in Older Adults"
+    tier: L1
+    version: "2022"
+    publish_date: "2022-09-01"
+    publisher: "American Academy of Orthopaedic Surgeons"
+    language: en
+    admin_priority: 3
+    status: active
+    superseded_by: ""
+
+  - id: universal-mi-definition-2018
+    name: "4th Universal Definition of Myocardial Infarction (2018)"
+    tier: L1
+    version: "2018"
+    publish_date: "2018-08-01"
+    publisher: "ESC/ACC/AHA/WHF"
+    language: en
+    admin_priority: 4
+    status: active
+    superseded_by: ""
+
+  - id: accp-antithrombotic
+    name: "ACCP Antithrombotic Therapy Guidelines"
+    tier: L1
+    version: "2024"
+    publish_date: "2024-01-15"
+    publisher: "American College of Chest Physicians"
+    language: en
+    admin_priority: 5
+    status: active
+    superseded_by: ""
+
+  - id: kdigo-ckd
+    name: "KDIGO CKD Guidelines"
+    tier: L1
+    version: "2024"
+    publish_date: "2024-03-01"
+    publisher: "Kidney Disease: Improving Global Outcomes"
+    language: en
+    admin_priority: 6
+    status: active
+    superseded_by: ""
+
+  - id: ada-standards-2025
+    name: "ADA Standards of Care in Diabetes"
+    tier: L1
+    version: "2025"
+    publish_date: "2025-01-01"
+    publisher: "American Diabetes Association"
+    language: en
+    admin_priority: 7
+    status: active
+    superseded_by: ""
+
+  - id: dvp-consensus-2024
+    name: "DVT预防中国专家共识（2024版）"
+    tier: L3
+    version: "2024"
+    publish_date: "2024-06-01"
+    publisher: "中华医学会骨科学分会"
+    language: zh
+    admin_priority: 10
+    status: active
+    superseded_by: ""
+
+  - id: guangdong-province-standard
+    name: "广东省骨科质控标准（2025）"
+    tier: L5
+    version: "2025"
+    publish_date: "2025-01-01"
+    publisher: "广东省骨科质控中心"
+    language: zh
+    admin_priority: 20
+    status: active
+    superseded_by: ""

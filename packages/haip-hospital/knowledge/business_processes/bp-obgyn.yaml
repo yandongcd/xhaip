@@ -1,0 +1,116 @@
+# 妇产科 ??????
+# TOGAF Business Architecture ? Auto-generated from template
+# Template: 妇产儿科
+# Generated: 2026-07-10
+
+department: 妇产科
+template_type: 妇产儿科
+guidelines: [中华妇产科杂志 产前检查与诊疗指南 (2022)]
+version: "1.0.0"
+
+value_streams:
+  - id: vs-prenatal
+    name: 产前/初诊
+    stage: 1
+    trigger: 就诊
+    outcome: 评估分级
+  - id: vs-assessment
+    name: 专项评估
+    stage: 2
+    trigger: 初诊完成
+    outcome: 明确诊断
+  - id: vs-delivery
+    name: 分娩/治疗
+    stage: 3
+    trigger: 评估完成
+    outcome: 顺利分娩/完成治疗
+  - id: vs-postnatal
+    name: 产后/康复
+    stage: 4
+    trigger: 分娩/治疗完成
+    outcome: 母婴/患儿康复
+  - id: vs-followup
+    name: 随访保健
+    stage: 5
+    trigger: 出院
+    outcome: 长期健康管理
+
+business_processes:
+  - id: bp-reception
+    name: 接诊评估
+    order: 1
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-exam
+    name: 专项检查
+    order: 2
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-diagnosis
+    name: 诊断分级
+    order: 3
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-treatment
+    name: 分娩/治疗执行
+    order: 4
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-nursing
+    name: 产后/儿科护理
+    order: 5
+    owner: 护士长
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-followup
+    name: 随访与保健
+    order: 6
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????

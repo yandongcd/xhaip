@@ -1,0 +1,76 @@
+# ============================================================
+# Business Process: 骨折分型
+# TOGAF Class: BusinessProcess + ProcessStep (Core ABB)
+# Trust Level: T1
+# ============================================================
+name: bp-ortho-fracture-classification
+version: "1.0"
+description: 骨折分型流程 — 根据影像学检查完成 Garden/Evans/AO 分型并判断稳定性
+owner: 主治医生
+value_stages:
+  - 明确诊断
+guideline_refs:
+  - csco-femoral-neck-2018
+  - csco-intertroch-2020
+  - aaos-2022
+
+steps:
+  - id: bp-fc-1
+    name: 影像资料获取
+    actor: 主治医生
+    description: 获取患者 X 线片、CT 三维重建影像资料
+    data_used: [de-exam-results]
+    decision: null
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.fracture_classifier
+      tool: orthopedic.classify_fracture
+
+  - id: bp-fc-2
+    name: 骨折类型判定
+    actor: 主治医生
+    description: |
+      根据影像特征判定骨折部位和类型：
+      - 股骨颈骨折 → 进入 Garden 分型路径
+      - 股骨转子间骨折 → 进入 Evans/AO 分型路径
+    data_used: [de-exam-results]
+    decision: "骨折部位？→ 股骨颈(Garden I-IV) | 股骨转子间(Evans I-V/AO)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.fracture_classifier
+      tool: orthopedic.classify_fracture
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-fc-3
+    name: Garden 分型（股骨颈）
+    actor: 主治医生
+    description: |
+      根据骨折移位程度进行 Garden 分型：
+      I 型：不完全骨折
+      II 型：完全骨折无移位
+      III 型：部分移位
+      IV 型：完全移位
+    data_used: [de-exam-results]
+    decision: "Garden 分型结果 → I/II 型(内固定可行) | III/IV 型(关节置换)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.fracture_classifier
+      tool: orthopedic.classify_fracture
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-fc-4
+    name: Evans/AO 分型（转子间）
+    actor: 主治医生
+    description: |
+      根据骨折形态进行 Evans/AO 分型：
+      Evans I-V 型或 AO 31-A1/A2/A3
+      结合内侧皮质完整性判断稳定性
+    data_used: [de-exam-results]
+    decision: "骨折稳定性？→ 稳定型(PFNA) | 不稳定型(InterTAN/加长柄)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.fracture_classifier
+      tool: orthopedic.classify_fracture
+      decision_coverage:
+        total: 2
+        covered: 2

@@ -1,0 +1,150 @@
+# ============================================================
+# Rule Asset: 出院随访规则（4时间节点）
+# TOGAF Class: Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+name: hip-fracture-followup-rules
+version: "1.0"
+description: 老年髋部骨折术后4时间节点随访+4阶段康复+红旗征
+owner: attending
+guideline_ref:
+  - "guideline-nhc-2022"
+  - "guideline-apta-2021"
+  - "guideline-aaos-2022"
+last_updated: 2026-07-01
+
+followup_schedule:
+  - id: followup-001
+    name: "1个月随访"
+    month: 1
+    tasks:
+      - "切口愈合评估"
+      - "VAS疼痛评分"
+      - "X线复查(骨折愈合+内固定位置)"
+      - "拆线评估"
+    rehab_phase: "早期(0-2周)"
+    rehab_location: "住院期间"
+    rehab_goals: "疼痛肿胀控制+并发症预防"
+    rehab_interventions:
+      - "踝泵运动"
+      - "股四头肌等长收缩"
+      - "CPM被动活动"
+      - "IPC气压泵"
+      - "多模式镇痛"
+    monitoring: "VAS q4h + 切口观察 + 引流量"
+    guideline_ref: "guideline-nhc-2022"
+
+  - id: followup-002
+    name: "3个月随访"
+    month: 3
+    tasks:
+      - "Harris髋关节评分"
+      - "X线(骨愈合进展)"
+      - "抗骨质疏松治疗评估"
+      - "跌倒风险评估"
+    rehab_phase: "中期(2-6周)"
+    rehab_location: "居家/社区"
+    rehab_goals: "ROM恢复+肌力重建+部分负重"
+    rehab_interventions:
+      - "主动髋关节ROM训练"
+      - "直腿抬高(SLR)"
+      - "助行器辅助行走"
+      - "平衡训练(双足→单足)"
+    monitoring: "Harris评分每月1次"
+    guideline_ref: "guideline-aaos-2022"
+
+  - id: followup-003
+    name: "6个月随访"
+    month: 6
+    tasks:
+      - "功能恢复评估"
+      - "X线(骨愈合确认)"
+      - "DXA骨密度(双能X线)"
+      - "康复依从性评估"
+    rehab_phase: "恢复期(6-12周)"
+    rehab_location: "居家/社区"
+    rehab_goals: "独立行走+肌力耐力+日常生活能力"
+    rehab_interventions:
+      - "渐进抗阻训练"
+      - "完全负重行走"
+      - "上下楼梯训练"
+      - "平衡板/单腿站立"
+    monitoring: "DXA半年1次"
+    guideline_ref: "guideline-apta-2021"
+
+  - id: followup-004
+    name: "12个月随访"
+    month: 12
+    tasks:
+      - "最终功能评估"
+      - "X线(骨愈合确认)"
+      - "DXA骨密度(对比)"
+      - "再骨折风险评估"
+      - "生活质量评估(SF-36)"
+    rehab_phase: "长期(12周+)"
+    rehab_location: "居家/社区"
+    rehab_goals: "功能维持+二次骨折预防"
+    rehab_interventions:
+      - "中等强度有氧 3-5次/周"
+      - "抗骨质疏松药物(双膦酸盐/地舒单抗/特立帕肽)"
+      - "钙1000mg/d+VitD 800IU/d"
+      - "年度DXA随访"
+    monitoring: "DXA每年1次"
+    guideline_ref: "guideline-apta-2021"
+
+red_flags:
+  - id: rf-001
+    symptom: "切口红肿热痛/渗液"
+    suspected: "切口感染"
+    action: "立即返院就诊"
+
+  - id: rf-002
+    symptom: "突发胸痛/呼吸困难"
+    suspected: "PE/MI"
+    action: "立即急诊就医"
+
+  - id: rf-003
+    symptom: "下肢肿胀/疼痛加重"
+    suspected: "DVT"
+    action: "立即血管超声检查"
+
+  - id: rf-004
+    symptom: "再次跌倒/外伤"
+    suspected: "再骨折"
+    action: "立即X线检查+就医"
+
+  - id: rf-005
+    symptom: "发热>38.5°C"
+    suspected: "感染"
+    action: "发热门诊排查"
+
+  - id: rf-006
+    symptom: "VAS>4+药物控制不佳"
+    suspected: "疼痛控制不良"
+    action: "调整镇痛方案+疼痛科门诊"
+
+medication_guidance:
+  - category: "抗骨质疏松"
+    drugs:
+      - "双膦酸盐(阿仑膦酸钠/唑来膦酸)"
+      - "地舒单抗"
+      - "特立帕肽(严重骨质疏松)"
+    supplementation: "钙1000mg/d + VitD 800IU/d"
+
+  - category: "抗凝药物"
+    drug: "低分子肝素"
+    duration: "术后2-4周(关节置换延长至5周)"
+
+  - category: "镇痛药物(阶梯)"
+    steps:
+      - level: 1
+        description: "VAS 1-3"
+        drug: "对乙酰氨基酚"
+
+      - level: 2
+        description: "VAS 4-6"
+        drug: "NSAIDs(塞来昔布/依托考昔)"
+
+      - level: 3
+        description: "VAS 7-10"
+        drug: "弱阿片(曲马多)→强阿片(吗啡)"

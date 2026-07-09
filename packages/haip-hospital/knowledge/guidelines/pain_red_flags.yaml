@@ -1,0 +1,66 @@
+# Red Flags 识别决策表
+red_flags:
+  - id: "RF-001"
+    name: "肿瘤病史"
+    severity: "high"
+    keywords: ["肿瘤", "癌症", "恶性", "转移", "化疗", "放疗", "肿块"]
+    description: "既往或现患恶性肿瘤，需排除骨转移"
+    action: "PRIORITY_HIGH — 标记肿瘤科会诊，禁止盲目物理治疗"
+    route: "oncology"
+    exams: ["全身骨扫描", "PET-CT", "肿瘤标志物"]
+  - id: "RF-002"
+    name: "马尾神经综合征"
+    severity: "critical"
+    keywords: ["大小便障碍", "尿潴留", "鞍区麻木", "双下肢无力", "会阴麻木"]
+    description: "鞍区麻木+大小便障碍 — 需急诊手术减压"
+    action: "EMERGENCY — 立即转急诊科，通知脊柱外科"
+    route: "emergency"
+    exams: ["急诊腰椎MRI"]
+  - id: "RF-003"
+    name: "感染征象"
+    severity: "high"
+    keywords: ["发热", "发烧", "寒战", "红肿热痛", "局部皮温高", "创口流脓"]
+    description: "发热+局部红肿，需排除椎间盘炎/硬膜外脓肿"
+    action: "PRIORITY_HIGH — 血培养+CRP+ESR+影像，感染科会诊"
+    route: "infectious_disease"
+    exams: ["血常规", "CRP", "ESR", "血培养", "MRI增强"]
+  - id: "RF-004"
+    name: "骨折/脱位"
+    severity: "high"
+    keywords: ["外伤", "摔伤", "车祸", "畸形", "异常活动"]
+    description: "外伤后剧痛+畸形+活动受限"
+    action: "PRIORITY_HIGH — 固定制动，急诊X线/CT，骨科急会诊"
+    route: "orthopedic"
+    exams: ["X线", "CT三维"]
+  - id: "RF-005"
+    name: "进行性神经功能缺损"
+    severity: "high"
+    keywords: ["无力加重", "走路越来越差", "手麻加重", "足下垂"]
+    description: "肌力进行性下降"
+    action: "急诊MRI+神经内科会诊，排除脊髓压迫"
+    route: "neurology"
+    exams: ["急诊MRI", "肌电图"]
+  - id: "RF-006"
+    name: "药物过量/中毒"
+    severity: "critical"
+    keywords: ["呼吸浅慢", "意识模糊", "针尖样瞳孔", "大量吃止痛药"]
+    description: "阿片类药物过量"
+    action: "EMERGENCY — 纳洛酮0.4mg iv，通知ICU"
+    route: "emergency"
+    exams: ["血气分析", "毒物筛查"]
+  - id: "RF-007"
+    name: "血管急症"
+    severity: "critical"
+    keywords: ["撕裂样痛", "刀割样痛", "胸前剧痛向背部放射"]
+    description: "主动脉夹层/动脉瘤破裂"
+    action: "EMERGENCY — 立即降压，急诊CTA，血管外科急会诊"
+    route: "emergency"
+    exams: ["急诊CTA"]
+  - id: "RF-008"
+    name: "自杀/自伤风险"
+    severity: "high"
+    keywords: ["想死", "不想活", "自杀", "自残", "活不下去"]
+    description: "慢性疼痛伴重度抑郁，有自杀意念"
+    action: "精神科紧急会诊，24h监护"
+    route: "psychology"
+    exams: []

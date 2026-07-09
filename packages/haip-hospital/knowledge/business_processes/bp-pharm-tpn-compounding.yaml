@@ -1,0 +1,130 @@
+# ============================================================
+# Business Process: TPN 无菌配制
+# TOGAF Class: BusinessProcess + ProcessStep (Core ABB)
+# Trust Level: T1
+# ============================================================
+name: bp-pharm-tpn-compounding
+version: "1.0"
+description: TPN 无菌配制流程 — 从处方参数设计到成品质量控制
+owner: 静脉配置药师
+value_stages:
+  - 有效治疗
+guideline_refs:
+  - china-compounding-2018
+  - china-electrolyte-2024
+  - china-fat-emulsion-2023
+  - espn-2023
+
+steps:
+  - id: bp-tpn-1
+    name: 营养参数计算
+    actor: 静脉配置药师
+    description: |
+      根据营养评估结果计算基础参数：
+      1. 总热量需求（kcal/d）
+      2. 氨基酸需求（g/kg/d）
+      3. 葡萄糖供给量（占总热量 50-70%）
+      4. 脂肪乳供给量（占总热量 30-50%）
+      5. 热氮比（100-200 kcal:1g N）
+      6. 糖脂比（1-2:1）
+    data_used: [de-patient, de-lab-results]
+    decision: "所有参数是否在安全范围内？→ 是 | 否(调整参数)"
+    implementation:
+      module: agents.domains.haip.pharmacy.core.tpn_calculator
+      tool: pharmacy.tpn
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-tpn-2
+    name: 电解质配方设计
+    actor: 静脉配置药师
+    description: |
+      按照指南上限设计电解质配方：
+      1. 钠（Na⁺）补充量
+      2. 钾（K⁺）补充量
+      3. 磷（P）补充量
+      4. 镁（Mg²⁺）补充量
+      5. 钙（Ca²⁺）补充量
+      6. 钙磷乘积 < 50
+      7. 一价阳离子总量 ≤ 150 mmol/L
+      8. 二价阳离子总量 ≤ 10 mmol/L
+    data_used: [de-lab-results, de-patient]
+    decision: "电解质配方是否全部达标？→ 达标 | 超标(调整)"
+    implementation:
+      module: agents.domains.haip.pharmacy.core.tpn_calculator
+      tool: pharmacy.tpn
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-tpn-3
+    name: 脂乳与微量元素添加
+    actor: 静脉配置药师
+    description: |
+      1. 选择脂肪乳类型（LCT/MCT/鱼油/橄榄油/结构脂肪乳）
+      2. 计算脂肪乳剂量
+      3. 添加脂溶性维生素
+      4. 添加水溶性维生素
+      5. 添加微量元素（锌/硒/铜/锰/铬/钼）
+    data_used: [de-patient, de-lab-results]
+    decision: "脂乳类型选择 → 标准(LCT/MCT) | 特殊(鱼油/橄榄油/结构)"
+    implementation:
+      module: agents.domains.haip.pharmacy.core.tpn_calculator
+      tool: pharmacy.tpn
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-tpn-4
+    name: 渗透压与相容性终审
+    actor: 静脉配置药师
+    description: |
+      配制前终审：
+      1. 葡萄糖终浓度 ≤ 23%
+      2. 氨基酸终浓度 ≥ 2.5%
+      3. 总渗透压检查
+      4. 钙磷沉淀风险评估
+      5. 药物-营养液相容性再次确认
+    data_used: [de-rx, de-drug]
+    decision: "终审全部通过？→ 通过(进入配制) | 不通过(返回调整)"
+    implementation:
+      module: agents.domains.haip.pharmacy.core.tpn_calculator
+      tool: pharmacy.tpn
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-tpn-5
+    name: ISO Class 5 无菌配制
+    actor: 静脉配置药师
+    description: |
+      在洁净环境下完成配制操作：
+      1. 人员更衣与手卫生
+      2. 台面清洁与消毒
+      3. 按序加入：氨基酸 → 葡萄糖 → 脂肪乳 → 电解质 → 维生素/微量元素
+      4. 全程无菌操作
+      5. 配制后检查（外观/微粒/标签）
+    data_used: null
+    decision: null
+    implementation:
+      module: agents.domains.haip.pharmacy.core.compatibility
+      tool: pharmacy.compound
+
+  - id: bp-tpn-6
+    name: 成品质量控制与发放
+    actor: 静脉配置药师
+    description: |
+      1. 肉眼检查（颜色/透明度/分层/沉淀）
+      2. 标签核对（患者信息/配方/配制时间/有效期）
+      3. 登记配制记录
+      4. 冷藏保存（2-8°C）
+      5. 发放至病区
+    data_used: [de-rx]
+    decision: "质控检查通过？→ 通过(发放) | 不通过(废弃重配)"
+    implementation:
+      module: agents.domains.haip.pharmacy.core.compatibility
+      tool: pharmacy.compound
+      decision_coverage:
+        total: 2
+        covered: 2

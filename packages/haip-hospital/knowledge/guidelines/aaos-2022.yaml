@@ -1,0 +1,68 @@
+# ============================================================
+# Guideline Asset: AAOS Management of Hip Fractures in Older Adults
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-aaos-2022"
+name: "AAOS Management of Hip Fractures in Older Adults"
+abbr: "AAOS 2022"
+version: "2022"
+publisher: "American Academy of Orthopaedic Surgeons"
+doi: "10.5435/JAAOS-D-22-00123"
+language: en
+trust_level: T1
+admin_priority: 3
+
+description: >
+  AAOS evidence-based clinical practice guideline for hip fracture management
+  in adults aged 65 and older. Covers surgical timing, implant selection,
+  venous thromboembolism prophylaxis, and rehabilitation.
+
+key_sections:
+  - id: "Rec1"
+    title: "Surgical timing within 48 hours"
+    pages: "5-8"
+    stage_ids: [S7]
+    rule_ids: [timing-rule-001]
+
+  - id: "Rec2"
+    title: "Implant selection for femoral neck fractures"
+    pages: "9-14"
+    stage_ids: [S9]
+    rule_ids:
+      - surgery-type-001
+      - surgery-type-002
+      - surgery-type-003
+
+  - id: "Rec3"
+    title: "Implant selection for intertrochanteric fractures"
+    pages: "15-20"
+    stage_ids: [S9]
+    rule_ids:
+      - surgery-type-004
+      - surgery-type-005
+      - surgery-type-006
+
+  - id: "Rec4"
+    title: "VTE prophylaxis"
+    pages: "21-24"
+    stage_ids: [S8, S10]
+    rule_ids: [complication-dvt, nursing-005]
+
+  - id: "Rec5"
+    title: "Postoperative rehabilitation"
+    pages: "25-28"
+    stage_ids: [S11]
+    rule_ids: [followup-001, followup-003]
+
+rule_sets_covered:
+  - timing
+  - surgery_type
+  - complication
+  - nursing
+  - followup
+
+derived_rule_count: 20
+last_updated: 2026-07-01
+supersedes: "AAOS 2014"
+superseded_by: ""

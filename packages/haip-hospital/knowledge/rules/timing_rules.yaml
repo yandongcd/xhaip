@@ -1,0 +1,313 @@
+# ============================================================
+# Rule Asset: 老年髋部骨折手术时机判定规则
+# TOGAF Class: Constraint (Extension ABB)
+# Trust Level: T1 (基于NICE NG37 / AAOS 2022 / 卫健委2022版)
+#              T2 (南方医院临床经验 — 创伤骨科临床经验权重调整)
+# ============================================================
+name: hip-fracture-timing-rules
+version: "3.0"
+description: >
+  老年髋部骨折手术时机判定规则 — 基于分层权重延迟因素模型的可执行规则引擎。
+  v3.0: 新增肺部/脑血管高权重维度（T2），调整抗凝/肾为中权重（南方医院规范）。
+   共8维度，分高/中两层：高(心脏/肺/脑血管) 中(抗凝/贫血/肾/血糖/感染)。
+  裁定: 高≥1 → MDT通道; 高=0且中1-2 → 限期; 高=0且中=0 → 48h急诊。
+owner: attending
+guideline_ref:
+  - "guideline-nice-ng37"
+  - "guideline-aaos-2022"
+  - "guideline-nhc-2022"
+  - "guideline-umi-2018"
+  - "guideline-accp-2024"
+  - "guideline-kdigo-ckd"
+  - "guideline-ada-2025"
+  - "guideline-nanfang-hip-fracture"
+last_updated: 2026-07-01
+
+# ──────────────────────────────────────────────
+# 延迟因素分类 — 每个维度含精确阈值与判定逻辑
+# ──────────────────────────────────────────────
+delay_factors:
+  - id: cardiac
+    name: 心脏因素
+    description: "围术期心肌缺血/心梗/严重心律失常导致手术风险升高"
+    risk_when_triggered: high
+    optimization: "心内科会诊 + 高敏肌钙蛋白复查 + 必要时冠脉评估"
+    threshold_values:
+      cTnI:
+        unit: "ng/mL"
+        high: 0.04
+        label: "肌钙蛋白I"
+      cTnT:
+        unit: "ng/mL"
+        high: 0.1
+        label: "肌钙蛋白T"
+      CKMB:
+        unit: "U/L"
+        high: 25
+        label: "心型肌酸激酶(CK-MB)"
+    ecg_high_risk_patterns:
+      - "ST段抬高"    # STEMI
+      - "ST段压低"    # NSTEMI/心肌缺血
+      - "新发左束支传导阻滞"
+      - "室性心动过速"
+      - "心室颤动"
+      - "三度房室传导阻滞"
+      - "新发Q波"
+      - "异常Q波"    # 陈旧性心梗可能
+      - "病理性Q波"  # 陈旧性心梗可能
+      - "T波改变"    # 非特异性T波异常
+      - "T波倒置"    # 心肌缺血/心梗
+      - "T波高尖"    # 高钾血症/急性心梗超急性期
+    diagnosis_keywords:
+      - "急性心肌梗死"
+      - "NSTEMI"
+      - "STEMI"
+      - "急性冠脉综合征"
+      - "不稳定性心绞痛"
+    evaluation_logic: |
+      1. 检查肌钙蛋白(cTnI>0.04 或 cTnT>0.1) → 触发
+      2. 检查CK-MB>25U/L → 触发
+      3. 检查ECG描述是否含高危模式 → 触发
+      4. 检查诊断是否含ACS关键词 → 触发
+      5. 任一条件满足 → cardiac.triggered=True
+      6. 同时评估既往心梗/心衰病史，但不计入当前延迟因素
+    source: "guideline-umi-2018"
+
+  - id: anticoagulation
+    name: 抗凝因素
+    description: "抗凝/抗血小板药物需停药桥接后才能手术"
+    risk_when_triggered: medium
+    optimization: "评估停药时间 + 桥接方案（低分子肝素） + 复查凝血功能"
+    threshold_values:
+      INR:
+        unit: ""
+        high: 1.5
+        label: "国际标准化比值(INR)"
+      PT:
+        unit: "sec"
+        high: 14
+        label: "凝血酶原时间(PT)"
+      APTT:
+        unit: "sec"
+        high: 45
+        label: "活化部分凝血活酶时间(APTT)"
+    drug_stop_time:
+      warfarin:       "INR<1.5 方可手术，通常停药3-5天"
+      rivaroxaban:    "CrCl>50: 停药≥24h; CrCl<50: 停药≥36h"
+      apixaban:       "CrCl>50: 停药≥24h; CrCl<50: 停药≥36h"
+      dabigatran:     "CrCl>50: 停药≥48h; CrCl<50: 停药≥72h"
+      clopidogrel:    "停药≥5天"
+      ticagrelor:     "停药≥3天"
+      aspirin:        "评估出血 vs 血栓风险，通常不停或桥接"
+    drug_keywords:
+      - "华法林"
+      - "利伐沙班"
+      - "达比加群"
+      - "阿哌沙班"
+      - "氯吡格雷"
+      - "替格瑞洛"
+      - "阿司匹林"
+      - "低分子肝素"
+    evaluation_logic: |
+      1. 检查用药史是否含抗凝/抗血小板药物关键词 → 步骤2
+      2. 检查INR>1.5(华法林) → 触发
+      3. 检查PT>14sec → 触发(非特异性)
+      4. 若使用NOAC/抗血小板，检查停药时间是否不足
+      5. 若"华法林"且INR>1.5 → 触发
+      6. 若"利伐沙班"等NOAC且未标注停药 → 触发
+      7. 抗血小板(氯吡格雷/替格瑞洛)5天内 → 触发
+      8. 阿司匹林单独使用一般不作为延迟因素
+    source:
+      - "guideline-accp-2024"
+      - "guideline-nhc-2022"
+      - "guideline-nanfang-hip-fracture"
+
+  - id: pulmonary
+    name: 肺部因素
+    description: "急性肺部感染/哮喘/肺梗塞增加围术期呼吸系统风险"
+    risk_when_triggered: high
+    trust_level: T2
+    optimization: "呼吸科会诊 + 肺功能评估 + 抗感染治疗 + 氧疗"
+    diagnosis_keywords:
+      - "肺炎"
+      - "肺部感染"
+      - "哮喘"
+      - "肺梗塞"
+      - "肺栓塞"
+      - "急性支气管炎"
+      - "呼吸衰竭"
+      - "COPD急性加重"
+    evaluation_logic: |
+      1. 检查诊断含"肺炎/肺部感染" → 判断是否1周内/至少3天 → 触发
+      2. 检查诊断含"哮喘" → 触发
+      3. 检查诊断含"肺梗塞/肺栓塞" → 触发
+      4. 检查既往史含"COPD/肺气肿/慢性支气管炎" 且 当前有急性加重体征 → 触发
+      5. 任一条件满足 → pulmonary.triggered=True
+      6. 慢性COPD/肺气肿无急性加重 → 不触发
+    source: "guideline-nanfang-hip-fracture"
+
+  - id: cerebral
+    name: 脑血管因素
+    description: "一月内新发脑梗增加围术期再发风险，影响抗凝决策"
+    risk_when_triggered: high
+    trust_level: T2
+    optimization: "神经内科会诊 + 脑血管评估 + 抗血小板桥接方案"
+    diagnosis_keywords:
+      - "脑梗"
+      - "脑梗死"
+      - "缺血性卒中"
+      - "脑栓塞"
+    evaluation_logic: |
+      1. 检查诊断含"脑梗/脑梗死/缺血性卒中"关键词 → 进入步骤2
+      2. 判断是否为1个月内新发（检查日期或关键词"急性/新发/近期/1个月"）→ 触发
+      3. 陈旧性脑梗（>1个月）→ 不触发（不影响手术窗口，但需注意抗板管理）
+    source: "guideline-nanfang-hip-fracture"
+
+  - id: anemia
+    name: 贫血因素
+    description: "围术期贫血增加心脑血管事件和术后并发症风险"
+    risk_when_triggered: medium
+    optimization: "输注浓缩红细胞至Hb≥80g/L; 合并心脏病者Hb≥100g/L"
+    threshold_values:
+      hemoglobin:
+        unit: "g/L"
+        high: null
+        low: 80
+        critical_low: 100_with_cardiac
+        label: "血红蛋白(Hb)"
+    evaluation_logic: |
+      1. 检查Hb<80g/L → 触发(重度贫血)
+      2. 检查Hb<100g/L 且 患者有冠心病/心衰病史 → 触发
+      3. 仅Hb 80-100 无心脏病 → 不触发(可优化但不强制延迟)
+    source: "guideline-nhc-2022"
+
+  - id: renal
+    name: 肾功能因素
+    description: "严重肾功能不全增加围术期风险，影响药物剂量和造影剂使用"
+    risk_when_triggered: medium
+    optimization: "肾内科会诊 + 避免肾毒性药物 + 造影剂肾病预防"
+    threshold_values:
+      eGFR:
+        unit: "mL/min/1.73m²"
+        high: null
+        low: 30
+        warning: 60
+        label: "估算肾小球滤过率(eGFR)"
+      creatinine:
+        unit: "μmol/L"
+        high: 133
+        label: "血肌酐(Cr)"
+    evaluation_logic: |
+      1. 检查eGFR<30mL/min → 触发(严重肾功能不全)
+      2. 检查eGFR 30-60 且 需要造影检查 → 触发
+      3. 检查Cr>133μmol/L 且 无eGFR → 触发
+    source: "guideline-kdigo-ckd"
+
+  - id: infection
+    name: 感染因素
+    description: "活动性感染增加术后感染风险和全身并发症"
+    risk_when_triggered: medium
+    optimization: "抗感染治疗 + 复查炎症指标至正常 + 感染灶控制"
+    threshold_values:
+      WBC:
+        unit: "×10⁹/L"
+        high: 12
+        low: null
+        label: "白细胞计数(WBC)"
+      CRP:
+        unit: "mg/L"
+        high: 100
+        label: "C反应蛋白(CRP)"
+      NEUT:
+        unit: "×10⁹/L"
+        high: 8
+        label: "中性粒细胞计数(NEUT)"
+    diagnosis_keywords:
+      - "泌尿系感染"
+      - "尿路感染"
+      - "蜂窝织炎"
+      - "切口感染"
+      - "败血症"
+      - "脓毒症"
+    evaluation_logic: |
+      1. 检查诊断是否含感染关键词 → 触发
+      2. 检查WBC>12×10⁹/L → 触发
+      3. 检查CRP>100mg/L → 触发
+      4. 检查中性粒细胞>8×10⁹/L → 触发
+      5. 任一条件满足 → infection.triggered=True
+      6. 肺部感染由 pulmonary 维度独立评估
+    source: "guideline-nhc-2022"
+
+  - id: glucose
+    name: 血糖因素
+    description: "未控制的高血糖/糖尿病酮症酸中毒增加围术期并发症"
+    risk_when_triggered: medium
+    optimization: "胰岛素方案调整 + 血糖控制至空腹<10mmol/L + 纠正DKA/HHS"
+    threshold_values:
+      glucose:
+        unit: "mmol/L"
+        high: 13.9
+        label: "葡萄糖(Glu)"
+      hba1c:
+        unit: "%"
+        high: 9.0
+        label: "糖化血红蛋白(HbA1c)"
+    diagnosis_keywords:
+      - "糖尿病酮症酸中毒"
+      - "DKA"
+      - "高渗高血糖状态"
+      - "HHS"
+    evaluation_logic: |
+      1. 检查空腹血糖>13.9mmol/L → 触发
+      2. 检查诊断含DKA/HHS关键词 → 触发(高风险)
+      3. 检查HbA1c>9% 作为长期控制不佳标记(不单独触发延迟，但计入风险评估)
+    source: "guideline-ada-2025"
+
+
+# ──────────────────────────────────────────────
+# 判定规则 — 延迟因素计数 → 手术时机裁定
+# ──────────────────────────────────────────────
+rules:
+  - id: timing-rule-001
+    name: 立即手术
+    condition: "high_risk_count == 0 && medium_risk_count == 0"
+    conclusion: "48小时内急诊手术"
+    urgency: emergency
+    action: "直接安排手术，在入院48h内完成"
+    guideline_ref: "NICE NG37: Surgery within 48 hours"
+
+  - id: timing-rule-002
+    name: 限期手术
+    condition: "high_risk_count == 0 && 1 <= medium_risk_count <= 2"
+    conclusion: "积极优化可逆因素后3-7天限期手术"
+    urgency: urgent
+    action: "每个可逆延迟因素制定优化方案，每24h重新评估优化进展"
+    guideline_ref: "卫健委2022版: 限期手术管理"
+
+  - id: timing-rule-003
+    name: MDT通道
+    condition: "high_risk_count >= 1 || medium_risk_count >= 3"
+    conclusion: "7天以上延迟手术，多学科协作管理"
+    urgency: elective
+    action: "MDT会诊(骨科+心内科+呼吸科+神经内科+麻醉科) + 逐项优化 + 每48h重新评估手术时机"
+    guideline_ref: "卫健委2022版: 延迟手术管理 | 南方医院2026 T2规范"
+
+  - id: timing-rule-004
+    name: 高风险预警
+    condition: "high_risk_count >= 1"
+    conclusion: "存在高风险延迟因素，自动进入MDT评估通道"
+    urgency: elective
+    action: "高权重因素(心脏/肺/脑血管)任一触发 → 启动MDT，相关科室会诊"
+    guideline_ref: "guideline-nanfang-hip-fracture"
+
+
+# ──────────────────────────────────────────────
+# 引擎配置
+# ──────────────────────────────────────────────
+engine_config:
+  re_evaluation_interval_hours:
+    emergency: 12     # 无延迟 → 每12h确认仍无新问题
+    urgent: 24        # 中风险1-2 → 每24h评估优化进展
+    elective: 48      # 高风险触发或中风险≥3 → 每48h评估是否可手术
+  max_deferral_days: 21
+  output_schema_version: "3.0"

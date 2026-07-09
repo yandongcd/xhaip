@@ -1,0 +1,31 @@
+rules:
+  serious:
+    - combination: ["阿片类药物", "苯二氮䓬类"]
+      risk: "呼吸抑制风险显著增加"
+      severity: "禁忌"
+      action: "禁止联合使用"
+    - combination: ["阿片类药物", "加巴喷丁/普瑞巴林"]
+      risk: "CNS和呼吸抑制叠加"
+      severity: "严重"
+      action: "慎用联合，减少剂量，监测呼吸"
+    - combination: ["曲马多", "SSRIs/SNRIs"]
+      risk: "5-羟色胺综合征风险"
+      severity: "严重"
+      action: "避免联合"
+    - combination: ["NSAIDs", "华法林"]
+      risk: "消化道出血+INR升高"
+      severity: "严重"
+      action: "避免联合，如必需密切监测INR"
+    - combination: ["NSAIDs", "ACEI/ARB"]
+      risk: "肾功能损伤+降压效果减弱"
+      severity: "严重"
+      action: "监测肾功能和血压"
+  moderate:
+    - combination: ["阿片类药物", "抗组胺药"]
+      risk: "嗜睡和认知影响叠加"
+      severity: "注意"
+      action: "警告患者不要驾驶"
+    - combination: ["NSAIDs", "利尿剂"]
+      risk: "利尿效果减弱"
+      severity: "注意"
+      action: "监测尿量"

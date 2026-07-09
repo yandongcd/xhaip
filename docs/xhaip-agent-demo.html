@@ -1,0 +1,301 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>xhaip v1.0 — 南方医院 48 Agent 功能演示</title>
+<style>
+:root { --primary: #C8102E; --bg: #F5F6FA; --card: #FFF; --text: #1a1a1a; --text2: #666; --border: #E2E4EA; --success: #22C55E; --warn: #F59E0B; --info: #3B82F6; --purple: #8B5CF6; --arch: #F97316; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
+.header { background: linear-gradient(135deg,#1a1a1a,#2B2B2B); color:#fff; padding:20px 32px; }
+.header h1 { font-size:22px; }
+.header .sub { color:rgba(255,255,255,.6); font-size:12px; margin-top:2px; }
+
+.container { max-width:1600px; margin:0 auto; padding:20px 32px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:8px; margin-bottom:20px; }
+.card { background:var(--card); border-radius:8px; padding:12px 14px; box-shadow:0 1px 3px rgba(0,0,0,.06); border:1px solid var(--border); cursor:pointer; transition:all .15s; }
+.card:hover { border-color:var(--info); box-shadow:0 2px 8px rgba(59,130,246,.15); }
+.card.selected { border-color:var(--primary); background:#FFF5F5; }
+.card .agent-name { font-size:14px; font-weight:700; }
+.card .agent-cn { font-size:11px; color:var(--text2); margin:2px 0 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.card .tags { display:flex; gap:4px; flex-wrap:wrap; }
+.tag { font-size:10px; padding:2px 8px; border-radius:10px; font-weight:600; }
+.tag-business { background:#DBEAFE; color:#1E40AF; }
+.tag-specialist { background:#DCFCE7; color:#166534; }
+.tag-master { background:#F3E8FF; color:#6B21A8; }
+.tag-architecture { background:#FFEDD5; color:#9A3412; }
+.tag-tools { background:#F3F4F6; color:#4B5563; }
+
+.search { margin-bottom:12px; }
+.search input { width:100%; padding:8px 14px; border:1px solid var(--border); border-radius:8px; font-size:13px; background:#fff; }
+.search input:focus { outline:none; border-color:var(--info); }
+
+.panel { background:var(--card); border-radius:8px; padding:20px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,.06); border:1px solid var(--border); }
+.panel h2 { font-size:16px; margin-bottom:12px; }
+.tool-row { display:flex; gap:8px; align-items:flex-start; margin:8px 0; }
+.tool-row select { padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-size:13px; min-width:200px; background:#fff; }
+.tool-row input, .tool-row textarea { padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-size:13px; flex:1; font-family:Consolas,monospace; background:#fff; }
+.tool-row textarea { height:80px; resize:vertical; }
+.tool-row button { padding:8px 20px; background:var(--primary); color:#fff; border:none; border-radius:6px; font-size:13px; cursor:pointer; font-weight:600; }
+.tool-row button:hover { opacity:.9; }
+.result { background:#1a1a1a; color:#e0e0e0; border-radius:6px; padding:16px; font-family:Consolas,monospace; font-size:12px; line-height:1.6; max-height:400px; overflow-y:auto; white-space:pre-wrap; }
+.result .ok { color:#22C55E; } .result .err { color:#EF4444; } .result .key { color:#60A5FA; }
+.info-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:16px; }
+.info-item { background:#F8F9FB; border-radius:6px; padding:12px; text-align:center; }
+.info-item .val { font-size:24px; font-weight:700; }
+.info-item .lbl { font-size:11px; color:var(--text2); text-transform:uppercase; margin-top:2px; }
+.footer { text-align:center; padding:16px; color:var(--text2); font-size:11px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>xhaip v1.0 — 南方医院 Agent 功能演示</h1>
+  <div class="sub">Hospital AI Platform · 48 Agents · 39 Clinical Departments · TOGAF 10 Architecture Governance</div>
+</div>
+
+<div class="container">
+
+<div class="info-grid" id="stats"></div>
+
+<div class="search"><input type="text" id="search-input" placeholder="搜索 Agent（名称/科室/类型）..." oninput="filterAgents()"></div>
+<div class="grid" id="agent-grid"></div>
+
+<div class="panel" id="detail-panel" style="display:none">
+  <h2 id="detail-title"></h2>
+  <div class="tool-row">
+    <select id="patient-select" style="min-width:280px" onchange="onPatientSelect()">
+      <option value="">-- 选择数字病人 --</option>
+    </select>
+    <span id="patient-info" style="font-size:11px;color:var(--text2);margin-left:8px"></span>
+  </div>
+  <div class="tool-row">
+    <select id="tool-select"><option>-- 选择工具 --</option></select>
+    <button onclick="callTool()">执行调用</button>
+  </div>
+  <div id="tool-params" style="margin-top:8px"></div>
+  <div class="result" id="tool-result">点击「执行调用」查看结果...</div>
+</div>
+
+<div class="panel">
+  <h2>快速演示</h2>
+  <div id="demos"></div>
+  <div class="result" id="demo-result" style="margin-top:8px">点击上方按钮运行演示...</div>
+</div>
+
+</div>
+
+<div class="footer" id="meta-info"></div>
+
+<script>
+const API_BASE = 'http://127.0.0.1:8769';
+const API_ONLINE = true;
+
+const AGENTS = [
+  {name:"acute-pain",cn:"急性疼痛评估与管理",type:"specialist",port:8841,dept:"疼痛科",tags:3,desc:"急性疼痛评估 / PCA镇痛 / 危象检测"},
+  {name:"anesthesia-risk",cn:"围术期麻醉评估",type:"specialist",port:0,dept:"跨科室",tags:3,desc:"ASA分级 / 困难气道 / 麻醉方案"},
+  {name:"breast-center",cn:"乳腺中心智能体",type:"business",port:8797,dept:"乳腺中心",tags:8,desc:"接诊分诊 / 诊断评估 / 手术方案"},
+  {name:"burns-plastic",cn:"烧伤整形科智能体",type:"business",port:8798,dept:"烧伤整形科",tags:8,desc:"接诊分诊 / 诊断评估 / 手术方案"},
+  {name:"cancer-pain",cn:"癌性疼痛管理",type:"specialist",port:0,dept:"疼痛科",tags:3,desc:"WHO阶梯 / 阿片安全 / 姑息转介"},
+  {name:"cardio-risk",cn:"围术期心脏评估",type:"specialist",port:8801,dept:"跨科室",tags:3,desc:"心脏风险 / MI评估 / 高血压管理"},
+  {name:"cardio-surgery",cn:"心血管外科智能体",type:"business",port:8768,dept:"心血管外科",tags:3,desc:"手术评估 / 抗凝方案 / 术后管理"},
+  {name:"cardiology",cn:"心血管内科智能体",type:"business",port:8775,dept:"心血管内科",tags:3,desc:"心衰评估 / 高血压管理 / 心律失常"},
+  {name:"chronic-pain",cn:"慢性疼痛综合评估",type:"specialist",port:0,dept:"疼痛科",tags:3,desc:"综合评估 / 量表评分 / 阶梯治疗"},
+  {name:"cosmetic-surgery",cn:"整形美容科智能体",type:"business",port:8799,dept:"整形美容科",tags:8,desc:"接诊分诊 / 诊断评估 / 手术方案"},
+  {name:"dermatology",cn:"皮肤科智能体",type:"business",port:8810,dept:"皮肤科",tags:5,desc:"接诊评估 / 检查检验 / 随访管理"},
+  {name:"emergency",cn:"急诊科智能体",type:"business",port:8808,dept:"急诊科",tags:5,desc:"急诊分诊 / 紧急救治 / 转归评估"},
+  {name:"endocrinology",cn:"内分泌科智能体",type:"business",port:8785,dept:"内分泌科",tags:6,desc:"接诊评估 / 检查检验 / 随访管理"},
+  {name:"ent",cn:"耳鼻喉科智能体",type:"business",port:8806,dept:"耳鼻喉科",tags:5,desc:"筛查初诊 / 专科检查 / 治疗执行"},
+  {name:"gastroenterology",cn:"消化内科智能体",type:"business",port:8782,dept:"消化内科",tags:6,desc:"接诊评估 / 检查检验 / 随访管理"},
+  {name:"general-surgery",cn:"普通外科智能体",type:"business",port:8791,dept:"普通外科",tags:8,desc:"接诊分诊 / 诊断评估 / 手术方案"},
+  {name:"geriatrics",cn:"老年病科智能体",type:"business",port:8790,dept:"老年病科",tags:6,desc:"接诊评估 / 检查检验 / 随访管理"},
+  {name:"health-management",cn:"健康管理科智能体",type:"business",port:8813,dept:"健康管理科",tags:5,desc:"接诊评估 / 检查检验 / 随访管理"},
+  {name:"hematology",cn:"血液内科智能体",type:"business",port:8784,dept:"血液内科",tags:6,desc:"接诊评估 / 检查检验 / 随访管理"},
+  {name:"hepatobiliary-surgery",cn:"肝胆外科智能体",type:"business",port:8792,dept:"肝胆外科",tags:8,desc:"接诊分诊 / 诊断评估 / 手术方案"},
+  {name:"huigiao",cn:"惠侨医疗中心智能体",type:"business",port:8814,dept:"惠侨医疗中心",tags:5,desc:"接诊评估 / 检查检验 / 随访管理"},
+  {name:"icu",cn:"重症医学科智能体",type:"business",port:8809,dept:"重症医学科",tags:5,desc:"急诊分诊 / 紧急救治 / 转归评估"},
+  {name:"infectious-disease",cn:"感染内科智能体",type:"business",port:8787,dept:"感染内科",tags:6,desc:"接诊评估 / 检查检验 / 随访管理"},
+  {name:"interventional-pain",cn:"介入疼痛治疗评估",type:"specialist",port:0,dept:"疼痛科",tags:3,desc:"适应症评估 / 影像门控 / 术后安全"},
+  {name:"interventional-therapy",cn:"介入治疗科智能体",type:"business",port:8802,dept:"介入治疗科",tags:8,desc:"接诊分诊 / 诊断评估 / 手术方案"},
+  {name:"medical-record",cn:"患者数据中心",type:"master_data",port:8766,dept:"全院",tags:3,desc:"患者查询 / 检验结果 / 影像报告"},
+  {name:"metrics",cn:"全院指标数据中心",type:"master_data",port:8767,dept:"全院",tags:3,desc:"运营指标 / 质量指标 / 效率指标"},
+  {name:"neonatology",cn:"新生儿科智能体",type:"business",port:8804,dept:"新生儿科",tags:6,desc:"接诊评估 / 专项检查 / 随访保健"},
+  {name:"nephrology",cn:"肾内科智能体",type:"business",port:8783,dept:"肾内科",tags:6,desc:"接诊评估 / 检查检验 / 随访管理"},
+  {name:"neurosurgery",cn:"神经外科智能体",type:"business",port:8793,dept:"神经外科",tags:8,desc:"接诊分诊 / 诊断评估 / 手术方案"},
+  {name:"obgyn",cn:"妇产科智能体",type:"business",port:8803,dept:"妇产科",tags:6,desc:"接诊评估 / 专项检查 / 随访保健"},
+  {name:"oncology",cn:"肿瘤科智能体",type:"business",port:8788,dept:"肿瘤科",tags:6,desc:"接诊评估 / 检查检验 / 随访管理"},
+  {name:"ophthalmology",cn:"眼科智能体",type:"business",port:8805,dept:"眼科",tags:5,desc:"筛查初诊 / 专科检查 / 治疗执行"},
+  {name:"orthopedic-surgery",cn:"创伤骨科智能体",type:"business",port:8765,dept:"骨外科",tags:15,desc:"骨折分型 / 术前评估 / 手术方案 / 并发症预测"},
+  {name:"pain-hub",cn:"疼痛专病智能体门户",type:"business",port:8840,dept:"疼痛科",tags:2,desc:"疼痛分诊 / 结果聚合 (Hub+5Sub)"},
+  {name:"pain-rehab",cn:"疼痛康复管理",type:"specialist",port:0,dept:"疼痛科",tags:3,desc:"运动处方 / 进展评估 / 合并症管理"},
+  {name:"pediatrics",cn:"儿科智能体",type:"business",port:8820,dept:"儿科",tags:3,desc:"生长发育 / 用药剂量 / IMCI诊断"},
+  {name:"pharmacy",cn:"药剂科智能体",type:"business",port:8770,dept:"药剂科",tags:6,desc:"营养评估 / TPN配比 / 处方审核 / 药品查询"},
+  {name:"psychiatry",cn:"精神心理科智能体",type:"business",port:8811,dept:"精神心理科",tags:5,desc:"接诊评估 / 检查检验 / 随访管理"},
+  {name:"rehabilitation",cn:"康复医学科智能体",type:"business",port:8812,dept:"康复医学科",tags:5,desc:"接诊评估 / 检查检验 / 随访管理"},
+  {name:"renal-transplant",cn:"肾移植科智能体",type:"business",port:8796,dept:"肾移植科",tags:8,desc:"接诊分诊 / 诊断评估 / 手术方案"},
+  {name:"respiratory",cn:"呼吸内科智能体",type:"business",port:8781,dept:"呼吸内科",tags:6,desc:"接诊评估 / 检查检验 / 随访管理"},
+  {name:"rheumatology",cn:"风湿免疫科智能体",type:"business",port:8786,dept:"风湿免疫科",tags:6,desc:"接诊评估 / 检查检验 / 随访管理"},
+  {name:"stomatology",cn:"口腔科智能体",type:"business",port:8807,dept:"口腔科",tags:5,desc:"筛查初诊 / 专科检查 / 治疗执行"},
+  {name:"tcm",cn:"中医科智能体",type:"business",port:8789,dept:"中医科",tags:6,desc:"接诊评估 / 检查检验 / 随访管理"},
+  {name:"thoracic-surgery",cn:"胸外科智能体",type:"business",port:8794,dept:"胸外科",tags:8,desc:"接诊分诊 / 诊断评估 / 手术方案"},
+  {name:"togaf",cn:"TOGAF架构治理智能体",type:"architecture",port:8750,dept:"全院",tags:6,desc:"元模型 / 4A构建 / 审计 / 布局 / 模板"},
+  {name:"vascular-surgery",cn:"血管外科智能体",type:"business",port:8795,dept:"血管外科",tags:8,desc:"接诊分诊 / 诊断评估 / 手术方案"},
+];
+
+const DEMOS = [
+  {agent:"orthopedic-surgery",tool:"classify_fracture",params:{patient_id:"P001",xray_findings:{location:"femoral_neck",type:"Garden III"}},label:"骨科：股骨颈骨折 Garden III",desc:"femoral_neck → severity=high"},
+  {agent:"respiratory",tool:"bp_reception",params:{patient_id:"P239"},label:"呼吸科：COPD 接诊评估",desc:"GOLD 2024 指南驱动"},
+  {agent:"cardiology",tool:"bp_diagnosis",params:{patient_id:"P241"},label:"心内科：心衰确诊分型",desc:"NYHA分级 + 心衰指南"},
+  {agent:"pharmacy",tool:"bp_reception",params:{patient_id:"P046"},label:"药剂科：TPN营养评估",desc:"NRS2002 + 再喂养风险评估"},
+  {agent:"emergency",tool:"bp_triage",params:{patient_id:"P300"},label:"急诊科：急诊分诊",desc:"生命体征 + 绿色通道判定"},
+  {agent:"neurosurgery",tool:"bp_diag",params:{patient_id:"P240"},label:"神经外科：颅脑评估",desc:"GCS评分 + 影像评估"},
+  {agent:"togaf",tool:"metamodel_list",params:{},label:"TOGAF：元模型查询",desc:"10实体 + 13关系"},
+  {agent:"medical-record",tool:"bp_reception",params:{patient_id:"P001"},label:"患者中心：查询 P001",desc:"股骨转子间骨折"},
+];
+
+let selectedAgent = null, allPatients = [], currentPatient = null;
+
+function renderStats() {
+  const counts = {business:0, specialist:0, master_data:0, architecture:0};
+  AGENTS.forEach(a => counts[a.type] = (counts[a.type]||0) + 1);
+  document.getElementById('stats').innerHTML = `
+    <div class="info-item"><div class="val" style="color:var(--primary)">${AGENTS.length}</div><div class="lbl">Agent 总数</div></div>
+    <div class="info-item"><div class="val" style="color:var(--info)">${counts.business}</div><div class="lbl">Business</div></div>
+    <div class="info-item"><div class="val" style="color:var(--success)">${counts.specialist}</div><div class="lbl">Specialist</div></div>
+    <div class="info-item"><div class="val" style="color:var(--purple)">${counts.master_data}</div><div class="lbl">Master Data</div></div>
+    <div class="info-item"><div class="val" style="color:var(--arch)">${counts.architecture}</div><div class="lbl">Architecture</div></div>
+    <div class="info-item"><div class="val" style="color:var(--warn)">${AGENTS.filter(a=>a.dept!=='跨科室'&&a.dept!=='全院').length}</div><div class="lbl">科室覆盖</div></div>
+  `;
+}
+
+function renderAgents() {
+  const q = (document.getElementById('search-input')?.value || '').toLowerCase();
+  const filtered = q ? AGENTS.filter(a => (a.cn+a.name+a.dept+a.type).toLowerCase().includes(q)) : AGENTS;
+  const grid = document.getElementById('agent-grid');
+  const cats = [
+    {type:'business',label:'Business Agent',icon:'🏥',color:'#3B82F6'},
+    {type:'specialist',label:'Specialist Agent',icon:'🔬',color:'#22C55E'},
+    {type:'master_data',label:'Master Data Agent',icon:'🗄️',color:'#8B5CF6'},
+    {type:'architecture',label:'Architecture Agent',icon:'🏗️',color:'#F97316'},
+  ];
+  let html = '';
+  cats.forEach(cat => {
+    const list = filtered.filter(a => a.type === cat.type);
+    if (!list.length) return;
+    html += `<div style="grid-column:1/-1;margin:8px 0 2px;font-size:12px;font-weight:700;color:${cat.color};padding:4px 0;border-bottom:1px solid var(--border)">
+      ${cat.icon} ${cat.label} <span style="font-weight:400;color:var(--text2);font-size:10px">${list.length} 个</span>
+    </div>`;
+    list.forEach(a => {
+      const tagClass = `tag-${a.type === 'architecture' ? 'architecture' : a.type === 'business' ? 'business' : a.type === 'specialist' ? 'specialist' : 'master'}`;
+      html += `<div class="card" onclick="selectAgent('${a.name}')" id="card-${a.name}">
+        <div class="agent-name">${a.cn}</div>
+        <div class="agent-cn">${a.name} | ${a.dept}${a.port?':'+a.port:''}</div>
+        <div class="tags"><span class="tag ${tagClass}">${a.type}</span><span class="tag tag-tools">${a.tags} tools</span></div></div>`;
+    });
+  });
+  grid.innerHTML = html || '<div style="text-align:center;padding:40px;color:var(--text2)">未找到匹配的 Agent</div>';
+}
+
+function filterAgents() { renderAgents(); }
+
+function selectAgent(name) {
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('card-' + name)?.classList.add('selected');
+  selectedAgent = AGENTS.find(a => a.name === name);
+  document.getElementById('detail-panel').style.display = 'block';
+  document.getElementById('detail-title').textContent = selectedAgent.cn + ' (' + selectedAgent.name + ')';
+  loadPatients(name);
+  fetch(API_BASE + '/api/agents').then(r=>r.json()).then(agents=>{
+    const a = agents.find(x=>x.name===name);
+    if (a) { updateToolSelector(a.tools); }
+  }).catch(()=>{ document.getElementById('tool-select').innerHTML = '<option>-- API 未响应 --</option>'; });
+}
+
+function updateToolSelector(tools) {
+  const sel = document.getElementById('tool-select');
+  sel.innerHTML = '<option value="">-- 选择工具 (' + (tools?tools.length:0) + ' 个) --</option>';
+  if (!tools) return;
+  tools.forEach(t => {
+    const params = t.input || {};
+    sel.innerHTML += `<option value="${t.name}" data-params='${JSON.stringify(params)}'>${t.name}: ${t.description||''}</option>`;
+  });
+  sel.onchange = function() {
+    const opt = sel.selectedOptions[0];
+    const ps = opt.getAttribute('data-params') || '{}';
+    document.getElementById('tool-params').innerHTML = `<p style="font-size:11px;color:var(--text2);margin-bottom:4px">参数:</p>
+      <textarea id="params-input" style="width:100%;height:60px;font-family:Consolas,monospace;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:8px">${ps}</textarea>`;
+    setTimeout(autoFillParams, 50);
+  };
+}
+
+function loadPatients(agentName) {
+  const sel = document.getElementById('patient-select');
+  sel.innerHTML = '<option value="">-- 加载中... --</option>';
+  fetch(API_BASE + '/patients?agent=' + encodeURIComponent(agentName))
+    .then(r => r.json()).then(pts => {
+      allPatients = Array.isArray(pts) ? pts : (pts.cases || []);
+      sel.innerHTML = '<option value="">-- 选择病人 (' + allPatients.length + ' 位) --</option>';
+      allPatients.forEach((p,i) => {
+        const ageLabel = p.age_months ? (p.age_months+'月') : (p.age||'?')+'岁';
+        sel.innerHTML += `<option value="${i}">${p.patient_id} | ${p.name} | ${ageLabel} | ${p.diagnosis||''}</option>`;
+      });
+    }).catch(()=>{ sel.innerHTML = '<option>-- 加载失败 --</option>'; });
+}
+
+function onPatientSelect() {
+  const idx = parseInt(document.getElementById('patient-select').value);
+  if (isNaN(idx)) { currentPatient = null; document.getElementById('patient-info').textContent = ''; return; }
+  currentPatient = allPatients[idx];
+  const p = currentPatient;
+  document.getElementById('patient-info').innerHTML = `<strong>${p.patient_id}</strong> ${p.name} ${p.gender==='M'?'男':'女'}`;
+  setTimeout(autoFillParams, 100);
+}
+
+function autoFillParams() {
+  if (!currentPatient) return;
+  const p = currentPatient;
+  const paramsEl = document.getElementById('params-input');
+  if (!paramsEl) return;
+  let params = {patient_id: p.patient_id, weight_kg: p.weight_kg, height_cm: p.height_cm, lab_results: p.lab_results || {}, age: p.age || 0};
+  paramsEl.value = JSON.stringify(params, null, 2);
+}
+
+function callTool() {
+  const tool = document.getElementById('tool-select').value;
+  const el = document.getElementById('tool-result');
+  if (!tool || !selectedAgent) { el.textContent = '请选择 Agent 和工具'; return; }
+  const paramsEl = document.getElementById('params-input');
+  let params = {};
+  try { params = paramsEl ? JSON.parse(paramsEl.value) : {}; } catch(e) { el.textContent = 'JSON 格式错误: ' + e.message; return; }
+  el.textContent = '调用中...';
+  fetch(API_BASE + '/api/call', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent:selectedAgent.name,tool:tool,params:params})})
+    .then(r=>r.json()).then(data=>{ el.textContent = JSON.stringify(data, null, 2); })
+    .catch(e=>{ el.textContent = '请求失败: ' + e.message; });
+}
+
+function renderDemos() {
+  document.getElementById('demos').innerHTML = DEMOS.map((d,i) =>
+    `<button style="margin:4px;padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer;font-size:12px;font-family:inherit" onclick="runDemo(${i})" title="${d.desc}">${d.label}</button>`
+  ).join('');
+}
+
+function runDemo(i) {
+  const d = DEMOS[i];
+  const el = document.getElementById('demo-result');
+  el.textContent = '调用中...';
+  fetch(API_BASE + '/api/call', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent:d.agent,tool:d.tool,params:d.params})})
+    .then(r=>r.json()).then(data=>{ el.textContent = JSON.stringify(data, null, 2); })
+    .catch(e=>{ el.textContent = '请求失败: ' + e.message + '\n请确认服务器已启动: .\\deploy.ps1'; });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderStats();
+  renderAgents();
+  renderDemos();
+  document.getElementById('meta-info').textContent = 'xhaip v1.0 · 48 Agents · 39 临床科室 · TOGAF 10 Architecture · KnowledgeAgent 推理';
+});
+</script>
+
+</body>
+</html>

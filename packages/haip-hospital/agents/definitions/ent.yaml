@@ -1,0 +1,80 @@
+name: ent
+cn_name: 耳鼻喉科智能体
+version: "1.0.0"
+type: business
+department: 耳鼻喉科
+port: 8806
+aliases: [耳鼻喉科, ent]
+
+prompt:
+  system: |
+    你是南方医院耳鼻喉科AI助手，负责耳鼻喉科常见疾病的诊疗评估和管理。
+    请基于相关临床指南给出专业建议。
+  temperature: 0.3
+
+tools:
+  - name: bp_screening
+    description: 筛查与初诊
+    handler: ent.bp_screening
+    input: {patient_id: str}
+
+  - name: bp_exam
+    description: 专科检查
+    handler: ent.bp_exam
+    input: {patient_id: str}
+
+  - name: bp_diagnosis
+    description: 确诊定级
+    handler: ent.bp_diagnosis
+    input: {patient_id: str}
+
+  - name: bp_treatment
+    description: 治疗操作
+    handler: ent.bp_treatment
+    input: {patient_id: str}
+
+  - name: bp_followup
+    description: 定期复查
+    handler: ent.bp_followup
+    input: {patient_id: str}
+
+
+ui:
+  template: chat-with-role-switcher
+  roles:
+    - {id: attending, label: 主治医师, default: true}
+    - {id: resid, label: 住院医师}
+    - {id: head_nurse, label: 护士长}
+    - {id: head, label: 科主任}
+
+stages:
+  - order: 1
+    id: bp-screening
+    label: 筛查与初诊
+    desc: "筛查与初诊流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resid', 'head_nurse']
+  - order: 2
+    id: bp-exam
+    label: 专科检查
+    desc: "专科检查流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resid', 'head_nurse']
+  - order: 3
+    id: bp-diagnosis
+    label: 确诊定级
+    desc: "确诊定级流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resid', 'head_nurse']
+  - order: 4
+    id: bp-treatment
+    label: 治疗操作
+    desc: "治疗操作流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resid', 'head_nurse']
+  - order: 5
+    id: bp-followup
+    label: 定期复查
+    desc: "定期复查流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resid', 'head_nurse']

@@ -1,0 +1,97 @@
+# 疼痛科智能分诊规则 — symptom→department→urgency→exams
+rules:
+  - symptom: "术后疼痛|手术后疼痛|切口痛"
+    keywords: ["术后", "手术", "切口"]
+    route_to: "acute_pain"
+    urgency: "routine"
+    category: "术后急性疼痛"
+    recommended_exams: []
+    red_flag_check: false
+  - symptom: "急性腰背痛|腰部剧痛|腰肌劳损"
+    keywords: ["腰痛", "腰背痛", "腰扭伤"]
+    route_to: "acute_pain"
+    urgency: "routine"
+    category: "急性腰痛"
+    recommended_exams: ["腰椎X线", "腰椎MRI"]
+    red_flag_check: true
+  - symptom: "颈椎痛|颈部疼痛|落枕"
+    keywords: ["颈痛", "颈肩痛", "落枕"]
+    route_to: "chronic_pain"
+    urgency: "routine"
+    category: "颈源性疼痛"
+    recommended_exams: ["颈椎X线"]
+    red_flag_check: false
+  - symptom: "膝关节痛|肩周炎|关节炎"
+    keywords: ["膝痛", "肩痛", "关节痛", "关节炎"]
+    route_to: "chronic_pain"
+    urgency: "routine"
+    category: "骨关节慢性疼痛"
+    recommended_exams: ["关节X线", "关节超声"]
+    red_flag_check: false
+  - symptom: "坐骨神经痛|腿麻|腿痛放射"
+    keywords: ["坐骨神经", "腿麻", "放射性痛"]
+    route_to: "chronic_pain"
+    urgency: "urgent"
+    category: "神经根性疼痛"
+    recommended_exams: ["腰椎MRI"]
+    red_flag_check: true
+  - symptom: "三叉神经痛|面痛|面部剧痛"
+    keywords: ["三叉神经", "面痛", "面部"]
+    route_to: "chronic_pain"
+    urgency: "routine"
+    category: "神经病理性疼痛"
+    recommended_exams: ["头颅MRI"]
+    red_flag_check: false
+    external_consult: "neurology"
+  - symptom: "头痛|偏头痛|紧张性头痛"
+    keywords: ["头痛", "偏头痛", "头胀痛"]
+    route_to: "chronic_pain"
+    urgency: "routine"
+    category: "头痛综合征"
+    recommended_exams: ["头颅CT"]
+    red_flag_check: true
+    external_consult: "neurology"
+  - symptom: "癌性疼痛|肿瘤相关疼痛|癌痛"
+    keywords: ["癌痛", "癌性", "肿瘤", "化疗后痛", "放疗后痛"]
+    route_to: "cancer_pain"
+    urgency: "urgent"
+    category: "癌性疼痛"
+    recommended_exams: []
+    red_flag_check: true
+    external_consult: "oncology"
+  - symptom: "带状疱疹后神经痛|带状疱疹后遗痛"
+    keywords: ["带状疱疹", "疱疹后", "PHN"]
+    route_to: "chronic_pain"
+    urgency: "routine"
+    category: "带状疱疹后神经痛"
+    recommended_exams: []
+    red_flag_check: false
+  - symptom: "腰椎间盘突出|椎间盘源性痛"
+    keywords: ["椎间盘", "腰突", "膨出", "脱出"]
+    route_to: "interventional_pain"
+    urgency: "routine"
+    category: "椎间盘源性疼痛"
+    recommended_exams: ["腰椎MRI", "腰椎CT"]
+    red_flag_check: false
+    external_consult: "orthopedic"
+  - symptom: "骨质疏松性疼痛|压缩性骨折疼痛"
+    keywords: ["骨质疏松", "压缩性骨折", "骨痛"]
+    route_to: "interventional_pain"
+    urgency: "urgent"
+    category: "骨质疏松性疼痛"
+    recommended_exams: ["骨密度", "脊柱MRI"]
+    red_flag_check: true
+    external_consult: "orthopedic"
+  - symptom: "纤维肌痛|全身广泛疼痛"
+    keywords: ["纤维肌痛", "全身痛", "广泛痛"]
+    route_to: "chronic_pain"
+    urgency: "routine"
+    category: "纤维肌痛综合征"
+    recommended_exams: []
+    red_flag_check: false
+    external_consult: "psychology"
+default_route:
+  route_to: "pain_hub"
+  urgency: "routine"
+  category: "未分类疼痛"
+  recommended_exams: []

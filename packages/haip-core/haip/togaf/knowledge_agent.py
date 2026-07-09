@@ -1,0 +1,160 @@
+"""KnowledgeAgent — Base class for clinically-intelligent Agent handlers.
+
+Provides:
+  - Guideline lookup by diagnosis / department
+  - Rule-based decision support
+  - Patient data enrichment
+  - Structured clinical reasoning output
+
+Usage:
+  from haip.togaf.knowledge_agent import KnowledgeAgent
+
+  class RespiratoryAgent(KnowledgeAgent):
+      def bp_reception(self, patient_id):
+          patient = self.get_patient(patient_id)
+          guides = self.search_guidelines("COPD")
+          return self.clinical_result("评估完成", patient, guides)
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+import json
+from typing import Any
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent  # xhaip root
+KNOWLEDGE_DIR = PROJECT_ROOT / "packages" / "haip-hospital" / "knowledge"
+PATIENTS_FILE = PROJECT_ROOT / "packages" / "haip-hospital" / "data" / "patients.json"
+
+# Cached patient data
+_patient_cache: dict[str, dict] | None = None
+
+
+def _load_patients() -> dict[str, dict]:
+    global _patient_cache
+    if _patient_cache is None:
+        _patient_cache = {}
+        if PATIENTS_FILE.exists():
+            with open(PATIENTS_FILE, encoding="utf-8") as f:
+                data = json.load(f)
+            for p in data.get("patients", []):
+                _patient_cache[p["patient_id"]] = p
+    return _patient_cache
+
+
+class KnowledgeAgent:
+    """Base class for handlers with knowledge-aware clinical reasoning."""
+
+    agent_name: str = ""
+    department: str = ""
+    guidelines_cache: list[dict] = []
+
+    def __init__(self, agent_name: str = "", department: str = ""):
+        self.agent_name = agent_name
+        self.department = department
+
+    def get_patient(self, patient_id: str) -> dict | None:
+        return _load_patients().get(patient_id)
+
+    def get_patients_by_dept(self) -> list[dict]:
+        dept = self.department
+        return [p for p in _load_patients().values()
+                if p.get("department") == dept]
+
+    def search_guidelines(self, query: str) -> list[str]:
+        """Search knowledge/guidelines/ for relevant guidelines."""
+        guidelines_dir = KNOWLEDGE_DIR / "guidelines"
+        results: list[str] = []
+        if not guidelines_dir.exists():
+            return results
+        for f in sorted(guidelines_dir.glob("*.yaml")):
+            try:
+                with open(f, encoding="utf-8") as fh:
+                    content = fh.read()
+                if query.lower() in content.lower():
+                    results.append(f.stem)
+            except Exception:
+                pass
+        return results[:5]
+
+    def search_rules(self, query: str) -> list[str]:
+        """Search knowledge/rules/ for applicable rules."""
+        rules_dir = KNOWLEDGE_DIR / "rules"
+        results: list[str] = []
+        if not rules_dir.exists():
+            return results
+        for f in sorted(rules_dir.rglob("*.yaml")):
+            try:
+                with open(f, encoding="utf-8") as fh:
+                    content = fh.read()
+                if query.lower() in content.lower():
+                    results.append(str(f.relative_to(rules_dir)))
+            except Exception:
+                pass
+        return results[:5]
+
+    def assess_vitals(self, patient: dict) -> dict:
+        """Basic vital sign assessment from patient data."""
+        labs = patient.get("lab_results", {})
+        alerts: list[str] = []
+
+        for key, (low, high, unit) in _VITAL_RANGES.items():
+            val = labs.get(key)
+            if val is not None:
+                try:
+                    v = float(val)
+                    if v < low:
+                        alerts.append(f"{key}偏低({v}{unit})")
+                    elif v > high:
+                        alerts.append(f"{key}偏高({v}{unit})")
+                except (ValueError, TypeError):
+                    pass
+
+        return {"alerts": alerts, "all_normal": len(alerts) == 0}
+
+    def clinical_result(self, summary: str, patient: dict | None = None,
+                        guidelines: list[str] | None = None,
+                        rules: list[str] | None = None,
+                        alerts: list[str] | None = None) -> dict:
+        """Generate structured clinical reasoning result."""
+        result: dict[str, Any] = {
+            "status": "ok",
+            "agent": self.agent_name,
+            "summary": summary,
+        }
+        if patient:
+            result["patient"] = {
+                "id": patient.get("patient_id"),
+                "name": patient.get("name"),
+                "diagnosis": patient.get("diagnosis"),
+            }
+            if alerts is None:
+                vitals = self.assess_vitals(patient)
+                alerts = vitals.get("alerts", [])
+        if guidelines:
+            result["guideline_refs"] = guidelines
+        if rules:
+            result["rule_refs"] = rules
+        if alerts:
+            result["alerts"] = alerts
+        return result
+
+
+# Common vital sign / lab reference ranges
+_VITAL_RANGES: dict[str, tuple[float, float, str]] = {
+    "Hb": (110, 160, "g/L"),
+    "WBC": (3.5, 10.0, "x10^9/L"),
+    "PLT": (100, 300, "x10^9/L"),
+    "CRP": (0, 10, "mg/L"),
+    "Cr": (60, 110, "umol/L"),
+    "ALT": (10, 40, "U/L"),
+    "AST": (10, 40, "U/L"),
+    "TBIL": (3, 21, "umol/L"),
+    "BUN": (2.9, 8.2, "mmol/L"),
+    "FPG": (3.9, 6.1, "mmol/L"),
+    "K+": (3.5, 5.5, "mmol/L"),
+    "Troponin": (0, 0.04, "ng/mL"),
+    "D-Dimer": (0, 0.5, "mg/L"),
+    "PaO2": (80, 100, "mmHg"),
+    "TSH": (0.4, 4.0, "mIU/L"),
+}

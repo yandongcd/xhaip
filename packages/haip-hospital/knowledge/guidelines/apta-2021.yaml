@@ -1,0 +1,52 @@
+# ============================================================
+# Guideline Asset: APTA 老年髋部骨折物理治疗管理临床实践指南（2021）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-apta-2021"
+name: "APTA 老年髋部骨折物理治疗管理临床实践指南"
+abbr: "APTA 2021"
+version: "2021"
+publisher: "American Physical Therapy Association"
+doi: "10.2522/ptj.20210023"
+language: en
+trust_level: T1
+admin_priority: 9
+
+description: >
+  Evidence-based clinical practice guideline from APTA for physical therapy
+  management following hip fracture in older adults. Covers 4 rehabilitation
+  phases, functional assessment, weight-bearing protocols, and fall prevention.
+
+key_sections:
+  - id: "§3"
+    title: "Early rehabilitation (0-2 weeks)"
+    pages: "6-10"
+    stage_ids: [S11]
+    rule_ids: [followup-001]
+
+  - id: "§4"
+    title: "Mid rehabilitation (2-6 weeks)"
+    pages: "11-15"
+    stage_ids: [S11]
+    rule_ids: [followup-002]
+
+  - id: "§5"
+    title: "Recovery (6-12 weeks)"
+    pages: "16-20"
+    stage_ids: [S11]
+    rule_ids: [followup-003]
+
+  - id: "§6"
+    title: "Long-term maintenance (12+ weeks)"
+    pages: "21-25"
+    stage_ids: [S11]
+    rule_ids: [followup-004]
+
+rule_sets_covered:
+  - followup
+
+derived_rule_count: 8
+last_updated: 2026-07-01
+supersedes: ""
+superseded_by: ""

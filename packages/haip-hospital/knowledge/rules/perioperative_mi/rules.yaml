@@ -1,0 +1,125 @@
+rule_set:
+  id: perioperative_mi
+  domain: cardiology
+  decision_points:
+    - troponin_level
+    - ecg_classification
+    - mi_type
+    - mi_risk_level
+  sources:
+    - universal-mi-definition-2018
+    - esc-guidelines-2023
+  version: "1.0"
+  trust_level: T1
+  owner: cardiology_consultant
+
+rules:
+  - id: troponin-normal
+    decision_point: troponin_level
+    condition_expr: "context.hs_cTnI < 0.04"
+    conclusion: "肌钙蛋白正常，排除急性MI"
+    rule_type: threshold
+    certainty: strong
+    evidence:
+      - source_id: universal-mi-definition-2018
+        chapter: "§4"
+        confidence: 0.95
+
+  - id: troponin-mild-elevation
+    decision_point: troponin_level
+    condition_expr: "0.04 <= context.hs_cTnI < 0.5"
+    conclusion: "肌钙蛋白轻度升高，需结合ECG和临床表现"
+    rule_type: threshold
+    certainty: moderate
+    evidence:
+      - source_id: universal-mi-definition-2018
+        chapter: "§4"
+        confidence: 0.85
+
+  - id: troponin-significant
+    decision_point: troponin_level
+    condition_expr: "context.hs_cTnI >= 0.5"
+    conclusion: "肌钙蛋白显著升高，急性MI可能，立即心内科会诊"
+    rule_type: threshold
+    certainty: strong
+    evidence:
+      - source_id: universal-mi-definition-2018
+        chapter: "§4"
+        confidence: 0.95
+
+  - id: ecg-stemi
+    decision_point: ecg_classification
+    condition_eval: "$ecg_has_pattern(context.ecg_text, ['ST段抬高'])"
+    conclusion: "STEMI — 急诊PCI或溶栓"
+    rule_type: deterministic
+    certainty: strong
+    evidence:
+      - source_id: universal-mi-definition-2018
+        chapter: "§3"
+        confidence: 0.95
+
+  - id: ecg-nstemi
+    decision_point: ecg_classification
+    condition_eval: "$ecg_has_pattern(context.ecg_text, ['ST段压低'])"
+    conclusion: "NSTEMI (需酶学确认) — 抗缺血治疗+心内科评估"
+    rule_type: deterministic
+    certainty: strong
+    evidence:
+      - source_id: universal-mi-definition-2018
+        chapter: "§3"
+        confidence: 0.90
+
+  - id: ecg-t-wave-inversion
+    decision_point: ecg_classification
+    condition_eval: "$ecg_has_pattern(context.ecg_text, ['T波倒置'])"
+    conclusion: "心肌缺血可能 (需结合酶学) — 连续ECG+肌钙蛋白q3h"
+    rule_type: deterministic
+    certainty: moderate
+    evidence:
+      - source_id: universal-mi-definition-2018
+        chapter: "§3"
+        confidence: 0.80
+
+  - id: mi-type-1
+    decision_point: mi_type
+    condition_eval: "$is_type1_mi(context)"
+    conclusion: "Type 1 MI (动脉粥样硬化血栓性) — 抗血小板+抗凝→冠脉造影"
+    rule_type: composite
+    certainty: strong
+    evidence:
+      - source_id: universal-mi-definition-2018
+        chapter: "§5"
+        confidence: 0.90
+
+  - id: mi-type-2
+    decision_point: mi_type
+    condition_eval: "$is_type2_mi(context)"
+    conclusion: "Type 2 MI (供需失衡) — 纠正诱因→优化血流动力学→密切监测"
+    rule_type: composite
+    certainty: moderate
+    evidence:
+      - source_id: universal-mi-definition-2018
+        chapter: "§5"
+        confidence: 0.85
+
+  - id: mi-risk-high
+    decision_point: mi_risk_level
+    condition_expr: "$mi_high_risk_factor_count(context) >= 3"
+    conclusion: "MI高风险"
+    rule_type: composite
+    certainty: strong
+    evidence:
+      - source_id: universal-mi-definition-2018
+        chapter: "§6"
+        confidence: 0.85
+
+  - id: mi-risk-medium
+    decision_point: mi_risk_level
+    condition_expr: "$mi_high_risk_factor_count(context) >= 1"
+    conclusion: "MI中风险"
+    rule_type: composite
+    certainty: moderate
+    evidence:
+      - source_id: universal-mi-definition-2018
+        chapter: "§6"
+        confidence: 0.80

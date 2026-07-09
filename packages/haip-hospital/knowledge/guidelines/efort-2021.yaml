@@ -1,0 +1,53 @@
+# ============================================================
+# Guideline Asset: EFORT 老年髋部骨折术前优化指南（2021）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-efort-2021"
+name: "EFORT 老年髋部骨折术前优化指南"
+abbr: "EFORT 2021"
+version: "2021"
+publisher: "European Federation of National Associations of Orthopaedics and Traumatology"
+doi: "10.1007/s00113-021-01044-y"
+language: en
+trust_level: T1
+admin_priority: 8
+
+description: >
+  European recommendations for preoperative optimization in geriatric hip fracture
+  patients. Covers cardiac risk stratification, anticoagulation management,
+  anemia correction, and multidisciplinary optimization protocols.
+
+key_sections:
+  - id: "§3"
+    title: "Cardiac risk optimization"
+    pages: "4-8"
+    stage_ids: [S4, S5]
+    rule_ids: [timing-cardiac]
+
+  - id: "§4"
+    title: "Anticoagulation management"
+    pages: "9-12"
+    stage_ids: [S6]
+    rule_ids: [timing-anticoagulation]
+
+  - id: "§5"
+    title: "Anemia and transfusion"
+    pages: "13-16"
+    stage_ids: [S4]
+    rule_ids: [timing-anemia]
+
+  - id: "§6"
+    title: "Multidisciplinary optimization"
+    pages: "17-22"
+    stage_ids: [S7]
+    rule_ids: [timing-rule-002, timing-rule-003]
+
+rule_sets_covered:
+  - timing
+  - completeness
+
+derived_rule_count: 8
+last_updated: 2026-07-01
+supersedes: ""
+superseded_by: ""

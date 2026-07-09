@@ -1,0 +1,171 @@
+# ============================================================
+# Rule Asset: 老年髋部骨折术前检验检查完整性规则
+# TOGAF Class: Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+name: hip-fracture-completeness-rules
+version: "1.0"
+description: 基于卫健委2022版/NICE NG37的术前必查检验(9项)+检查(5项)
+owner: attending
+guideline_ref:
+  - "guideline-nhc-2022"
+  - "guideline-nice-ng37"
+last_updated: 2026-07-01
+
+required_tests:
+  - id: cbc
+    category: "血常规"
+    name: "血常规"
+    items: ["白细胞", "红细胞", "血红蛋白", "血小板", "中性粒细胞", "淋巴细胞"]
+    reason: "评估感染 贫血 出血风险"
+    phase: "接诊"
+    dept: "检验科"
+    agents: []
+    guideline_ref: "guideline-nhc-2022"
+
+  - id: coagulation
+    category: "凝血功能"
+    name: "凝血四项"
+    items: ["凝血酶原时间", "活化部分凝血活酶时间", "纤维蛋白原", "凝血酶时间"]
+    reason: "评估出血/血栓风险,指导抗凝管理"
+    phase: "接诊"
+    dept: "检验科/麻醉科"
+    agents:
+      - name: "anesthesia-risk"
+        label: "抗凝评估"
+        path: "/anticoagulation"
+    guideline_ref: "guideline-nhc-2022"
+
+  - id: cardiac_enzymes
+    category: "心肌酶"
+    name: "心肌酶谱"
+    items: ["肌酸激酶", "心型肌酸激酶", "乳酸脱氢酶", "肌钙蛋白"]
+    reason: "排除急性冠脉综合征,评估心脏风险"
+    phase: "术前评估"
+    dept: "心内科"
+    agents:
+      - name: "cardio-risk"
+        label: "MI评估"
+        path: "/mi"
+    guideline_ref: "guideline-nhc-2022"
+
+  - id: renal_function
+    category: "肾功能"
+    name: "肾功能"
+    items: ["肌酐", "尿素", "肾小球滤过率", "尿酸"]
+    reason: "评估肾功能,指导用药剂量与造影剂使用"
+    phase: "接诊"
+    dept: "肾内科/麻醉科"
+    agents:
+      - name: "anesthesia-risk"
+        label: "麻醉评估"
+        path: "/asa"
+    guideline_ref: "guideline-nhc-2022"
+
+  - id: electrolytes
+    category: "电解质"
+    name: "电解质"
+    items: ["钾离子", "钠离子", "氯离子", "总钙", "镁离子"]
+    reason: "纠正电解质紊乱,降低心律失常风险"
+    phase: "术前评估"
+    dept: "检验科/麻醉科"
+    agents:
+      - name: "anesthesia-risk"
+        label: "麻醉评估"
+        path: "/asa"
+    guideline_ref: "guideline-nhc-2022"
+
+  - id: blood_glucose
+    category: "血糖"
+    name: "血糖"
+    items: ["葡萄糖", "糖化血红蛋白"]
+    reason: "排查糖尿病,围术期血糖管理"
+    phase: "接诊"
+    dept: "内分泌科"
+    agents: []
+    guideline_ref: "guideline-nhc-2022"
+
+  - id: liver_function
+    category: "肝功能"
+    name: "肝功能"
+    items: ["丙氨酸氨基转移酶", "天门冬氨酸氨基转移酶", "总蛋白", "白蛋白", "总胆红素"]
+    reason: "评估肝功能,指导麻醉药物选择"
+    phase: "术前评估"
+    dept: "检验科/麻醉科"
+    agents:
+      - name: "anesthesia-risk"
+        label: "麻醉评估"
+        path: "/asa"
+    guideline_ref: "guideline-nhc-2022"
+
+  - id: inflammatory
+    category: "炎症标志物"
+    name: "炎症标志物"
+    items: ["C反应蛋白"]
+    reason: "评估感染风险"
+    phase: "接诊"
+    dept: "检验科"
+    agents: []
+    guideline_ref: "guideline-nhc-2022"
+
+  - id: d_dimer
+    category: "血栓筛查"
+    name: "D-二聚体"
+    items: ["D-二聚体"]
+    reason: "筛查深静脉血栓风险"
+    phase: "接诊"
+    dept: "血管外科/检验科"
+    agents: []
+    guideline_ref: "guideline-dvt-2024"
+
+required_exams:
+  - id: ecg
+    category: "心电图"
+    name: "心电图"
+    reason: "筛查心律失常 心肌缺血"
+    phase: "接诊"
+    dept: "心内科"
+    agents:
+      - name: "cardio-risk"
+        label: "ECG判读"
+        path: "/ecg"
+    guideline_ref: "guideline-nhc-2022"
+
+  - id: chest_xray
+    category: "胸部影像"
+    name: "胸部X线/CT"
+    reason: "评估心肺状况,排除肺部感染"
+    phase: "接诊"
+    dept: "影像科"
+    agents: []
+    guideline_ref: "guideline-nhc-2022"
+
+  - id: hip_xray
+    category: "髋部影像"
+    name: "髋部X线/CT"
+    reason: "明确骨折类型与分型"
+    phase: "接诊"
+    dept: "影像科"
+    agents: []
+    guideline_ref: "guideline-nhc-2022"
+
+  - id: echocardiography
+    category: "心脏超声"
+    name: "心脏超声"
+    reason: "评估心脏结构与功能(EF值 瓣膜病变)"
+    phase: "术前评估"
+    dept: "心内科"
+    agents:
+      - name: "cardio-risk"
+        label: "心脏评估"
+        path: "/mi"
+    guideline_ref: "guideline-nhc-2022"
+
+  - id: lower_limb_ultrasound
+    category: "下肢血管超声"
+    name: "下肢血管超声"
+    reason: "筛查深静脉血栓"
+    phase: "术前评估"
+    dept: "血管外科"
+    agents: []
+    guideline_ref: "guideline-dvt-2024"

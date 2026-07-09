@@ -1,0 +1,148 @@
+# TOGAF 10 Core Metamodel — 药剂科实例
+# Single source of truth for both Python layout and JS rendering.
+# DO NOT edit entity/edge lists in server.py directly.
+version: "2.0"
+width: 900
+height: 620
+
+entities:
+  - id: vs
+    label: 价值流
+    domain: strategy
+    color: "#ff9f0a"
+    icon: "💡"
+    desc: 为客户创造价值的端到端活动序列
+    r: 22
+  - id: cap
+    label: 业务能力
+    domain: strategy
+    color: "#ff9f0a"
+    icon: "⭐"
+    desc: 组织为达成目标所做的事。如:处方审核、TPN配制、营养评估
+    r: 20
+  - id: org
+    label: 组织单位
+    domain: business
+    color: "#0a84ff"
+    icon: "🏢"
+    desc: 有明确使命与职责的业务部门。如:南方医院药剂科
+    r: 22
+  - id: actor
+    label: 参与者
+    domain: business
+    color: "#4fc3f7"
+    icon: "👤"
+    desc: 发起或参与业务活动的人员/系统。如:临床药师
+    r: 18
+  - id: role
+    label: 角色
+    domain: business
+    color: "#0a84ff"
+    icon: "👨‍⚕️"
+    desc: 参与者在流程中的行为期望。如:审方药师、静配药师
+    r: 18
+  - id: proc
+    label: 业务流程
+    domain: business
+    color: "#ff9f0a"
+    icon: "📋"
+    desc: 达成指定结果的活动序列。处方审核→TPN配制→营养选择
+    r: 18
+  - id: bsvc
+    label: 业务服务
+    domain: business
+    color: "#30d158"
+    icon: "🔵"
+    desc: 对外可见的服务能力。如:处方审核服务、TPN配方服务
+    r: 18
+  - id: product
+    label: 产品
+    domain: business
+    color: "#ff9f0a"
+    icon: "📦"
+    desc: 业务产出的交付物。如:审核意见、TPN处方、营养方案
+    r: 18
+  - id: de
+    label: 数据实体
+    domain: data
+    color: "#5e5ce6"
+    icon: "🗄️"
+    desc: 业务信息封装。如:药品库、处方数据、患者主数据
+    r: 20
+  - id: ldc
+    label: 逻辑数据组件
+    domain: data
+    color: "#5e5ce6"
+    icon: "🔖"
+    desc: 数据实体的逻辑封装与访问接口
+    r: 16
+  - id: asvc
+    label: 应用服务
+    domain: application
+    color: "#30d158"
+    icon: "⚙️"
+    desc: 业务服务的自动化实现。如:pharmacy.review/tpn/prescribe
+    r: 18
+  - id: app
+    label: 应用组件
+    domain: application
+    color: "#30d158"
+    icon: "🤖"
+    desc: 应用服务的封装。如:药剂科智能体(port:8770)
+    r: 20
+  - id: tsvc
+    label: 技术服务
+    domain: technology
+    color: "#ff453a"
+    icon: "☁️"
+    desc: 支撑应用运行的平台服务。如:Nexent Agent Runtime
+    r: 18
+  - id: infra
+    label: 技术组件
+    domain: technology
+    color: "#8b949e"
+    icon: "🖥️"
+    desc: 技术服务物理实现。服务器·存储·网络
+    r: 16
+
+edges:
+  # Strategy → Business
+  - {s: vs, t: cap, l: 分解为}
+  - {s: cap, t: proc, l: 实现为}
+  - {s: cap, t: bsvc, l: 暴露为}
+  # Organization → People & Capability
+  - {s: org, t: actor, l: 聘用}
+  - {s: org, t: role, l: 定义}
+  - {s: org, t: cap, l: 交付}
+  - {s: org, t: product, l: 产出}
+  # Role → Process
+  - {s: actor, t: role, l: 承担}
+  - {s: role, t: proc, l: 执行}
+  # Process → Service, Product, Data
+  - {s: proc, t: bsvc, l: 实现}
+  - {s: proc, t: product, l: 产出}
+  - {s: proc, t: de, l: 读写}
+  # Cross-domain
+  - {s: bsvc, t: asvc, l: 自动化}
+  - {s: asvc, t: app, l: 封装为}
+  - {s: app, t: de, l: 使用}
+  - {s: app, t: tsvc, l: 运行于}
+  - {s: tsvc, t: infra, l: 部署于}
+  # Data → Logical
+  - {s: de, t: ldc, l: 逻辑化}
+
+physics:
+  repulsion: 2500
+  attraction: 0.004
+  gravity: 0.0002
+  collide: 300
+  collide_dist: 150
+  damping: 0.82
+  iterations: 400
+
+domain_centers:
+  strategy:    [0.50, 0.07]
+  business:    [0.29, 0.48]
+  data:        [0.69, 0.21]
+  application: [0.69, 0.47]
+  technology:  [0.69, 0.81]

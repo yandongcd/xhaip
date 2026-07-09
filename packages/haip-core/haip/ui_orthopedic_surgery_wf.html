@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>xhaip · 创伤骨科 — 老年髋部骨折围术期管理</title>
+<style>
+:root{--bg:#0F1117;--card:#1A1D27;--card2:#212433;--border:#2A2E3E;--text:#E5E7EB;--text2:#9CA3AF;--accent:#3B82F6;--success:#22C55E;--warn:#F59E0B;--danger:#EF4444;--purple:#8B5CF6;--red:#C8102E}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6;display:flex;height:100vh;overflow:hidden}
+.sidebar{width:240px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.sidebar-header{padding:16px;border-bottom:1px solid var(--border)}
+.sidebar-header h2{font-size:16px;color:var(--text);font-weight:700}
+.sidebar-header .meta{font-size:11px;color:var(--text2);margin-top:2px}
+.role-box{padding:12px 16px;border-bottom:1px solid var(--border)}
+.role-box label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px}
+.role-box select{width:100%;padding:6px 10px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:12px}
+.stage-item{padding:10px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background .15s;border-left:2px solid transparent}
+.stage-item:hover{background:rgba(59,130,246,.06)}
+.stage-item.active{background:rgba(59,130,246,.1);border-left-color:var(--accent)}
+.stage-item.completed{border-left-color:var(--success)}
+.stage-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:var(--card2);color:var(--text2);flex-shrink:0}
+.stage-item.completed .stage-dot{background:var(--success);color:#fff}
+.stage-item.active .stage-dot{background:var(--accent);color:#fff}
+.stage-info{display:flex;flex-direction:column;min-width:0}
+.stage-name{font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stage-roles{font-size:9px;color:var(--text2)}
+.sidebar-foot{padding:12px 16px;font-size:10px;color:var(--text2);border-top:1px solid var(--border);margin-top:auto}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{padding:12px 20px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.topbar h1{font-size:15px;font-weight:600}
+.topbar .patient-bar{display:flex;align-items:center;gap:8px}
+.topbar select{padding:6px 12px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:12px;min-width:280px}
+.patient-tag{background:var(--card2);padding:4px 10px;border-radius:6px;font-size:11px;color:var(--success)}
+.content{flex:1;display:flex;overflow:hidden}
+.work-area{flex:1;padding:16px;overflow-y:auto}
+.stage-panel{display:none}.stage-panel.active{display:block}
+.stage-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.stage-badge{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;background:var(--accent);color:#fff;flex-shrink:0}
+.stage-header h3{font-size:16px;color:var(--text);margin-bottom:2px}
+.stage-header p{font-size:12px;color:var(--text2)}
+.guide-ref{font-size:10px;color:var(--purple);margin-top:4px;display:inline-block}
+.stage-body{margin-bottom:12px}
+.stage-body label{font-size:11px;color:var(--text2);display:block;margin-bottom:4px}
+.stage-body textarea{width:100%;height:80px;padding:10px 12px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:Consolas,monospace;resize:vertical}
+.btn-row{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}
+.btn-exec{padding:8px 20px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-exec:hover{opacity:.9}
+.btn-guard{padding:8px 16px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer}
+.btn-next{padding:8px 16px;background:var(--card2);color:var(--success);border:1px solid var(--success);border-radius:6px;font-size:12px;cursor:pointer}
+.result-box{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:Consolas,monospace;font-size:12px;line-height:1.6;white-space:pre-wrap;max-height:400px;overflow-y:auto;color:var(--text)}
+.panel-right{width:320px;background:var(--card);border-left:1px solid var(--border);padding:16px;overflow-y:auto;flex-shrink:0}
+.card{background:var(--card2);border-radius:8px;padding:14px;margin-bottom:12px;border:1px solid var(--border)}
+.card h4{font-size:12px;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.progress-row{display:flex;align-items:center;gap:4px;margin:12px 0}
+.progress-pip{width:10px;height:10px;border-radius:50%;background:var(--border)}
+.progress-pip.done{background:var(--success)}
+.progress-pip.active{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+.progress-line{flex:1;height:1px;background:var(--border)}
+.progress-label{font-size:10px;color:var(--text2);text-align:center;margin-top:4px}
+.risk-tag{display:inline-block;padding:2px 8px;background:rgba(239,68,68,.15);color:var(--danger);border-radius:4px;font-size:10px;font-weight:600;margin:2px}
+.tag-list{line-height:2}
+.stage-result-item{padding:4px 0;border-bottom:1px solid var(--border);font-size:11px}
+.stage-result-item .sid{color:var(--accent);font-weight:600}
+.stage-result-item .val{color:var(--text);margin-left:8px}
+.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.metric{background:var(--card2);border-radius:6px;padding:10px;text-align:center}
+.metric .mv{font-size:18px;font-weight:700;color:var(--accent)}
+.metric .ml{font-size:9px;color:var(--text2);text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h2>🏥 创伤骨科 — 老年髋部骨折围术期管理</h2>
+    <div class="meta">orthopedic-surgery · 10 阶段</div>
+  </div>
+  <div class="role-box">
+    <label>当前角色</label>
+    <select id="role-select" onchange="switchRole(this.value)"><option value="attending">🩺 主治医师</option>
+<option value="surgeon">🔪 主刀医生</option>
+<option value="anesthesiologist">💉 麻醉科医生</option>
+<option value="head_nurse">🏥 护士长</option>
+</select>
+  </div>
+<div class="stage-item active" onclick="showStage('triage')" data-stage="triage"><span class="stage-dot">1</span><div class="stage-info"><span class="stage-name">① 急诊分诊</span><span class="stage-roles">attending,head_nurse</span></div></div><div class="stage-item" onclick="showStage('classify')" data-stage="classify"><span class="stage-dot">2</span><div class="stage-info"><span class="stage-name">② 骨折分型</span><span class="stage-roles">attending,surgeon</span></div></div><div class="stage-item" onclick="showStage('preop')" data-stage="preop"><span class="stage-dot">3</span><div class="stage-info"><span class="stage-name">③ 术前评估</span><span class="stage-roles">attending,surgeon,anesthesiologist</span></div></div><div class="stage-item" onclick="showStage('timing')" data-stage="timing"><span class="stage-dot">4</span><div class="stage-info"><span class="stage-name">④ 手术时机</span><span class="stage-roles">attending,surgeon,anesthesiologist</span></div></div><div class="stage-item" onclick="showStage('complication')" data-stage="complication"><span class="stage-dot">5</span><div class="stage-info"><span class="stage-name">⑤ 并发症预测</span><span class="stage-roles">attending,surgeon</span></div></div><div class="stage-item" onclick="showStage('surgery')" data-stage="surgery"><span class="stage-dot">6</span><div class="stage-info"><span class="stage-name">⑥ 手术方案</span><span class="stage-roles">attending,surgeon</span></div></div><div class="stage-item" onclick="showStage('nursing')" data-stage="nursing"><span class="stage-dot">7</span><div class="stage-info"><span class="stage-name">⑦ 围术期护理</span><span class="stage-roles">head_nurse,attending</span></div></div><div class="stage-item" onclick="showStage('rehab')" data-stage="rehab"><span class="stage-dot">8</span><div class="stage-info"><span class="stage-name">⑧ 术后康复</span><span class="stage-roles">attending,head_nurse</span></div></div><div class="stage-item" onclick="showStage('followup')" data-stage="followup"><span class="stage-dot">9</span><div class="stage-info"><span class="stage-name">⑨ 随访计划</span><span class="stage-roles">attending,head_nurse</span></div></div><div class="stage-item" onclick="showStage('quality')" data-stage="quality"><span class="stage-dot">10</span><div class="stage-info"><span class="stage-name">⑩ 质控审计</span><span class="stage-roles">attending</span></div></div>
+  <div class="sidebar-foot" id="wf-stats">0/10 完成</div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <h1 id="panel-title">创伤骨科 — 老年髋部骨折围术期管理 工作台</h1>
+    <div class="patient-bar">
+      <span style="font-size:11px;color:var(--text2)">数字病人</span>
+      <select id="patient-select" onchange="onPatientSelect()">
+        <option value="">— 选择病人 —</option>
+      </select>
+      <span class="patient-tag" id="patient-info" style="display:none"></span>
+    </div>
+  </div>
+  <div class="content">
+    <div class="work-area"><div class="stage-panel active" id="panel-triage"><div class="stage-header"><span class="stage-badge">1</span><div><h3>① 急诊分诊</h3><p>11项检查清单, 绿色通道判定 (≥75岁+髋部骨折)</p><span class="guide-ref">📖 卫健委2022 §2</span></div></div><div class="stage-body"><label>参数</label><textarea id="params-triage">{"patient_id": "P001", "age": 78, "weight_kg": 55, "height_cm": 170}</textarea><div class="btn-row"><button class="btn-exec" onclick="callStage('triage','checklist')">▶ 执行</button><button class="btn-guard" onclick="showGuard('triage')">🛡 Guard</button><button class="btn-next" onclick="autoNext('triage','classify')">→ 下一步</button></div></div><div class="result-box" id="result-triage">点击「执行」开始...</div></div><div class="stage-panel" id="panel-classify"><div class="stage-header"><span class="stage-badge">2</span><div><h3>② 骨折分型</h3><p>Garden/Evans/AO 分型评估</p><span class="guide-ref">📖 卫健委2022 §3</span></div></div><div class="stage-body"><label>参数</label><textarea id="params-classify">{"patient_id": "P001", "age": 78, "weight_kg": 55, "height_cm": 170}</textarea><div class="btn-row"><button class="btn-exec" onclick="callStage('classify','classify_fracture')">▶ 执行</button><button class="btn-guard" onclick="showGuard('classify')">🛡 Guard</button><button class="btn-next" onclick="autoNext('classify','preop')">→ 下一步</button></div></div><div class="result-box" id="result-classify">点击「执行」开始...</div></div><div class="stage-panel" id="panel-preop"><div class="stage-header"><span class="stage-badge">3</span><div><h3>③ 术前评估</h3><p>合并症/药物/营养/认知 + 14项检查完备性</p><span class="guide-ref">📖 卫健委2022 §3</span></div></div><div class="stage-body"><label>参数</label><textarea id="params-preop">{"patient_id": "P001", "age": 78, "weight_kg": 55, "height_cm": 170}</textarea><div class="btn-row"><button class="btn-exec" onclick="callStage('preop','preop_assessment')">▶ 执行</button><button class="btn-guard" onclick="showGuard('preop')">🛡 Guard</button><button class="btn-next" onclick="autoNext('preop','timing')">→ 下一步</button></div></div><div class="result-box" id="result-preop">点击「执行」开始...</div></div><div class="stage-panel" id="panel-timing"><div class="stage-header"><span class="stage-badge">4</span><div><h3>④ 手术时机</h3><p>T2 8因素层次决策 (高危→择期 / 中危→限期 / 无→48h急诊)</p><span class="guide-ref">📖 卫健委2022 §4</span></div></div><div class="stage-body"><label>参数</label><textarea id="params-timing">{"patient_id": "P001", "age": 78, "weight_kg": 55, "height_cm": 170}</textarea><div class="btn-row"><button class="btn-exec" onclick="callStage('timing','timing_decision')">▶ 执行</button><button class="btn-guard" onclick="showGuard('timing')">🛡 Guard</button><button class="btn-next" onclick="autoNext('timing','complication')">→ 下一步</button></div></div><div class="result-box" id="result-timing">点击「执行」开始...</div></div><div class="stage-panel" id="panel-complication"><div class="stage-header"><span class="stage-badge">5</span><div><h3>⑤ 并发症预测</h3><p>DVT/感染/心脏/跌倒-谵妄 4维风险评估</p><span class="guide-ref">📖 卫健委2022 §6</span></div></div><div class="stage-body"><label>参数</label><textarea id="params-complication">{"patient_id": "P001", "age": 78, "weight_kg": 55, "height_cm": 170}</textarea><div class="btn-row"><button class="btn-exec" onclick="callStage('complication','complication_risk')">▶ 执行</button><button class="btn-guard" onclick="showGuard('complication')">🛡 Guard</button><button class="btn-next" onclick="autoNext('complication','surgery')">→ 下一步</button></div></div><div class="result-box" id="result-complication">点击「执行」开始...</div></div><div class="stage-panel" id="panel-surgery"><div class="stage-header"><span class="stage-badge">6</span><div><h3>⑥ 手术方案</h3><p>THA/HA/PFNA/DHS 手术方式推荐</p><span class="guide-ref">📖 卫健委2022 §5</span></div></div><div class="stage-body"><label>参数</label><textarea id="params-surgery">{"patient_id": "P001", "age": 78, "weight_kg": 55, "height_cm": 170}</textarea><div class="btn-row"><button class="btn-exec" onclick="callStage('surgery','surgical_plan')">▶ 执行</button><button class="btn-guard" onclick="showGuard('surgery')">🛡 Guard</button><button class="btn-next" onclick="autoNext('surgery','nursing')">→ 下一步</button></div></div><div class="result-box" id="result-surgery">点击「执行」开始...</div></div><div class="stage-panel" id="panel-nursing"><div class="stage-header"><span class="stage-badge">7</span><div><h3>⑦ 围术期护理</h3><p>4阶段25项护理计划 (术前/D0/D1-3/恢复期)</p><span class="guide-ref">📖 卫健委2022 §6</span></div></div><div class="stage-body"><label>参数</label><textarea id="params-nursing">{"patient_id": "P001", "age": 78, "weight_kg": 55, "height_cm": 170}</textarea><div class="btn-row"><button class="btn-exec" onclick="callStage('nursing','nursing_plan')">▶ 执行</button><button class="btn-guard" onclick="showGuard('nursing')">🛡 Guard</button><button class="btn-next" onclick="autoNext('nursing','rehab')">→ 下一步</button></div></div><div class="result-box" id="result-nursing">点击「执行」开始...</div></div><div class="stage-panel" id="panel-rehab"><div class="stage-header"><span class="stage-badge">8</span><div><h3>⑧ 术后康复</h3><p>4阶段康复跟踪 + Harris 髋关节评分</p><span class="guide-ref">📖 卫健委2022 §7</span></div></div><div class="stage-body"><label>参数</label><textarea id="params-rehab">{"patient_id": "P001", "age": 78, "weight_kg": 55, "height_cm": 170}</textarea><div class="btn-row"><button class="btn-exec" onclick="callStage('rehab','rehab_track')">▶ 执行</button><button class="btn-guard" onclick="showGuard('rehab')">🛡 Guard</button><button class="btn-next" onclick="autoNext('rehab','followup')">→ 下一步</button></div></div><div class="result-box" id="result-rehab">点击「执行」开始...</div></div><div class="stage-panel" id="panel-followup"><div class="stage-header"><span class="stage-badge">9</span><div><h3>⑨ 随访计划</h3><p>1/3/6/12月随访 + 6个红旗症状 + 骨质疏松管理</p><span class="guide-ref">📖 卫健委2022 §7</span></div></div><div class="stage-body"><label>参数</label><textarea id="params-followup">{"patient_id": "P001", "age": 78, "weight_kg": 55, "height_cm": 170}</textarea><div class="btn-row"><button class="btn-exec" onclick="callStage('followup','followup_plan')">▶ 执行</button><button class="btn-guard" onclick="showGuard('followup')">🛡 Guard</button><button class="btn-next" onclick="autoNext('followup','quality')">→ 下一步</button></div></div><div class="result-box" id="result-followup">点击「执行」开始...</div></div><div class="stage-panel" id="panel-quality"><div class="stage-header"><span class="stage-badge">10</span><div><h3>⑩ 质控审计</h3><p>6阶段18检查点合规评分</p><span class="guide-ref">📖 卫健委2022 全文</span></div></div><div class="stage-body"><label>参数</label><textarea id="params-quality">{"patient_id": "P001", "age": 78, "weight_kg": 55, "height_cm": 170}</textarea><div class="btn-row"><button class="btn-exec" onclick="callStage('quality','quality_audit')">▶ 执行</button><button class="btn-guard" onclick="showGuard('quality')">🛡 Guard</button></div></div><div class="result-box" id="result-quality">点击「执行」开始...</div></div></div>
+    <div class="panel-right">
+      <div class="metric-grid">
+        <div class="metric"><div class="mv" id="metric-done">0</div><div class="ml">已完成</div></div>
+        <div class="metric"><div class="mv" id="metric-total">10</div><div class="ml">总阶段</div></div>
+        <div class="metric"><div class="mv" id="metric-pct">0%</div><div class="ml">完成率</div></div>
+      </div>
+      <div class="card"><h4>工作流进度</h4><div id="progress-bar"></div><div class="progress-label" id="progress-label">未开始</div></div>
+      <div class="card"><h4>⚠️ 高危触发</h4><div class="tag-list"><span class="risk-tag">手术决策</span> <span class="risk-tag">心梗评估</span> <span class="risk-tag">MDT分歧</span></div></div>
+      <div class="card"><h4>阶段结果</h4><div id="stage-results" style="font-size:11px;color:var(--text2)">未执行任何阶段</div></div>
+      <div class="card"><h4>当前角色</h4><div id="role-desc" style="font-size:11px;color:var(--text2)">主治医师 — 全流程管理</div></div>
+    </div>
+  </div>
+</div>
+<script>
+var AGENT='orthopedic-surgery';var STAGES=[{"id": "triage", "order": 1, "label": "① 急诊分诊", "description": "11项检查清单, 绿色通道判定 (≥75岁+髋部骨折)", "tool": "checklist", "roles": ["attending", "head_nurse"], "key_output": "triage_level", "guideline_ref": "卫健委2022 §2"}, {"id": "classify", "order": 2, "label": "② 骨折分型", "description": "Garden/Evans/AO 分型评估", "tool": "classify_fracture", "roles": ["attending", "surgeon"], "key_output": "classification", "guideline_ref": "卫健委2022 §3"}, {"id": "preop", "order": 3, "label": "③ 术前评估", "description": "合并症/药物/营养/认知 + 14项检查完备性", "tool": "preop_assessment", "roles": ["attending", "surgeon", "anesthesiologist"], "key_output": "cleared", "guideline_ref": "卫健委2022 §3"}, {"id": "timing", "order": 4, "label": "④ 手术时机", "description": "T2 8因素层次决策 (高危→择期 / 中危→限期 / 无→48h急诊)", "tool": "timing_decision", "roles": ["attending", "surgeon", "anesthesiologist"], "key_output": "urgency", "guideline_ref": "卫健委2022 §4"}, {"id": "complication", "order": 5, "label": "⑤ 并发症预测", "description": "DVT/感染/心脏/跌倒-谵妄 4维风险评估", "tool": "complication_risk", "roles": ["attending", "surgeon"], "key_output": "overall_risk", "guideline_ref": "卫健委2022 §6"}, {"id": "surgery", "order": 6, "label": "⑥ 手术方案", "description": "THA/HA/PFNA/DHS 手术方式推荐", "tool": "surgical_plan", "roles": ["attending", "surgeon"], "key_output": "procedure", "guideline_ref": "卫健委2022 §5"}, {"id": "nursing", "order": 7, "label": "⑦ 围术期护理", "description": "4阶段25项护理计划 (术前/D0/D1-3/恢复期)", "tool": "nursing_plan", "roles": ["head_nurse", "attending"], "key_output": "plan", "guideline_ref": "卫健委2022 §6"}, {"id": "rehab", "order": 8, "label": "⑧ 术后康复", "description": "4阶段康复跟踪 + Harris 髋关节评分", "tool": "rehab_track", "roles": ["attending", "head_nurse"], "key_output": "harris_score", "guideline_ref": "卫健委2022 §7"}, {"id": "followup", "order": 9, "label": "⑨ 随访计划", "description": "1/3/6/12月随访 + 6个红旗症状 + 骨质疏松管理", "tool": "followup_plan", "roles": ["attending", "head_nurse"], "key_output": "schedule", "guideline_ref": "卫健委2022 §7"}, {"id": "quality", "order": 10, "label": "⑩ 质控审计", "description": "6阶段18检查点合规评分", "tool": "quality_audit", "roles": ["attending"], "key_output": "total_score", "guideline_ref": "卫健委2022 全文"}];var WF_STAGES=[{"id": "triage", "order": 1, "label": "① 急诊分诊", "description": "11项检查清单, 绿色通道判定 (≥75岁+髋部骨折)", "tool": "checklist", "roles": ["attending", "head_nurse"], "key_output": "triage_level", "guideline_ref": "卫健委2022 §2"}, {"id": "classify", "order": 2, "label": "② 骨折分型", "description": "Garden/Evans/AO 分型评估", "tool": "classify_fracture", "roles": ["attending", "surgeon"], "key_output": "classification", "guideline_ref": "卫健委2022 §3"}, {"id": "preop", "order": 3, "label": "③ 术前评估", "description": "合并症/药物/营养/认知 + 14项检查完备性", "tool": "preop_assessment", "roles": ["attending", "surgeon", "anesthesiologist"], "key_output": "cleared", "guideline_ref": "卫健委2022 §3"}, {"id": "timing", "order": 4, "label": "④ 手术时机", "description": "T2 8因素层次决策 (高危→择期 / 中危→限期 / 无→48h急诊)", "tool": "timing_decision", "roles": ["attending", "surgeon", "anesthesiologist"], "key_output": "urgency", "guideline_ref": "卫健委2022 §4"}, {"id": "complication", "order": 5, "label": "⑤ 并发症预测", "description": "DVT/感染/心脏/跌倒-谵妄 4维风险评估", "tool": "complication_risk", "roles": ["attending", "surgeon"], "key_output": "overall_risk", "guideline_ref": "卫健委2022 §6"}, {"id": "surgery", "order": 6, "label": "⑥ 手术方案", "description": "THA/HA/PFNA/DHS 手术方式推荐", "tool": "surgical_plan", "roles": ["attending", "surgeon"], "key_output": "procedure", "guideline_ref": "卫健委2022 §5"}, {"id": "nursing", "order": 7, "label": "⑦ 围术期护理", "description": "4阶段25项护理计划 (术前/D0/D1-3/恢复期)", "tool": "nursing_plan", "roles": ["head_nurse", "attending"], "key_output": "plan", "guideline_ref": "卫健委2022 §6"}, {"id": "rehab", "order": 8, "label": "⑧ 术后康复", "description": "4阶段康复跟踪 + Harris 髋关节评分", "tool": "rehab_track", "roles": ["attending", "head_nurse"], "key_output": "harris_score", "guideline_ref": "卫健委2022 §7"}, {"id": "followup", "order": 9, "label": "⑨ 随访计划", "description": "1/3/6/12月随访 + 6个红旗症状 + 骨质疏松管理", "tool": "followup_plan", "roles": ["attending", "head_nurse"], "key_output": "schedule", "guideline_ref": "卫健委2022 §7"}, {"id": "quality", "order": 10, "label": "⑩ 质控审计", "description": "6阶段18检查点合规评分", "tool": "quality_audit", "roles": ["attending"], "key_output": "total_score", "guideline_ref": "卫健委2022 全文"}];
+var CURRENT_ROLE='attending';var WORKFLOW_DATA={patient_id:'P001',age:78,weight_kg:55,height_cm:170};
+var COMPLETED_STAGES=new Set();var STAGE_RESULTS={};
+var currentPatient=null;
+
+var ROLES={
+  attending:{icon:'🩺',name:'主治医师',desc:'全流程管理',stages:[1,2,3,4,5,6,7,8,9]},
+  surgeon:{icon:'🔪',name:'主刀医生',desc:'手术相关',stages:[2,3,4,5,6]},
+  anesthesiologist:{icon:'💉',name:'麻醉科医生',desc:'麻醉评估',stages:[3,4]},
+  head_nurse:{icon:'🏥',name:'护士长',desc:'护理管理',stages:[1,7,8,9]}
+};
+
+function switchRole(role){
+  CURRENT_ROLE=role;
+  var rcfg=ROLES[role];
+  document.getElementById('role-desc').textContent=rcfg?rcfg.icon+' '+rcfg.name+' — '+rcfg.desc:'全部角色';
+  var allowed=rcfg?rcfg.stages:null;
+  document.querySelectorAll('.stage-item').forEach(function(el){
+    var sid=el.getAttribute('data-stage');
+    var stage=STAGES.find(function(s){return s.id===sid});
+    if(!stage)return;
+    el.style.display=(!allowed||allowed.indexOf(stage.order)>=0)?'flex':'none';
+  });
+}
+
+function showStage(sid){
+  document.querySelectorAll('.stage-item').forEach(function(e){e.classList.remove('active')});
+  document.querySelectorAll('.stage-panel').forEach(function(e){e.classList.remove('active')});
+  var el=document.querySelector('.stage-item[data-stage="'+sid+'"]');if(el)el.classList.add('active');
+  var p=document.getElementById('panel-'+sid);if(p)p.classList.add('active');
+  document.getElementById('panel-title').textContent=document.querySelector('.stage-item[data-stage="'+sid+'"] .stage-name')?.textContent||sid;
+  setTimeout(fillCurrentParams,100);
+}
+
+async function callStage(sid,tool){
+  var el=document.getElementById('result-'+sid);el.textContent='⏳ 执行中...';
+  var paramsEl=document.getElementById('params-'+sid),params=WORKFLOW_DATA;
+  if(paramsEl){try{Object.assign(params,JSON.parse(paramsEl.value))}catch(e){}}
+  try{
+    var r=await fetch('/api/call',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent:AGENT,tool:tool,params:params})});
+    var d=await r.json();el.textContent=JSON.stringify(d,null,2);
+    if(d.status==='ok'){
+      COMPLETED_STAGES.add(sid);STAGE_RESULTS[sid]=d;
+      var s=STAGES.find(function(x){return x.id===sid});
+      if(s)WORKFLOW_DATA[s.key_output]=d[s.key_output]||d;
+      updateProgress();addResult(sid,d,s);
+    }
+  }catch(e){el.textContent='❌ '+e.message}
+}
+
+function autoNext(fromId,toId){
+  showStage(toId);
+  if(STAGE_RESULTS[fromId]){
+    var el=document.getElementById('params-'+toId);
+    if(el)el.value=JSON.stringify(STAGE_RESULTS[fromId],null,2);
+  }
+}
+
+function updateProgress(){
+  var done=COMPLETED_STAGES.size,total=STAGES.length;
+  document.getElementById('metric-done').textContent=done;
+  document.getElementById('metric-pct').textContent=Math.round(done/total*100)+'%';
+  document.getElementById('progress-label').textContent=done===0?'未开始':done+'/'+total+' 完成';
+  document.getElementById('wf-stats').textContent='✅ '+done+'/'+total+' 完成';
+  var html='<div class="progress-row">';
+  STAGES.forEach(function(s,i){
+    var cls='progress-pip';
+    if(COMPLETED_STAGES.has(s.id))cls+=' done';
+    if(document.querySelector('.stage-item.active')?.getAttribute('data-stage')===s.id)cls+=' active';
+    html+='<span class="'+cls+'" title="'+s.label+'"></span>';
+    if(i<STAGES.length-1)html+='<span class="progress-line"></span>';
+  });
+  html+='</div>';document.getElementById('progress-bar').innerHTML=html;
+  document.querySelectorAll('.stage-item').forEach(function(e){
+    if(COMPLETED_STAGES.has(e.getAttribute('data-stage')))e.classList.add('completed');
+  });
+}
+
+function addResult(sid,data,stage){
+  var html='';
+  Object.entries(STAGE_RESULTS).forEach(function(e){
+    var s=STAGES.find(function(x){return x.id===e[0]});
+    var key=s?s.key_output:'',val=e[1][key]||'ok';
+    if(typeof val==='object')val=JSON.stringify(val).substring(0,60);
+    html+='<div class="stage-result-item"><span class="sid">'+e[0]+'</span><span class="val">'+val+'</span></div>';
+  });
+  document.getElementById('stage-results').innerHTML=html||'无结果';
+}
+
+function showGuard(sid){
+  var out=document.getElementById('result-'+sid)?.textContent||'';
+  fetch('/api/guard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({output:out,agent:AGENT})})
+  .then(function(r){return r.json()}).then(function(d){document.getElementById('result-'+sid).textContent='🛡 GUARD:\n'+JSON.stringify(d,null,2)});
+}
+
+function loadPatients(){
+  fetch('/patients?agent='+AGENT).then(function(r){return r.json()}).then(function(pts){
+    var sel=document.getElementById('patient-select');
+    sel.innerHTML='<option value="">— 选择病人 ('+pts.length+' 位) —</option>';
+    pts.forEach(function(p,i){var age=p.age_months?(p.age_months+'月'):(p.age+'岁');
+      sel.innerHTML+='<option value="'+i+'">'+p.patient_id+' | '+p.name+' | '+age+' | '+(p.diagnosis||'')+'</option>';
+    });sel._patients=pts;
+  });
+}
+
+function onPatientSelect(){
+  var idx=parseInt(document.getElementById('patient-select').value);
+  var sel=document.getElementById('patient-select');
+  if(isNaN(idx)||!sel._patients)return;
+  currentPatient=sel._patients[idx];var p=currentPatient;
+  var age=p.age_months?(p.age_months+'月'):(p.age+'岁');
+  var info=document.getElementById('patient-info');info.style.display='inline-block';
+  info.textContent=p.patient_id+' '+p.name+' '+age;
+  resetWorkflow();
+  WORKFLOW_DATA={patient_id:p.patient_id,age:p.age||p.age_months||0,weight_kg:p.weight_kg||0,height_cm:p.height_cm||0,lab_results:p.lab_results||{},conditions:p.conditions||[]};
+  setTimeout(fillCurrentParams,200);
+}
+
+function resetWorkflow(){
+  COMPLETED_STAGES=new Set();STAGE_RESULTS={};
+  document.querySelectorAll('.stage-item').forEach(function(e){e.classList.remove('completed')});
+  STAGES.forEach(function(s){var el=document.getElementById('result-'+s.id);if(el)el.textContent='点击「执行」开始...';});
+  if(STAGES.length>0)showStage(STAGES[0].id);
+  document.getElementById('stage-results').innerHTML='未执行任何阶段';
+  updateProgress();
+}
+
+function fillCurrentParams(){
+  if(!currentPatient)return;
+  var ap=document.querySelector('.stage-panel.active');
+  if(!ap)return;var ta=ap.querySelector('textarea');
+  if(ta)ta.value=JSON.stringify(WORKFLOW_DATA,null,2);
+}
+
+switchRole('attending');updateProgress();loadPatients();
+</script>
+</body>
+</html>

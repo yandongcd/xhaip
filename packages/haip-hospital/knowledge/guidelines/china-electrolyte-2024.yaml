@@ -1,0 +1,59 @@
+# ============================================================
+# Guideline Asset: 肠外营养中电解质补充中国专家共识
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+name: "肠外营养中电解质补充中国专家共识"
+abbr: "电解质共识2024"
+version: "2024"
+publisher: "中华医学会肠外肠内营养学分会 (CSPEN)"
+journal: "中华医学杂志 2024;104(15):1234-1245"
+doi: "10.3760/cma.j.cn112137-20240101-00015"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国首个肠外营养中电解质补充的专项专家共识。系统规定了TPN中Na/K/Ca/Mg/P/Cl
+  的补充原则、安全限量(一价≤150mmol/L、二价≤10mmol/L、钙磷乘积<50)、
+  药品→离子摩尔量换算系数。
+
+key_sections:
+  - id: §3.1
+    title: 钠的补充与限量
+    pages: "1237-1238"
+    rule_ids: [R008-R010]
+
+  - id: §3.2
+    title: 钾的补充与限量
+    pages: "1238-1239"
+    rule_ids: [R011-R012]
+
+  - id: §3.3
+    title: 磷的补充与限量
+    pages: "1239-1240"
+    rule_ids: [R013-R014]
+
+  - id: §3.4
+    title: 镁的补充与限量
+    pages: "1240"
+    rule_ids: [R015]
+
+  - id: §3.5
+    title: 钙的补充与钙磷乘积
+    pages: "1240-1241"
+    rule_ids: [R016]
+
+  - id: §3.6
+    title: TPN中阳离子安全限量
+    pages: "1241-1242"
+    rule_ids: [R052-R053]
+
+rule_sets_covered:
+  - electrolyte_na (R008-R010)
+  - electrolyte_k (R011-R012)
+  - electrolyte_p (R013-R014)
+  - electrolyte_mg_ca (R015-R016)
+  - formulation (R052-R053)
+
+derived_rule_count: 9
+last_updated: 2026-07-01

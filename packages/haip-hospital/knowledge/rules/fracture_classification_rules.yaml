@@ -1,0 +1,99 @@
+# ============================================================
+# Rule Asset: 骨折分型规则
+# TOGAF Class: Constraint (Extension ABB)
+# Trust Level: T1 (基于 CSCO 指南 2018/2020 + AAOS 2022)
+# ============================================================
+name: fracture-classification-rules
+version: "1.0"
+description: Garden/Evans/AO-OTA 骨折分型表 + 分型判定阈值
+owner: 主治医生
+guideline_refs:
+  - csco-femoral-neck-2018
+  - csco-intertroch-2020
+  - aaos-2022
+
+# ── Garden 分型 (股骨颈) ──
+garden_classification:
+  - type: I
+    subtype: 不完全骨折
+    description: 股骨颈外展嵌插型不完全骨折
+    stability: 稳定
+    treatment: 内固定可行
+    matching_keywords: ["Garden I", "I型", "嵌插", "不完全", "无移位"]
+  - type: II
+    subtype: 完全骨折无移位
+    description: 完全骨折但无移位
+    stability: 稳定
+    treatment: 内固定可行
+    matching_keywords: ["Garden II", "II型", "完全", "无移位", "非移位"]
+  - type: III
+    subtype: 部分移位
+    description: 部分移位，骨折端有不同程度分离
+    stability: 不稳定
+    treatment: 关节置换
+    matching_keywords: ["Garden III", "III型", "部分移位", "移位"]
+  - type: IV
+    subtype: 完全移位
+    description: 完全移位，骨折端完全分离
+    stability: 不稳定
+    treatment: 关节置换
+    matching_keywords: ["Garden IV", "IV型", "完全移位", "明显移位", "重度移位"]
+
+# ── Evans 分型 (转子间) ──
+evans_classification:
+  - type: I
+    subtype: 无移位稳定型
+    description: 无移位或轻微移位的稳定型骨折
+    stability: 稳定
+    treatment: PFNA
+    matching_keywords: ["Evans I", "I型", "无移位", "稳定"]
+  - type: II
+    subtype: 移位稳定型
+    description: 有移位但内侧皮质完整
+    stability: 稳定
+    treatment: PFNA
+    matching_keywords: ["Evans II", "II型", "内侧皮质完整"]
+  - type: III
+    subtype: 移位不稳定型
+    description: 移位+内侧皮质不完整
+    stability: 不稳定
+    treatment: InterTAN / PFNA加长柄
+    matching_keywords: ["Evans III", "III型", "内侧皮质不完整", "不稳定"]
+  - type: IV
+    subtype: 严重粉碎型
+    description: 严重粉碎性骨折
+    stability: 不稳定
+    treatment: InterTAN / PFNA加长柄+内侧支撑
+    matching_keywords: ["Evans IV", "IV型", "粉碎"]
+  - type: V
+    subtype: 反转子间骨折
+    description: 反转子间骨折线
+    stability: 不稳定
+    treatment: PFNA加长柄 / 重建钉
+    matching_keywords: ["Evans V", "V型", "反转子间"]
+
+# ── AO/OTA 分型 (髋部统一编码) ──
+ao_ota_hip:
+  - code: "31-A1"
+    description: 转子间简单骨折
+    subtypes: ["31-A1.1 沿转子间线", "31-A1.2 经大转子", "31-A1.3 经小转子"]
+  - code: "31-A2"
+    description: 转子间粉碎骨折
+    subtypes: ["31-A2.1 一块中间骨块", "31-A2.2 多块中间骨块", "31-A2.3 延伸至转子下"]
+  - code: "31-A3"
+    description: 转子间反转子间骨折
+    subtypes: ["31-A3.1 简单斜行", "31-A3.2 简单横行", "31-A3.3 粉碎"]
+
+# ── 术后检测关键词 ──
+postoperative_keywords:
+  - 术后
+  - 置换术后
+  - 内固定术后
+  - THA术后
+  - HA术后
+  - PFNA术后
+  - InterTAN术后
+  - DHS术后
+  - DAA入路
+  - 人工髋关节
+  - 髓内钉

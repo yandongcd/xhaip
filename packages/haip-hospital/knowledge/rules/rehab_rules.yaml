@@ -1,0 +1,83 @@
+# ============================================================
+# Rule Asset: 康复管理规则
+# TOGAF Class: Constraint (Extension ABB)
+# Trust Level: T1 (APTA 2021 + 卫健委2022)
+# ============================================================
+name: hip-fracture-rehab-rules
+version: "1.0"
+description: 康复阶段 + Harris评分 + 依从性分级
+guideline_refs: [apta-2021, nhc-2022]
+
+rehab_phases:
+  - phase: 术后早期(0-2周)
+    location: 住院期间
+    goals: ["控制疼痛和肿胀", "预防并发症(DVT/压疮/肺炎)", "早期被动活动"]
+    interventions:
+      - "踝泵运动 20次/组,3组/天"
+      - "股四头肌等长收缩 10次/组,3组/天"
+      - "CPM机被动活动(关节置换术后)"
+      - "气压泵预防DVT"
+    precautions: ["避免髋关节屈曲>90°", "避免内收超过中线", "避免旋转"]
+    criteria: ["VAS≤3分", "无DVT/肺炎/压疮发生"]
+
+  - phase: 术后中期(2-6周)
+    location: 出院后家庭/社区
+    goals: ["逐步恢复关节活动度", "肌力训练", "开始负重训练"]
+    interventions:
+      - "髋关节主动屈伸 10次/组,3组/天"
+      - "直腿抬高 10次/组,3组/天"
+      - "助行器辅助部分负重行走"
+      - "平衡训练(坐位→站位)"
+    precautions: ["避免髋关节屈曲>90°", "遵医嘱负重限制"]
+    criteria: ["Harris≥60分", "独立完成ADL>50%"]
+
+  - phase: 术后后期(6-12周)
+    location: 社区/康复门诊
+    goals: ["恢复正常步态", "强化肌力", "独立ADL"]
+    interventions:
+      - "抗阻训练(弹力带)"
+      - "单腿站立平衡训练"
+      - "上下楼梯训练"
+      - "户外步行(渐增距离)"
+    precautions: ["避免冲击性运动", "遵医嘱负重"]
+    criteria: ["Harris≥80分", "独立完成ADL>80%"]
+
+  - phase: 术后远期(12周+)
+    location: 社区/家庭
+    goals: ["恢复至伤前功能水平", "骨质疏松二级预防", "维持骨密度"]
+    interventions:
+      - "规律负重运动(步行/太极)"
+      - "核心肌群训练"
+      - "平衡训练(防跌倒)"
+    precautions: ["防跌倒", "避免高冲击运动"]
+    criteria: ["Harris≥90分", "恢复伤前活动水平"]
+
+harris_score:
+  components:
+    pain:
+      max_points: 44
+      items:
+        - {label: 无痛, points: 44}
+        - {label: 轻微/偶发, points: 40}
+        - {label: 轻度(不影响活动), points: 30}
+        - {label: 中度(需服药), points: 20}
+        - {label: 重度(限制活动), points: 10}
+        - {label: 完全丧失功能, points: 0}
+    function:
+      max_points: 47
+      sub_components:
+        gait: {max: 33}
+        activities: {max: 14}
+    deformity:
+      max_points: 4
+    range_of_motion:
+      max_points: 5
+  grading:
+    - {grade: 优, min: 90, label: 恢复良好}
+    - {grade: 良, min: 80, label: 轻微功能障碍}
+    - {grade: 可, min: 70, label: 中度功能障碍}
+    - {grade: 差, min: 0, label: 需进一步评估}
+
+compliance:
+  thresholds: {excellent: 80, good: 60, fair: 40}
+  labels: {excellent: 优, good: 良, fair: 中, poor: 差}

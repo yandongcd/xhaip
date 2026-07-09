@@ -1,0 +1,139 @@
+# TOGAF 10 — Technology Component & Service Catalog
+# 全院技术基础设施清单
+
+technology_components:
+  # ══ Runtime ══
+  - id: tc-python
+    name: Python 3.12 Runtime
+    type: TechnologyComponent
+    description: Python 3.12 运行环境
+    version: 3.12.x
+    deployed_on: tc-windows
+
+  - id: tc-windows
+    name: Windows 11 Host
+    type: TechnologyComponent
+    description: 开发环境主机操作系统
+    version: Windows 11
+
+  # ══ MCP Gateway ══
+  - id: tc-nexent-runtime
+    name: Nexent Runtime
+    type: TechnologyComponent
+    description: MCP 协议网关 — Agent 注册、工具路由、负载均衡
+    port: 5014
+
+  # ══ Platform Services ══
+  - id: ts-haip-portal
+    name: HAIP 门户
+    type: TechnologyService
+    description: 南方医院未来医院统一门户
+    port: 8769
+    agent: haip
+
+  - id: ts-nx-dashboard
+    name: NX Nexent 全景
+    type: TechnologyService
+    description: 网络拓扑可视化 + TOGAF 学习门户
+    port: 8843
+    agent: nx
+
+  # ══ Specialty Agent Services ══
+  - id: ts-cardio-risk
+    name: 心脏风险评估服务
+    type: TechnologyService
+    description: 围术期 MI/高血压/ECG 评估
+    port: 8801
+    agent: cardio_risk
+
+  - id: ts-anesthesia-risk
+    name: 麻醉风险评估服务
+    type: TechnologyService
+    description: ASA/抗凝/气道评估
+    port: 8829
+    agent: anesthesia_risk
+
+  # ══ Data Agent Services ══
+  - id: ts-medical-record
+    name: 患者数据中心服务
+    type: TechnologyService
+    description: 统一患者数据查询 (HIS+EMR+PACS+NIS+OA)
+    port: 8766
+    agent: medical_record
+
+  - id: ts-metrics
+    name: 全院指标数据中心服务
+    type: TechnologyService
+    description: 临床指标时序查询/趋势/预警
+    port: 8767
+    agent: metrics
+
+  - id: ts-rules
+    name: 规则资产中心服务
+    type: TechnologyService
+    description: T1/T2 三层优先级裁决
+    port: CLI only
+    agent: rules
+
+  # ══ Architecture Agent Services ══
+  - id: ts-togaf
+    name: TOGAF 架构基础设施服务
+    type: TechnologyService
+    description: 元模型定义/4A架构构建/力导向布局/模板渲染
+    port: CLI only
+    agent: togaf
+
+  # ══ Business Agent Web Services ══
+  - id: ts-orthopedic-web
+    name: 创伤骨科 Web UI
+    type: TechnologyService
+    description: 13-tab 围术期管理 SPA
+    port: 8765
+    agent: orthopedic_surgery
+
+  - id: ts-pharmacy-web
+    name: 药剂科 Web UI
+    type: TechnologyService
+    description: 营养评估+TPN计算+处方审核 SPA
+    port: 8770
+    agent: pharmacy
+
+  - id: ts-cardio-surg-web
+    name: 心血管外科 Web UI
+    type: TechnologyService
+    description: 抗凝模拟+随访报告看板
+    port: 8768
+    agent: cardio_surgery
+
+  - id: ts-cardio-risk-web
+    name: 心脏评估 Web UI
+    type: TechnologyService
+    description: MI/高血压/ECG 评估页面
+    port: 8801
+    agent: cardio_risk
+
+  - id: ts-anesthesia-web
+    name: 麻醉评估内部 Web
+    type: TechnologyService
+    description: A2A only, no public UI
+    port: 8829
+    agent: anesthesia_risk
+
+  # ══ Infrastructure ══
+  - id: tc-llm-api
+    name: LLM API Gateway
+    type: TechnologyComponent
+    description: OpenAI-compatible chat completion API
+    consumed_by: [orthopedic_surgery, pharmacy, cardio_surgery]
+
+  - id: tc-git
+    name: Git Version Control
+    type: TechnologyComponent
+    description: 源码版本管理 (GitHub)
+    consumed_by: all agents
+
+  - id: tc-openharness
+    name: OpenHarness Runtime
+    type: TechnologyComponent
+    description: Skill 运行时 + MCP 配置
+    consumed_by: all agents

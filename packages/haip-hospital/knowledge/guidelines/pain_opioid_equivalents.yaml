@@ -1,0 +1,46 @@
+reference:
+  standard: "口服吗啡"
+  unit: "mg/day"
+equivalents:
+  - drug: "吗啡 (口服)"
+    route: "PO"
+    ratio_to_morphine_po: 1.0
+  - drug: "吗啡 (注射)"
+    route: "IV/SC"
+    ratio_to_morphine_po: 3.0
+  - drug: "羟考酮 (口服)"
+    route: "PO"
+    ratio_to_morphine_po: 1.5
+    daily_max_mg: 200
+  - drug: "羟考酮 (注射)"
+    route: "IV/SC"
+    ratio_to_morphine_po: 3.0
+  - drug: "氢吗啡酮 (口服)"
+    route: "PO"
+    ratio_to_morphine_po: 5.0
+  - drug: "芬太尼透皮贴"
+    route: "TD"
+    ratio_to_morphine_po: null
+    conversion_formula: "morphine_po_mg_per_day / 2 = fentanyl_mcg_per_hour"
+  - drug: "曲马多 (口服)"
+    route: "PO"
+    ratio_to_morphine_po: 0.1
+    daily_max_mg: 400
+  - drug: "可待因 (口服)"
+    route: "PO"
+    ratio_to_morphine_po: 0.1
+    daily_max_mg: 360
+dose_limits:
+  morphine_oral_equivalent_daily_max: 120
+  warning_threshold_pct: 0.8
+who_ladder:
+  step1:
+    name: "第一阶梯 (轻度 NRS 1-3)"
+    drugs: ["对乙酰氨基酚", "NSAIDs (布洛芬/塞来昔布)"]
+  step2:
+    name: "第二阶梯 (中度 NRS 4-6)"
+    drugs: ["曲马多", "可待因", "羟考酮(低剂量)"]
+  step3:
+    name: "第三阶梯 (重度 NRS 7-10)"
+    drugs: ["吗啡", "羟考酮", "芬太尼透皮贴"]
+    breakthrough: "即释吗啡 (24h总量的10-15%)"

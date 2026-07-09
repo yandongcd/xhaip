@@ -1,0 +1,85 @@
+# ============================================================
+# Business Process: 手术时机评估
+# TOGAF Class: BusinessProcess + ProcessStep (Core ABB)
+# Trust Level: T1
+# ============================================================
+name: bp-ortho-surgical-timing
+version: "1.0"
+description: 手术时机引擎内部流程 — 骨科 timing_engine 的计算内核（子），被跨Agent编排流程 bp-timing-decision（父）step 3 内部委派调用
+owner: 主治医生 + 麻醉科医生
+value_stages:
+  - 有效治疗
+guideline_refs:
+  - nhc-2022
+  - nice-ng37
+  - aaos-2022
+  - nanfang-hip-fracture-triage
+parent_process: bp-timing-decision
+
+steps:
+  - id: bp-st-1
+    name: 延迟因素汇总与分类
+    actor: 主治医生
+    description: |
+      汇总六大因素评估中的延迟因素：
+      心脏 | 抗凝 | 贫血 | 肾功 | 感染 | 血糖
+      统计可纠正因素 vs 不可纠正因素数量
+    data_used: [de-risk-assessment]
+    decision: "延迟因素计数 → 0项 | 1-2项(限期) | ≥3项(延迟)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.timing_engine
+      tool: orthopedic.assess_timing
+      decision_coverage:
+        total: 3
+        covered: 3
+
+  - id: bp-st-2
+    name: 手术时机裁定
+    actor: 主治医生 + 麻醉科医生
+    description: |
+      根据延迟因素计数、患者年龄、骨折类型综合裁定手术时机：
+      - 急诊（48h内）：无延迟因素，骨折类型适合早期手术
+      - 限期（3-7d）：1-2项可纠正延迟因素
+      - 延迟（>7d）：≥3项延迟因素或单因素极高危
+    data_used: [de-risk-assessment, de-patient]
+    decision: "手术时机 → 急诊(48h) | 限期(3-7d) | 延迟(>7d)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.timing_engine
+      tool: orthopedic.assess_timing
+      decision_coverage:
+        total: 3
+        covered: 3
+
+  - id: bp-st-3
+    name: MDT 联合决策
+    actor: MDT 团队
+    description: |
+      启动多学科会诊：
+      创伤骨科 + 心内科 + 麻醉科三方联合讨论，
+      最终裁定手术时机、手术方案和围术期管理策略
+    data_used: [de-risk-assessment, de-mdt-decision, de-patient]
+    decision: "MDT 结论 → 确认急诊 | 确认限期 | 确认延迟(→制定优化方案)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.timing_engine
+      tool: orthopedic.assess_timing
+      decision_coverage:
+        total: 3
+        covered: 3
+
+  - id: bp-st-4
+    name: 术前优化执行
+    actor: MDT 团队
+    description: |
+      按照 MDT 决策执行术前优化措施：
+      心内科 → 心脏功能优化
+      麻醉科 → 抗凝桥接 + 贫血纠正
+      护士长 → DVT 物理预防 + 皮肤准备
+      创伤骨科 → 手术排程协调
+    data_used: [de-risk-assessment, de-mdt-decision]
+    decision: "优化是否达标？→ 达标(按计划手术) | 未达标(继续优化/调整时机)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.timing_engine
+      tool: orthopedic.assess_timing
+      decision_coverage:
+        total: 2
+        covered: 2

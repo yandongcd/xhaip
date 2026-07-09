@@ -1,0 +1,93 @@
+name: neonatology
+cn_name: 新生儿科智能体
+version: "1.0.0"
+type: business
+department: 新生儿科
+port: 8804
+aliases: [新生儿科, neonatology]
+
+prompt:
+  system: |
+    你是南方医院新生儿科AI助手，负责新生儿科常见疾病的诊疗评估和管理。
+    请基于相关临床指南给出专业建议。
+  temperature: 0.3
+
+tools:
+  - name: bp_reception
+    description: 接诊评估
+    handler: neonatology.bp_reception
+    input: {patient_id: str}
+
+  - name: bp_exam
+    description: 专项检查
+    handler: neonatology.bp_exam
+    input: {patient_id: str}
+
+  - name: bp_diagnosis
+    description: 诊断分级
+    handler: neonatology.bp_diagnosis
+    input: {patient_id: str}
+
+  - name: bp_treatment
+    description: 分娩/治疗执行
+    handler: neonatology.bp_treatment
+    input: {patient_id: str}
+
+  - name: bp_nursing
+    description: 产后/儿科护理
+    handler: neonatology.bp_nursing
+    input: {patient_id: str}
+
+  - name: bp_followup
+    description: 随访与保健
+    handler: neonatology.bp_followup
+    input: {patient_id: str}
+
+guard:
+  triggers: ['药物交互']
+
+ui:
+  template: chat-with-role-switcher
+  roles:
+    - {id: attending, label: 主治医师, default: true}
+    - {id: resident, label: 住院医师}
+    - {id: head_nurse, label: 护士长}
+    - {id: head, label: 科主任}
+
+stages:
+  - order: 1
+    id: bp-reception
+    label: 接诊评估
+    desc: "接诊评估流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 2
+    id: bp-exam
+    label: 专项检查
+    desc: "专项检查流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 3
+    id: bp-diagnosis
+    label: 诊断分级
+    desc: "诊断分级流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 4
+    id: bp-treatment
+    label: 分娩/治疗执行
+    desc: "分娩/治疗执行流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 5
+    id: bp-nursing
+    label: 产后/儿科护理
+    desc: "产后/儿科护理流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 6
+    id: bp-followup
+    label: 随访与保健
+    desc: "随访与保健流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']

@@ -1,0 +1,773 @@
+# ============================================================
+# Rule Asset: 肠内肠外营养风险预警规则库（54条）
+# TOGAF Class: Constraint (Extension ABB)
+# Trust Level: T1 (基于国家指南/国际指南)
+# ============================================================
+name: nutrition-risk-rules
+version: "1.0"
+description: >
+  肠内肠外营养风险预警54条规则 — 覆盖血糖/电解质/脂肪乳/肝肾/炎症标志物/
+  营养支持并发症等全维度。每条规则标注指南来源与证据等级。
+  由 pharmacy/core/rules.py 中的 evaluate_all_rules() 加载执行。
+owner: review_pharmacist
+guideline_ref:
+  - "中国成人患者肠外肠内营养临床应用指南 (中华医学杂志 2023)"
+  - "成人肠外营养脂肪乳注射液临床应用指南 (中华外科杂志 2023)"
+  - "肠外营养中电解质补充中国专家共识 (中华医学杂志 2024)"
+  - "ESPEN Guidelines on Clinical Nutrition (2023)"
+  - "规范肠外营养液配制 (中华临床营养杂志 2018)"
+  - "中国药典 (2020/2025版)"
+  - "肠内肠外营养风险预警系统.xlsm (南方医院药剂科知识库)"
+last_updated: 2026-07-01
+total_rules: 54
+
+# ──────────────────────────────────────────────
+# 规则集 — 按临床域分组
+# ──────────────────────────────────────────────
+rule_sets:
+
+  # ════════════════════════════════════════════
+  # 类别A：中国EN/PN指南2023 — 血糖管理
+  # ════════════════════════════════════════════
+  - id: glucose
+    name: 血糖规则集
+    description: 营养支持期间血糖监控 — 高血糖/低血糖预警
+    source_category: A
+    primary_guideline: "中国成人患者肠外肠内营养临床应用指南 (2023) §7.2"
+    rules:
+      - id: R001
+        name: 高血糖预警
+        condition: "glucose > 10 mmol/L"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 增加血糖监测频率至q2-4h，调整胰岛素方案
+        monitoring: q2h血糖直至稳定
+        guideline_ref: "中国EN/PN指南2023 §7.2; ADA 2025"
+        evidence_level: A
+        active: true
+
+      - id: R002
+        name: 高血糖危急预警
+        condition: "glucose > 15 mmol/L"
+        risk_level: critical
+        risk_label: 🔴危急
+        disposal: 立即通知医师，暂停含糖液体，胰岛素静脉输注
+        monitoring: q1h血糖
+        guideline_ref: "中国EN/PN指南2023 §7.2"
+        evidence_level: A
+        active: true
+
+      - id: R003
+        name: 低血糖预警
+        condition: "glucose < 3.9 mmol/L"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 减慢胰岛素速度，口服15-20g葡萄糖或静注50%GS 20ml
+        monitoring: q30min血糖直至>3.9
+        guideline_ref: "中国EN/PN指南2023 §7.2; ADA 2025"
+        evidence_level: A
+        active: true
+
+      - id: R004
+        name: 低血糖危急预警
+        condition: "glucose < 2.8 mmol/L"
+        risk_level: critical
+        risk_label: 🔴危急
+        disposal: 立即推注50%葡萄糖20ml，通知医师，查明原因
+        monitoring: q15min血糖直至>3.9
+        guideline_ref: "中国EN/PN指南2023 §7.2"
+        evidence_level: A
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别D：再喂养综合征 — ESPEN/中国指南
+  # ════════════════════════════════════════════
+  - id: refeeding
+    name: 再喂养综合征规则集
+    description: 再喂养综合征风险分层 — BMI/禁食时长/体重下降综合判定
+    source_category: D
+    primary_guideline: "ESPEN Refeeding Syndrome Guidelines 2023; 中国EN/PN指南2023"
+    rules:
+      - id: R005
+        name: 再喂养高风险
+        condition: "BMI < 16.0 OR (禁食>=7天 AND 体重下降>10%)"
+        risk_level: critical
+        risk_label: 🔴危急
+        disposal: 目标量1/4起始(3-7天达目标)，预防性补充K/Mg/P，补充B1 100-300mg/d静注
+        monitoring: 每日电解质+心电图，起始24h q4h监测K/Mg/P
+        check_items: [phosphorus, potassium, magnesium, ecg]
+        guideline_ref: "ESPEN Refeeding 2023; 中国EN/PN指南2023"
+        evidence_level: A
+        active: true
+
+      - id: R006
+        name: 再喂养中风险
+        condition: "BMI 16.0-18.5 OR (禁食4-7天) OR (体重下降5-10%)"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 目标量1/2起始(5天达目标)，监测下补充K/Mg/P，补充B1
+        monitoring: 每1-3天监测电解质
+        guideline_ref: "ESPEN Refeeding 2023"
+        evidence_level: B
+        active: true
+
+      - id: R007
+        name: 再喂养低风险
+        condition: "以上均不符合"
+        risk_level: info
+        risk_label: 🟢正常
+        disposal: 标准方案启动，长期进食不足者仍需补充B1
+        monitoring: 常规监测
+        guideline_ref: "ESPEN Refeeding 2023"
+        evidence_level: C
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别C：电解质共识2024 — Na/K/P/Mg/Ca
+  # ════════════════════════════════════════════
+  - id: electrolyte_na
+    name: 血钠规则集
+    description: 低钠/高钠预警
+    source_category: C
+    primary_guideline: "肠外营养中电解质补充中国专家共识 (2024)"
+    rules:
+      - id: R008
+        name: 低钠预警
+        condition: "sodium < 135 mmol/L"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 根据病因补充，纠正速度<10-12mmol/L/24h
+        guideline_ref: "电解质共识2024 §3.1"
+        evidence_level: A
+        active: true
+
+      - id: R009
+        name: 低钠危急
+        condition: "sodium < 120 mmol/L"
+        risk_level: critical
+        risk_label: 🔴危急
+        disposal: 高渗盐水(3% NaCl)补充，监测q4h，防止纠正过快
+        monitoring: q4h血钠，神经系统评估q2h
+        guideline_ref: "电解质共识2024 §3.1"
+        evidence_level: A
+        active: true
+
+      - id: R010
+        name: 高钠预警
+        condition: "sodium > 150 mmol/L"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 限制钠摄入，补充自由水，查找原因
+        monitoring: q6h血钠
+        guideline_ref: "电解质共识2024 §3.1"
+        evidence_level: A
+        active: true
+
+  - id: electrolyte_k
+    name: 血钾规则集
+    description: 低钾/高钾预警
+    source_category: C
+    primary_guideline: "肠外营养中电解质补充中国专家共识 (2024)"
+    rules:
+      - id: R011
+        name: 低钾预警
+        condition: "potassium < 3.5 mmol/L"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 静脉补钾≤20-40mmol/h，浓度≤40mmol/L，监测心电
+        guideline_ref: "电解质共识2024 §3.2"
+        evidence_level: A
+        active: true
+
+      - id: R012
+        name: 低钾危急
+        condition: "potassium < 2.5 mmol/L"
+        risk_level: critical
+        risk_label: 🔴危急
+        disposal: 心电监护下静脉补钾，最高可至40mmol/h，通知医师
+        monitoring: 持续心电监护，q2h血钾
+        guideline_ref: "电解质共识2024 §3.2"
+        evidence_level: A
+        active: true
+
+  - id: electrolyte_p
+    name: 血磷规则集
+    description: 低磷预警
+    source_category: C
+    primary_guideline: "肠外营养中电解质补充中国专家共识 (2024)"
+    rules:
+      - id: R013
+        name: 低磷预警
+        condition: "phosphorus < 0.8 mmol/L"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 补充磷0.3-0.6mmol/kg/d，优先使用甘油磷酸钠
+        guideline_ref: "电解质共识2024 §3.3"
+        evidence_level: A
+        active: true
+
+      - id: R014
+        name: 低磷危急
+        condition: "phosphorus < 0.3 mmol/L"
+        risk_level: critical
+        risk_label: 🔴危急
+        disposal: 立即静脉补磷，严重者中心静脉补磷，监测血磷q4h
+        monitoring: q4h血磷，q8h血钙（警惕低钙血症）
+        guideline_ref: "电解质共识2024 §3.3"
+        evidence_level: A
+        active: true
+
+  - id: electrolyte_mg_ca
+    name: 血镁/血钙规则集
+    description: 低镁/钙磷乘积预警
+    source_category: C
+    primary_guideline: "肠外营养中电解质补充中国专家共识 (2024)"
+    rules:
+      - id: R015
+        name: 低镁预警
+        condition: "magnesium < 0.75 mmol/L"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 补充镁0.3-0.4mmol/kg/d，25% MgSO4 5-10ml/d
+        guideline_ref: "电解质共识2024 §3.4"
+        evidence_level: A
+        active: true
+
+      - id: R016
+        name: 钙磷乘积预警
+        condition: "calcium_phosphorus_product >= 50 mmol2/L2"
+        risk_level: critical
+        risk_label: 🔴危急
+        disposal: 调整钙/磷剂量，分开输注(不同通路)，降低浓度
+        check_items: [calcium, phosphorus]
+        guideline_ref: "电解质共识2024 §3.5; 规范肠外营养液配制2018"
+        evidence_level: A
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别B：脂肪乳指南2023 — 脂代谢
+  # ════════════════════════════════════════════
+  - id: lipid
+    name: 脂肪乳规则集
+    description: 脂肪乳使用监控 — TG水平决定脂肪乳调整方案
+    source_category: B
+    primary_guideline: "成人肠外营养脂肪乳注射液临床应用指南 (2023)"
+    rules:
+      - id: R017
+        name: TG轻度升高
+        condition: "triglyceride > 2.3 mmol/L"
+        risk_level: info
+        risk_label: 🟡注意
+        disposal: 减少脂肪乳用量，监测TG趋势
+        monitoring: qd TG
+        guideline_ref: "脂肪乳指南2023 §5.1"
+        evidence_level: B
+        active: true
+
+      - id: R018
+        name: TG显著升高
+        condition: "triglyceride > 5.0 mmol/L"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 减少脂肪乳用量>50%，选择鱼油脂肪乳替代部分
+        monitoring: qd TG，肝功能1次/周
+        guideline_ref: "脂肪乳指南2023 §5.2"
+        evidence_level: A
+        active: true
+
+      - id: R019
+        name: 脂肪超载综合征
+        condition: "triglyceride > 11.4 mmol/L"
+        risk_level: critical
+        risk_label: 🔴危急
+        disposal: 立即停用脂肪乳，监测TG至<5再考虑低剂量重启
+        monitoring: qd TG，肝功能+凝血2次/周
+        guideline_ref: "脂肪乳指南2023 §5.3"
+        evidence_level: A
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别A：中国EN/PN指南 — 肝肾/液体
+  # ════════════════════════════════════════════
+  - id: hepatorenal
+    name: 肝肾功能规则集
+    description: 肝肾功能异常预警 — ALT/AST/胆红素/BUN/Cr
+    source_category: A
+    primary_guideline: "中国成人患者肠外肠内营养临床应用指南 (2023)"
+    rules:
+      - id: R020
+        name: 肝功能预警
+        condition: "ALT > 80 U/L OR AST > 80 U/L"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 调整氨基酸用量，选择MCT/LCT脂肪乳，监测肝功能
+        monitoring: 肝功能1次/周
+        guideline_ref: "中国EN/PN指南2023 §8.3"
+        evidence_level: A
+        active: true
+
+      - id: R021
+        name: 肝功能危急
+        condition: "ALT > 200 U/L OR AST > 200 U/L"
+        risk_level: critical
+        risk_label: 🔴危急
+        disposal: 评估PN相关性肝损害，暂停PN或调整为纯EN
+        monitoring: 肝功能2次/周，腹部超声
+        guideline_ref: "中国EN/PN指南2023 §8.3"
+        evidence_level: A
+        active: true
+
+      - id: R022
+        name: 肾功能预警
+        condition: "BUN > 14.3 mmol/L OR creatinine > 133 umol/L"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 限制蛋白0.6-0.8g/kg/d(CKD非透析)，监测电解质
+        monitoring: 肾功能1次/周，电解质2次/周
+        guideline_ref: "中国EN/PN指南2023 §8.4"
+        evidence_level: A
+        active: true
+
+      - id: R023
+        name: 肾功能危急
+        condition: "creatinine > 707 umol/L OR dialysis"
+        risk_level: critical
+        risk_label: 🔴危急
+        disposal: 肾内科会诊，透析患者蛋白增至1.2-1.5g/kg/d
+        monitoring: 每日出入量，肾功能+电解质qd
+        guideline_ref: "中国EN/PN指南2023 §8.4; KDIGO 2024"
+        evidence_level: A
+        active: true
+
+      - id: R024
+        name: TBIL升高预警
+        condition: "total_bilirubin > 21 umol/L"
+        risk_level: info
+        risk_label: 🟡注意
+        disposal: 评估胆汁淤积原因，调整脂肪乳用量
+        monitoring: 肝功能+胆红素1次/周
+        guideline_ref: "中国EN/PN指南2023 §8.3"
+        evidence_level: B
+        active: true
+
+  - id: fluid_balance
+    name: 液体平衡规则集
+    description: 液体出入量监控
+    source_category: A
+    primary_guideline: "中国成人患者肠外肠内营养临床应用指南 (2023)"
+    rules:
+      - id: R025
+        name: 液体轻度超载
+        condition: "fluid_in - fluid_out > 500 ml"
+        risk_level: info
+        risk_label: 🟡注意
+        disposal: 评估心肾功能，调整输液速度
+        monitoring: qd出入量
+        guideline_ref: "中国EN/PN指南2023 §6.2"
+        evidence_level: B
+        active: true
+
+      - id: R026
+        name: 液体重度超载
+        condition: "fluid_in - fluid_out > 1000 ml"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 限制液体，评估心功能，利尿治疗
+        monitoring: qd出入量+体重, 心功能评估
+        guideline_ref: "中国EN/PN指南2023 §6.2"
+        evidence_level: A
+        active: true
+
+      - id: R027
+        name: 液体不足
+        condition: "fluid_out - fluid_in > 500 ml"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 增加补液量，查找液体丢失原因
+        monitoring: qd出入量
+        guideline_ref: "中国EN/PN指南2023 §6.2"
+        evidence_level: B
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别F：临床监测标准 — 炎症/营养标志物
+  # ════════════════════════════════════════════
+  - id: inflammation
+    name: 炎症/营养标志物规则集
+    description: CRP/前白蛋白/血氨监测 — 炎症状态与营养评估
+    source_category: F
+    primary_guideline: "中国成人患者肠外肠内营养临床应用指南 (2023)"
+    rules:
+      - id: R028
+        name: CRP显著升高
+        condition: "CRP > 50 mg/L"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 评估感染源，增加蛋白供给(1.5-2.0g/kg/d)
+        monitoring: CRP 2次/周
+        guideline_ref: "中国EN/PN指南2023 §8.5"
+        evidence_level: A
+        active: true
+
+      - id: R029
+        name: CRP危急升高
+        condition: "CRP > 100 mg/L"
+        risk_level: critical
+        risk_label: 🔴危急
+        disposal: 严重炎症状态，加强抗感染，高蛋白支持(2.0g/kg/d)
+        monitoring: CRP+血培养，体温q4h
+        guideline_ref: "中国EN/PN指南2023 §8.5"
+        evidence_level: A
+        active: true
+
+      - id: R030
+        name: 前白蛋白偏低
+        condition: "prealbumin < 150 mg/L"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 蛋白营养不足或炎症消耗，加强蛋白供给
+        monitoring: 前白蛋白1次/周
+        guideline_ref: "中国EN/PN指南2023 §8.5"
+        evidence_level: B
+        active: true
+
+      - id: R031
+        name: 前白蛋白危急
+        condition: "prealbumin < 100 mg/L"
+        risk_level: critical
+        risk_label: 🔴危急
+        disposal: 严重蛋白缺乏，积极营养支持，排查慢性消耗
+        monitoring: 前白蛋白1次/周, 联合CRP评估
+        guideline_ref: "中国EN/PN指南2023 §8.5"
+        evidence_level: B
+        active: true
+
+      - id: R032
+        name: 血氨升高预警
+        condition: "ammonia > 60 umol/L"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 限制蛋白摄入，考虑BCAA强化氨基酸
+        monitoring: 血氨2次/周，意识状态评估qd
+        guideline_ref: "中国EN/PN指南2023 §8.3"
+        evidence_level: A
+        active: true
+
+      - id: R033
+        name: 血氨危急
+        condition: "ammonia > 100 umol/L"
+        risk_level: critical
+        risk_label: 🔴危急
+        disposal: 暂停PN氨基酸，乳果糖降血氨，肝病科会诊
+        monitoring: 血氨qd，意识状态q4h
+        guideline_ref: "中国EN/PN指南2023 §8.3"
+        evidence_level: A
+        active: true
+
+      - id: R034
+        name: 白蛋白严重偏低
+        condition: "albumin < 25 g/L"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 严重低蛋白血症，加强蛋白支持，评估炎症消耗
+        monitoring: 白蛋白1次/周
+        guideline_ref: "中国EN/PN指南2023 §8.5"
+        evidence_level: B
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别A：EN/PN指南 — 营养支持并发症
+  # ════════════════════════════════════════════
+  - id: en_complications
+    name: EN并发症规则集
+    description: 肠内营养耐受性监控 — GRV/腹泻/误吸/CRBSI
+    source_category: A
+    primary_guideline: "中国成人患者肠外肠内营养临床应用指南 (2023)"
+    rules:
+      - id: R035
+        name: EN不耐受预警(GRV)
+        condition: "GRV > 200 ml"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 减速/暂停EN，评估促胃动力药。持续>200ml时改PN/SPN
+        monitoring: q4h GRV
+        guideline_ref: "中国EN/PN指南2023 §6.3"
+        evidence_level: A
+        active: true
+
+      - id: R036
+        name: 腹泻轻度(EN相关)
+        condition: "bowel_moves_per_day > 3"
+        risk_level: info
+        risk_label: 🟡注意
+        disposal: 换短肽配方，添加可溶性纤维，排除感染性腹泻
+        monitoring: qd排便次数+性状
+        guideline_ref: "中国EN/PN指南2023 §6.3"
+        evidence_level: B
+        active: true
+
+      - id: R037
+        name: 腹泻重度(EN相关)
+        condition: "bowel_moves_per_day > 5"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 暂停EN，检查感染性腹泻(艰难梭菌)，改PN
+        monitoring: 大便培养+艰难梭菌，q6h排便量
+        guideline_ref: "中国EN/PN指南2023 §6.3"
+        evidence_level: A
+        active: true
+
+      - id: R038
+        name: CRBSI高危预警
+        condition: "temperature > 38.5 C AND has_cvc"
+        risk_level: critical
+        risk_label: 🔴危急
+        disposal: 血培养(导管+外周)×2套，导管端培养，考虑拔管
+        monitoring: 血培养，体温q4h
+        guideline_ref: "中国EN/PN指南2023 §8.6"
+        evidence_level: A
+        active: true
+
+      - id: R039
+        name: 血糖波动过大
+        condition: "glucose_fluctuation_4h > 5 mmol/L"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 调整胰岛素输注方案，考虑胰岛素泵
+        monitoring: q1h血糖
+        guideline_ref: "中国EN/PN指南2023 §7.2"
+        evidence_level: B
+        active: true
+
+      - id: R040
+        name: EN起始不耐受
+        condition: "EN_start_24h_no_tolerance"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 评估再喂养风险，改为SPN或PN
+        monitoring: 评估再喂养风险
+        guideline_ref: "中国EN/PN指南2023 §5.2"
+        evidence_level: B
+        active: true
+
+      - id: R041
+        name: 维生素B1缺乏风险
+        condition: "alcohol_dependence OR long_term_PN > 7d"
+        risk_level: info
+        risk_label: 🟡注意
+        disposal: 预防性补充B1 100mg/d(静注)，高危者连用3-4天
+        monitoring: 神经症状评估
+        guideline_ref: "ESPEN Refeeding 2023; 中国EN/PN指南2023"
+        evidence_level: B
+        active: true
+
+      - id: R042
+        name: EN误吸风险
+        condition: "age >= 65 AND (consciousness_impaired OR supine_feeding)"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 半卧位30-45°喂养，评估吞咽功能，考虑鼻空肠管
+        monitoring: 床头抬高角度，q4h评估
+        guideline_ref: "中国EN/PN指南2023 §6.4"
+        evidence_level: A
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别A：中国EN/PN指南 — SPN启动条件
+  # ════════════════════════════════════════════
+  - id: spn_criteria
+    name: SPN启动条件规则集
+    description: 补充性肠外营养启动判定
+    source_category: A
+    primary_guideline: "中国成人患者肠外肠内营养临床应用指南 (2023)"
+    rules:
+      - id: R043
+        name: EN摄入不足启动SPN
+        condition: "EN_intake < 60% target for 7-10 days"
+        risk_level: info
+        risk_label: 🟡注意
+        disposal: 启动SPN补充，SPN量 = 目标量 - EN实际量
+        guideline_ref: "中国EN/PN指南2023 §5.4"
+        evidence_level: A
+        active: true
+
+      - id: R044
+        name: 高营养风险+EN不足
+        condition: "NRS2002 >= 5 AND EN_intake < 60%"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 尽早启动SPN(不必等7天)，EN+PN覆盖全目标
+        guideline_ref: "中国EN/PN指南2023 §5.4"
+        evidence_level: A
+        active: true
+
+      - id: R045
+        name: SPN能量计算
+        condition: "SPN_initiated"
+        risk_level: info
+        risk_label: ℹ️参考
+        disposal: "SPN能量 = 目标量 - EN实际量，糖脂比6:4，蛋白1.2-1.5g/kg/d"
+        guideline_ref: "中国EN/PN指南2023 §5.4"
+        evidence_level: A
+        active: true
+
+      - id: R046
+        name: EN逐步增量
+        condition: "SPN_duration > 7d AND EN_tolerance_improving"
+        risk_level: info
+        risk_label: ℹ️参考
+        disposal: 每2-3天增加EN 20%，对应减少SPN，过渡至全EN
+        guideline_ref: "中国EN/PN指南2023 §5.4"
+        evidence_level: B
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别H：规范肠外营养液配制2018 — 配方限值
+  # ════════════════════════════════════════════
+  - id: formulation
+    name: TPN配方安全限值规则集
+    description: TPN配比核心参数校验 — 热氮比/渗透压/浓度/阳离子
+    source_category: H
+    primary_guideline: "规范肠外营养液配制 (中华临床营养杂志 2018)"
+    rules:
+      - id: R047
+        name: 热氮比合理范围
+        condition: "calorific_nitrogen_ratio < 100 OR > 200"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 调整糖脂比或蛋白量，使热氮比恢复100-200:1
+        guideline_ref: "规范肠外营养液配制2018 §3.2; 中国EN/PN指南2023"
+        evidence_level: A
+        active: true
+
+      - id: R048
+        name: 渗透压超限
+        condition: "osmolarity > 900 mOsm/L"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: "> 900需中心静脉输注，调整配方降低渗透压"
+        guideline_ref: "规范肠外营养液配制2018 §3.3"
+        evidence_level: A
+        active: true
+
+      - id: R049
+        name: 渗透压外周静脉可用
+        condition: "osmolarity <= 900 mOsm/L"
+        risk_level: info
+        risk_label: ✅信息
+        disposal: 可经外周静脉输注，常规护理
+        guideline_ref: "规范肠外营养液配制2018 §3.3"
+        evidence_level: A
+        active: true
+
+      - id: R050
+        name: 葡萄糖浓度超限
+        condition: "glucose_concentration > 23 %"
+        risk_level: critical
+        risk_label: 🔴危急
+        disposal: 调整配方降低葡萄糖浓度至≤23%
+        guideline_ref: "规范肠外营养液配制2018 §3.4"
+        evidence_level: A
+        active: true
+
+      - id: R051
+        name: 氨基酸浓度不足
+        condition: "amino_acid_concentration < 2.5 %"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 增加氨基酸用量使浓度≥2.5%
+        guideline_ref: "规范肠外营养液配制2018 §3.4; 中国EN/PN指南2023"
+        evidence_level: A
+        active: true
+
+      - id: R052
+        name: 一价阳离子超限
+        condition: "monovalent_cation > 150 mmol/L"
+        risk_level: critical
+        risk_label: 🔴危急
+        disposal: 破乳风险！减少Na+/K+总量至≤150mmol/L
+        guideline_ref: "电解质共识2024 §3.6; 规范肠外营养液配制2018"
+        evidence_level: A
+        active: true
+
+      - id: R053
+        name: 二价阳离子超限
+        condition: "divalent_cation > 10 mmol/L"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 沉淀风险！减少Ca2+/Mg2+总量至≤10mmol/L
+        guideline_ref: "电解质共识2024 §3.6"
+        evidence_level: A
+        active: true
+
+      - id: R054
+        name: 脂肪供能比超限
+        condition: "fat_energy_ratio > 60 %"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 降低脂肪乳用量，使脂肪供能≤50%
+        guideline_ref: "脂肪乳指南2023 §4.2"
+        evidence_level: B
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别A：EN/PN指南 — 营养途径决策
+  # ════════════════════════════════════════════
+  - id: route_decision
+    name: 营养途径决策规则集
+    description: EN vs PN vs SPN 途径选择判定
+    source_category: A
+    primary_guideline: "中国成人患者肠外肠内营养临床应用指南 (2023)"
+    rules:
+      - id: R055
+        name: 首选EN判定
+        condition: "bowel_function_normal AND no_en_contraindication"
+        risk_level: info
+        risk_label: ℹ️决策
+        disposal: 优先选择肠内营养(EN)。NRS2002≥5者24-48h内启动
+        guideline_ref: "中国EN/PN指南2023 §4.2"
+        evidence_level: A
+        active: true
+
+      - id: R056
+        name: EN禁忌→PN
+        condition: "bowel_dysfunction OR ileus OR severe_gi_bleeding"
+        risk_level: info
+        risk_label: ℹ️决策
+        disposal: 肠道功能障碍→选择肠外营养(PN)，待肠道功能恢复后评估EN
+        guideline_ref: "中国EN/PN指南2023 §4.3"
+        evidence_level: A
+        active: true
+
+      - id: R057
+        name: PN禁忌审核
+        condition: "glucose > 15 OR TG > 11.4 OR severe_electrolyte_imbalance"
+        risk_level: warning
+        risk_label: 🟠警告
+        disposal: 先纠正代谢紊乱再启动PN，或启动特殊配方
+        guideline_ref: "中国EN/PN指南2023 §4.4"
+        evidence_level: A
+        active: true
+
+      - id: R058
+        name: EN不耐受→SPN
+        condition: "EN_intolerance (GRV>200 OR diarrhea>5)"
+        risk_level: info
+        risk_label: ℹ️决策
+        disposal: 先尝试EN减速/换配方，仍不耐受→SPN补充
+        guideline_ref: "中国EN/PN指南2023 §5.4"
+        evidence_level: A
+        active: true
+
+# ──────────────────────────────────────────────
+# 规则引擎配置
+# ──────────────────────────────────────────────
+engine_config:
+  evaluation_mode: "on_assessment"   # 评估模式：每次综合评估时自动执行
+  evaluation_scope: "all_active"     # 仅评估active=true的规则
+  output_format: "triggered_only"    # 仅返回触发的规则
+  re_evaluation_triggers:
+    - "new_lab_result"
+    - "prescription_change"
+    - "daily_round"
+  guideline_version_policy: "latest"  # 始终使用最新版指南引用

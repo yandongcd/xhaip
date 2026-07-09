@@ -1,0 +1,102 @@
+﻿# ============================================================
+# Business Process: 患者注册与数据采集
+# TOGAF Class: BusinessProcess + ProcessStep (Core ABB)
+# Trust Level: T1
+# ============================================================
+name: bp-ortho-patient-registration
+version: "1.0"
+description: 患者注册与数据采集流程 — 从急诊接诊到电子病历建档、检验检查数据加载
+owner: 分诊护士 + 住院总值班医生
+value_stages:
+  - 患者分诊与登记
+guideline_refs:
+  - nhc-2022
+  - nanfang-hip-fracture-triage
+
+steps:
+  - id: bp-pr-1
+    name: 急诊接诊与创伤骨科通知
+    actor: 急诊分诊护士
+    description: |
+      患者到达急诊后，急诊分诊护士完成初步评估：
+      1. 生命体征采集（BP/HR/RR/SpO2/T）
+      2. 疼痛初步评估（VAS）
+      3. 创伤骨科住院总值班通知
+      4. 急诊绿色通道启动判定（老年髋部骨折 ≥ 75岁）
+    data_used: [de-patient]
+    decision: "是否启动绿色通道？→ 是(≥75岁+髋部骨折) | 否(常规流程)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.checklist
+      tool: orthopedic.triage
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-pr-2
+    name: 住院总值班接诊与初步评定
+    actor: 住院总值班医生
+    description: |
+      创伤骨科住院总值班医生到达急诊完成接诊：
+      1. 创伤机制问询（摔倒/车祸/坠落）
+      2. 骨折部位初步判断（髋部/骨盆/股骨）
+      3. 11项 HAIP Checklist 启动
+      4. 急诊影像申请（X线骨盆正位+患侧髋关节侧位）
+    data_used: [de-patient, de-exam-results]
+    decision: "骨折部位 → 股骨颈 | 股骨转子间 | 转子下 | 其他(转诊)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.checklist
+      tool: orthopedic.triage
+      decision_coverage:
+        total: 4
+        covered: 4
+
+  - id: bp-pr-3
+    name: 电子病历建档与主数据录入
+    actor: Master Data Agent + 住院总值班医生
+    description: |
+      Master Data Agent 从 HIS/EMR 系统拉取患者历史数据并建档：
+      1. 基本信息（姓名/性别/年龄/身份证号/医保类型）
+      2. 既往史（慢病史/手术史/过敏史/用药史）
+      3. 门诊号/住院号生成
+      4. 创伤骨科病房床位分配
+    data_used: [de-patient, de-clinical-record]
+    decision: "HIS数据是否完整？→ 完整 | 缺失(手动补录)"
+    implementation:
+      module: agents.domains.haip.medical_record.core.data_loader
+      tool: medical-record.get_patient
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-pr-4
+    name: 一诉五史结构化录入
+    actor: 住院总值班医生
+    description: |
+      按骨科专科模板完成一诉五史结构化录入：
+      1. 主诉（摔倒时间/机制/部位/疼痛程度）
+      2. 现病史（受伤经过/院前处理/既往诊疗经过）
+      3. 既往史（高血压/冠心病/糖尿病/脑血管/慢阻肺/肝病/肾病）
+      4. 个人史（吸烟/饮酒/运动/居住情况）
+      5. 家族史（骨质疏松/脆性骨折家族史）
+      6. 用药史（抗凝药/降压药/降糖药/抗骨质疏松药）
+    data_used: [de-patient, de-clinical-record]
+    decision: null
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.patient_data
+      tool: orthopedic.assess
+
+  - id: bp-pr-5
+    name: 检验检查数据预加载
+    actor: Master Data Agent
+    description: |
+      Master Data Agent 从 LIS/PACS 批量预加载患者历史数据：
+      1. 近30天检验结果（血常规/凝血/生化/心肌标志物）
+      2. 近1年影像报告（X线/CT/MRI/超声）
+      3. 用药记录（住院/门诊处方）
+      4. 历史住院病历摘要
+      5. 数据校验完成标志返回给创伤骨科 Agent
+    data_used: [de-lab-results, de-exam-results, de-medications]
+    decision: null
+    implementation:
+      module: agents.domains.haip.medical_record.core.data_loader
+      tool: medical-record.get_full_patient

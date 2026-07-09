@@ -1,0 +1,46 @@
+procedures:
+  - name: "神经阻滞"
+    indications: ["神经根性疼痛", "带状疱疹后神经痛", "三叉神经痛"]
+    contraindications_absolute: ["穿刺部位感染", "严重凝血功能障碍 (INR>1.5 或 PLT<50)", "患者拒绝"]
+    contraindications_relative: ["抗凝药物未停药", "妊娠"]
+    imaging_required: ["超声引导", "C臂/CT引导"]
+    success_rate_pct: 75
+  - name: "脉冲射频 (PRF)"
+    indications: ["神经根性疼痛(药物无效)", "带状疱疹后神经痛(亚急性)", "膝关节炎疼痛"]
+    contraindications_absolute: ["穿刺部位感染", "严重凝血功能障碍", "体内植入电子设备(与操作部位<15cm)"]
+    contraindications_relative: ["妊娠"]
+    imaging_required: ["C臂/CT引导"]
+    success_rate_pct: 70
+  - name: "射频热凝 (RFA)"
+    indications: ["小关节源性腰痛", "骶髂关节疼痛", "三叉神经痛"]
+    contraindications_absolute: ["穿刺部位感染", "严重凝血功能障碍", "体内植入电子设备", "运动神经损伤风险"]
+    contraindications_relative: ["感觉迟钝已存在"]
+    imaging_required: ["C臂/CT引导"]
+    success_rate_pct: 65
+  - name: "脊髓电刺激 (SCS)"
+    indications: ["腰椎术后失败综合征(FBSS)", "复杂区域疼痛综合征(CRPS)", "幻肢痛"]
+    contraindications_absolute: ["未控制的精神疾病", "活动性感染", "严重凝血功能障碍"]
+    contraindications_relative: ["阿片类药物滥用"]
+    imaging_required: ["C臂引导", "MRI(术前评估)"]
+    requires_trial_period: true
+    trial_duration_days: 7
+    success_rate_pct: 60
+  - name: "鞘内药物输注系统 (IDDS)"
+    indications: ["顽固性癌痛(口服无效)", "非癌性顽固疼痛"]
+    contraindications_absolute: ["活动性感染", "严重凝血功能障碍", "颅内高压"]
+    contraindications_relative: ["依从性差"]
+    imaging_required: ["C臂引导"]
+    requires_trial_period: true
+    success_rate_pct: 80
+  - name: "椎体成形术"
+    indications: ["骨质疏松性椎体压缩骨折(>2周保守无效)", "椎体转移瘤"]
+    contraindications_absolute: ["无症状骨折", "椎体后壁不完整", "严重凝血功能障碍"]
+    contraindications_relative: ["椎体高度丢失>70%"]
+    imaging_required: ["C臂/CT引导", "术前MRI"]
+    success_rate_pct: 85
+  - name: "椎间孔镜/脊柱内镜"
+    indications: ["腰椎间盘突出症(保守6周无效)", "腰椎管狭窄症(侧隐窝型)"]
+    contraindications_absolute: ["马尾综合征", "脊柱不稳定", "穿刺部位感染"]
+    contraindications_relative: ["广泛椎间盘钙化"]
+    imaging_required: ["术前MRI", "术中C臂/CT引导"]
+    success_rate_pct: 85

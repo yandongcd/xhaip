@@ -1,0 +1,82 @@
+# ============================================================
+# Rule Asset: 骨质疏松管理规则
+# TOGAF Class: Constraint (Extension ABB)
+# Trust Level: T1 (AAOS 2022 + NOF指南)
+# ============================================================
+name: osteoporosis-management-rules
+version: "1.0"
+description: 抗骨质疏松药物清单 + Ca/VitD 方案 + BMD 监测 + FRAX 评分规则
+guideline_refs: [aaos-2022, nhc-2022]
+
+medications:
+  - category: 双膦酸盐类
+    drugs:
+      - name: 阿仑膦酸钠
+        dose: "70mg qw 口服"
+        route: 口服
+        note: 清晨空腹大杯水送服,服后保持直立30分钟
+      - name: 唑来膦酸
+        dose: "5mg iv qy"
+        route: 静脉
+        note: 静脉输注≥15min,监测肾功能
+    indication: 骨质疏松一线治疗
+    contraindication: eGFR<35 / 食管狭窄 / 不能保持直立
+
+  - category: 选择性雌激素受体调节剂
+    drugs:
+      - name: 雷洛昔芬
+        dose: "60mg qd 口服"
+        route: 口服
+        note: 仅适用于绝经后女性
+    indication: 绝经后骨质疏松,乳腺癌风险降低
+    contraindication: DVT/PE病史
+
+  - category: RANKL抑制剂
+    drugs:
+      - name: 地舒单抗
+        dose: "60mg sc q6m"
+        route: 皮下注射
+        note: 每6个月一次,需补充钙+VitD
+    indication: 骨质疏松,肾功能不全可选用
+    contraindication: 低钙血症未纠正
+
+  - category: 促进骨形成类
+    drugs:
+      - name: 特立帕肽
+        dose: "20μg sc qd"
+        route: 皮下注射
+        note: 疗程≤24个月
+    indication: 严重骨质疏松/椎体骨折/双膦酸盐无效
+    contraindication: Paget骨病/骨恶性肿瘤/高钙血症/骨骼放射史
+
+calcium_vitd_protocol:
+  calcium: {dose: "1000-1200 mg/d", note: "分次服用,单次≤500mg"}
+  vitamin_d: {dose: "800-1200 IU/d", note: "目标血清25(OH)D≥30ng/mL"}
+
+bmd_monitoring:
+  - time: baseline
+    label: 治疗前基线
+    tests: ["骨密度DXA(髋部+腰椎)", "血清25(OH)D", "血钙, 血磷", "肾功能"]
+  - time: "1yr"
+    label: 治疗后1年
+    tests: ["骨密度DXA复查", "血清25(OH)D"]
+  - time: "q1-2yr"
+    label: 每1-2年
+    tests: ["骨密度DXA", "椎体形态学评估"]
+  - time: drug_switch
+    label: 药物更换时
+    tests: ["骨转换标志物(P1NP/CTX)", "骨密度DXA"]
+
+frax_scoring:
+  high_threshold: 5
+  medium_threshold: 3
+  labels: {high: 高危, medium: 中危, low: 低危}
+  age_bonus: {female: {threshold: 65, points: 2}, male: {threshold: 70, points: 2}}
+  risk_factors:
+    - 既往脆性骨折
+    - 父母髋部骨折
+    - 吸烟
+    - 糖皮质激素
+    - 类风湿关节炎
+    - 继发性骨质疏松
+    - 饮酒>3单位/天

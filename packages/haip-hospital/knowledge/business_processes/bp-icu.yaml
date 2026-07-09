@@ -1,0 +1,103 @@
+# 重症医学科 ??????
+# TOGAF Business Architecture ? Auto-generated from template
+# Template: 急诊重症
+# Generated: 2026-07-10
+
+department: 重症医学科
+template_type: 急诊重症
+guidelines: [SCCM 2021 重症监护管理指南]
+version: "1.0.0"
+
+value_streams:
+  - id: vs-triage
+    name: 急诊分诊
+    stage: 1
+    trigger: 患者到达
+    outcome: 分诊级别
+  - id: vs-rescue
+    name: 急救处置
+    stage: 2
+    trigger: 分诊完成
+    outcome: 生命体征稳定
+  - id: vs-icu
+    name: 重症监护
+    stage: 3
+    trigger: 急救完成
+    outcome: 器官功能支持
+  - id: vs-transfer
+    name: 转归处置
+    stage: 4
+    trigger: 病情稳定
+    outcome: 转科/出院
+  - id: vs-followup
+    name: 随访跟踪
+    stage: 5
+    trigger: 出院
+    outcome: 康复评估
+
+business_processes:
+  - id: bp-triage
+    name: 急诊分诊
+    order: 1
+    owner: 急诊医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-rescue
+    name: 紧急救治
+    order: 2
+    owner: 急诊医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-icu
+    name: 重症监护
+    order: 3
+    owner: ICU医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-transfer
+    name: 转归评估
+    order: 4
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-followup
+    name: 随访跟踪
+    order: 5
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????

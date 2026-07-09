@@ -1,0 +1,115 @@
+name: interventional-therapy
+cn_name: 介入治疗科智能体
+version: "1.0.0"
+type: business
+department: 介入治疗科
+port: 8802
+aliases: [介入治疗科, interventional-therapy]
+
+prompt:
+  system: |
+    你是南方医院介入治疗科AI助手，负责介入治疗科常见疾病的诊疗评估和管理。
+    请基于相关临床指南给出专业建议。
+  temperature: 0.3
+
+tools:
+  - name: bp_reg
+    description: 患者登记分诊
+    handler: interventional_therapy.bp_reg
+    input: {patient_id: str}
+
+  - name: bp_diag
+    description: 诊断评估
+    handler: interventional_therapy.bp_diag
+    input: {patient_id: str}
+
+  - name: bp_preop
+    description: 术前准备
+    handler: interventional_therapy.bp_preop
+    input: {patient_id: str}
+
+  - name: bp_risk
+    description: 风险评估
+    handler: interventional_therapy.bp_risk
+    input: {patient_id: str}
+
+  - name: bp_mdt
+    description: MDT决策
+    handler: interventional_therapy.bp_mdt
+    input: {patient_id: str}
+
+  - name: bp_surgery
+    description: 手术执行
+    handler: interventional_therapy.bp_surgery
+    input: {patient_id: str}
+
+  - name: bp_nursing
+    description: 围术期护理
+    handler: interventional_therapy.bp_nursing
+    input: {patient_id: str}
+
+  - name: bp_followup
+    description: 术后随访
+    handler: interventional_therapy.bp_followup
+    input: {patient_id: str}
+
+guard:
+  triggers: ['手术决策']
+
+ui:
+  template: chat-with-role-switcher
+  roles:
+    - {id: attending, label: 主治医师, default: true}
+    - {id: resident, label: 住院医师}
+    - {id: head_nurse, label: 护士长}
+    - {id: head, label: 科主任}
+
+stages:
+  - order: 1
+    id: bp-reg
+    label: 患者登记分诊
+    desc: "患者登记分诊流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 2
+    id: bp-diag
+    label: 诊断评估
+    desc: "诊断评估流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 3
+    id: bp-preop
+    label: 术前准备
+    desc: "术前准备流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 4
+    id: bp-risk
+    label: 风险评估
+    desc: "风险评估流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 5
+    id: bp-mdt
+    label: MDT决策
+    desc: "MDT决策流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 6
+    id: bp-surgery
+    label: 手术执行
+    desc: "手术执行流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 7
+    id: bp-nursing
+    label: 围术期护理
+    desc: "围术期护理流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 8
+    id: bp-followup
+    label: 术后随访
+    desc: "术后随访流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']

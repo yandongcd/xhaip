@@ -1,0 +1,111 @@
+"""Citation Engine — 引文提取、信任等级推断、指南验证."""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from pathlib import Path
+
+# ── Trust Level 关键词 ──
+
+T1_KEYWORDS = [
+    "国际", "WHO", "NICE", "AAOS", "ACCP", "AHA", "ACC", "ESC",
+    "WS/T", "国家标准", "全国临床检验操作规程", "grade 1", "level 1",
+    "KDIGO", "ADA", "ESPEN", "CSPEN", "ASPN", "CSCO",
+]
+
+T2_KEYWORDS = ["共识", "专家", "院内", "南方医院", "广东省", "科室", "中华医学会"]
+
+EXTRACT_PATTERNS = [
+    re.compile(r"\[ref:\s*(.+?)\]"),
+    re.compile(r"参考[:：]\s*(.+?)(?:[。\n]|$)"),
+    re.compile(r"依据(.+?指南)[，。\n]"),
+    re.compile(r"根据(.+?标准)[，。\n]"),
+]
+
+
+@dataclass
+class Citation:
+    claim: str = ""
+    source: str = ""
+    trust_level: str = "T2"
+    verified: bool = False
+    guideline_file: str = ""
+    warning: str = ""
+
+
+class CitationEngine:
+    """引文提取与验证引擎。"""
+
+    def __init__(self, guidelines_dir: str | Path = ""):
+        self._index: dict[str, Path] = {}
+        if guidelines_dir:
+            self.index_guidelines(Path(guidelines_dir))
+
+    def index_guidelines(self, directory: Path) -> None:
+        for path in directory.rglob("*"):
+            if path.suffix in (".yaml", ".yml", ".md", ".txt"):
+                stem = path.stem.lower()
+                self._index[stem] = path
+                parts = stem.replace("-", " ").replace("_", " ").split()
+                for p in parts:
+                    if len(p) >= 3:
+                        self._index.setdefault(p, path)
+
+    def extract(self, text: str) -> list[Citation]:
+        citations: list[Citation] = []
+        seen: set[str] = set()
+        for pattern in EXTRACT_PATTERNS:
+            for m in pattern.finditer(text):
+                source = m.group(1).strip()
+                if source and source not in seen:
+                    seen.add(source)
+                    citations.append(Citation(
+                        source=source,
+                        trust_level=self._guess_trust_level(source),
+                    ))
+        return citations
+
+    def verify(self, citations: list[Citation]) -> list[Citation]:
+        for c in citations:
+            if not self._index:
+                c.warning = "no guidelines indexed"
+                continue
+            key = c.source.lower().replace(" ", "_").replace("-", "_")
+            if key in self._index:
+                c.verified = True
+                c.guideline_file = str(self._index[key])
+            else:
+                for stem, path in self._index.items():
+                    if stem in key or key in stem:
+                        c.verified = True
+                        c.guideline_file = str(path)
+                        break
+                if not c.verified:
+                    c.warning = "未在指南资产库中找到对应文件"
+        return citations
+
+    def _guess_trust_level(self, text: str) -> str:
+        for kw in T1_KEYWORDS:
+            if kw.lower() in text.lower():
+                return "T1"
+        for kw in T2_KEYWORDS:
+            if kw.lower() in text.lower():
+                return "T2"
+        return "T2"
+
+    @staticmethod
+    def has_unverified(citations: list[Citation]) -> bool:
+        return any(not c.verified for c in citations)
+
+    @staticmethod
+    def all_t1(citations: list[Citation]) -> bool:
+        return bool(citations) and all(c.trust_level == "T1" for c in citations)
+
+    @staticmethod
+    def format_summary(citations: list[Citation]) -> str:
+        parts = []
+        for c in citations:
+            flag = "verified" if c.verified else "unverified"
+            parts.append(f"[{flag}][{c.trust_level}] {c.source}")
+        return "\n".join(parts)

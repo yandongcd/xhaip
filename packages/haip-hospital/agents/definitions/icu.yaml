@@ -1,0 +1,82 @@
+name: icu
+cn_name: 重症医学科智能体
+version: "1.0.0"
+type: business
+department: 重症医学科
+port: 8809
+aliases: [重症医学科, icu]
+
+prompt:
+  system: |
+    你是南方医院重症医学科AI助手，负责重症医学科常见疾病的诊疗评估和管理。
+    请基于相关临床指南给出专业建议。
+  temperature: 0.3
+
+tools:
+  - name: bp_triage
+    description: 急诊分诊
+    handler: icu.bp_triage
+    input: {patient_id: str}
+
+  - name: bp_rescue
+    description: 紧急救治
+    handler: icu.bp_rescue
+    input: {patient_id: str}
+
+  - name: bp_icu
+    description: 重症监护
+    handler: icu.bp_icu
+    input: {patient_id: str}
+
+  - name: bp_transfer
+    description: 转归评估
+    handler: icu.bp_transfer
+    input: {patient_id: str}
+
+  - name: bp_followup
+    description: 随访跟踪
+    handler: icu.bp_followup
+    input: {patient_id: str}
+
+guard:
+  triggers: ['手术决策']
+
+ui:
+  template: chat-with-role-switcher
+  roles:
+    - {id: attending, label: 主治医师, default: true}
+    - {id: resident, label: 住院医师}
+    - {id: head_nurse, label: 护士长}
+    - {id: head, label: 科主任}
+
+stages:
+  - order: 1
+    id: bp-triage
+    label: 急诊分诊
+    desc: "急诊分诊流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 2
+    id: bp-rescue
+    label: 紧急救治
+    desc: "紧急救治流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 3
+    id: bp-icu
+    label: 重症监护
+    desc: "重症监护流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 4
+    id: bp-transfer
+    label: 转归评估
+    desc: "转归评估流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']
+  - order: 5
+    id: bp-followup
+    label: 随访跟踪
+    desc: "随访跟踪流程"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: ['attending', 'resident', 'head_nurse']

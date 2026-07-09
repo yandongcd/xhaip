@@ -1,0 +1,123 @@
+# ============================================================
+# Business Process: 并发症风险预测
+# TOGAF Class: BusinessProcess + ProcessStep (Core ABB)
+# Trust Level: T1
+# ============================================================
+name: bp-ortho-complication-prediction
+version: "1.0"
+description: 并发症风险预测流程 — 4维28项并发症风险评估与预防方案生成
+owner: 主治医生 + 护士长
+value_stages:
+  - 病情评估与风险分层
+  - 治疗执行与监护
+guideline_refs:
+  - nhc-2022
+  - dvt-consensus-2024
+  - universal-mi-4th
+
+steps:
+  - id: bp-cp-1
+    name: DVT 风险评估
+    actor: 主治医生 + 护士长
+    description: |
+      深静脉血栓风险评估：
+      1. Caprini 评分模型计算
+      2. D-二聚体定量检测结果判定
+      3. 下肢静脉超声（如已做）报告分析
+      4. 既往 DVT/PE 病史查询
+      5. 风险分级：低危/中危/高危
+    data_used: [de-lab-results, de-exam-results, de-patient]
+    decision: "DVT 风险等级 → 低危(物理预防) | 中危(低分子肝素) | 高危(抗凝+超声监测)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.complication_predictor
+      tool: orthopedic.assess_complications
+      rule_set: complication_rules.yaml
+      rule_ids: ["DVT-RISK-001", "DVT-CAPRINI"]
+      decision_coverage:
+        total: 3
+        covered: 3
+
+  - id: bp-cp-2
+    name: 感染风险评估
+    actor: 主治医生
+    description: |
+      围术期感染风险评估：
+      1. 炎症标志物解读（CRP/PCT/WBC/ESR）
+      2. 术前感染灶排查（肺/泌尿道/皮肤）
+      3. 切口感染风险因子评估（糖尿病/肥胖/营养不良/免疫抑制）
+      4. 抗生素预防方案推荐（头孢唑林/万古霉素）
+    data_used: [de-lab-results, de-patient]
+    decision: "感染风险等级 → 低危 | 中危(术前预防性抗生素) | 高危(已有感染→延迟手术)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.complication_predictor
+      tool: orthopedic.assess_complications
+      rule_set: complication_rules.yaml
+      rule_ids: ["INFECTION-001", "INFECTION-SSI"]
+      decision_coverage:
+        total: 3
+        covered: 3
+
+  - id: bp-cp-3
+    name: 心脏并发症风险评估
+    actor: 主治医生 + 心内科会诊医生
+    description: |
+      围术期心脏并发症风险评估：
+      1. 围术期心肌梗死（PMI）风险评估（cTnI动态监测）
+      2. 围术期心力衰竭风险评估（BNP/NT-proBNP + NYHA分级）
+      3. 围术期心律失常风险评估（电解质+ECG+QTc间期）
+      4. 术前心脏优化方案建议
+      5. A2A → cardio-risk Agent 二次确认
+    data_used: [de-lab-results, de-exam-results, de-risk-assessment]
+    decision: "心脏并发症风险 → 低危 | 中危(术前优化达标后可手术) | 高危(延迟手术)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.complication_predictor
+      tool: orthopedic.assess_complications
+      rule_set: complication_rules.yaml
+      rule_ids: ["CARDIAC-001", "CARDIAC-PMI", "CARDIAC-HF", "CARDIAC-ARR"]
+      a2a_calls:
+        - agent: cardio-risk
+          tool: assess_mi
+      decision_coverage:
+        total: 3
+        covered: 3
+
+  - id: bp-cp-4
+    name: 跌倒与谵妄风险评估
+    actor: 护士长
+    description: |
+      老年患者跌倒与谵妄风险评估：
+      1. Braden 压疮评分
+      2. Morse 跌倒评分（步态/平衡/精神状态/跌倒史）
+      3. 老年术后谵妄风险预测（CAM-ICU/Nu-DESC）
+      4. 电解质异常排查（低钠/高钙 → 谵妄风险）
+      5. 镇静镇痛药物审查（苯二氮卓类 → 谵妄关联）
+    data_used: [de-lab-results, de-patient]
+    decision: "跌倒/谵妄风险 → 低危 | 中危(环境+行为干预) | 高危(多学科干预+镇静方案调优)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.complication_predictor
+      tool: orthopedic.assess_complications
+      rule_set: complication_rules.yaml
+      rule_ids: ["DELIRIUM-001", "FALL-RISK"]
+      decision_coverage:
+        total: 3
+        covered: 3
+
+  - id: bp-cp-5
+    name: 综合并发症风险矩阵与预防方案
+    actor: 主治医生 + 护士长
+    description: |
+      汇总四维风险评估结果，生成围术期并发症预防方案：
+      1. 四维风险矩阵可视化（DVT/感染/心脏/跌倒谵妄）
+      2. 综合风险等级判定（低危/中危/高危/极高危）
+      3. 各维度预防措施优先级排序
+      4. MDT 会诊触发条件评估（任一维度高危 → 启动）
+      5. 术后并发症监测计划（监测指标+频次+预警阈值）
+    data_used: [de-risk-assessment, de-patient]
+    decision: "综合风险 → 低危 | 中危 | 高危(MDT) | 极高危(延迟手术+全面优化)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.complication_predictor
+      tool: orthopedic.assess_complications
+      rule_set: complication_rules.yaml
+      decision_coverage:
+        total: 4
+        covered: 4

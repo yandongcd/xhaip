@@ -1,0 +1,80 @@
+# ============================================================
+# Business Process: 处方审核与配伍禁忌检查
+# TOGAF Class: BusinessProcess + ProcessStep (Core ABB)
+# Trust Level: T1
+# ============================================================
+name: bp-pharm-prescription-verification
+version: "1.0"
+description: 处方审核与配伍禁忌检查流程 — 从接收处方到出具审核意见的完整审方路径
+owner: 审方药师
+value_stages:
+  - 有效治疗
+guideline_refs:
+  - china-compounding-2018
+  - china-en-pn-2023
+
+steps:
+  - id: bp-pv-1
+    name: 接收与核对处方
+    actor: 审方药师
+    description: |
+      从 HIS 系统接收医生提交的处方单：
+      1. 核对患者基本信息（姓名/住院号/年龄/体重）
+      2. 核对处方药品清单与诊断一致性
+      3. 确认处方完整（药物名称/规格/剂量/用法/疗程）
+    data_used: [de-rx, de-patient]
+    decision: "处方信息是否完整？→ 完整 | 不完整(退回补充)"
+    implementation:
+      module: agents.domains.haip.pharmacy.core.prescription_review
+      tool: pharmacy.review
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-pv-2
+    name: 配伍禁忌检查
+    actor: 审方药师
+    description: |
+      逐一检查：
+      1. 药物间配伍禁忌（不可同瓶/不可同路）
+      2. 溶媒选择合理性
+      3. 药物-患者禁忌（过敏史/肾功能/肝功能）
+      4. 剂量合理性（按体重/体表面积计算）
+    data_used: [de-drug, de-rx, de-patient]
+    decision: "存在配伍禁忌？→ 退回处方(附禁忌说明) | 通过"
+    implementation:
+      module: agents.domains.haip.pharmacy.core.prescription_review
+      tool: pharmacy.review
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-pv-3
+    name: 适应证与剂量审核
+    actor: 审方药师
+    description: |
+      1. 确认药物适应证与患者诊断一致
+      2. 核查剂量是否在指南推荐范围内
+      3. 核查给药途径和频次
+      4. 核查疗程合理性
+    data_used: [de-drug, de-rx, de-patient]
+    decision: "适应证/剂量/途径是否合理？→ 合理 | 不合理(退回并建议修改)"
+    implementation:
+      module: agents.domains.haip.pharmacy.core.prescription_review
+      tool: pharmacy.review
+      decision_coverage:
+        total: 2
+        covered: 2
+
+  - id: bp-pv-4
+    name: 出具审核意见
+    actor: 审方药师
+    description: |
+      综合前三步审核结果：
+      1. 全部通过 → 签署审核意见，回传 HIS
+      2. 存在退回项 → 附修改建议，回传 HIS 通知医生
+    data_used: [de-rx]
+    decision: null
+    implementation:
+      module: agents.domains.haip.pharmacy.core.prescription_review
+      tool: pharmacy.review

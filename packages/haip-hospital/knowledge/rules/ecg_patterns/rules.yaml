@@ -1,0 +1,92 @@
+rule_set:
+  id: ecg_patterns
+  domain: cardiology
+  decision_points:
+    - ecg_risk_classification
+  sources:
+    - universal-mi-definition-2018
+  version: "1.0"
+  trust_level: T2
+  owner: cardiology_consultant
+
+rules:
+  - id: ecg-stemi
+    decision_point: ecg_risk_classification
+    condition_eval: "$ecg_has_pattern(context.ecg_text, ['ST段抬高'])"
+    conclusion: "STEMI — 急诊PCI或溶栓"
+    certainty: strong
+    rule_type: deterministic
+    evidence:
+      - source_id: universal-mi-definition-2018
+        chapter: "§3"
+        confidence: 0.95
+
+  - id: ecg-nstemi
+    decision_point: ecg_risk_classification
+    condition_eval: "$ecg_has_pattern(context.ecg_text, ['ST段压低'])"
+    conclusion: "NSTEMI/心肌缺血 — 心内科会诊"
+    certainty: strong
+    rule_type: deterministic
+
+  - id: ecg-t-wave-peaked
+    decision_point: ecg_risk_classification
+    condition_eval: "$ecg_has_pattern(context.ecg_text, ['T波高尖'])"
+    conclusion: "超急性期MI可能 — 急诊心内科会诊"
+    certainty: strong
+    rule_type: deterministic
+
+  - id: ecg-q-wave
+    decision_point: ecg_risk_classification
+    condition_eval: "$ecg_has_pattern(context.ecg_text, ['异常Q波','病理性Q波'])"
+    conclusion: "陈旧性MI — 评估心功能"
+    certainty: strong
+    rule_type: deterministic
+
+  - id: ecg-t-wave-inversion
+    decision_point: ecg_risk_classification
+    condition_eval: "$ecg_has_pattern(context.ecg_text, ['T波倒置'])"
+    conclusion: "心肌缺血可能 — 结合酶学评估"
+    certainty: moderate
+    rule_type: deterministic
+
+  - id: ecg-lbbb
+    decision_point: ecg_risk_classification
+    condition_eval: "$ecg_has_pattern(context.ecg_text, ['完全性左束支传导阻滞'])"
+    conclusion: "新发CLBBB = MI until proven otherwise — 心内科会诊"
+    certainty: strong
+    rule_type: deterministic
+
+  - id: ecg-ventricular-tachy
+    decision_point: ecg_risk_classification
+    condition_eval: "$ecg_has_pattern(context.ecg_text, ['室速','室性心动过速'])"
+    conclusion: "室性心动过速 — 急诊心律失常处理"
+    certainty: strong
+    rule_type: deterministic
+
+  - id: ecg-ventricular-fib
+    decision_point: ecg_risk_classification
+    condition_eval: "$ecg_has_pattern(context.ecg_text, ['室颤','心室颤动'])"
+    conclusion: "心室颤动 — 心肺复苏+除颤"
+    certainty: strong
+    rule_type: deterministic
+
+  - id: ecg-av-block-3rd
+    decision_point: ecg_risk_classification
+    condition_eval: "$ecg_has_pattern(context.ecg_text, ['三度房室传导阻滞','III度房室传导阻滞'])"
+    conclusion: "三度AVB — 临时起搏器"
+    certainty: strong
+    rule_type: deterministic
+
+  - id: ecg-atrial-fib
+    decision_point: ecg_risk_classification
+    condition_eval: "$ecg_has_pattern(context.ecg_text, ['心房颤动','房颤'])"
+    conclusion: "心房颤动 — 卒中风险评估+抗凝管理"
+    certainty: strong
+    rule_type: deterministic
+
+  - id: ecg-qt-prolonged
+    decision_point: ecg_risk_classification
+    condition_eval: "$ecg_has_pattern(context.ecg_text, ['QTc间期延长'])"
+    conclusion: "QTc间期延长 — TdP风险，纠正电解质+避免QT延长药物"
+    certainty: strong
+    rule_type: deterministic

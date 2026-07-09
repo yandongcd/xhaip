@@ -1,0 +1,72 @@
+# ============================================================
+# Guideline Asset: 老年髋部骨折围手术期衰弱护理管理专家共识
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T2
+# ============================================================
+id: "guideline-frailty-nursing"
+name: "老年髋部骨折围手术期衰弱护理管理专家共识"
+abbr: "衰弱护理共识"
+version: "2023"
+publisher: "中华护理学会骨科护理专业委员会"
+doi: "—"
+language: zh-CN
+trust_level: T2
+admin_priority: 7
+
+description: >
+  中国老年髋部骨折围术期护理的专项共识。覆盖衰弱评估、体位管理、
+  压疮预防、营养支持、管道护理、心理护理等4阶段21项护理方案。
+
+key_sections:
+  - id: "§3"
+    title: "术前护理"
+    pages: "4-8"
+    stage_ids: [S10]
+    rule_ids:
+      - nursing-001
+      - nursing-002
+      - nursing-003
+      - nursing-004
+
+  - id: "§4"
+    title: "术后当日护理"
+    pages: "9-14"
+    stage_ids: [S10]
+    rule_ids:
+      - nursing-005
+      - nursing-006
+      - nursing-007
+      - nursing-008
+      - nursing-009
+
+  - id: "§5"
+    title: "术后早期护理"
+    pages: "15-20"
+    stage_ids: [S10]
+    rule_ids:
+      - nursing-010
+      - nursing-011
+      - nursing-012
+      - nursing-013
+      - nursing-014
+
+  - id: "§6"
+    title: "恢复期护理与出院指导"
+    pages: "21-26"
+    stage_ids: [S10, S11]
+    rule_ids:
+      - nursing-015
+      - nursing-016
+      - nursing-017
+      - nursing-018
+      - nursing-019
+      - nursing-020
+      - nursing-021
+
+rule_sets_covered:
+  - nursing
+
+derived_rule_count: 21
+last_updated: 2026-07-01
+supersedes: ""
+superseded_by: ""

@@ -1,0 +1,114 @@
+# ============================================================
+# Business Process: 手术方案推荐
+# TOGAF Class: BusinessProcess + ProcessStep (Core ABB)
+# Trust Level: T1
+# ============================================================
+name: bp-ortho-surgery-planning
+version: "1.0"
+description: 手术方案推荐流程 — 基于骨折分型与患者特征推荐手术方式、入路和内固定方案
+owner: 主治医生 + 主刀医生
+value_stages:
+  - 诊疗决策与资源协调
+  - 有效治疗
+guideline_refs:
+  - nhc-2022
+  - aaos-2022
+  - csco-femoral-neck-2018
+  - csco-intertroch-2020
+
+steps:
+  - id: bp-sp-1
+    name: 骨折分型最终确认
+    actor: 主治医生
+    description: |
+      确认骨折分型结果，为手术方案决策提供依据：
+      1. 股骨颈骨折 → Garden I-IV型确认
+      2. 转子间骨折 → Evans I-V型 / AO 31-A1/A2/A3 确认
+      3. 转子下骨折 → Seinsheimer分型确认
+      4. 骨折稳定性综合判断（内侧皮质/Pauwels角/后侧壁）
+    data_used: [de-exam-results]
+    decision: "骨折类型与稳定性 → 股骨颈稳定 | 股骨颈不稳定 | 转子间稳定 | 转子间不稳定 | 转子下"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.fracture_classifier
+      tool: orthopedic.classify_fracture
+      decision_coverage:
+        total: 5
+        covered: 5
+
+  - id: bp-sp-2
+    name: 手术方式选择
+    actor: 主治医生
+    description: |
+      根据骨折类型、年龄、功能需求和合并症选择手术方式：
+      1. Garden I-II 无移位 → 空心加压螺钉内固定（CCS）
+      2. Garden III-IV 移位型 → 半髋关节置换（HA）或全髋关节置换（THA）
+      3. Evans 稳定型 → PFNA 髓内钉
+      4. Evans 不稳定型 → InterTAN 或 PFNA加长柄 + 内侧支撑
+      5. 转子下骨折 → 重建钉
+      THA vs HA 决策：年龄 < 75岁 + 功能需求高 + 无严重合并症 → THA
+    data_used: [de-patient, de-exam-results, de-risk-assessment]
+    decision: "手术方式 → CCS | HA | THA | PFNA | InterTAN | 重建钉 | 保守治疗"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.surgery_planner
+      tool: orthopedic.recommend_surgery
+      rule_set: surgery_type_rules.yaml
+      decision_coverage:
+        total: 7
+        covered: 7
+
+  - id: bp-sp-3
+    name: 手术入路选择
+    actor: 主刀医生
+    description: |
+      根据手术方式选择最佳手术入路：
+      1. HA/THA → 后外侧入路（Moore）或直接前入路（DAA）
+      2. PFNA/InterTAN → 大转子顶点入路
+      3. DAA 适用条件：BMI < 30 + 无髋关节手术史 + 非肥胖
+      4. 后外侧入路：标准入路，视野暴露充分，适应症广
+    data_used: [de-exam-results, de-patient]
+    decision: "手术入路 → 后外侧入路(Moore) | 直接前入路(DAA) | 大转子入路"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.surgery_planner
+      tool: orthopedic.recommend_surgery
+      decision_coverage:
+        total: 3
+        covered: 3
+
+  - id: bp-sp-4
+    name: 内固定/假体规格选择
+    actor: 主刀医生
+    description: |
+      根据患者解剖参数选择适当规格的内固定物或假体：
+      1. X线/CT测量：股骨头直径、股骨颈干角、髓腔直径、股骨干弧度
+      2. PFNA 选择：主钉直径/长度、螺旋刀片规格、远端锁定螺钉数量
+      3. HA 选择：股骨头直径（双极/单极）、颈长、柄型（骨水泥/非骨水泥）
+      4. THA 选择：髋臼杯外径、内衬材质（陶瓷/高交联聚乙烯）、股骨柄类型
+    data_used: [de-exam-results, de-patient]
+    decision: null
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.surgery_planner
+      tool: orthopedic.recommend_surgery
+      rule_set: surgery_type_rules.yaml
+
+  - id: bp-sp-5
+    name: 手术方案确认与知情同意
+    actor: 主治医生 + 麻醉科医生
+    description: |
+      最终手术方案确认：
+      1. 手术方式+入路+内固定方案三合一确认
+      2. 麻醉科复核（全麻/腰麻/神经阻滞方案）
+      3. 术前备血/自体血回输方案
+      4. 手术时间预估
+      5. 患者及家属知情同意签署
+      6. 手术排程系统录入
+    data_used: [de-risk-assessment, de-patient, de-surgery-record]
+    decision: "麻醉科风险复核 → 通过 | 不通过(需调整麻醉方案)"
+    implementation:
+      module: agents.domains.haip.orthopedic_surgery.core.surgery_planner
+      tool: orthopedic.recommend_surgery
+      a2a_calls:
+        - agent: anesthesia-risk
+          tool: assess_anticoagulation
+      decision_coverage:
+        total: 2
+        covered: 2

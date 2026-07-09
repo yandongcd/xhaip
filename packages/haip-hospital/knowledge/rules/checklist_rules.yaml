@@ -1,0 +1,117 @@
+# ============================================================
+# Rule Asset: 急诊分诊 Checklist 规则
+# TOGAF Class: Constraint (Extension ABB)
+# Trust Level: T1 (基于 HAIP 骨外科指南)
+# ============================================================
+name: hip-fracture-checklist-rules
+version: "1.0"
+description: 老年髋部骨折急诊分诊11项 Checklist + 严重度阈值 + 条件→指标映射
+owner: 主治医生
+guideline_refs:
+  - nhc-2022
+  - nanfang-hip-fracture-triage
+
+# ── 11项 Checklist ──
+checklist:
+  - id: cardiac
+    label: 心脏急症
+    question: 胸痛/胸闷/心悸? ECG异常? 肌钙蛋白升高?
+    triggers: ["胸痛", "胸闷", "心梗", "ACS", "急性冠脉", "STEMI", "NSTEMI", "cTnI", "肌钙蛋白", "ST段抬高", "ST段压低"]
+    emergency_if: ["cTnI>0.04", "STEMI", "NSTEMI", "急性心梗", "ST段抬高"]
+
+  - id: htn
+    label: 高血压急症
+    question: 血压>180/110? 伴靶器官损伤症状?
+    triggers: ["高血压", "血压升高", "SBP>180", "DBP>110", "高血压危象"]
+    emergency_if: []
+
+  - id: dvt
+    label: 深静脉血栓
+    question: 下肢肿胀? D-二聚体升高? 既往DVT史?
+    triggers: ["DVT", "深静脉血栓", "下肢肿胀", "D-二聚体", "D-Dimer"]
+    emergency_if: []
+
+  - id: infection
+    label: 活动性感染
+    question: 发热? WBC异常? CRP升高?
+    triggers: ["感染", "发热", "肺炎", "肺部感染", "WBC", "CRP", "PCT"]
+    emergency_if: ["脓毒症", "败血症", "感染性休克"]
+
+  - id: fracture
+    label: 骨折类型评估
+    question: 髋部骨折? 是否移位? 有无神经血管损伤?
+    triggers: ["骨折", "髋部", "股骨", "转子间", "转子下", "股骨颈", "髋臼"]
+    emergency_if: ["开放性骨折", "合并血管损伤"]
+
+  - id: hip_elderly
+    label: 老年髋部骨折绿色通道
+    question: 年龄≥75岁且髋部骨折?
+    triggers: ["髋部", "股骨颈", "转子间", "转子下"]
+    emergency_if: []
+
+  - id: glucose
+    label: 血糖异常
+    question: 血糖>13.9或<3.9? 有无DKA/HHS?
+    triggers: ["血糖", "葡萄糖", "Glu", "糖尿病", "DKA", "酮症酸中毒"]
+    emergency_if: ["DKA", "酮症酸中毒", "HHS", "高渗性昏迷"]
+
+  - id: renal
+    label: 肾功能异常
+    question: eGFR<30? Cr显著升高?
+    triggers: ["肾", "eGFR", "Cr", "肌酐", "BUN", "尿毒症", "透析"]
+    emergency_if: ["急性肾损伤", "AKI", "尿毒症脑病"]
+
+  - id: coagulation
+    label: 凝血功能障碍
+    question: INR>1.5? 在用抗凝药?
+    triggers: ["抗凝", "INR", "华法林", "凝血", "PT", "APTT", "利伐沙班", "达比加群"]
+    emergency_if: []
+
+  - id: osteoporosis
+    label: 骨质疏松风险评估
+    question: 既往脆性骨折? 长期激素使用?
+    triggers: ["骨质疏松", "OP", "脆性骨折", "骨密度", "DXA", "激素"]
+    emergency_if: []
+
+  - id: rehab
+    label: 康复需求评估
+    question: 术前功能状态? 有无照护者?
+    triggers: ["卧床", "活动受限", "ADL", "照护", "康复"]
+    emergency_if: []
+
+# ── 检验严重度阈值 (thr1=急诊阈, thr2=高危阈) ──
+lab_severity_thresholds:
+  CK:    {thr1: 200,  thr2: 600,  unit: "U/L",    direction: "high"}
+  CKMB:  {thr1: 25,   thr2: 50,   unit: "U/L",    direction: "high"}
+  cTnI:  {thr1: 0.04, thr2: 0.1,  unit: "ng/mL",  direction: "high"}
+  cTnT:  {thr1: 0.1,  thr2: 0.5,  unit: "ng/mL",  direction: "high"}
+  CRP:   {thr1: 6,    thr2: 50,   unit: "mg/L",   direction: "high"}
+  WBC:   {thr1: 12,   thr2: 20,   unit: "×10⁹/L", direction: "high"}
+  Hb:    {thr1: 100,  thr2: 80,   unit: "g/L",    direction: "low"}
+  DDi:   {thr1: 0.5,  thr2: 2.0,  unit: "mg/L",   direction: "high"}
+  eGFR:  {thr1: 60,   thr2: 30,   unit: "mL/min", direction: "low"}
+  Cr:    {thr1: 104,  thr2: 133,  unit: "μmol/L", direction: "high"}
+  Glu:   {thr1: 6.1,  thr2: 13.9, unit: "mmol/L", direction: "high"}
+  Ca:    {thr1: 2.1,  thr2: 1.8,  unit: "mmol/L", direction: "low"}
+
+# ── 疾病→指标映射 ──
+condition_lab_map:
+  心脏因素: [cTnI, cTnT, CKMB, CK]
+  高血压:   []
+  DVT:      [DDi]
+  感染:     [WBC, CRP, PCT]
+  贫血:     [Hb]
+  血糖:     [Glu]
+  肾功:     [eGFR, Cr]
+  电解质:   [K, Na, Ca]
+  凝血:     []
+  骨质疏松: []
+
+# ── 推荐逻辑 ──
+recommendation_logic:
+  emergency_threshold: 2
+  urgent_threshold: 1
+  default: 普通门诊
+  emergency_label: 急诊会诊
+  urgent_label: 急诊
+  default_label: 普通门诊

@@ -1,0 +1,144 @@
+# ============================================================
+# Rule Asset: 围术期护理规则（4阶段21项）
+# TOGAF Class: Constraint (Extension ABB)
+# Trust Level: T2
+# ============================================================
+name: hip-fracture-nursing-rules
+version: "1.0"
+description: 老年髋部骨折围术期4阶段21项护理方案
+owner: head_nurse
+guideline_ref:
+  - "guideline-frailty-nursing"
+  - "guideline-dvt-2024"
+  - "guideline-nhc-2022"
+last_updated: 2026-07-01
+
+nursing_stages:
+  - id: preop
+    name: "术前护理"
+    order: 1
+    stage_ids: [S10]
+
+    items:
+      - id: nursing-001
+        description: "健康教育"
+        detail: "手术方式/麻醉方式/术后注意事项宣教"
+        guide_ref: "guideline-frailty-nursing"
+
+      - id: nursing-002
+        description: "皮肤准备"
+        detail: "备皮+皮肤完整性评估"
+        guide_ref: "guideline-frailty-nursing"
+
+      - id: nursing-003
+        description: "禁食指导"
+        detail: "术前6h禁食固体,2h禁清流质"
+        guide_ref: "guideline-frailty-nursing"
+
+      - id: nursing-004
+        description: "床上便盆训练+心理护理"
+        detail: "术后床上排尿排便适应性训练,术前焦虑评估与疏导"
+        guide_ref: "guideline-frailty-nursing"
+
+  - id: postop_d0
+    name: "术后当日护理"
+    order: 2
+    stage_ids: [S10]
+
+    items:
+      - id: nursing-005
+        description: "生命体征监测"
+        detail: "q1h×4次后改q4h,关注血压心率和血氧"
+        guide_ref: "guideline-nhc-2022"
+
+      - id: nursing-006
+        description: "体位管理"
+        detail: "患肢外展中立位,抬高15-30°,避免内收内旋"
+        guide_ref: "guideline-frailty-nursing"
+
+      - id: nursing-007
+        description: "切口观察"
+        detail: "敷料外观/引流管/引流量/颜色"
+        guide_ref: "guideline-frailty-nursing"
+
+      - id: nursing-008
+        description: "疼痛护理"
+        detail: "VAS评分q4h+药物镇痛"
+        guide_ref: "guideline-nhc-2022"
+
+      - id: nursing-009
+        description: "DVT物理预防"
+        detail: "IPC气压泵+踝泵运动q1h+弹力袜"
+        guide_ref: "guideline-dvt-2024"
+
+  - id: postop_d1_3
+    name: "术后早期1-3天护理"
+    order: 3
+    stage_ids: [S10]
+
+    items:
+      - id: nursing-010
+        description: "饮食管理"
+        detail: "麻醉恢复后清流→半流→普食,高蛋白高钙"
+        guide_ref: "guideline-frailty-nursing"
+
+      - id: nursing-011
+        description: "管道护理"
+        detail: "导尿管BID护理+引流管观察"
+        guide_ref: "guideline-frailty-nursing"
+
+      - id: nursing-012
+        description: "功能锻炼"
+        detail: "踝泵运动+股四头肌等长收缩"
+        guide_ref: "guideline-nhc-2022"
+
+      - id: nursing-013
+        description: "便秘预防"
+        detail: "腹部按摩+饮食调整+必要时缓泻剂"
+        guide_ref: "guideline-frailty-nursing"
+
+      - id: nursing-014
+        description: "睡眠护理"
+        detail: "减少夜间打扰+疼痛控制+环境优化"
+        guide_ref: "guideline-frailty-nursing"
+
+  - id: recovery
+    name: "术后恢复期4天-出院"
+    order: 4
+    stage_ids: [S10, S11]
+
+    items:
+      - id: nursing-015
+        description: "离床活动指导"
+        detail: "助行器辅助下床,循序渐进"
+        guide_ref: "guideline-nhc-2022"
+
+      - id: nursing-016
+        description: "跌倒预防"
+        detail: "床栏+呼叫铃+防滑鞋"
+        guide_ref: "guideline-nhc-2022"
+
+      - id: nursing-017
+        description: "出院指导"
+        detail: "伤口护理/饮食/活动/复诊安排"
+        guide_ref: "guideline-frailty-nursing"
+
+      - id: nursing-018
+        description: "照护者培训"
+        detail: "翻身/助行器使用/体位摆放/跌倒预防"
+        guide_ref: "guideline-frailty-nursing"
+
+      - id: nursing-019
+        description: "心理状态评估"
+        detail: "术后抑郁筛查(PHQ-9)"
+        guide_ref: "guideline-frailty-nursing"
+
+      - id: nursing-020
+        description: "DVT药物预防"
+        detail: "低分子肝素注射+注射部位观察"
+        guide_ref: "guideline-dvt-2024"
+
+      - id: nursing-021
+        description: "压疮预防"
+        detail: "Braden评分+q2h翻身+减压垫"
+        guide_ref: "guideline-frailty-nursing"

@@ -1,0 +1,108 @@
+# ============================================================
+# TOGAF Class: BusinessCapability (Extension ABB)
+# Source: G211 Business Capabilities V2
+# Trust Level: T1
+# ============================================================
+name: pharmacy-capabilities
+version: "1.0"
+description: 药剂科业务能力树 — 从临床指南推导，按 ValueStage 组织
+department: pharmacy（药剂科）
+value_stream: 救死扶伤
+
+# ── L1: 全院统一，由 catalog.yaml 定义 ──
+# L1 = Patient Care（患者诊疗）
+
+capabilities:
+  # ── ValueStage: 有效治疗 ──
+
+  - id: cap-pharm-review
+    name: Prescription Review
+    level: L3
+    description: 审核处方的药物配伍禁忌、剂量合理性、适应症是否符合指南
+    value_stages:
+      - 有效治疗
+    enabling_roles:
+      - review_pharmacist（审方药师）
+    guideline_refs:
+      - china-compounding-2018
+      - china-electrolyte-2024
+
+  - id: cap-pharm-nutrition-decision
+    name: Nutrition Support Decision
+    level: L3
+    description: 根据患者状态决定营养支持途径（EN/PN/SPN），选择适宜的制剂
+    value_stages:
+      - 有效治疗
+      - 康复回归
+    enabling_roles:
+      - clinical_pharmacist（临床药师）
+      - dietitian（营养师）
+    guideline_refs:
+      - china-en-pn-2023
+      - espen-2023
+
+  - id: cap-pharm-tpn-formulation
+    name: TPN Formulation
+    level: L3
+    description: 设计肠外营养处方（热氮比/糖脂比/电解质/脂乳/微量元素）
+    value_stages:
+      - 有效治疗
+    enabling_roles:
+      - iv_compounding_pharmacist（静脉配置药师）
+      - clinical_pharmacist（临床药师）
+    guideline_refs:
+      - china-compounding-2018
+      - china-electrolyte-2024
+      - china-fat-emulsion-2023
+      - espen-2023
+
+  - id: cap-pharm-sterile-compounding
+    name: Sterile Compounding
+    level: L4
+    description: 在 ISO Class 5 洁净环境中完成 TPN 无菌配制操作和质量控制
+    value_stages:
+      - 有效治疗
+    enabling_roles:
+      - iv_compounding_pharmacist（静脉配置药师）
+    guideline_refs:
+      - china-compounding-2018
+
+  - id: cap-pharm-dispensing
+    name: Drug Dispensing
+    level: L3
+    description: 按处方准确调配和发放药品，含特殊药品管理
+    value_stages:
+      - 有效治疗
+    enabling_roles:
+      - dispensing_pharmacist（调剂药师）
+      - pharmacist（药剂师）
+    guideline_refs:
+      - (医院章程 — 药剂科职能)
+
+  # ── ValueStage: 康复回归 ──
+
+  - id: cap-pharm-metabolic-monitoring
+    name: Metabolic Monitoring
+    level: L3
+    description: 监测营养支持患者的代谢指标（血糖/肝肾功能/电解质/钙磷乘积/脂代谢/炎性指标）
+    value_stages:
+      - 康复回归
+    enabling_roles:
+      - clinical_pharmacist（临床药师）
+    guideline_refs:
+      - china-en-pn-2023
+      - china-electrolyte-2024
+      - china-fat-emulsion-2023
+
+  - id: cap-pharm-en-tolerance
+    name: EN Tolerance Monitoring
+    level: L3
+    description: 监测肠内营养患者的胃肠道耐受性和并发症
+    value_stages:
+      - 康复回归
+    enabling_roles:
+      - clinical_pharmacist（临床药师）
+      - dietitian（营养师）
+    guideline_refs:
+      - china-en-pn-2023
+      - espen-2023

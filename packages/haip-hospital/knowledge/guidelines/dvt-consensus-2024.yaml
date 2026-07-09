@@ -1,0 +1,56 @@
+# ============================================================
+# Guideline Asset: 老年髋部骨折围术期DVT基础预防专家共识（2024版）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-dvt-2024"
+name: "老年髋部骨折围术期下肢深静脉血栓基础预防专家共识"
+abbr: "DVT共识2024"
+version: "2024"
+publisher: "中华医学会骨科学分会"
+doi: "—"
+language: zh-CN
+trust_level: T1
+admin_priority: 6
+
+description: >
+  中国老年髋部骨折围术期DVT预防的专项共识。覆盖药物预防（低分子肝素）、
+  物理预防（IPC/弹力袜）、预防时机与持续时间的标准化方案。
+
+key_sections:
+  - id: "§2"
+    title: "DVT风险评估"
+    pages: "3-6"
+    stage_ids: [S8]
+    rule_ids: [complication-dvt]
+
+  - id: "§3"
+    title: "基础预防措施"
+    pages: "7-12"
+    stage_ids: [S10]
+    rule_ids:
+      - nursing-005
+      - nursing-006
+      - nursing-007
+
+  - id: "§4"
+    title: "药物预防"
+    pages: "13-18"
+    stage_ids: [S10]
+    rule_ids: [nursing-008]
+
+  - id: "§5"
+    title: "出院后DVT预防"
+    pages: "19-22"
+    stage_ids: [S11]
+    rule_ids: [followup-002]
+
+rule_sets_covered:
+  - complication
+  - nursing
+  - followup
+
+derived_rule_count: 8
+last_updated: 2026-07-01
+supersedes: ""
+superseded_by: ""

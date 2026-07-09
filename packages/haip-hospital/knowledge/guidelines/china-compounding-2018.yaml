@@ -1,0 +1,46 @@
+# ============================================================
+# Guideline Asset: 规范肠外营养液配制
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+name: "规范肠外营养液配制"
+abbr: "规范配制2018"
+version: "2018"
+publisher: "中华医学会肠外肠内营养学分会药学协作组"
+journal: "中华临床营养杂志 2018;26(3):129-139"
+doi: "10.3760/cma.j.issn.1674-635X.2018.03.001"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国首部肠外营养液配制规范。规定了TPN配制的全流程标准操作，
+  包括: 成品输液袋产品选择、处方设计(葡萄糖≤23%/氨基酸≥2.5%/
+  渗透压/阳离子限量)、配制环境、配制顺序(8步)、质量控制、储存与运输。
+
+key_sections:
+  - id: §3.2
+    title: 热氮比与糖脂比
+    rule_ids: [R047]
+
+  - id: §3.3
+    title: 渗透压要求
+    rule_ids: [R048-R049]
+
+  - id: §3.4
+    title: 葡萄糖/氨基酸浓度要求
+    rule_ids: [R050-R051]
+
+  - id: §4
+    title: TPN配制8步流程
+    rule_ids: []
+
+  - id: §5
+    title: 质量控制
+    rule_ids: [R052-R053]
+
+rule_sets_covered:
+  - formulation (R047-R053)
+
+derived_rule_count: 7
+compounding_steps: 8
+last_updated: 2026-07-01

@@ -1,0 +1,142 @@
+# 介入治疗科 ??????
+# TOGAF Business Architecture ? Auto-generated from template
+# Template: 外科
+# Generated: 2026-07-10
+
+department: 介入治疗科
+template_type: 外科
+guidelines: [中华介入放射学杂志 介入诊疗规范 (2022)]
+version: "1.0.0"
+
+value_streams:
+  - id: vs-triage
+    name: 分诊登记
+    stage: 1
+    trigger: 患者到达
+    outcome: 分诊级别
+  - id: vs-assessment
+    name: 病情评估
+    stage: 2
+    trigger: 分诊完成
+    outcome: 明确诊断
+  - id: vs-decision
+    name: 诊疗决策
+    stage: 3
+    trigger: 诊断确认
+    outcome: 手术方案 + MDT决策
+  - id: vs-surgery
+    name: 手术执行
+    stage: 4
+    trigger: 方案确定
+    outcome: 手术完成 + 并发症管理
+  - id: vs-recovery
+    name: 术后康复
+    stage: 5
+    trigger: 手术完成
+    outcome: 功能恢复 + 随访计划
+
+business_processes:
+  - id: bp-reg
+    name: 患者登记分诊
+    order: 1
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-diag
+    name: 诊断评估
+    order: 2
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-preop
+    name: 术前准备
+    order: 3
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-risk
+    name: 风险评估
+    order: 4
+    owner: 麻醉医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-mdt
+    name: MDT决策
+    order: 5
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-surgery
+    name: 手术执行
+    order: 6
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-nursing
+    name: 围术期护理
+    order: 7
+    owner: 护士长
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????
+  - id: bp-followup
+    name: 术后随访
+    order: 8
+    owner: 主治医师
+    inputs:
+      - ????
+      - ????
+    outputs:
+      - ????
+    steps:
+      - ????
+      - ????
+      - ????

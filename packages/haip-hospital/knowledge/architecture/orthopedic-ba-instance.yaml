@@ -1,0 +1,896 @@
+view_name: 创伤骨科 TOGAF BA 实例
+description: 创伤骨科 Agent 业务架构 — 8 个 BusinessProcess + 5 个 Role + 6 个 DataEntity + A2A 协作
+vw: 1000
+vh: 640
+nodes:
+
+# ── Business Processes ──
+- id: bp-ortho-registration
+  label: 患者注册与数据采集
+  type: BusinessProcess
+  domain: ba
+  color: '#5e5ce6'
+  icon: 🔄
+  x: 400
+  y: 60
+  detail:
+    title: 🔄 患者注册与数据采集 (BusinessProcess)
+    fields:
+    - - TOGAF 实体
+      - BusinessProcess (Core ABB)
+    - - Owner
+      - 分诊护士 + 住院总值班医生
+    - - 步骤数
+      - '5'
+    - - 步骤
+      - ①急诊接诊→②住院总评定→③HIS建档→④五史录入→⑤数据预加载
+    - - 关键决策
+      - 启动绿色通道？→ 是(≥75岁) | 否(常规)
+    - - 指南
+      - nhc-2022, nanfang-hip-fracture-triage
+  subtype: Process
+  subtype_cn: 业务流程
+  big: false
+
+- id: bp-ortho-classification
+  label: 骨折分型
+  type: BusinessProcess
+  domain: ba
+  color: '#5e5ce6'
+  icon: 🔄
+  x: 400
+  y: 130
+  detail:
+    title: 🔄 骨折分型 (BusinessProcess)
+    fields:
+    - - TOGAF 实体
+      - BusinessProcess (Core ABB)
+    - - Owner
+      - 主治医生
+    - - 步骤数
+      - '4'
+    - - 步骤
+      - ①影像获取→②骨折类型判定→③Garden分型→④Evans/AO分型
+    - - 关键决策
+      - 骨折部位？→ 股骨颈 | 转子间；稳定性？→ 稳定 | 不稳定
+    - - 指南
+      - csco-femoral-neck-2018, csco-intertroch-2020, aaos-2022
+  subtype: Process
+  subtype_cn: 业务流程
+  big: false
+
+- id: bp-ortho-assessment
+  label: 术前评估与风险分层
+  type: BusinessProcess
+  domain: ba
+  color: '#5e5ce6'
+  icon: 🔄
+  x: 400
+  y: 200
+  detail:
+    title: 🔄 术前评估与风险分层 (BusinessProcess)
+    fields:
+    - - TOGAF 实体
+      - BusinessProcess (Core ABB)
+    - - Owner
+      - 主治医生
+    - - 步骤数
+      - '5'
+    - - 步骤
+      - ①14项检查完整性→②6因子评估→③心脏会诊(A2A)→④麻醉评估(A2A)→⑤风险分层
+    - - 关键决策
+      - 每因子 → 正常 | 可控 | 延迟因素
+    - - 指南
+      - nhc-2022, efort-2021, nanfang-hip-fracture-triage
+  subtype: Process
+  subtype_cn: 业务流程
+  big: false
+
+- id: bp-timing-decision
+  label: 手术时机决策（父流程）
+  type: BusinessProcess
+  domain: ba
+  color: '#5e5ce6'
+  icon: 🔄
+  x: 400
+  y: 270
+  detail:
+    title: 🔄 手术时机决策·跨Agent编排 (BusinessProcess)
+    fields:
+    - - TOGAF 实体
+      - BusinessProcess (Core ABB)
+    - - Owner
+      - 主治医生 + 麻醉科医生
+    - - 步骤数
+      - '7'
+    - - 步骤
+      - ①手术必要性→②心内科A2A→③麻醉科A2A→④延迟汇总→⑤MDT裁定→⑥护理→⑦随访
+    - - 子流程
+      - bp-ortho-surgical-timing（timing_engine 4步内核）
+    - - 指南
+      - nhc-2022, nice-ng37, aaos-2022
+  subtype: Process
+  subtype_cn: 业务流程
+  big: false
+
+- id: bp-ortho-timing
+  label: 手术时机引擎（子流程）
+  type: BusinessProcess
+  domain: ba
+  color: '#5e5ce6'
+  icon: 🔄
+  x: 400
+  y: 340
+  detail:
+    title: 🔄 手术时机引擎·timing_engine内核 (BusinessProcess)
+    fields:
+    - - TOGAF 实体
+      - BusinessProcess (Core ABB)
+    - - Owner
+      - 主治医生 + 麻醉科医生
+    - - 步骤数
+      - '4'
+    - - 步骤
+      - ①延迟因素汇总→②时机裁定→③MDT决策→④术前优化
+    - - 父流程
+      - bp-timing-decision
+    - - 指南
+      - nhc-2022, nice-ng37, aaos-2022, nanfang-hip-fracture-triage
+  subtype: Process
+  subtype_cn: 业务流程
+  big: false
+
+- id: bp-ortho-complication
+  label: 并发症风险预测
+  type: BusinessProcess
+  domain: ba
+  color: '#5e5ce6'
+  icon: 🔄
+  x: 400
+  y: 410
+  detail:
+    title: 🔄 并发症风险预测 (BusinessProcess)
+    fields:
+    - - TOGAF 实体
+      - BusinessProcess (Core ABB)
+    - - Owner
+      - 主治医生 + 护士长
+    - - 步骤数
+      - '5'
+    - - 步骤
+      - ①DVT风险→②感染风险→③心脏并发症→④跌倒谵妄→⑤综合矩阵
+    - - 关键决策
+      - 综合风险 → 低危 | 中危 | 高危(MDT) | 极高危(延迟手术)
+    - - 指南
+      - nhc-2022, dvt-consensus-2024, universal-mi-4th
+  subtype: Process
+  subtype_cn: 业务流程
+  big: false
+
+- id: bp-ortho-surgery-planning
+  label: 手术方案推荐
+  type: BusinessProcess
+  domain: ba
+  color: '#5e5ce6'
+  icon: 🔄
+  x: 400
+  y: 480
+  detail:
+    title: 🔄 手术方案推荐 (BusinessProcess)
+    fields:
+    - - TOGAF 实体
+      - BusinessProcess (Core ABB)
+    - - Owner
+      - 主治医生 + 主刀医生
+    - - 步骤数
+      - '5'
+    - - 步骤
+      - ①分型确认→②手术方式→③入路选择→④规格选择→⑤方案确认
+    - - 关键决策
+      - 手术方式 → CCS | HA | THA | PFNA | InterTAN | 保守
+    - - 指南
+      - aaos-2022, csco-femoral-neck-2018, csco-intertroch-2020
+  subtype: Process
+  subtype_cn: 业务流程
+  big: false
+
+- id: bp-ortho-followup
+  label: 出院随访与二次骨折预防
+  type: BusinessProcess
+  domain: ba
+  color: '#5e5ce6'
+  icon: 🔄
+  x: 400
+  y: 550
+  detail:
+    title: 🔄 出院随访与二次骨折预防 (BusinessProcess)
+    fields:
+    - - TOGAF 实体
+      - BusinessProcess (Core ABB)
+    - - Owner
+      - 主治医生
+    - - 步骤数
+      - '5'
+    - - 步骤
+      - ①出院计划→②1月复诊→③3月复诊→④6月复诊→⑤12月年度随访
+    - - 关键决策
+      - 愈合进展 → 正常 | 延迟愈合 | 不良(排查并发症)
+    - - 指南
+      - nhc-2022, nice-ng37, dvt-consensus-2024
+  subtype: Process
+  subtype_cn: 业务流程
+  big: false
+
+# ── Roles ──
+- id: role-attending
+  label: 主治医生
+  type: Role
+  domain: ba
+  color: '#bf5af2'
+  icon: 👤
+  x: 120
+  y: 100
+  detail:
+    title: 👤 主治医生 (Role #81)
+    fields:
+    - - TOGAF 实体
+      - Role (Core ABB)
+    - - 所属科室
+      - 创伤骨科
+    - - 职责
+      - 诊断、手术决策、骨折分型、随访
+    - - 执行 Process
+      - bp-ortho-classification, bp-ortho-assessment, bp-timing-decision, bp-ortho-followup
+    - - Agent 工具
+      - orthopedic.classify_fracture, orthopedic.assess_timing, orthopedic.recommend_surgery
+  subtype: Role
+  subtype_cn: 角色
+  big: false
+
+- id: role-anesthesiologist
+  label: 麻醉科医生
+  type: Role
+  domain: ba
+  color: '#bf5af2'
+  icon: 👤
+  x: 120
+  y: 170
+  detail:
+    title: 👤 麻醉科医生 (Role #5)
+    fields:
+    - - TOGAF 实体
+      - Role (Core ABB)
+    - - 所属科室
+      - 麻醉手术中心
+    - - 职责
+      - 围术期风险评估（ASA/RCRI/抗凝/ECG）
+    - - 执行 Process
+      - bp-ortho-assessment, bp-timing-decision, bp-ortho-surgery-planning
+    - - 跨科室协作
+      - 调用 anesthesia-risk Agent (A2A)
+  subtype: Role
+  subtype_cn: 角色
+  big: false
+
+- id: role-head-nurse
+  label: 护士长
+  type: Role
+  domain: ba
+  color: '#bf5af2'
+  icon: 👤
+  x: 120
+  y: 240
+  detail:
+    title: 👤 护士长 (Role #76)
+    fields:
+    - - TOGAF 实体
+      - Role (Core ABB)
+    - - 所属科室
+      - 创伤骨科
+    - - 职责
+      - 围术期护理（DVT预防/体位/压疮/疼痛）
+    - - 执行 Process
+      - bp-ortho-complication, bp-timing-decision (护理计划)
+    - - Agent 工具
+      - orthopedic.generate_nursing
+  subtype: Role
+  subtype_cn: 角色
+  big: false
+
+- id: role-emergency-nurse
+  label: 急诊分诊护士
+  type: Role
+  domain: ba
+  color: '#bf5af2'
+  icon: 👤
+  x: 120
+  y: 310
+  detail:
+    title: 👤 急诊分诊护士 (Role)
+    fields:
+    - - TOGAF 实体
+      - Role (Core ABB)
+    - - 所属科室
+      - 急诊医学科
+    - - 职责
+      - 生命体征采集、绿色通道判定、分诊评估
+    - - 执行 Process
+      - bp-ortho-registration
+  subtype: Role
+  subtype_cn: 角色
+  big: false
+
+- id: role-surgeon
+  label: 主刀医生
+  type: Role
+  domain: ba
+  color: '#bf5af2'
+  icon: 👤
+  x: 120
+  y: 380
+  detail:
+    title: 👤 主刀医生 (Role)
+    fields:
+    - - TOGAF 实体
+      - Role (Core ABB)
+    - - 所属科室
+      - 创伤骨科
+    - - 职责
+      - 手术入路选择、内固定/假体规格确定
+    - - 执行 Process
+      - bp-ortho-surgery-planning
+    - - Agent 工具
+      - orthopedic.recommend_surgery
+  subtype: Role
+  subtype_cn: 角色
+  big: false
+
+# ── Data Entities ──
+- id: de-patient
+  label: 患者主数据
+  type: DataEntity
+  domain: da
+  color: '#FF9500'
+  icon: 📊
+  x: 720
+  y: 100
+  detail:
+    title: 📊 患者主数据 (DataEntity)
+    fields:
+    - - TOGAF 实体
+      - DataEntity (Core ABB)
+    - - 敏感度
+      - 高
+    - - 属性
+      - name, age, gender, diagnosis, mrn, inpatient_no
+    - - 来源
+      - Master Data Agent (medical-record)
+  subtype: DataEntity
+  subtype_cn: 数据实体
+  big: false
+
+- id: de-lab-results
+  label: 检验结果
+  type: DataEntity
+  domain: da
+  color: '#FF9500'
+  icon: 📊
+  x: 720
+  y: 170
+  detail:
+    title: 📊 检验结果 (DataEntity)
+    fields:
+    - - TOGAF 实体
+      - DataEntity (Core ABB)
+    - - 敏感度
+      - 中
+    - - 属性
+      - cTnI, CK-MB, Hb, INR, eGFR, CRP, WBC, Glu, electrolytes
+    - - 来源
+      - LIS → Master Data Agent
+  subtype: DataEntity
+  subtype_cn: 数据实体
+  big: false
+
+- id: de-exam-results
+  label: 检查结果
+  type: DataEntity
+  domain: da
+  color: '#FF9500'
+  icon: 📊
+  x: 720
+  y: 240
+  detail:
+    title: 📊 检查结果 (DataEntity)
+    fields:
+    - - TOGAF 实体
+      - DataEntity (Core ABB)
+    - - 敏感度
+      - 中
+    - - 属性
+      - ECG, Chest X-ray, Echo, 下肢静脉超声, 骨密度DXA
+    - - 来源
+      - PACS → Master Data Agent
+  subtype: DataEntity
+  subtype_cn: 数据实体
+  big: false
+
+- id: de-risk-assessment
+  label: 风险评估
+  type: DataEntity
+  domain: da
+  color: '#FF9500'
+  icon: 📊
+  x: 720
+  y: 310
+  detail:
+    title: 📊 风险评估 (DataEntity)
+    fields:
+    - - TOGAF 实体
+      - DataEntity (Core ABB)
+    - - 敏感度
+      - 中
+    - - 属性
+      - MI_risk, ASA, Caprini, RCRI, delay_factors, timing_ruling
+    - - 来源
+      - 骨科 Agent + cardio-risk + anesthesia-risk 输出
+  subtype: DataEntity
+  subtype_cn: 数据实体
+  big: false
+
+- id: de-surgery-record
+  label: 手术记录
+  type: DataEntity
+  domain: da
+  color: '#FF9500'
+  icon: 📊
+  x: 720
+  y: 380
+  detail:
+    title: 📊 手术记录 (DataEntity)
+    fields:
+    - - TOGAF 实体
+      - DataEntity (Core ABB)
+    - - 敏感度
+      - 高
+    - - 属性
+      - surgery_type, approach, implant_spec, ANES_method, duration
+    - - 来源
+      - 手麻系统
+  subtype: DataEntity
+  subtype_cn: 数据实体
+  big: false
+
+- id: de-followup
+  label: 随访记录
+  type: DataEntity
+  domain: da
+  color: '#FF9500'
+  icon: 📊
+  x: 720
+  y: 450
+  detail:
+    title: 📊 随访记录 (DataEntity)
+    fields:
+    - - TOGAF 实体
+      - DataEntity (Core ABB)
+    - - 敏感度
+      - 中
+    - - 属性
+      - VAS, Harris_score, XRAY_result, healing_status, complication_flag
+    - - 来源
+      - 骨科 Agent 输出
+  subtype: DataEntity
+  subtype_cn: 数据实体
+  big: false
+
+# ── Application Components ──
+- id: agent-ortho
+  label: 创伤骨科智能体
+  type: ApplicationComponent
+  agent_type: business
+  domain: aa
+  color: '#ff9f0a'
+  icon: 🦴
+  x: 520
+  y: 520
+  big: false
+  detail:
+    title: 🦴 创伤骨科智能体 (Application)
+    fields:
+    - - TOGAF 实体
+      - ApplicationComponent (Core ABB)
+    - - 类型
+      - Business Agent
+    - - 端口
+      - '8765'
+    - - 版本
+      - v0.8.0
+    - - MCP 工具
+      - assess, triage, fracture, completeness, risk, timing, complications, surgery-plan, nursing, followup
+    - - 支撑 Process
+      - bp-ortho-classification, bp-ortho-assessment, bp-timing-decision, bp-ortho-timing, bp-ortho-complication, bp-ortho-surgery-planning, bp-ortho-followup
+  subtype: Application
+  subtype_cn: 应用
+
+- id: agent-cardio-risk
+  label: 心内科智能体
+  type: ApplicationComponent
+  agent_type: specialist
+  domain: aa
+  color: '#ff453a'
+  icon: ❤️
+  x: 260
+  y: 580
+  detail:
+    title: ❤️ 心内科智能体 (SkillAgent)
+    fields:
+    - - TOGAF 实体
+      - ApplicationComponent (Core ABB)
+    - - 类型
+      - Specialist Agent
+    - - 端口
+      - '8801'
+    - - 归属科室
+      - 心血管内科
+    - - MCP 工具
+      - assess_mi, assess_hypertension, interpret_ecg
+    - - 被调用方
+      - orthopedic_surgery (A2A)
+  subtype: Application
+  subtype_cn: 应用
+  big: false
+
+- id: agent-anesthesia-risk
+  label: 麻醉科智能体
+  type: ApplicationComponent
+  agent_type: specialist
+  domain: aa
+  color: '#bf5af2'
+  icon: 💉
+  x: 780
+  y: 580
+  detail:
+    title: 💉 麻醉科智能体 (SkillAgent)
+    fields:
+    - - TOGAF 实体
+      - ApplicationComponent (Core ABB)
+    - - 类型
+      - Specialist Agent
+    - - 端口
+      - '8829'
+    - - 归属科室
+      - 麻醉手术中心
+    - - MCP 工具
+      - assess_asa, assess_anticoagulation, assess_airway
+    - - 被调用方
+      - orthopedic_surgery (A2A)
+  subtype: Application
+  subtype_cn: 应用
+  big: false
+
+- id: agent-master-data
+  label: 患者数据中心
+  type: ApplicationComponent
+  agent_type: master_data
+  domain: aa
+  color: '#30d158'
+  icon: 📋
+  x: 520
+  y: 620
+  detail:
+    title: 📋 患者数据中心 (MasterData Agent)
+    fields:
+    - - TOGAF 实体
+      - ApplicationComponent (Core ABB)
+    - - 类型
+      - Master Data Agent
+    - - 端口
+      - '8766'
+    - - 归属科室
+      - 信息中心
+    - - MCP 工具
+      - get_patient, get_labs, get_exams, get_indicator_trends
+    - - 被调用方
+      - 所有 Agent
+  subtype: Application
+  subtype_cn: 应用
+  big: false
+
+# ── Organization ──
+- id: org-ortho
+  label: 创伤骨科
+  type: Organization
+  domain: ba
+  color: '#0a84ff'
+  icon: 🏥
+  x: 500
+  y: 30
+  big: false
+  detail:
+    title: 🏥 创伤骨科 (Organization)
+    fields:
+    - - TOGAF 实体
+      - Organization (Core ABB)
+    - - 组织
+      - 南方医科大学南方医院·创伤骨科
+    - - 科室主任
+      - 余斌
+    - - 角色
+      - 主治医生#81、护士长#76、主刀医生
+    - - 架构域
+      - Business Architecture
+  subtype: Organization
+  subtype_cn: 组织
+
+# ── Technology ──
+- id: platform
+  label: Nexent平台
+  type: TechnologyService
+  domain: ta
+  color: '#ff453a'
+  icon: ☁️
+  x: 800
+  y: 560
+  detail:
+    title: ☁️ Nexent智能体平台 (TechnologyService)
+    fields:
+    - - TOGAF 实体
+      - TechnologyService
+    - - 类型
+      - Agent Runtime 平台
+    - - 承载
+      - 所有 Agent 运行于此平台
+  subtype: Technology
+  subtype_cn: 技术
+  big: false
+
+edges:
+# ── Organization → Roles ──
+- sid: org-ortho
+  tid: role-attending
+  label: contains
+  color: '#0a84ff'
+  confidence: real
+- sid: org-ortho
+  tid: role-head-nurse
+  label: contains
+  color: '#0a84ff'
+  confidence: real
+- sid: org-ortho
+  tid: role-surgeon
+  label: contains
+  color: '#0a84ff'
+  confidence: real
+
+# ── Role → Process (actor) ──
+- sid: role-emergency-nurse
+  tid: bp-ortho-registration
+  label: actor
+  color: '#bf5af2'
+  confidence: real
+- sid: role-attending
+  tid: bp-ortho-classification
+  label: actor
+  color: '#bf5af2'
+  confidence: real
+- sid: role-attending
+  tid: bp-ortho-assessment
+  label: actor
+  color: '#bf5af2'
+  confidence: real
+- sid: role-anesthesiologist
+  tid: bp-ortho-assessment
+  label: actor
+  color: '#bf5af2'
+  confidence: real
+- sid: role-attending
+  tid: bp-timing-decision
+  label: actor
+  color: '#bf5af2'
+  confidence: real
+- sid: role-anesthesiologist
+  tid: bp-timing-decision
+  label: actor
+  color: '#bf5af2'
+  confidence: real
+- sid: role-attending
+  tid: bp-ortho-timing
+  label: actor
+  color: '#bf5af2'
+  confidence: real
+- sid: role-anesthesiologist
+  tid: bp-ortho-timing
+  label: actor
+  color: '#bf5af2'
+  confidence: real
+- sid: role-attending
+  tid: bp-ortho-complication
+  label: actor
+  color: '#bf5af2'
+  confidence: real
+- sid: role-head-nurse
+  tid: bp-ortho-complication
+  label: actor
+  color: '#bf5af2'
+  confidence: real
+- sid: role-attending
+  tid: bp-ortho-surgery-planning
+  label: actor
+  color: '#bf5af2'
+  confidence: real
+- sid: role-surgeon
+  tid: bp-ortho-surgery-planning
+  label: actor
+  color: '#bf5af2'
+  confidence: real
+- sid: role-attending
+  tid: bp-ortho-followup
+  label: actor
+  color: '#bf5af2'
+  confidence: real
+
+# ── Process → Process (flow) ──
+- sid: bp-ortho-registration
+  tid: bp-ortho-classification
+  label: →
+  color: '#5e5ce6'
+  confidence: real
+- sid: bp-ortho-classification
+  tid: bp-ortho-assessment
+  label: →
+  color: '#5e5ce6'
+  confidence: real
+- sid: bp-ortho-assessment
+  tid: bp-timing-decision
+  label: →
+  color: '#5e5ce6'
+  confidence: real
+- sid: bp-timing-decision
+  tid: bp-ortho-timing
+  label: 委派
+  color: '#5e5ce6'
+  confidence: real
+- sid: bp-ortho-assessment
+  tid: bp-ortho-complication
+  label: →
+  color: '#5e5ce6'
+  confidence: real
+- sid: bp-timing-decision
+  tid: bp-ortho-surgery-planning
+  label: →
+  color: '#5e5ce6'
+  confidence: real
+- sid: bp-ortho-surgery-planning
+  tid: bp-ortho-followup
+  label: →
+  color: '#5e5ce6'
+  confidence: real
+
+# ── Process → Data ──
+- sid: bp-ortho-registration
+  tid: de-patient
+  label: uses
+  color: '#FF9500'
+  confidence: real
+- sid: bp-ortho-assessment
+  tid: de-lab-results
+  label: uses
+  color: '#FF9500'
+  confidence: real
+- sid: bp-ortho-assessment
+  tid: de-exam-results
+  label: uses
+  color: '#FF9500'
+  confidence: real
+- sid: bp-ortho-classification
+  tid: de-exam-results
+  label: uses
+  color: '#FF9500'
+  confidence: real
+- sid: bp-timing-decision
+  tid: de-risk-assessment
+  label: uses
+  color: '#FF9500'
+  confidence: real
+- sid: bp-ortho-complication
+  tid: de-lab-results
+  label: uses
+  color: '#FF9500'
+  confidence: real
+- sid: bp-ortho-complication
+  tid: de-risk-assessment
+  label: produces
+  color: '#FF9500'
+  confidence: real
+- sid: bp-ortho-surgery-planning
+  tid: de-exam-results
+  label: uses
+  color: '#FF9500'
+  confidence: real
+- sid: bp-ortho-surgery-planning
+  tid: de-surgery-record
+  label: produces
+  color: '#FF9500'
+  confidence: real
+- sid: bp-ortho-followup
+  tid: de-followup
+  label: produces
+  color: '#FF9500'
+  confidence: real
+
+# ── Process → App ──
+- sid: bp-ortho-classification
+  tid: agent-ortho
+  label: supported by
+  color: '#ff9f0a'
+  confidence: real
+- sid: bp-ortho-assessment
+  tid: agent-cardio-risk
+  label: A2A call
+  color: '#ff453a'
+  confidence: real
+- sid: bp-ortho-assessment
+  tid: agent-anesthesia-risk
+  label: A2A call
+  color: '#bf5af2'
+  confidence: real
+- sid: bp-timing-decision
+  tid: agent-ortho
+  label: supported by
+  color: '#ff9f0a'
+  confidence: real
+- sid: bp-ortho-complication
+  tid: agent-ortho
+  label: supported by
+  color: '#ff9f0a'
+  confidence: real
+- sid: bp-ortho-surgery-planning
+  tid: agent-ortho
+  label: supported by
+  color: '#ff9f0a'
+  confidence: real
+- sid: bp-ortho-followup
+  tid: agent-ortho
+  label: supported by
+  color: '#ff9f0a'
+  confidence: real
+
+# ── App → Platform ──
+- sid: agent-ortho
+  tid: platform
+  label: runs on
+  color: '#ff453a'
+  confidence: real
+- sid: agent-cardio-risk
+  tid: platform
+  label: runs on
+  color: '#ff453a'
+  confidence: real
+- sid: agent-anesthesia-risk
+  tid: platform
+  label: runs on
+  color: '#ff453a'
+  confidence: real
+- sid: agent-master-data
+  tid: platform
+  label: runs on
+  color: '#ff453a'
+  confidence: real
+
+# ── Process → Master Data ──
+- sid: bp-ortho-registration
+  tid: agent-master-data
+  label: uses
+  color: '#30d158'
+  confidence: real
+- sid: bp-ortho-assessment
+  tid: agent-master-data
+  label: uses
+  color: '#30d158'
+  confidence: real
+- sid: bp-ortho-complication
+  tid: agent-master-data
+  label: uses
+  color: '#30d158'
+  confidence: real

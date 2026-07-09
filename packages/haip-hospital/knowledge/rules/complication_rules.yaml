@@ -1,0 +1,227 @@
+# ============================================================
+# Rule Asset: 围术期并发症风险预测规则
+# TOGAF Class: Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+name: hip-fracture-complication-rules
+version: "1.0"
+description: 老年髋部骨折围术期4维并发症风险预测规则
+owner: attending
+guideline_ref:
+  - "guideline-nhc-2022"
+  - "guideline-dvt-2024"
+  - "guideline-intertroch-2020"
+last_updated: 2026-07-01
+
+complication_dimensions:
+  - id: dvt
+    name: "DVT/PE风险"
+    description: Caprini-based DVT risk assessment
+    guideline_ref: "guideline-dvt-2024"
+
+    score_items:
+      - id: age_75plus
+        condition: "age >= 75"
+        score: 3
+
+      - id: age_60_74
+        condition: "60 <= age <= 74"
+        score: 2
+
+      - id: age_41_60
+        condition: "41 <= age <= 60"
+        score: 1
+
+      - id: hip_surgery
+        condition: "diagnosis contains '髋部骨折' or 'hip fracture'"
+        score: 2
+
+      - id: fracture_trauma
+        condition: "diagnosis contains '骨折' or 'fracture'"
+        score: 2
+
+      - id: dvt_history
+        condition: "past_history contains 'DVT' or '深静脉血栓' or '血栓'"
+        score: 3
+
+      - id: pe_history
+        condition: "past_history contains '肺栓塞' or 'PE' or '肺动脉栓塞'"
+        score: 3
+
+      - id: malignancy
+        condition: "past_history contains '肿瘤' or '恶性肿瘤' or 'cancer'"
+        score: 2
+
+      - id: immobilization
+        condition: "present_illness contains '卧床' or '制动' or 'immobilization'"
+        score: 2
+
+      - id: d_dimer_elevated
+        condition: "lab.d_dimer > 0.5"
+        score: 1
+
+    risk_levels:
+      - level: "极高危"
+        min_score: 10
+        action: "药物(低分子肝素)+物理(IPC+弹力袜)联合预防,延长至术后5周"
+
+      - level: "高危"
+        min_score: 7
+        action: "药物+物理联合预防至术后4周"
+
+      - level: "中危"
+        min_score: 4
+        action: "药物或物理单种预防至术后2周"
+
+      - level: "低危"
+        min_score: 0
+        action: "基础预防(踝泵+早期活动)"
+
+  - id: infection
+    name: "术后感染风险"
+    description: Postoperative infection risk assessment
+    guideline_ref: "guideline-intertroch-2020"
+
+    score_items:
+      - id: age_75plus
+        condition: "age >= 75"
+        score: 2
+
+      - id: diabetes
+        condition: "past_history contains '糖尿病' or 'diabetes'"
+        score: 2
+
+      - id: obesity
+        condition: "bmi >= 30"
+        score: 1
+
+      - id: immunosuppression
+        condition: "past_history contains '免疫抑制剂' or '激素治疗' or 'immunosuppression'"
+        score: 2
+
+      - id: smoking
+        condition: "past_history contains '吸烟' or 'smoking'"
+        score: 1
+
+      - id: hypoalbuminemia_severe
+        condition: "lab.albumin is not None and lab.albumin < 35"
+        score: 2
+
+      - id: hypoalbuminemia_mild
+        condition: "lab.albumin is not None and 35 <= lab.albumin < 40"
+        score: 1
+
+    risk_levels:
+      - level: "高危"
+        min_score: 6
+        action: "预防性抗生素+营养支持+血糖强化控制"
+
+      - level: "中危"
+        min_score: 3
+        action: "标准预防性抗生素+关注血糖"
+
+      - level: "低危"
+        min_score: 0
+        action: "标准围术期管理"
+
+  - id: cardiac
+    name: "心脏事件风险(MACE)"
+    description: Major adverse cardiac event risk assessment (RCRI-based)
+    guideline_ref: "guideline-nhc-2022"
+
+    score_items:
+      - id: age_75plus
+        condition: "age >= 75"
+        score: 1
+
+      - id: cad
+        condition: "past_history contains '冠心病' or 'CAD' or '心肌梗死' or '心绞痛'"
+        score: 1
+
+      - id: chf
+        condition: "past_history contains '心衰' or '心力衰竭' or 'CHF'"
+        score: 1
+
+      - id: cvd
+        condition: "past_history contains '脑血管' or '脑梗死' or '卒中' or 'TIA'"
+        score: 1
+
+      - id: diabetes
+        condition: "past_history contains '糖尿病' or 'diabetes'"
+        score: 1
+
+      - id: renal_impairment
+        condition: "lab.creatinine is not None and lab.creatinine > 177"
+        score: 1
+
+    risk_levels:
+      - level: "高危"
+        min_score: 3
+        mace_rate: ">11%"
+        action: "心内科术前会诊+优化药物治疗+考虑延迟手术"
+
+      - level: "中危"
+        min_score: 2
+        mace_rate: "6-11%"
+        action: "心内科评估+BNP/肌钙蛋白基线检测"
+
+      - level: "低中危"
+        min_score: 1
+        mace_rate: "2-5%"
+        action: "继续现有心脏药物治疗"
+
+      - level: "低危"
+        min_score: 0
+        mace_rate: "<2%"
+        action: "常规围术期管理"
+
+  - id: fall
+    name: "跌倒/再骨折风险"
+    description: Postoperative fall and refracture risk assessment
+    guideline_ref: "guideline-nhc-2022"
+
+    score_items:
+      - id: age_80plus
+        condition: "age >= 80"
+        score: 2
+
+      - id: age_65_79
+        condition: "65 <= age <= 79"
+        score: 1
+
+      - id: fall_history
+        condition: "past_history contains '跌倒' or '摔伤' or '跌倒史' or 'fall'"
+        score: 2
+
+      - id: osteoporosis
+        condition: "past_history contains '骨质疏松' or 'osteoporosis' or '骨松'"
+        score: 2
+
+      - id: vision_impairment
+        condition: "past_history contains '视力' or '白内障' or 'vision'"
+        score: 1
+
+      - id: cognitive_impairment
+        condition: "past_history contains '痴呆' or '认知' or '阿尔茨海默' or 'dementia'"
+        score: 1
+
+      - id: parkinson
+        condition: "past_history contains '帕金森' or 'parkinson'"
+        score: 2
+
+    risk_levels:
+      - level: "极高危"
+        min_score: 6
+        action: "多学科跌倒预防+居家环境改造+髋部保护器"
+
+      - level: "高危"
+        min_score: 4
+        action: "平衡训练+肌力训练+防跌倒教育"
+
+      - level: "中危"
+        min_score: 2
+        action: "标准化跌倒风险评估+防跌倒指导"
+
+      - level: "低危"
+        min_score: 0
+        action: "常规出院防跌倒指导"

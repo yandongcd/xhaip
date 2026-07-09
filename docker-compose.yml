@@ -1,0 +1,24 @@
+# xhaip v1.0 — Hospital AI Platform
+version: "3.8"
+
+services:
+  xhaip:
+    build: .
+    container_name: xhaip-server
+    ports:
+      - "8769:8769"
+    volumes:
+      - ./packages/haip-hospital/agents/definitions:/app/packages/haip-hospital/agents/definitions:ro
+      - ./packages/haip-hospital/data:/app/packages/haip-hospital/data:ro
+      - ./packages/haip-hospital/knowledge:/app/packages/haip-hospital/knowledge:ro
+      - ./packages/haip-hospital/modules:/app/packages/haip-hospital/modules:ro
+      - ./config:/app/config:ro
+    environment:
+      - PYTHONPATH=/app/packages/haip-core:/app/packages/haip-hospital
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8769/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

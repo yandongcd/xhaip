@@ -1,0 +1,72 @@
+rule_set:
+  id: hypertension
+  domain: cardiology
+  decision_points:
+    - bp_grade
+    - htn_risk_level
+    - bp_control_target
+    - preoperative_bp
+  sources:
+    - china-htn-2024
+  version: "1.0"
+  trust_level: T2
+  owner: cardiology_consultant
+
+rules:
+  - id: bp-grade-3
+    decision_point: bp_grade
+    condition_expr: "context.sbp >= 180 OR context.dbp >= 110"
+    conclusion: "高血压3级（重度）"
+    rule_type: threshold
+    certainty: strong
+    evidence: []
+
+  - id: bp-grade-2
+    decision_point: bp_grade
+    condition_expr: "context.sbp >= 160 OR context.dbp >= 100"
+    conclusion: "高血压2级（中度）"
+    rule_type: threshold
+    certainty: strong
+
+  - id: bp-grade-1
+    decision_point: bp_grade
+    condition_expr: "context.sbp >= 140 OR context.dbp >= 90"
+    conclusion: "高血压1级（轻度）"
+    rule_type: threshold
+    certainty: strong
+
+  - id: htn-target-high
+    decision_point: htn_risk_level
+    condition_eval: "$htn_is_high_risk(context)"
+    conclusion: "高血压高危"
+    rule_type: composite
+    certainty: strong
+
+  - id: htn-target-medium
+    decision_point: htn_risk_level
+    condition_eval: "$htn_is_medium_risk(context)"
+    conclusion: "高血压中危"
+    rule_type: composite
+    certainty: moderate
+
+  - id: preop-bp-safe
+    decision_point: preoperative_bp
+    condition_expr: "context.sbp < 160 AND context.dbp < 100"
+    conclusion: "术前血压达标，可手术"
+    rule_type: threshold
+    certainty: moderate
+    evidence:
+      - source_id: weiwei-2022
+        chapter: "§3.1"
+        confidence: 0.80
+
+  - id: preop-bp-uncontrolled
+    decision_point: preoperative_bp
+    condition_expr: "context.sbp >= 160 OR context.dbp >= 100"
+    conclusion: "术前血压未控制，暂缓手术，优化降压方案"
+    rule_type: threshold
+    certainty: moderate
+    evidence:
+      - source_id: weiwei-2022
+        chapter: "§3.1"
+        confidence: 0.80

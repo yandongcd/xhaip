@@ -1,0 +1,151 @@
+# ============================================================
+# Rules Registry — 全院临床决策规则注册表
+# TOGAF Class: Constraint (Extension ABB)
+# ============================================================
+name: haip-rules-registry
+version: "2.0"
+description: HAIP平台所有可执行规则集的索引（覆盖骨科+心内科+麻醉科+营养科）
+last_updated: 2026-07-02
+
+rule_sets:
+  # ── 骨外科规则 ──
+  - id: timely
+    name: 手术时机判定规则
+    abbr: timing
+    file: assets/rules/timing_rules.yaml
+    version: "3.0"
+    owner: attending
+    rules_count: 9
+    guideline_refs:
+      - "guideline-nhc-2022"
+      - "guideline-nice-ng37"
+
+  - id: completeness
+    name: 术前完整性校验规则
+    abbr: completeness
+    file: assets/rules/completeness_rules.yaml
+    version: "1.0"
+    owner: attending
+    rules_count: 14
+    guideline_refs:
+      - "guideline-nhc-2022"
+      - "guideline-nice-ng37"
+
+  - id: complication
+    name: 并发症风险预测规则
+    abbr: complication
+    file: assets/rules/complication_rules.yaml
+    version: "1.0"
+    owner: attending
+    rules_count: 28
+    guideline_refs:
+      - "guideline-nhc-2022"
+      - "guideline-dvt-2024"
+      - "guideline-intertroch-2020"
+
+  - id: nursing
+    name: 围术期护理规则
+    abbr: nursing
+    file: assets/rules/nursing_rules.yaml
+    version: "1.0"
+    owner: head_nurse
+    rules_count: 21
+    guideline_refs:
+      - "guideline-frailty-nursing"
+      - "guideline-dvt-2024"
+
+  - id: surgery_type
+    name: 手术方式选择规则
+    abbr: surgery_type
+    file: assets/rules/surgery_type_rules.yaml
+    version: "1.0"
+    owner: attending
+    rules_count: 10
+    guideline_refs:
+      - "guideline-femoral-neck-2018"
+      - "guideline-intertroch-2020"
+      - "guideline-aaos-2022"
+
+  - id: followup
+    name: 出院随访规则
+    abbr: followup
+    file: assets/rules/followup_rules.yaml
+    version: "1.0"
+    owner: attending
+    rules_count: 4
+    guideline_refs:
+      - "guideline-nhc-2022"
+      - "guideline-apta-2021"
+
+  - id: fracture_evans
+    name: Evans骨折分型规则
+    abbr: evans
+    file: assets/rules/fracture_evans_rules.yaml
+    version: "1.0"
+    owner: attending
+    rules_count: 7
+    guideline_refs:
+      - "guideline-intertroch-2020"
+
+  # ── 心内科/麻醉科规则 ──
+  - id: hip_fracture_timing
+    name: 髋部骨折手术时机可执行规则
+    abbr: hip_timing
+    file: assets/rules/hip_fracture_timing/rules.yaml
+    version: "1.0"
+    owner: attending
+    rules_count: 19
+    guideline_refs:
+      - "guideline-nhc-2022"
+      - "guideline-nice-ng37"
+
+  - id: ecg_patterns
+    name: ECG模式识别规则
+    abbr: ecg
+    file: assets/rules/ecg_patterns/rules.yaml
+    version: "1.0"
+    owner: cardiologist
+    rules_count: 11
+    guideline_refs:
+      - "guideline-umi-2018"
+
+  - id: perioperative_mi
+    name: 围术期心梗评估规则
+    abbr: mi
+    file: assets/rules/perioperative_mi/rules.yaml
+    version: "1.0"
+    owner: cardiologist
+    rules_count: 9
+    guideline_refs:
+      - "guideline-umi-2018"
+
+  - id: hypertension
+    name: 高血压评估规则
+    abbr: htn
+    file: assets/rules/hypertension/rules.yaml
+    version: "1.0"
+    owner: cardiologist
+    rules_count: 7
+    guideline_refs:
+      - "guideline-china-htn-2024"
+
+  - id: rcri
+    name: RCRI心脏风险指数规则
+    abbr: rcri
+    file: assets/rules/rcri/rules.yaml
+    version: "1.0"
+    owner: cardiologist
+    rules_count: 9
+    guideline_refs:
+      - "guideline-accp-2024"
+
+  # ── 营养科规则 ──
+  - id: nutrition
+    name: 营养风险评估规则
+    abbr: nutrition
+    file: assets/rules/nutrition_rules.yaml
+    version: "1.0"
+    owner: nutritionist
+    rules_count: 54
+    guideline_refs:
+      - "guideline-aspen-2024"
