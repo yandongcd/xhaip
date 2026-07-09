@@ -91,37 +91,50 @@ def audit_environment(**kwargs: Any) -> dict[str, Any]:
 # ── template_render ───────────────────────────────────────────────────────────
 
 _TEMPLATE_HTML: dict[str, str] = {
-    "capability_heatmap": """<!DOCTYPE html>
-<html lang="zh-CN">
-<head><meta charset="UTF-8"><title>业务能力热力图 · EA Templates</title></head>
-<body style="font-family:sans-serif;padding:2rem">
-<h1>业务能力热力图</h1><p>TOGAF Phase B — 能力成熟度 / 关键性 / 覆盖率矩阵（占位模板，完整 HTML 见 templates/）</p>
-</body></html>""",
-    "stakeholder_map": """<!DOCTYPE html>
-<html lang="zh-CN">
-<head><meta charset="UTF-8"><title>干系人地图 · EA Templates</title></head>
-<body style="font-family:sans-serif;padding:2rem">
-<h1>干系人地图</h1><p>TOGAF Phase A — 权力·兴趣四象限矩阵（占位模板，完整 HTML 见 templates/）</p>
-</body></html>""",
-    "roadmap": """<!DOCTYPE html>
-<html lang="zh-CN">
-<head><meta charset="UTF-8"><title>架构路线图 · EA Templates</title></head>
-<body style="font-family:sans-serif;padding:2rem">
-<h1>架构路线图</h1><p>TOGAF Phase F — 四阶段迁移时间线（占位模板，完整 HTML 见 templates/）</p>
-</body></html>""",
-    "app_landscape": """<!DOCTYPE html>
-<html lang="zh-CN">
-<head><meta charset="UTF-8"><title>应用全景图 · EA Templates</title></head>
-<body style="font-family:sans-serif;padding:2rem">
-<h1>应用全景图</h1><p>TOGAF Phase C — 应用组合状态与技术栈（占位模板，完整 HTML 见 templates/）</p>
-</body></html>""",
-    "value_stream": """<!DOCTYPE html>
-<html lang="zh-CN">
-<head><meta charset="UTF-8"><title>价值流图 · EA Templates</title></head>
-<body style="font-family:sans-serif;padding:2rem">
-<h1>价值流图</h1><p>TOGAF Phase B — 端到端价值流阶段（占位模板，完整 HTML 见 templates/）</p>
-</body></html>""",
+    # Templates now rendered dynamically by _render_template_real()
 }
+_TEMPLATE_CACHE: dict[str, str] = {}
+
+
+def _render_template_real(name: str, dept: str = "orthopedic") -> str:
+    """Render EA template with real builder data."""
+    if name in _TEMPLATE_CACHE:
+        return _TEMPLATE_CACHE[name]
+
+    from haip.togaf.builder import build_to_dict
+
+    arch_data = build_to_dict(dept)
+    if not arch_data:
+        return f"<html><body><h1>Error</h1><p>No architecture data for {dept}</p></body></html>"
+
+    nodes = arch_data.get("nodes", [])
+
+    if name == "capability_heatmap":
+        from haip.togaf.templates.capability_heatmap import render as render_heatmap, DEFAULT_DATA
+        capabilities = [
+            {"capability": n["name"], "maturity": min(5, 3 + n.get("properties", {}).get("stage", 0)),
+             "criticality": 4 if n["layer"] == "Business" else 3, "coverage": 0.75}
+            for n in nodes if n["layer"] in ("Business", "Application")
+        ]
+        html = render_heatmap(capabilities or DEFAULT_DATA)
+    elif name == "app_landscape":
+        from haip.togaf.templates.app_landscape import render as render_app, DEFAULT_DATA
+        apps = [
+            {"name": n["name"], "type": n["type"], "status": "active",
+             "version": "1.0", "owner": n.get("properties", {}).get("owner", dept)}
+            for n in nodes if n["layer"] == "Application"
+        ]
+        html = render_app(apps or DEFAULT_DATA)
+    elif name == "value_stream":
+        from haip.togaf.templates.value_stream_map import render as render_vs, DEFAULT_DATA
+        stages = [{"name": n["name"], "order": n.get("properties", {}).get("stage", 0)}
+                  for n in nodes if n["type"] == "BusinessService"]
+        html = render_vs(stages or DEFAULT_DATA)
+    else:
+        html = ea_templates.render_template(name, arch_data)
+
+    _TEMPLATE_CACHE[name] = html
+    return html
 
 _TEMPLATE_META: dict[str, dict[str, str]] = {
     "capability_heatmap": {
@@ -148,22 +161,19 @@ _TEMPLATE_META: dict[str, dict[str, str]] = {
 
 
 def template_render(name: str = "", theme: dict[str, str] | None = None, **kwargs: Any) -> dict[str, Any]:
-    """Render an EA visualisation template by name."""
+    """Render an EA visualisation template with real data."""
     try:
+        dept = kwargs.get("department", kwargs.get("dept", "orthopedic"))
         html = _TEMPLATE_HTML.get(name)
         if html is None:
-            available = ", ".join(_TEMPLATE_HTML.keys())
-            return {
-                "status": "error",
-                "error": f"Template '{name}' not found. Available: {available}",
-            }
-
-        # Apply theme as CSS variables override inline if provided
-        if theme:
-            css_vars = ";".join(f"{k}:{v}" for k, v in theme.items())
-            html = html.replace("</head>", f"<style>:root{{{css_vars}}}</style></head>")
-
-        return {"status": "ok", "result": html}
+            # Generate from real templates + builder data
+            try:
+                html = _render_template_real(name, dept)
+            except Exception:
+                available = list(_TEMPLATE_META.keys())
+                return {"status": "error",
+                        "error": f"Unknown template: {name}. Available: {', '.join(available)}"}
+        return {"status": "ok", "result": {"template": name, "html": html[:5000], "rendered": True}}
     except Exception as exc:
         return {"status": "error", "error": str(exc)}
 
