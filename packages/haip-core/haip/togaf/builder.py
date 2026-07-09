@@ -452,18 +452,85 @@ def _build_edges(nodes: list[ArchitectureNode], domain: str) -> list[Architectur
     return unique
 
 
+def _build_domain_from_template(department: str) -> dict | None:
+    """Generate domain data from templates_dept.py for any department."""
+    from haip.togaf.templates_dept import get_dept_template
+    from haip.togaf.organization import list_orgs
+
+    # Try Chinese name → org_id lookup
+    org_id = department
+    for org in list_orgs():
+        if org.name == department:
+            org_id = org.id
+            break
+
+    # Find parent for template
+    parent_id = ""
+    for org in list_orgs():
+        for child in org.children:
+            if child.id == org_id or child.name == department:
+                parent_id = org.id
+                break
+        if parent_id:
+            break
+
+    template = get_dept_template(org_id, parent_id)
+    if not template:
+        return None
+
+    return {
+        "value_streams": [
+            {"id": vs["id"], "name": vs["name"], "stage": vs["stage"],
+             "trigger": vs.get("trigger", ""), "outcome": vs.get("outcome", ""),
+             "roles": template.typical_roles[:3]}
+            for vs in template.value_streams
+        ],
+        "business_processes": [
+            {"id": bp["id"], "name": bp["name"], "order": bp["order"],
+             "owner": bp.get("owner", ""),
+             "inputs": ["患者信息", "检验报告"],
+             "outputs": [bp.get("name", "") + "结果"]}
+            for bp in template.business_processes
+        ],
+        "data_entities": [
+            {"id": f"de-{de[:20].replace(' ', '-')}",
+             "name": de, "category": "Transaction", "fields": ["result"]}
+            for de in template.common_data_entities
+        ],
+        "application_components": [
+            {"id": f"ac-{department[:20].replace(' ', '-')}",
+             "name": f"{department}Agent", "type": "ApplicationComponent",
+             "services": [bp["id"] for bp in template.business_processes[:3]],
+             "depends_on": ["ac-master-data"]},
+            {"id": "ac-master-data", "name": "患者数据中心",
+             "type": "DataEntity", "port": 8766, "services": ["get_patient"]},
+        ],
+        "technology_components": [
+            {"id": "tc-python", "name": "Python Runtime", "type": "TechnologyComponent"},
+            {"id": "tc-http", "name": "HTTP Server", "type": "TechnologyService"},
+        ],
+    }
+
+
 # ── Public API ──
 
 def build_4a(department: str = "orthopedic") -> Architecture4A | None:
     """Generate complete 4A TOGAF architecture for a department.
 
+    First tries the hardcoded domain registry, then falls back
+    to template-based generation from templates_dept.py.
+
     Args:
-        department: Department key ('orthopedic')
+        department: Department key ('orthopedic') or Chinese name ('呼吸内科')
 
     Returns:
-        Architecture4A with all nodes and edges, or None if department unknown.
+        Architecture4A with all nodes and edges, or None if unrecognized.
     """
+    # Try hardcoded domain first
     domain = _DOMAIN_REGISTRY.get(department)
+    # Try template-based generation
+    if not domain:
+        domain = _build_domain_from_template(department)
     if not domain:
         return None
 

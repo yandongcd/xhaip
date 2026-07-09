@@ -185,8 +185,15 @@ def list_all() -> dict[str, DomainPlugin]:
     return dict(_registry)
 
 
-def load_from_dir(definitions_dir: str | Path) -> int:
-    """从目录加载所有 YAML Agent 定义，返回注册数量。"""
+def load_from_dir(definitions_dir: str | Path, on_register: callable | None = None) -> int:
+    """从目录加载所有 YAML Agent 定义，返回注册数量。
+    
+    Args:
+        definitions_dir: YAML目录路径
+        on_register: 可选回调，在每个Agent注册后调用。
+                    签名: on_register(plugin: DomainPlugin) -> None
+                    用于TOGAF校验、日志等。异常会被捕获并打印警告。
+    """
     root = Path(definitions_dir)
     count = 0
     for yaml_file in sorted(root.glob("*.yaml")):
@@ -198,6 +205,12 @@ def load_from_dir(definitions_dir: str | Path) -> int:
             continue
         plugin = DomainPlugin.from_yaml(data)
         register(plugin)
+        if on_register is not None:
+            try:
+                on_register(plugin)
+            except Exception as e:
+                import sys
+                print(f"[TOGAF] Validation warning for {plugin.name}: {e}", file=sys.stderr)
         count += 1
     return count
 
