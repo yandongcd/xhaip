@@ -1,4 +1,4 @@
-# 眼科 ????????????????
+# 眼科 临床步骤临床步骤临床步骤临床步骤
 # TOGAF Business Architecture ? Auto-generated from template
 # Template: 五官科
 # Generated: 2026-07-10
@@ -41,63 +41,63 @@ business_processes:
     order: 1
     owner: 主治医师
     inputs:
-      - ????
-      - ????
+      - 病史采集与体格检查
+      - 辅助检查与判读
     outputs:
-      - ????
+      - 诊断确认
     steps:
-      - ????
-      - ????
-      - ????
+      - 治疗方案制定
+      - 执行与监测
+      - 随访评估
   - id: bp-exam
     name: 专科检查
     order: 2
     owner: 主治医师
     inputs:
-      - ????
-      - ????
+      - 病史采集
+      - 辅助检查
     outputs:
-      - ????
+      - 诊断确认
     steps:
-      - ????
-      - ????
-      - ????
+      - 方案制定
+      - 执行监测
+      - 随访评估
   - id: bp-diagnosis
     name: 确诊定级
     order: 3
     owner: 主治医师
     inputs:
-      - ????
-      - ????
+      - 康复管理
+      - 质控审计
     outputs:
-      - ????
+      - 病史采集
     steps:
-      - ????
-      - ????
-      - ????
+      - 辅助检查
+      - 诊断确认
+      - 方案制定
   - id: bp-treatment
     name: 治疗操作
     order: 4
     owner: 主治医师
     inputs:
-      - ????
-      - ????
+      - 执行监测
+      - 随访评估
     outputs:
-      - ????
+      - 康复管理
     steps:
-      - ????
-      - ????
-      - ????
+      - 质控审计
+      - 病史采集
+      - 辅助检查
   - id: bp-followup
     name: 定期复查
     order: 5
     owner: 主治医师
     inputs:
-      - ????
-      - ????
+      - 诊断确认
+      - 方案制定
     outputs:
-      - ????
+      - 执行监测
     steps:
-      - ????
-      - ????
-      - ????
+      - 随访评估
+      - 康复管理
+      - 质控审计

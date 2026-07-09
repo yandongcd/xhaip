@@ -1,11 +1,11 @@
-# 儿科 ?????????
+# 儿科 临床步骤临床步骤?
 # TOGAF Business Architecture ? Auto-generated from template
 # Template: 妇产儿科
 # Generated: 2026-07-10
 
 department: 儿科
 template_type: 妇产儿科
-guidelines: [??????]
+guidelines: [科室临床指南]
 version: "1.0.0"
 
 value_streams:
@@ -41,76 +41,76 @@ business_processes:
     order: 1
     owner: 主治医师
     inputs:
-      - ????
-      - ????
+      - 病史采集与体格检查
+      - 辅助检查与判读
     outputs:
-      - ????
+      - 诊断确认
     steps:
-      - ????
-      - ????
-      - ????
+      - 治疗方案制定
+      - 执行与监测
+      - 随访评估
   - id: bp-exam
     name: 专项检查
     order: 2
     owner: 主治医师
     inputs:
-      - ????
-      - ????
+      - 病史采集
+      - 辅助检查
     outputs:
-      - ????
+      - 诊断确认
     steps:
-      - ????
-      - ????
-      - ????
+      - 方案制定
+      - 执行监测
+      - 随访评估
   - id: bp-diagnosis
     name: 诊断分级
     order: 3
     owner: 主治医师
     inputs:
-      - ????
-      - ????
+      - 康复管理
+      - 质控审计
     outputs:
-      - ????
+      - 病史采集
     steps:
-      - ????
-      - ????
-      - ????
+      - 辅助检查
+      - 诊断确认
+      - 方案制定
   - id: bp-treatment
     name: 分娩/治疗执行
     order: 4
     owner: 主治医师
     inputs:
-      - ????
-      - ????
+      - 执行监测
+      - 随访评估
     outputs:
-      - ????
+      - 康复管理
     steps:
-      - ????
-      - ????
-      - ????
+      - 质控审计
+      - 病史采集
+      - 辅助检查
   - id: bp-nursing
     name: 产后/儿科护理
     order: 5
     owner: 护士长
     inputs:
-      - ????
-      - ????
+      - 诊断确认
+      - 方案制定
     outputs:
-      - ????
+      - 执行监测
     steps:
-      - ????
-      - ????
-      - ????
+      - 随访评估
+      - 康复管理
+      - 质控审计
   - id: bp-followup
     name: 随访与保健
     order: 6
     owner: 主治医师
     inputs:
-      - ????
-      - ????
+      - 病史采集
+      - 辅助检查
     outputs:
-      - ????
+      - 诊断确认
     steps:
-      - ????
-      - ????
-      - ????
+      - 方案制定
+      - 执行监测
+      - 随访评估

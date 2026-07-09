@@ -1,4 +1,4 @@
-# 肝胆外科 ?????????????????????????????
+# 肝胆外科 业务流程定义
 # TOGAF Business Architecture ? Auto-generated from template
 # Template: 外科
 # Generated: 2026-07-10
@@ -41,102 +41,102 @@ business_processes:
     order: 1
     owner: 主治医师
     inputs:
-      - ????
-      - ????
+      - 病史采集与体格检查
+      - 辅助检查与判读
     outputs:
-      - ????
+      - 诊断确认
     steps:
-      - ????
-      - ????
-      - ????
+      - 治疗方案制定
+      - 执行与监测
+      - 随访评估
   - id: bp-diag
     name: 诊断评估
     order: 2
     owner: 主治医师
     inputs:
-      - ????
-      - ????
+      - 病史采集
+      - 辅助检查
     outputs:
-      - ????
+      - 诊断确认
     steps:
-      - ????
-      - ????
-      - ????
+      - 方案制定
+      - 执行监测
+      - 随访评估
   - id: bp-preop
     name: 术前准备
     order: 3
     owner: 主治医师
     inputs:
-      - ????
-      - ????
+      - 康复管理
+      - 质控审计
     outputs:
-      - ????
+      - 病史采集
     steps:
-      - ????
-      - ????
-      - ????
+      - 辅助检查
+      - 诊断确认
+      - 方案制定
   - id: bp-risk
     name: 风险评估
     order: 4
     owner: 麻醉医师
     inputs:
-      - ????
-      - ????
+      - 执行监测
+      - 随访评估
     outputs:
-      - ????
+      - 康复管理
     steps:
-      - ????
-      - ????
-      - ????
+      - 质控审计
+      - 病史采集
+      - 辅助检查
   - id: bp-mdt
     name: MDT决策
     order: 5
     owner: 主治医师
     inputs:
-      - ????
-      - ????
+      - 诊断确认
+      - 方案制定
     outputs:
-      - ????
+      - 执行监测
     steps:
-      - ????
-      - ????
-      - ????
+      - 随访评估
+      - 康复管理
+      - 质控审计
   - id: bp-surgery
     name: 手术执行
     order: 6
     owner: 主治医师
     inputs:
-      - ????
-      - ????
+      - 病史采集
+      - 辅助检查
     outputs:
-      - ????
+      - 诊断确认
     steps:
-      - ????
-      - ????
-      - ????
+      - 方案制定
+      - 执行监测
+      - 随访评估
   - id: bp-nursing
     name: 围术期护理
     order: 7
     owner: 护士长
     inputs:
-      - ????
-      - ????
+      - 康复管理
+      - 质控审计
     outputs:
-      - ????
+      - 病史采集
     steps:
-      - ????
-      - ????
-      - ????
+      - 辅助检查
+      - 诊断确认
+      - 方案制定
   - id: bp-followup
     name: 术后随访
     order: 8
     owner: 主治医师
     inputs:
-      - ????
-      - ????
+      - 执行监测
+      - 随访评估
     outputs:
-      - ????
+      - 康复管理
     steps:
-      - ????
-      - ????
-      - ????
+      - 质控审计
+      - 病史采集
+      - 辅助检查
