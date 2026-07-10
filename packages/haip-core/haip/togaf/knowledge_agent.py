@@ -48,10 +48,63 @@ class KnowledgeAgent:
     agent_name: str = ""
     department: str = ""
     guidelines_cache: list[dict] = []
+    _rule_engine: object | None = None  # RuleEngine instance (lazy loaded)
 
     def __init__(self, agent_name: str = "", department: str = ""):
         self.agent_name = agent_name
         self.department = department
+
+    @property
+    def rule_engine(self):
+        """Lazy-load RuleEngine on first access."""
+        if self._rule_engine is None:
+            from haip.togaf.rule_engine import RuleEngine
+            self._rule_engine = RuleEngine()
+        return self._rule_engine
+
+    def run_clinical_pipeline(self, patient: dict) -> object:
+        """Run full clinical pipeline (diagnosis→risk→treatment→alerts) via RuleEngine."""
+        return self.rule_engine.run_pipeline(patient, department=self.department)
+
+    def clinical_result_from_pipeline(self, patient: dict,
+                                       pipeline_result: object = None) -> dict:
+        """Generate clinical_result using RuleEngine pipeline output."""
+        if pipeline_result is None:
+            pipeline_result = self.run_clinical_pipeline(patient)
+        s = pipeline_result.summary()
+        diag = s.get("diagnosis", {})
+        risk = s.get("risk", {})
+        treatment = s.get("treatment", {})
+        alerts = s.get("alerts", [])
+
+        summary_parts = []
+        if diag:
+            summary_parts.append(f"{diag.get('diagnosis', '')} ({diag.get('severity', '')})")
+        if risk:
+            summary_parts.append(f"风险: {risk.get('risk', '')}")
+        if treatment:
+            summary_parts.append(f"方案: {treatment.get('treatment', '')[:30]}")
+
+        result: dict[str, Any] = {
+            "status": "ok",
+            "agent": self.agent_name,
+            "summary": " | ".join(summary_parts) if summary_parts else "评估完成",
+        }
+        if patient:
+            result["patient"] = {
+                "id": patient.get("patient_id"),
+                "name": patient.get("name"),
+                "diagnosis": patient.get("diagnosis"),
+            }
+        if diag:
+            result["diagnosis"] = diag
+        if risk:
+            result["risk"] = risk
+        if treatment:
+            result["treatment"] = treatment
+        if alerts:
+            result["alerts"] = [a.get("message", str(a)) for a in alerts]
+        return result
 
     def get_patient(self, patient_id: str) -> dict | None:
         return _load_patients().get(patient_id)

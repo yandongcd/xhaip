@@ -1,0 +1,169 @@
+# 呼吸内科临床规则 — COPD分级 + 哮喘分型 + 肺炎严重度
+rule_type: diagnosis
+department: 呼吸内科
+guideline: GOLD 2024 慢性阻塞性肺疾病全球倡议
+version: "1.0.0"
+
+rules:
+  - id: copd-gold-4
+    description: COPD GOLD 4级（极重度）
+    condition:
+      and:
+        - field: diagnosis
+          operator: contains
+          value: COPD
+        - or:
+            - field: lab_results.FEV1
+              operator: "<="
+              value: 30
+            - field: lab_results.PaO2
+              operator: "<="
+              value: 55
+    result:
+      diagnosis: COPD GOLD 4级（极重度）
+      severity: 极重度
+      recommendation: LAMA加LABA加ICS三联吸入，长期氧疗
+
+  - id: copd-gold-3
+    description: COPD GOLD 3级（重度）
+    condition:
+      and:
+        - field: diagnosis
+          operator: contains
+          value: COPD
+        - field: lab_results.FEV1
+          operator: "<="
+          value: 50
+    result:
+      diagnosis: COPD GOLD 3级（重度）
+      severity: 重度
+      recommendation: LAMA加LABA联合吸入，肺康复训练
+
+  - id: copd-gold-2
+    description: COPD GOLD 2级（中度）
+    condition:
+      and:
+        - field: diagnosis
+          operator: contains
+          value: COPD
+        - field: lab_results.FEV1
+          operator: "<="
+          value: 80
+    result:
+      diagnosis: COPD GOLD 2级（中度）
+      severity: 中度
+      recommendation: LABA或LAMA单药维持
+
+  - id: asthma-severe
+    description: 重度哮喘
+    condition:
+      and:
+        - field: diagnosis
+          operator: contains
+          value: 哮喘
+        - or:
+            - field: lab_results.WBC
+              operator: ">="
+              value: 15
+            - field: lab_results.CRP
+              operator: ">="
+              value: 20
+    result:
+      diagnosis: 支气管哮喘急性发作（重度）
+      severity: 重度
+      recommendation: 雾化SABA加SAMA，全身糖皮质激素
+
+  - id: cap-severe
+    description: 重症肺炎
+    condition:
+      and:
+        - field: diagnosis
+          operator: contains
+          value: 肺炎
+        - or:
+            - field: lab_results.WBC
+              operator: ">="
+              value: 15
+            - field: lab_results.CRP
+              operator: ">="
+              value: 100
+            - field: lab_results.PaO2
+              operator: "<="
+              value: 60
+    result:
+      diagnosis: 重症社区获得性肺炎
+      severity: 重症
+      recommendation: 联合抗生素，必要时ICU
+
+  - id: cap-moderate
+    description: 中度肺炎
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 肺炎
+    result:
+      diagnosis: 社区获得性肺炎（中度）
+      severity: 中度
+      recommendation: 阿莫西林克拉霉素口服
+
+---
+rule_type: treatment
+department: 呼吸内科
+
+rules:
+  - id: copd-maintenance
+    description: COPD 维持治疗
+    condition:
+      field: diagnosis
+      operator: contains
+      value: COPD
+    result:
+      treatment: 分级维持治疗
+      medications:
+        - LABA或LAMA联合吸入
+        - 按需SABA缓解
+        - ICS用于反复急性加重
+      non_pharm: 肺康复加戒烟加疫苗
+
+  - id: asthma-step-up
+    description: 哮喘阶梯治疗
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 哮喘
+    result:
+      treatment: 阶梯治疗
+      steps:
+        - 按需低剂量ICS-formoterol
+        - 每日低剂量ICS
+        - 低剂量ICS加LABA
+        - 中剂量ICS加LABA
+
+---
+rule_type: alert
+department: 呼吸内科
+
+rules:
+  - id: severe-hypoxemia
+    description: 重度低氧血症
+    condition:
+      field: lab_results.PaO2
+      operator: "<="
+      value: 50
+    result:
+      alert_level: 紧急
+      message: PaO2低重度低氧血症
+
+  - id: severe-infection
+    description: 重症感染预警
+    condition:
+      and:
+        - field: diagnosis
+          operator: contains
+          value: COPD
+        - field: lab_results.CRP
+          operator: ">="
+          value: 150
+    result:
+      alert_level: 紧急
+      message: 重度COPD合并感染，警惕呼衰

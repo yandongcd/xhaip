@@ -1,0 +1,141 @@
+# 心血管内科临床规则 — 心衰诊断 + 高血压分级 + GDMT方案
+# 指南: 中国心力衰竭诊断和治疗指南 (2024) + 中国高血压防治指南 (2024)
+
+rule_type: diagnosis
+department: 心血管内科
+guideline: 中国心力衰竭诊断和治疗指南 (2024)
+version: "1.0.0"
+
+rules:
+  - id: hf-diagnose-ntprobnp
+    description: NT-proBNP 心衰诊断阈值
+    condition:
+      or:
+        - field: "lab_results.NT-proBNP"
+          operator: ">="
+          value: 300
+        - field: "lab_results.BNP"
+          operator: ">="
+          value: 100
+    result:
+      diagnosis: 心力衰竭
+      severity: 确诊
+      guideline_ref: 中国心衰指南2024 §3
+
+  - id: hf-acute-ntprobnp-high
+    description: NT-proBNP > 5000 → 急性心衰
+    condition:
+      field: "lab_results.NT-proBNP"
+      operator: ">="
+      value: 5000
+    result:
+      diagnosis: 急性心力衰竭
+      severity: 危重
+      recommendation: 立即住院，利尿+血管扩张剂+正性肌力药
+
+  - id: htn-grade-3
+    description: 高血压3级
+    condition:
+      and:
+        - field: diagnosis
+          operator: contains
+          value: 高血压
+        - field: age
+          operator: ">="
+          value: 60
+    result:
+      diagnosis: 高血压病3级（高危）
+      severity: 高危
+      recommendation: 联合用药，监测靶器官损害
+
+  - id: htn-grade-2
+    description: 高血压2级
+    condition:
+      and:
+        - field: diagnosis
+          operator: contains
+          value: 高血压
+        - field: age
+          operator: "<"
+          value: 60
+    result:
+      diagnosis: 高血压病2级
+      severity: 中危
+      recommendation: 首选CCB/ACEI/ARB单药或联合
+
+  - id: acs-stemi
+    description: 急性ST段抬高心梗
+    condition:
+      or:
+        - field: diagnosis
+          operator: contains
+          value: ST段抬高
+        - field: diagnosis
+          operator: contains
+          value: 急性心梗
+        - field: "lab_results.Troponin"
+          operator: ">="
+          value: 0.5
+    result:
+      diagnosis: 急性ST段抬高心肌梗死
+      severity: 危重
+      recommendation: 急诊PCI（门球时间<90min），双抗+DAPT
+
+---
+rule_type: treatment
+department: 心血管内科
+guideline: 中国心力衰竭诊断和治疗指南 (2024)
+
+rules:
+  - id: hfref-gdmt
+    description: HFrEF GDMT 四联疗法
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 心衰
+    result:
+      treatment: GDMT四联疗法
+      medications:
+        - ARNI/ACEI（沙库巴曲缬沙坦 首选）
+        - β阻滞剂（美托洛尔/比索洛尔）
+        - MRA（螺内酯/依普利酮）
+        - SGLT2i（达格列净/恩格列净）
+      monitoring: 血钾/肌酐 1-2周复查；血压每日监测
+
+  - id: htn-combination
+    description: 高血压联合治疗方案
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 高血压
+    result:
+      treatment: 个体化降压方案
+      medications:
+        - CCB（氨氯地平/硝苯地平） 首选
+        - ACEI/ARB（培哚普利/缬沙坦）
+      target: 血压<140/90 mmHg（老年<150/90）
+      lifestyle: 限盐<5g/d，有氧运动150min/周
+
+---
+rule_type: followup
+department: 心血管内科
+
+rules:
+  - id: hf-followup-1month
+    description: 心衰出院1月随访
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 心衰
+    result:
+      followup_schedule:
+        - time: 出院1周
+          items: 体重/血压/症状评估/药物调整
+        - time: 出院1月
+          items: NT-proBNP/心超/肾功能/电解质
+        - time: 出院3月
+          items: 全面评估/GDMT优化
+      red_flags:
+        - 体重3天内增加>2kg
+        - 静息心率>100bpm
+        - 不能平卧
