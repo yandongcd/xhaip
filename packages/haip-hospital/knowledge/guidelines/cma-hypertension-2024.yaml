@@ -1,0 +1,61 @@
+# ============================================================
+# Guideline Asset: 中国高血压防治指南（2024年修订版）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-htn-2024"
+name: "中国高血压防治指南（2024年修订版）"
+abbr: "高血压指南2024"
+version: "2024"
+publisher: "中华医学会心血管病学分会 / 中国高血压联盟"
+journal: "中华心血管病杂志 2024;52(8):857-910"
+doi: "10.3760/cma.j.cn112148-20240701-00400"
+language: zh-CN
+trust_level: T1
+original_pdf: "guidelines/originals/cardiology-中国高血压防治指南(2024年修订版).pdf"
+
+description: >
+  2024年修订版高血压防治指南，在2018年版基础上结合国内外最新研究证据修订。
+  涵盖高血压诊断评估、分级分层、预防干预、治疗管理全流程。适用于各级医疗
+  机构临床医师、公共卫生人员。
+
+key_sections:
+  - id: "§3"
+    title: "高血压诊断与分级"
+    pages: "860-864"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [htn-grade-1, htn-grade-2, htn-grade-3, htn-ish]
+
+  - id: "§4"
+    title: "高血压危险分层"
+    pages: "865-870"
+    stage_ids: [S3]
+    rule_ids: [htn-risk-low, htn-risk-mid, htn-risk-high, htn-risk-veryhigh]
+
+  - id: "§5"
+    title: "高血压治疗策略"
+    pages: "871-890"
+    stage_ids: [S4, S5]
+    rule_ids: [htn-lifestyle, htn-monotherapy, htn-combination, htn-sphc]
+
+  - id: "§6"
+    title: "特殊人群高血压管理"
+    pages: "891-900"
+    stage_ids: [S4, S5]
+    rule_ids: [htn-elderly, htn-dm, htn-ckd, htn-pregnancy]
+
+  - id: "§7"
+    title: "高血压随访与长期管理"
+    pages: "901-910"
+    stage_ids: [S6]
+    rule_ids: [htn-followup-1m, htn-followup-3m, htn-followup-annual]
+
+rule_sets_covered:
+  - htn_diagnosis
+  - htn_risk_stratification
+  - htn_treatment
+  - htn_special_population
+  - htn_followup
+
+derived_rule_count: 6
+last_updated: 2026-07-10

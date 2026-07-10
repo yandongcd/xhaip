@@ -1,0 +1,132 @@
+# 感染内科临床规则 — 病毒性肝炎 + 结核病 + HIV 机会感染
+rule_type: diagnosis
+department: 感染内科
+capability: cap-l3-infectious-disease-diagnosis
+business_process: bp-infectious-disease-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-infection, de-lab-biochemistry, de-imaging]
+  produces: [de-diagnosis-result]
+guideline: 中华感染病学杂志 慢性乙型肝炎防治指南 (2022)
+stakeholder: 感染内科医师需快速判定肝炎活动、结核感染与 HIV 分期
+version: "1.0.0"
+
+rules:
+  - id: id-hbv-antiviral
+    description: 乙肝 DNA > 2000 + ALT > 2× → 抗病毒
+    condition:
+      and:
+        - {field: lab_results.HBV_DNA, operator: ">", value: 2000}
+        - {field: lab_results.ALT, operator: ">", value: 80}
+    result:
+      diagnosis: 慢性乙型肝炎（免疫清除期）
+      severity: 中危
+      recommendation: 启动一线核苷类似物治疗
+
+  - id: id-hcv-daa
+    description: 丙肝 RNA 阳性 → DAA
+    condition:
+      field: lab_results.HCV_RNA
+      operator: "=="
+      value: positive
+    result:
+      diagnosis: 慢性丙型肝炎
+      severity: 中危
+      recommendation: 基因分型后 DAA 方案、评估肝纤维化
+
+  - id: id-tspot-tb
+    description: T-SPOT 阳性 → 抗结核
+    condition:
+      field: lab_results.T_SPOT
+      operator: "=="
+      value: positive
+    result:
+      diagnosis: 结核分枝杆菌感染
+      severity: 中危
+      recommendation: 胸片/CT 排查活动性结核、考虑预防性抗结核
+
+---
+rule_type: risk_score
+department: 感染内科
+capability: cap-l3-infectious-disease-risk
+business_process: bp-infectious-disease-assessment
+data_entities:
+  consumes: [de-patient, de-lab-infection, de-lab-biochemistry]
+  produces: [de-risk-assessment]
+guideline: 中华感染病学杂志 HIV/AIDS 诊疗指南 (2023)
+stakeholder: 评估肝炎重症化风险与 HIV 机会感染风险
+version: "1.0.0"
+
+rules:
+  - id: id-hbv-high-viral
+    description: HBV DNA > 10^5 → 高危
+    condition:
+      field: lab_results.HBV_DNA
+      operator: ">"
+      value: 100000
+    result:
+      risk: 肝硬化/肝癌高危
+      severity: 高病毒载量、肝脏持续损伤
+      recommendation: 立即抗病毒、每 3-6 月肝脏影像学筛查
+
+  - id: id-cd4-opportunistic
+    description: CD4 < 200 → 机会感染
+    condition:
+      field: lab_results.CD4
+      operator: "<"
+      value: 200
+    result:
+      risk: 机会性感染高风险
+      severity: 艾滋病期免疫功能严重缺陷
+      recommendation: 预防性 SMZ/TMP、启动 ART
+
+---
+rule_type: treatment
+department: 感染内科
+capability: cap-l3-infectious-disease-treatment
+business_process: bp-infectious-disease-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-lab-infection]
+  produces: [de-treatment-plan]
+guideline: 中华感染病学杂志 慢性乙型肝炎防治指南 (2022)
+stakeholder: 根据感染病原体选择精准抗病毒/抗结核方案
+version: "1.0.0"
+
+rules:
+  - id: id-entecavir-hbv
+    description: 恩替卡韦 → 乙肝
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 乙型肝炎
+    result:
+      treatment: 恩替卡韦（ETV）
+      dosage: 恩替卡韦 0.5mg qd（空腹）
+      alternatives:
+        - 替诺福韦（TDF）300mg qd
+        - 丙酚替诺福韦（TAF）25mg qd
+
+  - id: id-sofosbuvir-hcv
+    description: 索磷布韦 → 丙肝
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 丙型肝炎
+    result:
+      treatment: 索磷布韦联合 DAA
+      regimens:
+        - 索磷布韦/维帕他韦（丙通沙）12 周
+        - 格拉瑞韦/艾尔巴韦 12 周
+      monitoring: HCV RNA 治疗 4 周 + SVR12
+
+  - id: id-isoniazid-rifampin-tb
+    description: 异烟肼 + 利福平 → 结核
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 结核
+    result:
+      treatment: 异烟肼 + 利福平 + 吡嗪酰胺 + 乙胺丁醇
+      phase:
+        - 强化期：HRZE 2 月
+        - 巩固期：HR 4 月
+      monitoring: 肝功能每 2 周

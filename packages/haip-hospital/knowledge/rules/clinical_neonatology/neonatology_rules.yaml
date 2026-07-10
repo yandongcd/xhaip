@@ -1,0 +1,126 @@
+# 新生儿科临床规则 — 早产管理 + 黄疸筛查 + 呼吸评估
+rule_type: diagnosis
+department: 新生儿科
+capability: cap-l3-neonatology-diagnosis
+business_process: bp-neonatology-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-neonate, de-vital-neonate]
+  produces: [de-diagnosis-result]
+guideline: 中国新生儿复苏指南 (2021)
+stakeholder: 新生儿科医师需快速判定新生儿危重症
+version: "1.0.0"
+
+rules:
+  - id: neo-very-low-bw
+    description: 出生体重 < 1500g → NICU
+    condition:
+      field: patient.birth_weight
+      operator: "<"
+      value: 1500
+    result:
+      diagnosis: 极低出生体重儿
+      severity: 高危
+      recommendation: 收入 NICU，恒温箱管理
+
+  - id: neo-hyperbilirubinemia
+    description: 黄疸 > 15mg/dl → 光疗
+    condition:
+      field: lab.total_bilirubin
+      operator: ">="
+      value: 15
+    result:
+      diagnosis: 新生儿高胆红素血症
+      severity: 需干预
+      recommendation: 双面光疗 + 监测胆红素变化
+
+  - id: neo-respiratory-distress
+    description: 呼吸频率 > 60次/min → 呼吸窘迫
+    condition:
+      field: vital.respiratory_rate
+      operator: ">"
+      value: 60
+    result:
+      diagnosis: 新生儿呼吸窘迫
+      severity: 高危
+      recommendation: 血氧监测 + 血气分析 + 必要时辅助通气
+
+---
+rule_type: risk_score
+department: 新生儿科
+capability: cap-l3-neonatology-risk
+business_process: bp-neonatology-risk-assessment
+data_entities:
+  consumes: [de-patient, de-vital-neonate]
+  produces: [de-risk-assessment]
+guideline: 中国早产儿保健指南 (2022)
+stakeholder: 评估早产儿与窒息相关风险，制定监护级别
+version: "1.0.0"
+
+rules:
+  - id: neo-preterm-high-risk
+    description: 孕周 < 32w → 高危早产
+    condition:
+      field: patient.gestational_age
+      operator: "<"
+      value: 32
+    result:
+      risk: 高危早产儿
+      severity: 多器官发育不全风险
+      recommendation: NICU 长期监护 + 多学科管理
+
+  - id: neo-apgar-asphyxia
+    description: Apgar 1min < 7 → 窒息风险
+    condition:
+      field: assessment.apgar_1min
+      operator: "<"
+      value: 7
+    result:
+      risk: 新生儿窒息
+      severity: 高危
+      recommendation: 即刻复苏 + 5分钟 Apgar 复评
+
+---
+rule_type: treatment
+department: 新生儿科
+capability: cap-l3-neonatology-treatment
+business_process: bp-neonatology-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-lab-neonate]
+  produces: [de-treatment-plan]
+guideline: 中国新生儿呼吸窘迫综合征诊治指南 (2021)
+stakeholder: 根据新生儿状况实施药物与支持治疗
+version: "1.0.0"
+
+rules:
+  - id: neo-surfactant-rds
+    description: 新生儿 RDS → 肺表面活性物质
+    condition:
+      field: diagnosis.RDS
+      operator: "=="
+      value: true
+    result:
+      treatment: 肺表面活性物质气管内给药
+      indication: 新生儿呼吸窘迫综合征
+      monitoring: 血气 + 胸片 + 呼吸机参数
+
+  - id: neo-phototherapy
+    description: 黄疸超标 → 持续光疗
+    condition:
+      field: lab.total_bilirubin
+      operator: ">="
+      value: 15
+    result:
+      treatment: 双面光疗持续照射
+      indication: 新生儿高胆红素血症
+      monitoring: q12h 胆红素复查
+
+  - id: neo-tpn-preterm
+    description: 早产儿不能经口喂养 → 静脉营养
+    condition:
+      field: patient.gestational_age
+      operator: "<"
+      value: 34
+    result:
+      treatment: 全静脉营养（TPN）
+      indication: 早产儿肠道功能不成熟
+      recommendation: 逐步过渡至肠道内营养

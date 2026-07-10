@@ -1,0 +1,135 @@
+# 中医科临床规则 — 四诊辨证 + 气血阴阳 + 经典方剂
+rule_type: diagnosis
+department: 中医科
+capability: cap-l3-tcm-diagnosis
+business_process: bp-tcm-diagnosis
+data_entities:
+  consumes: [de-patient, de-tcm-four-exam, de-tongue-pulse]
+  produces: [de-diagnosis-result]
+guideline: 中医内科常见病诊疗指南 (2022)
+stakeholder: 中医医师通过望闻问切四诊合参进行辨证分型
+version: "1.0.0"
+
+rules:
+  - id: tcm-red-tongue-heat
+    description: 舌红苔黄脉数 → 清热
+    condition:
+      and:
+        - {field: tcm.tongue, operator: contains, value: 舌红}
+        - {field: tcm.coating, operator: contains, value: 苔黄}
+        - {field: tcm.pulse, operator: contains, value: 数}
+    result:
+      diagnosis: 实热证
+      pattern: 热入气分
+      recommendation: 清热泻火、佐以养阴
+
+  - id: tcm-sallow-qi-blood
+    description: 面色萎黄脉细 → 补气血
+    condition:
+      and:
+        - {field: tcm.complexion, operator: contains, value: 面色萎黄}
+        - {field: tcm.pulse, operator: contains, value: 细}
+    result:
+      diagnosis: 气血两虚证
+      pattern: 心脾两虚
+      recommendation: 补气养血、健脾安神
+
+  - id: tcm-sore-waist-kidney
+    description: 腰膝酸软 → 补肾
+    condition:
+      field: symptoms
+      operator: contains
+      value: 腰膝酸软
+    result:
+      diagnosis: 肾虚证
+      pattern: 肾精亏虚
+      recommendation: 补肾填精、强筋壮骨
+
+---
+rule_type: risk_score
+department: 中医科
+capability: cap-l3-tcm-risk
+business_process: bp-tcm-assessment
+data_entities:
+  consumes: [de-patient, de-tcm-four-exam, de-diagnosis-result]
+  produces: [de-risk-assessment]
+guideline: 中医内科学 急危重症辨证标准 (2021)
+stakeholder: 评估中医证候严重度与预后转归
+version: "1.0.0"
+
+rules:
+  - id: tcm-zheng-deficiency-excess
+    description: 正虚邪盛 → 危重
+    condition:
+      and:
+        - {field: tcm.zhengqi, operator: "==", value: 虚}
+        - {field: tcm.xieqi, operator: "==", value: 盛}
+    result:
+      risk: 危重
+      severity: 正不胜邪、脏腑衰败
+      recommendation: 扶正固本、回阳救逆
+
+  - id: tcm-yin-yang-deficiency
+    description: 阴阳两虚 → 慢病
+    condition:
+      field: tcm.syndrome
+      operator: contains
+      value: 阴阳两虚
+    result:
+      risk: 慢性难治
+      severity: 病程迁延、多脏腑受累
+      recommendation: 阴阳双补、缓图调理
+
+---
+rule_type: treatment
+department: 中医科
+capability: cap-l3-tcm-treatment
+business_process: bp-tcm-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment]
+  produces: [de-treatment-plan]
+guideline: 中华人民共和国药典 中药临床应用指导原则 (2022)
+stakeholder: 根据辨证分型选择经典方剂与中成药
+version: "1.0.0"
+
+rules:
+  - id: tcm-liuwei-kidney-yin
+    description: 六味地黄丸 → 肾阴虚
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 肾阴虚
+    result:
+      treatment: 六味地黄丸
+      composition:
+        - 熟地黄、山茱萸、山药
+        - 泽泻、牡丹皮、茯苓
+      usage: 滋阴补肾
+
+  - id: tcm-buzhong-qi
+    description: 补中益气汤 → 气虚
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 气虚
+    result:
+      treatment: 补中益气汤
+      composition:
+        - 黄芪、党参、白术
+        - 炙甘草、当归、陈皮
+        - 升麻、柴胡
+      usage: 补中益气、升阳举陷
+
+  - id: tcm-xuefu-blood-stasis
+    description: 血府逐瘀汤 → 血瘀
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 血瘀
+    result:
+      treatment: 血府逐瘀汤
+      composition:
+        - 桃仁、红花、当归
+        - 生地黄、牛膝、川芎
+        - 桔梗、赤芍、枳壳、柴胡、甘草
+      usage: 活血化瘀、行气止痛

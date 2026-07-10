@@ -1,0 +1,126 @@
+# 康复医学科临床规则 — 功能评估 + 风险筛查 + 多模态康复治疗
+rule_type: diagnosis
+department: 康复医学科
+capability: cap-l3-rehabilitation-diagnosis
+business_process: bp-rehabilitation-diagnosis
+data_entities:
+  consumes: [de-patient, de-assessment-rehab, de-assessment-swallow]
+  produces: [de-diagnosis-result]
+guideline: 中国康复医学指南 (2022)
+stakeholder: 康复医师需评估功能缺损程度并制定康复计划
+version: "1.0.0"
+
+rules:
+  - id: rehab-barthel-intervention
+    description: Barthel 指数 < 40 → 康复介入
+    condition:
+      field: assessment.Barthel_index
+      operator: "<"
+      value: 40
+    result:
+      diagnosis: 重度日常生活活动依赖
+      severity: 需康复干预
+      recommendation: 住院康复 + 多学科团队评估
+
+  - id: rehab-muscle-strength-passive
+    description: 徒手肌力 ≤ 3 级 → 被动训练
+    condition:
+      field: assessment.MMT_grade
+      operator: "<="
+      value: 3
+    result:
+      diagnosis: 肌力减退
+      severity: 需辅助训练
+      recommendation: 被动关节活动度训练 + 神经肌肉电刺激
+
+  - id: rehab-dysphagia-ng
+    description: 吞咽障碍 → 鼻饲
+    condition:
+      field: assessment.dysphagia
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 吞咽功能障碍
+      severity: 高危
+      recommendation: 鼻饲管营养 + 言语治疗师吞咽训练
+
+---
+rule_type: risk_score
+department: 康复医学科
+capability: cap-l3-rehabilitation-risk
+business_process: bp-rehabilitation-risk-assessment
+data_entities:
+  consumes: [de-patient, de-assessment-rehab]
+  produces: [de-risk-assessment]
+guideline: 中国康复医学指南 压疮与跌倒预防 (2022)
+stakeholder: 评估跌倒与压疮风险，制定预防措施
+version: "1.0.0"
+
+rules:
+  - id: rehab-fall-high-risk
+    description: 跌倒风险评分为高 → 防护
+    condition:
+      field: assessment.fall_risk
+      operator: "=="
+      value: high
+    result:
+      risk: 跌倒高风险
+      severity: 高危
+      recommendation: 床栏 + 防滑鞋 + 陪护
+
+  - id: rehab-pressure-ulcer-risk
+    description: Braden 评分 ≤ 12 → 压疮高危
+    condition:
+      field: assessment.Braden_score
+      operator: "<="
+      value: 12
+    result:
+      risk: 压疮高风险
+      severity: 高危
+      recommendation: 气垫床 + q2h 翻身 + 皮肤护理
+
+---
+rule_type: treatment
+department: 康复医学科
+capability: cap-l3-rehabilitation-treatment
+business_process: bp-rehabilitation-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment]
+  produces: [de-treatment-plan]
+guideline: 中国康复医学指南 物理与作业治疗规范 (2022)
+stakeholder: 根据功能缺损类型选择物理、作业或言语治疗
+version: "1.0.0"
+
+rules:
+  - id: rehab-physiotherapy-motor
+    description: 运动功能障碍 → 物理治疗
+    condition:
+      field: diagnosis.motor_impairment
+      operator: "=="
+      value: true
+    result:
+      treatment: 物理治疗（运动疗法 + 理疗）
+      indication: 脑卒中/脊髓损伤/骨折后运动障碍
+      frequency: 每日 1 次，每次 45min
+
+  - id: rehab-occupational-therapy-adl
+    description: ADL 受限 → 作业治疗
+    condition:
+      field: diagnosis.ADL_limitation
+      operator: "=="
+      value: true
+    result:
+      treatment: 作业治疗（日常生活活动训练）
+      indication: 自理能力下降
+      goal: 重返家庭与社会参与
+
+  - id: rehab-speech-therapy-swallow
+    description: 吞咽障碍 → 言语治疗
+    condition:
+      field: diagnosis.dysphagia
+      operator: "=="
+      value: true
+    result:
+      treatment: 言语治疗（吞咽功能训练）
+      indication: 卒中后吞咽障碍
+      techniques: 口腔运动训练 + 吞咽手法 + 食物性状调整

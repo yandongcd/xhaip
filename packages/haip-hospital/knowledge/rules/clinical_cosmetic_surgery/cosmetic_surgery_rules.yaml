@@ -1,0 +1,124 @@
+# 整形美容科临床规则 — 术前评估 + 风险筛查 + 术后管理
+rule_type: diagnosis
+department: 整形美容科
+capability: cap-l3-cosmetic-diagnosis
+business_process: bp-cosmetic-diagnosis
+data_entities:
+  consumes: [de-patient, de-assessment-psych, de-lab-coagulation]
+  produces: [de-diagnosis-result]
+guideline: 中华整形外科杂志 美容外科手术安全规范 (2022)
+stakeholder: 整形科医师需术前筛查心理与躯体风险
+version: "1.0.0"
+
+rules:
+  - id: cos-unrealistic-expectation
+    description: 期望不合理 → 心理评估
+    condition:
+      field: assessment.unrealistic_expectation
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 手术期望管理需求
+      recommendation: 心理评估 + 术前沟通强化 + 必要时建议暂缓手术
+
+  - id: cos-coagulopathy-contraindication
+    description: 凝血异常 → 手术禁忌
+    condition:
+      field: lab.coagulation_abnormal
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 凝血功能障碍
+      severity: 手术禁忌
+      recommendation: 暂停手术 + 血液科评估
+
+  - id: cos-smoking-delay
+    description: 吸烟 → 伤口延迟愈合
+    condition:
+      field: patient.smoking
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 吸烟相关愈合风险
+      recommendation: 术前戒烟 ≥ 2 周
+
+---
+rule_type: risk_score
+department: 整形美容科
+capability: cap-l3-cosmetic-risk
+business_process: bp-cosmetic-risk-assessment
+data_entities:
+  consumes: [de-patient, de-exam-vital, de-lab]
+  produces: [de-risk-assessment]
+guideline: 中华整形外科杂志 美容外科手术安全规范 (2022)
+stakeholder: 评估麻醉与伤口并发症风险
+version: "1.0.0"
+
+rules:
+  - id: cos-asa-anesthesia-risk
+    description: ASA ≥ 2 → 麻醉风险评估
+    condition:
+      field: assessment.ASA_class
+      operator: ">="
+      value: 2
+    result:
+      risk: 麻醉风险增高
+      severity: 中高危
+      recommendation: 麻醉科术前评估 + 优化合并症
+
+  - id: cos-obesity-wound
+    description: BMI > 30 → 伤口并发症风险
+    condition:
+      field: exam.BMI
+      operator: ">"
+      value: 30
+    result:
+      risk: 术后伤口并发症
+      severity: 中高危
+      recommendation: 术前减重建议 + 术后加强伤口护理
+
+---
+rule_type: treatment
+department: 整形美容科
+capability: cap-l3-cosmetic-treatment
+business_process: bp-cosmetic-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment]
+  produces: [de-treatment-plan]
+guideline: 中华整形外科杂志 美容外科术后管理规范 (2022)
+stakeholder: 通过术前准备 + 术后塑形优化手术效果
+version: "1.0.0"
+
+rules:
+  - id: cos-smoking-cessation-preop
+    description: 吸烟者 → 术前戒烟 2 周
+    condition:
+      field: patient.smoking
+      operator: "=="
+      value: true
+    result:
+      treatment: 术前强制戒烟 ≥ 2 周
+      indication: 所有择期整形手术
+      benefit: 降低皮瓣坏死 + 伤口裂开风险
+
+  - id: cos-abx-implant
+    description: 植入物手术 → 预防性抗生素
+    condition:
+      field: surgery.implant_placement
+      operator: "=="
+      value: true
+    result:
+      treatment: 术前预防性抗生素 30-60min
+      indication: 假体植入手术
+      duration: 单次给药，必要时术后 24h
+
+  - id: cos-compression-garment
+    description: 术后塑形需求 → 弹力衣
+    condition:
+      field: treatment.postop_contouring_needed
+      operator: "=="
+      value: true
+    result:
+      treatment: 弹力加压衣穿戴
+      indication: 吸脂 / 腹壁成形术后塑形
+      duration: 术后 4-6w 持续穿戴

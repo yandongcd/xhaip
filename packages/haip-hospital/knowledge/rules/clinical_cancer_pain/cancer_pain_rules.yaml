@@ -1,0 +1,124 @@
+# Cancer Pain 智能体临床规则 — 癌痛评估 + 阿片滴定 + 特殊癌痛综合征
+rule_type: diagnosis
+department: cancer-pain
+capability: cap-l3-cancer-pain-diagnosis
+business_process: bp-cancer-pain-diagnosis
+data_entities:
+  consumes: [de-patient, de-assessment-pain, de-imaging-tumor]
+  produces: [de-diagnosis-result]
+guideline: WHO 癌痛三阶梯指南 (2020)
+stakeholder: 癌症疼痛团队需评估疼痛机制与滴定需求
+version: "1.0.0"
+
+rules:
+  - id: cancp-titration-moderate
+    description: VAS ≥ 4 → 短效阿片滴定
+    condition:
+      field: assessment.VAS
+      operator: ">="
+      value: 4
+    result:
+      diagnosis: 中重度癌痛
+      recommendation: 短效阿片滴定 → 转换为长效制剂
+
+  - id: cancp-opioid-rotation-high-dose
+    description: 阿片剂量 > 100mg 吗啡当量 → 轮换
+    condition:
+      field: treatment.opioid_MEQ_daily
+      operator: ">"
+      value: 100
+    result:
+      diagnosis: 高剂量阿片疗效下降
+      recommendation: 阿片轮换 ± 辅助镇痛药
+
+  - id: cancp-non-oral-route
+    description: 不能口服 → 皮下 / 静脉给药
+    condition:
+      field: patient.oral_route_unavailable
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 需非口服镇痛
+      recommendation: 皮下持续输注或静脉 PCA
+
+---
+rule_type: risk_score
+department: cancer-pain
+capability: cap-l3-cancer-pain-risk
+business_process: bp-cancer-pain-risk-assessment
+data_entities:
+  consumes: [de-patient, de-imaging-tumor, de-assessment-pain]
+  produces: [de-risk-assessment]
+guideline: WHO 癌痛三阶梯指南 (2020)
+stakeholder: 识别难治性癌痛与骨转移相关风险
+version: "1.0.0"
+
+rules:
+  - id: cancp-neuro-invasion-refractory
+    description: 神经侵犯 → 难治性疼痛
+    condition:
+      field: imaging.neural_invasion
+      operator: "=="
+      value: true
+    result:
+      risk: 难治性癌痛
+      severity: 高危
+      recommendation: 加用抗惊厥药 / 抗抑郁药 + 介入镇痛评估
+
+  - id: cancp-bone-mets-fracture
+    description: 骨转移 → 病理性骨折风险
+    condition:
+      field: imaging.bone_metastasis_lytic
+      operator: "=="
+      value: true
+    result:
+      risk: 病理性骨折
+      severity: 高危
+      recommendation: 骨科评估 ± 预防性内固定 + 放疗
+
+---
+rule_type: treatment
+department: cancer-pain
+capability: cap-l3-cancer-pain-treatment
+business_process: bp-cancer-pain-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment]
+  produces: [de-treatment-plan]
+guideline: WHO 癌痛三阶梯指南 (2020)
+stakeholder: 根据 WHO 三阶梯原则 + 难治因素选择方案
+version: "1.0.0"
+
+rules:
+  - id: cancp-who-ladder
+    description: 癌痛 → WHO 三阶梯
+    condition:
+      field: diagnosis.cancer_pain
+      operator: "=="
+      value: true
+    result:
+      treatment: 按阶梯镇痛
+      step1: NSAIDs / 对乙酰氨基酚（轻痛）
+      step2: 弱阿片类（中痛）
+      step3: 强阿片类（重痛）
+
+  - id: cancp-radiotherapy-bone-pain
+    description: 局限性骨转移痛 → 放疗
+    condition:
+      field: diagnosis.bone_metastasis_pain
+      operator: "=="
+      value: true
+    result:
+      treatment: 局部姑息放疗
+      indication: 骨转移所致局限性疼痛
+      expectation: 1-2w 起效，有效率 60-80%
+
+  - id: cancp-nerve-block-refractory
+    description: 难治性癌痛 → 神经阻滞
+    condition:
+      field: diagnosis.refractory_cancer_pain
+      operator: "=="
+      value: true
+    result:
+      treatment: 神经阻滞 / 神经毁损术
+      indication: 口服药难控制的癌痛
+      approach: 腹腔神经丛 / 上腹下丛阻滞

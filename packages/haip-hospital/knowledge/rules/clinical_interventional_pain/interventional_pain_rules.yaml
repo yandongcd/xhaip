@@ -1,0 +1,124 @@
+# Interventional Pain 智能体临床规则 — 介入镇痛适应证 + 术前安全筛查 + 微创介入治疗
+rule_type: diagnosis
+department: interventional-pain
+capability: cap-l3-interventional-pain-diagnosis
+business_process: bp-interventional-pain-diagnosis
+data_entities:
+  consumes: [de-patient, de-imaging-spine, de-lab-coagulation, de-assessment-pain]
+  produces: [de-diagnosis-result]
+guideline: 介入疼痛治疗指南 (2022)
+stakeholder: 介入疼痛团队需判定介入适应证与禁忌证
+version: "1.0.0"
+
+rules:
+  - id: ip-intervention-indicated
+    description: 保守治疗 > 6 周无效 → 介入治疗
+    condition:
+      field: treatment.conservative_duration_weeks
+      operator: ">"
+      value: 6
+    result:
+      diagnosis: 保守治疗无效
+      recommendation: 影像引导下介入治疗
+
+  - id: ip-coagulopathy-delay
+    description: 凝血异常 → 暂停介入
+    condition:
+      field: lab.INR
+      operator: ">"
+      value: 1.5
+    result:
+      diagnosis: 凝血功能障碍
+      severity: 介入禁忌
+      recommendation: 暂停操作，纠正凝血功能
+
+  - id: ip-infection-precede-abx
+    description: 穿刺部位感染 → 先抗感染
+    condition:
+      field: exam.site_infection
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 局部感染
+      recommendation: 抗生素治疗后再评估
+
+---
+rule_type: risk_score
+department: interventional-pain
+capability: cap-l3-interventional-pain-risk
+business_process: bp-interventional-pain-risk-assessment
+data_entities:
+  consumes: [de-patient, de-lab-coagulation, de-allergy]
+  produces: [de-risk-assessment]
+guideline: 介入疼痛治疗指南 (2022)
+stakeholder: 评估出血风险与造影剂过敏风险
+version: "1.0.0"
+
+rules:
+  - id: ip-bleeding-risk-inr
+    description: INR > 1.5 → 出血高风险
+    condition:
+      field: lab.INR
+      operator: ">"
+      value: 1.5
+    result:
+      risk: 介入操作出血风险
+      severity: 高危
+      recommendation: 推迟操作 + 维生素 K 或 FFP 纠正
+
+  - id: ip-contrast-allergy
+    description: 造影剂过敏史 → 风险预案
+    condition:
+      field: patient.contrast_allergy
+      operator: "=="
+      value: true
+    result:
+      risk: 造影剂过敏反应
+      severity: 中高危
+      recommendation: 术前激素预防 + 备急救药品
+
+---
+rule_type: treatment
+department: interventional-pain
+capability: cap-l3-interventional-pain-treatment
+business_process: bp-interventional-pain-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-imaging-spine]
+  produces: [de-treatment-plan]
+guideline: 介入疼痛治疗指南 (2022)
+stakeholder: 选择射频消融、硬膜外注射或脊髓电刺激等微创方案
+version: "1.0.0"
+
+rules:
+  - id: ip-rfa-neuropathic
+    description: 神经源性疼痛 → 射频消融
+    condition:
+      field: diagnosis.neuropathic_pain
+      operator: "=="
+      value: true
+    result:
+      treatment: 脉冲 / 热凝射频消融
+      indication: 三叉神经痛、带状疱疹后神经痛
+      guidance: 超声 / CT 引导
+
+  - id: ip-epidural-radicular
+    description: 根性痛 → 硬膜外注射
+    condition:
+      field: diagnosis.radicular_pain
+      operator: "=="
+      value: true
+    result:
+      treatment: 硬膜外糖皮质激素注射
+      indication: 椎间盘突出所致根性痛
+      technique: 椎板间 / 椎间孔入路
+
+  - id: ip-scs-refractory
+    description: 难治性神经痛 → 脊髓电刺激
+    condition:
+      field: diagnosis.refractory_neuropathic_pain
+      operator: "=="
+      value: true
+    result:
+      treatment: 脊髓电刺激（SCS）植入
+      indication: 其他治疗失败的难治性神经痛
+      steps: 测试期 5-7d → 永久植入

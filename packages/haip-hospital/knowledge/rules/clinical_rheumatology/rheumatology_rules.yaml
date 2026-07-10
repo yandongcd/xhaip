@@ -1,0 +1,128 @@
+# 风湿免疫科临床规则 — SLE + RA + 疾病活动度评估
+rule_type: diagnosis
+department: 风湿免疫科
+capability: cap-l3-rheumatology-diagnosis
+business_process: bp-rheumatology-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-immune, de-lab-infection, de-imaging]
+  produces: [de-diagnosis-result]
+guideline: 中华风湿病学杂志 系统性红斑狼疮诊疗指南 (2023)
+stakeholder: 风湿免疫科医师需快速判定自身免疫病活动性与治疗靶点
+version: "1.0.0"
+
+rules:
+  - id: rh-ana-lupus
+    description: ANA > 1:320 → 狼疮排查
+    condition:
+      field: lab_results.ANA_titer
+      operator: ">"
+      value: 320
+    result:
+      diagnosis: 抗核抗体高滴度阳性
+      severity: 中危
+      recommendation: 查抗 dsDNA+抗 Sm+补体 C3/C4、狼疮抗凝物
+
+  - id: rh-das28-biologic
+    description: DAS28 > 5.1 → 生物制剂
+    condition:
+      field: das28_score
+      operator: ">"
+      value: 5.1
+    result:
+      diagnosis: 类风湿关节炎（高疾病活动度）
+      severity: 高危
+      recommendation: 评估生物制剂治疗指征
+
+  - id: rh-crp-swollen
+    description: CRP > 50 + 关节肿 → 疾病活动
+    condition:
+      and:
+        - {field: lab_results.CRP, operator: ">", value: 50}
+        - {field: physical_exam, operator: contains, value: 关节肿胀}
+    result:
+      diagnosis: 炎性关节炎（活动期）
+      severity: 高危
+      recommendation: 强化抗炎治疗、关节超声评估
+
+---
+rule_type: risk_score
+department: 风湿免疫科
+capability: cap-l3-rheumatology-risk
+business_process: bp-rheumatology-assessment
+data_entities:
+  consumes: [de-patient, de-lab-immune, de-imaging]
+  produces: [de-risk-assessment]
+guideline: 中华风湿病学杂志 类风湿关节炎诊治指南 (2022)
+stakeholder: 评估自身免疫病活动度与器官损伤风险
+version: "1.0.0"
+
+rules:
+  - id: rh-anti-dsdna-active
+    description: 抗 dsDNA 阳性 → 狼疮活动
+    condition:
+      field: lab_results.anti_dsDNA
+      operator: "=="
+      value: positive
+    result:
+      risk: 狼疮活动高危
+      severity: 肾脏及多器官受累风险
+      recommendation: 查尿蛋白、补体、肾活检
+
+  - id: rh-rf-joint-damage
+    description: RF 高滴度 → 关节破坏风险
+    condition:
+      field: lab_results.RF_titer
+      operator: ">"
+      value: 150
+    result:
+      risk: 关节破坏高风险
+      severity: 预后不良标志
+      recommendation: 早期强化 DMARD、影像学监测
+
+---
+rule_type: treatment
+department: 风湿免疫科
+capability: cap-l3-rheumatology-treatment
+business_process: bp-rheumatology-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-lab-immune]
+  produces: [de-treatment-plan]
+guideline: 中华风湿病学杂志 类风湿关节炎规范诊疗指南 (2023)
+stakeholder: 根据风湿免疫病类型制定 DMARD 与生物制剂方案
+version: "1.0.0"
+
+rules:
+  - id: rh-mtx-ra
+    description: MTX → RA 一线
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 类风湿关节炎
+    result:
+      treatment: 甲氨蝶呤（MTX）锚定治疗
+      dosage: MTX 10-15mg qw，逐步加量
+      adjunct: 叶酸 5mg qw（MTX 后 24h）
+
+  - id: rh-hcq-sle
+    description: 羟氯喹 → SLE
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 系统性红斑狼疮
+    result:
+      treatment: 羟氯喹（基础治疗）
+      dosage: 羟氯喹 200mg bid
+      monitoring: 每年眼底检查
+
+  - id: rh-biologic-refractory
+    description: 生物制剂 → 难治性 RA
+    condition:
+      and:
+        - {field: diagnosis, operator: contains, value: 类风湿关节炎}
+        - {field: treatment_history, operator: contains, value: MTX无效}
+    result:
+      treatment: 生物制剂/靶向合成 DMARD
+      options:
+        - TNF-α 抑制剂（阿达木单抗/英夫利西单抗）
+        - JAK 抑制剂（托法替布/巴瑞替尼）
+        - IL-6 受体拮抗剂（托珠单抗）

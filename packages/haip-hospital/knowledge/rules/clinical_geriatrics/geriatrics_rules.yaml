@@ -1,0 +1,133 @@
+# 老年病科临床规则 — 多重用药 + 老年综合征 + 个体化治疗
+rule_type: diagnosis
+department: 老年病科
+capability: cap-l3-geriatrics-diagnosis
+business_process: bp-geriatrics-diagnosis
+data_entities:
+  consumes: [de-patient, de-medication-list, de-vitals, de-cognitive-assessment]
+  produces: [de-diagnosis-result]
+guideline: 中华老年医学杂志 老年患者多重用药管理专家共识 (2023)
+stakeholder: 老年病科医师需综合评估老年综合征与多重用药风险
+version: "1.0.0"
+
+rules:
+  - id: ge-polypharmacy-deprescribe
+    description: ≥5 种药物 → 精简用药
+    condition:
+      field: medication_count
+      operator: ">="
+      value: 5
+    result:
+      diagnosis: 多重用药
+      severity: 中危
+      recommendation: 药物重整、精简非必要药物、Beers 标准评估
+
+  - id: ge-fall-prevention
+    description: 跌倒史 + 步态异常 → 防跌倒
+    condition:
+      and:
+        - {field: history, operator: contains, value: 跌倒}
+        - {field: gait, operator: contains, value: 异常}
+    result:
+      diagnosis: 跌倒高风险
+      severity: 高危
+      recommendation: 步态训练、居家环境改造、维生素 D 补充
+
+  - id: ge-cognitive-assessment
+    description: MMSE < 24 → 认知评估
+    condition:
+      field: mmse_score
+      operator: "<"
+      value: 24
+    result:
+      diagnosis: 认知功能障碍
+      severity: 中危
+      recommendation: 进一步 MoCA 评估、神经内科会诊
+
+---
+rule_type: risk_score
+department: 老年病科
+capability: cap-l3-geriatrics-risk
+business_process: bp-geriatrics-assessment
+data_entities:
+  consumes: [de-patient, de-comprehensive-assessment, de-nutrition]
+  produces: [de-risk-assessment]
+guideline: 中华老年医学杂志 老年综合评估技术应用指南 (2023)
+stakeholder: 通过老年综合评估（CGA）识别衰弱与营养不良风险
+version: "1.0.0"
+
+rules:
+  - id: ge-frailty-high-risk
+    description: 衰弱 ≥ 3 项 → 高危
+    condition:
+      field: frailty_criteria
+      operator: ">="
+      value: 3
+    result:
+      risk: 衰弱高危
+      severity: 失能、跌倒、死亡风险显著增加
+      recommendation: 多学科综合干预、康复训练
+
+  - id: ge-malnutrition
+    description: 营养不良 → 风险升级
+    condition:
+      field: mna_score
+      operator: "<"
+      value: 17
+    result:
+      risk: 营养不良高危
+      severity: 免疫功能下降、伤口愈合延迟
+      recommendation: 营养支持、蛋白质补充 1.2-1.5g/kg/d
+
+---
+rule_type: treatment
+department: 老年病科
+capability: cap-l3-geriatrics-treatment
+business_process: bp-geriatrics-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-comprehensive-assessment]
+  produces: [de-treatment-plan]
+guideline: 中华老年医学杂志 老年患者合理用药指南 (2023)
+stakeholder: 基于老年综合评估制定个体化、精简化治疗方案
+version: "1.0.0"
+
+rules:
+  - id: ge-cga-individualized
+    description: 综合评估 → 个体化方案
+    condition:
+      field: cga_completed
+      operator: "=="
+      value: true
+    result:
+      treatment: 老年综合评估（CGA）指导个体化方案
+      domains:
+        - 医疗：慢病管理、合理用药
+        - 功能：康复训练、辅助器具
+        - 心理：认知干预、情绪支持
+        - 社会：照护计划、家庭支持
+
+  - id: ge-anticholinergic-reduction
+    description: 减少抗胆碱能药
+    condition:
+      field: medication_list
+      operator: contains
+      value: 抗胆碱能
+    result:
+      treatment: 减少抗胆碱能药物负荷
+      actions:
+        - 停用非必要抗胆碱能药（苯海拉明/奥昔布宁等）
+        - 替换为认知友好替代方案
+        - 抗胆碱能负荷量表（ACB）定期评估
+
+  - id: ge-vitd-calcium
+    description: 补充 VitD + 钙 → 骨质疏松
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 骨质疏松
+    result:
+      treatment: 维生素 D + 钙剂联合补充
+      medications:
+        - 维生素 D3 800-1000 IU qd
+        - 碳酸钙 600mg bid
+      adjunct: 负重运动、日照

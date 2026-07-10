@@ -1,0 +1,132 @@
+# 肾内科临床规则 — CKD 分期 + 肾病综合征 + 电解质危象
+rule_type: diagnosis
+department: 肾内科
+capability: cap-l3-nephrology-diagnosis
+business_process: bp-nephrology-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-biochemistry, de-lab-urinalysis, de-imaging]
+  produces: [de-diagnosis-result]
+guideline: 中华肾脏病杂志 慢性肾脏病筛查诊断及防治指南 (2023)
+stakeholder: 肾内科医师需快速判定 CKD 分期与透析时机
+version: "1.0.0"
+
+rules:
+  - id: ne-egfr-dialysis
+    description: eGFR < 15 → 准备透析
+    condition:
+      field: lab_results.eGFR
+      operator: "<"
+      value: 15
+    result:
+      diagnosis: 慢性肾脏病 CKD 5 期
+      severity: 危重
+      recommendation: 动静脉内瘘成形、准备肾脏替代治疗
+
+  - id: ne-proteinuria-nephrotic
+    description: 尿蛋白 > 3.5g → 肾病综合征
+    condition:
+      field: lab_results.urine_protein_24h
+      operator: ">"
+      value: 3.5
+    result:
+      diagnosis: 肾病综合征
+      severity: 中危
+      recommendation: 肾穿刺活检明确病理类型
+
+  - id: ne-hyperkalemia-emergency
+    description: K+ > 6.0 → 紧急降钾
+    condition:
+      field: lab_results.K
+      operator: ">"
+      value: 6.0
+    result:
+      diagnosis: 高钾血症（危急值）
+      severity: 危重
+      recommendation: 立即降钾治疗（葡萄糖酸钙+胰岛素+利尿剂）
+
+---
+rule_type: risk_score
+department: 肾内科
+capability: cap-l3-nephrology-risk
+business_process: bp-nephrology-assessment
+data_entities:
+  consumes: [de-patient, de-lab-biochemistry, de-lab-urinalysis]
+  produces: [de-risk-assessment]
+guideline: 中华肾脏病杂志 CKD 进展风险评估与管理指南 (2022)
+stakeholder: 评估 CKD 进展风险与心血管并发症
+version: "1.0.0"
+
+rules:
+  - id: ne-ckd4-high-risk
+    description: eGFR < 30 → CKD 4 期高危
+    condition:
+      field: lab_results.eGFR
+      operator: "<"
+      value: 30
+    result:
+      risk: 高危
+      severity: CKD 4 期肾功能严重受损
+      recommendation: 肾内科专科管理、控制进展因素
+
+  - id: ne-proteinuria-progression
+    description: 蛋白尿 > 1g → 进展风险
+    condition:
+      field: lab_results.urine_protein_24h
+      operator: ">"
+      value: 1.0
+    result:
+      risk: CKD 进展高风险
+      severity: 蛋白尿提示肾小球损伤
+      recommendation: 强化 RAS 阻断、控制血压 < 130/80
+
+---
+rule_type: treatment
+department: 肾内科
+capability: cap-l3-nephrology-treatment
+business_process: bp-nephrology-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-lab-biochemistry]
+  produces: [de-treatment-plan]
+guideline: 中华肾脏病杂志 肾性贫血诊断与治疗中国专家共识 (2023)
+stakeholder: 根据 CKD 并发症制定综合治疗方案
+version: "1.0.0"
+
+rules:
+  - id: ne-acei-proteinuria
+    description: ACEI/ARB → 降蛋白
+    condition:
+      field: diagnosis
+      operator: contains
+      value: CKD
+    result:
+      treatment: ACEI/ARB 降蛋白治疗
+      medications:
+        - 培哚普利/缬沙坦
+        - 目标蛋白尿减少 > 50%
+      monitoring: 血钾 + eGFR 每 2 周
+
+  - id: ne-epo-anemia
+    description: 肾性贫血 → EPO + 铁剂
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 肾性贫血
+    result:
+      treatment: 促红细胞生成素（EPO）+ 铁剂
+      medications:
+        - EPO 100-150 IU/kg/wk
+        - 蔗糖铁 100mg iv qw
+      target: Hb 110-120 g/L
+
+  - id: ne-phosphate-binder
+    description: 高磷血症 → 磷结合剂
+    condition:
+      field: lab_results.P
+      operator: ">"
+      value: 1.78
+    result:
+      treatment: 磷结合剂
+      medications:
+        - 碳酸钙 0.5-1g tid（餐中嚼服）
+        - 司维拉姆 800mg tid
+      monitoring: 血磷、血钙每月复查

@@ -1,0 +1,123 @@
+# 惠侨医疗中心临床规则 — 国际患者管理 + 多学科会诊 + 海外转诊
+rule_type: diagnosis
+department: 惠侨医疗中心
+capability: cap-l3-huigiao-diagnosis
+business_process: bp-huigiao-diagnosis
+data_entities:
+  consumes: [de-patient, de-insurance, de-language-assessment]
+  produces: [de-diagnosis-result]
+guideline: 中国国际医疗服务规范 (2023)
+stakeholder: 惠侨医疗中心需为国际患者提供全流程协调服务
+version: "1.0.0"
+
+rules:
+  - id: hq-international-patient
+    description: 国际患者 → 翻译 + 保险对接
+    condition:
+      field: patient.nationality
+      operator: "!="
+      value: CN
+    result:
+      diagnosis: 国际患者服务需求
+      recommendation: 安排翻译服务 + 核对国际保险覆盖范围
+
+  - id: hq-second-opinion-mdt
+    description: 要求第二意见 → 多学科会诊
+    condition:
+      field: patient.request_second_opinion
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 第二意见需求
+      recommendation: 组织 MDT 多学科会诊 + 出具书面意见
+
+  - id: hq-overseas-transfer
+    description: 需要转诊海外 → 对接国际医疗网络
+    condition:
+      field: patient.needs_overseas_transfer
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 海外转诊需求
+      recommendation: 联系合作国际医院 + 病历翻译 + 转运安排
+
+---
+rule_type: risk_score
+department: 惠侨医疗中心
+capability: cap-l3-huigiao-risk
+business_process: bp-huigiao-risk-assessment
+data_entities:
+  consumes: [de-patient, de-language-assessment, de-cultural-assessment]
+  produces: [de-risk-assessment]
+guideline: 中国国际医疗服务规范 (2023)
+stakeholder: 评估语言与文化障碍导致的医疗安全风险
+version: "1.0.0"
+
+rules:
+  - id: hq-language-barrier
+    description: 语言障碍 → 沟通风险
+    condition:
+      field: assessment.language_barrier
+      operator: "=="
+      value: true
+    result:
+      risk: 医患沟通障碍
+      severity: 中高危
+      recommendation: 配备专业医学翻译 + 知情同意书双语版本
+
+  - id: hq-cross-cultural-adherence
+    description: 跨文化差异 → 依从性风险
+    condition:
+      field: assessment.cross_cultural_gap
+      operator: "=="
+      value: high
+    result:
+      risk: 治疗依从性不足
+      severity: 中危
+      recommendation: 文化敏感性沟通 + 家属参与决策
+
+---
+rule_type: treatment
+department: 惠侨医疗中心
+capability: cap-l3-huigiao-treatment
+business_process: bp-huigiao-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment]
+  produces: [de-treatment-plan]
+guideline: 中国国际医疗服务规范 (2023)
+stakeholder: 为国际患者提供高端体检与全流程健康管理
+version: "1.0.0"
+
+rules:
+  - id: hq-green-channel-transfer
+    description: 国际转诊 → 绿色通道
+    condition:
+      field: treatment.international_transfer
+      operator: "=="
+      value: true
+    result:
+      treatment: 国际转诊绿色通道
+      indication: 海外患者转入
+      service: 专车接机 + 陪同就诊 + 住院优先安排
+
+  - id: hq-vip-checkup
+    description: 高端体检需求 → VIP 套餐
+    condition:
+      field: patient.vip_exam_request
+      operator: "=="
+      value: true
+    result:
+      treatment: VIP 全面体检套餐
+      indication: 高端健康管理
+      components: 全身影像 + 基因筛查 + 专科评估
+
+  - id: hq-remote-followup-return
+    description: 患者回国 → 远程随访
+    condition:
+      field: patient.return_home
+      operator: "=="
+      value: true
+    result:
+      treatment: 远程随访管理
+      indication: 国际患者回程后延续管理
+      method: 远程会诊 + 报告翻译 + 药品邮寄

@@ -1,0 +1,133 @@
+# 肿瘤科临床规则 — TNM 分期 + ECOG 体能 + 精准治疗
+rule_type: diagnosis
+department: 肿瘤科
+capability: cap-l3-oncology-diagnosis
+business_process: bp-oncology-diagnosis
+data_entities:
+  consumes: [de-patient, de-imaging, de-pathology, de-lab-hematology]
+  produces: [de-diagnosis-result]
+guideline: 中华肿瘤杂志 CSCO 常见恶性肿瘤诊疗指南 (2024)
+stakeholder: 肿瘤科医师需快速判定分期与治疗策略（根治/姑息）
+version: "1.0.0"
+
+rules:
+  - id: on-tnm-adjuvant
+    description: TNM ≥ IIIA → 辅助化疗
+    condition:
+      field: staging.TNM
+      operator: ">="
+      value: IIIA
+    result:
+      diagnosis: 局部晚期恶性肿瘤
+      severity: 高危
+      recommendation: 辅助化疗 ± 放疗、多学科会诊
+
+  - id: on-ecog-palliative
+    description: ECOG ≥ 3 → 姑息治疗
+    condition:
+      field: ecog_score
+      operator: ">="
+      value: 3
+    result:
+      diagnosis: 晚期恶性肿瘤（体能差）
+      severity: 危重
+      recommendation: 姑息支持治疗、症状控制优先
+
+  - id: on-wbc-delay-chemo
+    description: WBC < 3.0 → 推迟化疗
+    condition:
+      field: lab_results.WBC
+      operator: "<"
+      value: 3.0
+    result:
+      diagnosis: 化疗前骨髓抑制
+      severity: 中危
+      recommendation: 推迟化疗、G-CSF 支持、WBC > 3.5 恢复治疗
+
+---
+rule_type: risk_score
+department: 肿瘤科
+capability: cap-l3-oncology-risk
+business_process: bp-oncology-assessment
+data_entities:
+  consumes: [de-patient, de-pathology, de-imaging]
+  produces: [de-risk-assessment]
+guideline: 中华肿瘤杂志 肿瘤复发风险评估专家共识 (2023)
+stakeholder: 评估术后复发转移风险与预后因素
+version: "1.0.0"
+
+rules:
+  - id: on-node-positive
+    description: 淋巴结阳性 → 高危复发
+    condition:
+      field: pathology.node_status
+      operator: "=="
+      value: positive
+    result:
+      risk: 高危复发转移
+      severity: 淋巴结转移提示系统性播散
+      recommendation: 辅助化疗 ± 放疗、密切随访
+
+  - id: on-lvi-recurrence
+    description: 脉管癌栓 → 复发风险
+    condition:
+      field: pathology.LVI
+      operator: "=="
+      value: positive
+    result:
+      risk: 复发高风险
+      severity: 脉管浸润提高远处转移概率
+      recommendation: 延长辅助治疗周期、加强影像监测
+
+---
+rule_type: treatment
+department: 肿瘤科
+capability: cap-l3-oncology-treatment
+business_process: bp-oncology-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-pathology, de-gene-test]
+  produces: [de-treatment-plan]
+guideline: 中华肿瘤杂志 CSCO 非小细胞肺癌诊疗指南 (2024)
+stakeholder: 根据基因分型与肿瘤类型制定精准治疗方案
+version: "1.0.0"
+
+rules:
+  - id: on-platinum-doublet-nsclc
+    description: 铂类双药 → NSCLC
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 非小细胞肺癌
+    result:
+      treatment: 铂类双药化疗
+      regimens:
+        - 培美曲塞 + 顺铂（非鳞癌）
+        - 紫杉醇 + 卡铂（鳞癌）
+      cycles: 4-6 周期
+
+  - id: on-folfox-crc
+    description: FOLFOX → 结直肠癌
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 结直肠癌
+    result:
+      treatment: FOLFOX/XELOX 方案
+      regimens:
+        - FOLFOX（奥沙利铂 + 5-FU + LV）q2w
+        - XELOX（奥沙利铂 + 卡培他滨）q3w
+      perioperative: 围术期 6 月
+
+  - id: on-targeted-driver
+    description: 靶向 → 驱动基因阳性
+    condition:
+      field: gene_test.driver_mutation
+      operator: "=="
+      value: positive
+    result:
+      treatment: 靶向治疗
+      options:
+        - EGFR-TKI（吉非替尼/奥希替尼）
+        - ALK-TKI（克唑替尼/阿来替尼）
+        - ROS1-TKI（克唑替尼）
+      first_line: 靶向药物优于化疗

@@ -1,0 +1,132 @@
+# 血液内科临床规则 — 血细胞减少危象 + 白血病早期识别 + 血液病治疗
+rule_type: diagnosis
+department: 血液内科
+capability: cap-l3-hematology-diagnosis
+business_process: bp-hematology-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-hematology, de-lab-coagulation, de-bone-marrow]
+  produces: [de-diagnosis-result]
+guideline: 中华血液学杂志 中国贫血诊断标准与治疗指南 (2023)
+stakeholder: 血液内科医师需快速判定血细胞减少严重度与输血指征
+version: "1.0.0"
+
+rules:
+  - id: he-hb-transfusion
+    description: Hb < 60 → 输血
+    condition:
+      field: lab_results.Hb
+      operator: "<"
+      value: 60
+    result:
+      diagnosis: 重度贫血
+      severity: 危重
+      recommendation: 输注红细胞悬液 2U
+
+  - id: he-plt-transfusion
+    description: PLT < 20 → 输板
+    condition:
+      field: lab_results.PLT
+      operator: "<"
+      value: 20
+    result:
+      diagnosis: 重度血小板减少
+      severity: 危重
+      recommendation: 输注血小板 1 治疗量
+
+  - id: he-wbc-isolation
+    description: WBC < 1.0 → 保护性隔离
+    condition:
+      field: lab_results.WBC
+      operator: "<"
+      value: 1.0
+    result:
+      diagnosis: 粒细胞缺乏症
+      severity: 高危
+      recommendation: 保护性隔离、预防性抗感染
+
+---
+rule_type: risk_score
+department: 血液内科
+capability: cap-l3-hematology-risk
+business_process: bp-hematology-assessment
+data_entities:
+  consumes: [de-patient, de-lab-hematology, de-bone-marrow]
+  produces: [de-risk-assessment]
+guideline: 中华血液学杂志 中国急性白血病诊疗指南 (2022)
+stakeholder: 评估粒缺发热风险与急性白血病早期指标
+version: "1.0.0"
+
+rules:
+  - id: he-anc-febrile
+    description: ANC < 500 → 粒缺发热高危
+    condition:
+      field: lab_results.ANC
+      operator: "<"
+      value: 500
+    result:
+      risk: 粒缺发热高危
+      severity: 感染风险极高
+      recommendation: 广谱抗生素、G-CSF 升粒细胞
+
+  - id: he-blast-leukemia
+    description: 幼稚细胞 > 20% → 急性白血病
+    condition:
+      field: bone_marrow.blast_percent
+      operator: ">"
+      value: 20
+    result:
+      risk: 急性白血病高度可疑
+      severity: 需立即确诊
+      recommendation: 骨髓穿刺+流式免疫分型+细胞遗传学
+
+---
+rule_type: treatment
+department: 血液内科
+capability: cap-l3-hematology-treatment
+business_process: bp-hematology-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-bone-marrow]
+  produces: [de-treatment-plan]
+guideline: 中华血液学杂志 成人急性髓系白血病诊疗规范 (2023)
+stakeholder: 根据血液病类型制定化疗与支持治疗方案
+version: "1.0.0"
+
+rules:
+  - id: he-iron-deficiency
+    description: 铁剂 → 缺铁性贫血
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 缺铁性贫血
+    result:
+      treatment: 口服铁剂
+      medications:
+        - 琥珀酸亚铁 0.1g tid
+        - 维生素 C 0.1g tid（促进吸收）
+      monitoring: Hb + 铁蛋白 每 2 周
+
+  - id: he-aml-chemotherapy
+    description: 急性白血病 → 化疗诱导
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 急性白血病
+    result:
+      treatment: 诱导化疗
+      regimens:
+        - IA 方案（伊达比星 + 阿糖胞苷）
+        - DA 方案（柔红霉素 + 阿糖胞苷）
+      support: 水化、碱化、止吐、预防 TLS
+
+  - id: he-cml-hydroxyurea
+    description: CML → 羟基脲
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 慢性粒细胞白血病
+    result:
+      treatment: 羟基脲/伊马替尼
+      first_line: 伊马替尼 400mg qd（TKI）
+      alternatives:
+        - 羟基脲（无法耐受 TKI 时）
+        - 第二代 TKI（达沙替尼/尼洛替尼）

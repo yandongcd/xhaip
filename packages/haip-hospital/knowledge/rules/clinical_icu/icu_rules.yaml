@@ -1,0 +1,126 @@
+# 重症医学科临床规则 — 器官衰竭评估 + 危重度评分 + ICU 核心治疗
+rule_type: diagnosis
+department: 重症医学科
+capability: cap-l3-icu-diagnosis
+business_process: bp-icu-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-critical, de-vital-icu, de-monitor]
+  produces: [de-diagnosis-result]
+guideline: Surviving Sepsis Campaign 国际严重感染与感染性休克治疗指南 (2021)
+stakeholder: ICU 医师需动态追踪器官功能变化以判定病情进展
+version: "1.0.0"
+
+rules:
+  - id: icu-sofa-progression
+    description: SOFA 评分升高 ≥ 2 分 → 器官衰竭进展
+    condition:
+      field: assessment.SOFA_delta
+      operator: ">="
+      value: 2
+    result:
+      diagnosis: 器官功能衰竭进展
+      severity: 高危
+      recommendation: 重新评估感染源 + 强化器官支持
+
+  - id: icu-lactic-acidosis
+    description: 乳酸 > 4 mmol/L → 液体复苏
+    condition:
+      field: lab.lactate
+      operator: ">"
+      value: 4
+    result:
+      diagnosis: 组织低灌注 / 休克
+      severity: 危急
+      recommendation: 30mL/kg 晶体液复苏 + 乳酸 q2h 复查
+
+  - id: icu-refractory-shock
+    description: 去甲肾上腺素 > 0.5 μg/kg/min → 难治性休克
+    condition:
+      field: treatment.norepinephrine_dose
+      operator: ">"
+      value: 0.5
+    result:
+      diagnosis: 难治性分布性休克
+      severity: 危急
+      recommendation: 加用血管加压素 + 氢化可的松
+
+---
+rule_type: risk_score
+department: 重症医学科
+capability: cap-l3-icu-risk
+business_process: bp-icu-risk-assessment
+data_entities:
+  consumes: [de-patient, de-lab-critical, de-assessment-critical]
+  produces: [de-risk-assessment]
+guideline: 中国重症医学诊疗规范 (2022)
+stakeholder: 利用危重度评分预测死亡风险与气道保护需求
+version: "1.0.0"
+
+rules:
+  - id: icu-apache-high-mortality
+    description: APACHE II > 25 → 高死亡风险
+    condition:
+      field: assessment.APACHE_II
+      operator: ">"
+      value: 25
+    result:
+      risk: 高死亡风险
+      severity: 极高危
+      recommendation: 与家属沟通预后 + 制定治疗目标
+
+  - id: icu-gcs-airway
+    description: GCS < 8 → 气道保护需求
+    condition:
+      field: assessment.GCS
+      operator: "<"
+      value: 8
+    result:
+      risk: 气道保护能力丧失
+      severity: 危急
+      recommendation: 气管插管 + 机械通气
+
+---
+rule_type: treatment
+department: 重症医学科
+capability: cap-l3-icu-treatment
+business_process: bp-icu-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-lab-critical]
+  produces: [de-treatment-plan]
+guideline: 中华重症医学电子杂志 ARDS 与 AKI 管理指南 (2023)
+stakeholder: 根据器官支持需求实施肺通气、营养与肾脏替代治疗
+version: "1.0.0"
+
+rules:
+  - id: icu-lung-protective-ards
+    description: ARDS → 肺保护性通气
+    condition:
+      field: diagnosis.ARDS
+      operator: "=="
+      value: true
+    result:
+      treatment: 肺保护性通气（TV 6mL/kg + 平台压 < 30cmH2O）
+      indication: ARDS
+      monitoring: 血气 + 氧合指数 q6h
+
+  - id: icu-enteral-nutrition-early
+    description: 入 ICU 后血流稳定 → 早期肠内营养
+    condition:
+      field: assessment.tolerate_enteral_feeding
+      operator: "=="
+      value: true
+    result:
+      treatment: 早期肠内营养（24-48h 内启动）
+      indication: ICU 重症患者
+      precaution: 监测胃残余量 + 预防误吸
+
+  - id: icu-crrt-aki
+    description: 急性肾损伤 → CRRT
+    condition:
+      field: diagnosis.AKI_stage_3
+      operator: "=="
+      value: true
+    result:
+      treatment: 持续性肾脏替代治疗（CRRT）
+      indication: 重症 AKI / 液体过负荷 / 严重电解质紊乱
+      monitoring: 超滤量 + 电解质 q4h

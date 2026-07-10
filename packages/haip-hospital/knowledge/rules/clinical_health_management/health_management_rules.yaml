@@ -1,0 +1,134 @@
+# 健康管理科临床规则 — 代谢指标管理 + 高危人群筛查 + 生活方式干预
+rule_type: diagnosis
+department: 健康管理科
+capability: cap-l3-health-mgmt-diagnosis
+business_process: bp-health-mgmt-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-metabolic, de-vital, de-exam-physical]
+  produces: [de-diagnosis-result]
+guideline: 中国成人血脂异常防治指南 (2022)
+stakeholder: 健康管理师需根据体检异常指标制定干预计划
+version: "1.0.0"
+
+rules:
+  - id: hm-bmi-obesity
+    description: BMI > 28 → 减重干预
+    condition:
+      field: exam.BMI
+      operator: ">"
+      value: 28
+    result:
+      diagnosis: 肥胖症
+      severity: 需医学干预
+      recommendation: 饮食 + 运动 + 行为干预
+
+  - id: hm-hypertension-followup
+    description: 血压 > 140/90 → 随访强化
+    condition:
+      or:
+        - field: vital.BP_systolic
+          operator: ">="
+          value: 140
+        - field: vital.BP_diastolic
+          operator: ">="
+          value: 90
+    result:
+      diagnosis: 高血压
+      severity: 需强化管理
+      recommendation: 生活方式干预 + 药物评估 + 定期随访
+
+  - id: hm-diabetes-control
+    description: HbA1c > 7% → 控糖升级
+    condition:
+      field: lab.HbA1c
+      operator: ">"
+      value: 7
+    result:
+      diagnosis: 血糖控制不达标
+      severity: 需调整方案
+      recommendation: 强化降糖方案 + 糖尿病教育
+
+---
+rule_type: risk_score
+department: 健康管理科
+capability: cap-l3-health-mgmt-risk
+business_process: bp-health-mgmt-risk-assessment
+data_entities:
+  consumes: [de-patient, de-lab-metabolic, de-vital]
+  produces: [de-risk-assessment]
+guideline: 中国心血管病一级预防指南 (2022)
+stakeholder: 评估代谢综合征与肿瘤高危人群
+version: "1.0.0"
+
+rules:
+  - id: hm-metabolic-syndrome
+    description: 代谢综合征 → 高危
+    condition:
+      field: assessment.metabolic_syndrome
+      operator: "=="
+      value: true
+    result:
+      risk: 代谢综合征
+      severity: 高危
+      recommendation: 综合管理（血糖 + 血脂 + 血压 + 体重）
+
+  - id: hm-cancer-screening
+    description: 吸烟 + 肿瘤家族史 → 肿瘤筛查
+    condition:
+      and:
+        - field: patient.smoking
+          operator: "=="
+          value: true
+        - field: patient.family_cancer_history
+          operator: "=="
+          value: true
+    result:
+      risk: 肿瘤高危人群
+      severity: 需筛查
+      recommendation: 低剂量 CT（肺）+ 胃肠镜 + 肿瘤标志物
+
+---
+rule_type: treatment
+department: 健康管理科
+capability: cap-l3-health-mgmt-treatment
+business_process: bp-health-mgmt-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment]
+  produces: [de-treatment-plan]
+guideline: 中国心血管病一级预防指南 (2022)
+stakeholder: 根据代谢异常选择生活方式调整或药物治疗
+version: "1.0.0"
+
+rules:
+  - id: hm-lifestyle-primary
+    description: 代谢异常 → 饮食运动首选
+    condition:
+      field: diagnosis.metabolic_abnormality
+      operator: "=="
+      value: true
+    result:
+      treatment: 饮食指导 + 运动处方
+      indication: 超重 / 临界高血压 / 糖耐量异常
+      goal: 体重下降 5-10%
+
+  - id: hm-statin-hyperlipidemia
+    description: 高脂血症 → 他汀
+    condition:
+      field: diagnosis.hyperlipidemia_requiring_medication
+      operator: "=="
+      value: true
+    result:
+      treatment: 中等强度他汀口服
+      indication: ASCVD 风险评估中高危
+      monitoring: 肝功能 + 肌酶 4-12w
+
+  - id: hm-aspirin-primary-prevention
+    description: ASCVD 高危 → 阿司匹林一级预防
+    condition:
+      field: risk.ASCVD_10yr_high
+      operator: "=="
+      value: true
+    result:
+      treatment: 阿司匹林 100mg qd
+      indication: 心血管病一级预防
+      precaution: 排除出血风险 + 胃保护

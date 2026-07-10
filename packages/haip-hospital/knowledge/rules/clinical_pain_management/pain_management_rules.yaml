@@ -1,0 +1,125 @@
+# 疼痛科临床规则 — 疼痛评估 + 癌痛管理 + 神经病理性疼痛
+rule_type: diagnosis
+department: 疼痛科
+capability: cap-l3-pain-diagnosis
+business_process: bp-pain-diagnosis
+data_entities:
+  consumes: [de-patient, de-assessment-pain, de-lab]
+  produces: [de-diagnosis-result]
+guideline: IASP 疼痛管理指南 (2021)
+stakeholder: 疼痛科医师需使用疼痛量表与临床特征做诊断分型
+version: "1.0.0"
+
+rules:
+  - id: pain-severe-opioid
+    description: VAS ≥ 7 → 强阿片类药物
+    condition:
+      field: assessment.VAS
+      operator: ">="
+      value: 7
+    result:
+      diagnosis: 重度疼痛
+      severity: 需强效镇痛
+      recommendation: 强阿片类 ± 辅助镇痛药
+
+  - id: pain-neuropathic-gabapentin
+    description: 神经病理性疼痛 → 加巴喷丁
+    condition:
+      field: assessment.pain_type
+      operator: "=="
+      value: neuropathic
+    result:
+      diagnosis: 神经病理性疼痛
+      recommendation: 加巴喷丁 / 普瑞巴林 ± 阿片类
+
+  - id: pain-cancer-who-ladder
+    description: 癌痛 → WHO 三阶梯评估
+    condition:
+      field: diagnosis.cancer_related
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 癌性疼痛
+      severity: 按阶梯评估
+      recommendation: 按 WHO 三阶梯镇痛原则选药
+
+---
+rule_type: risk_score
+department: 疼痛科
+capability: cap-l3-pain-risk
+business_process: bp-pain-risk-assessment
+data_entities:
+  consumes: [de-assessment-pain, de-patient]
+  produces: [de-risk-assessment]
+guideline: 中华疼痛学杂志 阿片类药物管理指南 (2022)
+stakeholder: 评估爆发痛控制与阿片耐受风险
+version: "1.0.0"
+
+rules:
+  - id: pain-breakthrough-regimen
+    description: 爆发痛 > 3 次/日 → 方案调整
+    condition:
+      field: assessment.breakthrough_pain_daily
+      operator: ">"
+      value: 3
+    result:
+      risk: 疼痛控制不足
+      severity: 需方案优化
+      recommendation: 增加背景剂量或轮换阿片
+
+  - id: pain-opioid-tolerance-rotation
+    description: 阿片耐受 → 轮换策略
+    condition:
+      field: assessment.opioid_tolerance
+      operator: "=="
+      value: true
+    result:
+      risk: 阿片疗效下降
+      severity: 需轮换
+      recommendation: 等效剂量转换为另一种阿片
+
+---
+rule_type: treatment
+department: 疼痛科
+capability: cap-l3-pain-treatment
+business_process: bp-pain-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment]
+  produces: [de-treatment-plan]
+guideline: WHO 癌痛三阶梯指南 (2020)
+stakeholder: 根据疼痛强度与类型选择药物与非药物治疗
+version: "1.0.0"
+
+rules:
+  - id: pain-morphine-moderate-severe
+    description: 中重度疼痛 → 吗啡
+    condition:
+      field: assessment.VAS
+      operator: ">="
+      value: 5
+    result:
+      treatment: 吗啡口服 / 静脉
+      indication: 中重度急性或癌性疼痛
+      monitoring: 呼吸频率 + 镇静评分
+
+  - id: pain-pregabalin-neuropathic
+    description: 神经病理性疼痛 → 普瑞巴林
+    condition:
+      field: assessment.pain_type
+      operator: "=="
+      value: neuropathic
+    result:
+      treatment: 普瑞巴林口服
+      indication: 神经病理性疼痛
+      titration: 起始 75mg bid → 逐渐滴定
+
+  - id: pain-fentanyl-transdermal-cancer
+    description: 癌痛需持续阿片 → 芬太尼透皮
+    condition:
+      field: diagnosis.cancer_pain_persistent
+      operator: "=="
+      value: true
+    result:
+      treatment: 芬太尼透皮贴剂 q72h
+      indication: 癌性疼痛持续状态
+      advantage: 非侵入性 + 平稳血药浓度

@@ -1,0 +1,74 @@
+# ============================================================
+# Guideline Asset: 中国糖尿病防治指南（2024版）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-dm-2024"
+name: "中国糖尿病防治指南（2024版）"
+abbr: "糖尿病指南2024"
+version: "2024"
+publisher: "中华医学会糖尿病学分会"
+journal: "中华糖尿病杂志 2024;16(12):1057-1110"
+doi: "10.3760/cma.j.cn115791-20241230-00400"
+language: zh-CN
+trust_level: T1
+original_pdf: "guidelines/originals/endocrinology-中国糖尿病防治指南(2024版).pdf"
+
+description: >
+  2024版糖尿病防治指南，共20章，涵盖中国糖尿病流行病学、诊断与分型、
+  综合控制目标、生活方式干预、药物治疗（口服药/胰岛素/GLP-1RA/SGLT2i）、
+  急慢性并发症管理、特殊人群管理等。突破以往仅关注2型糖尿病的局限，
+  新增儿童青少年糖尿病和1型糖尿病专门章节。
+
+key_sections:
+  - id: "§2"
+    title: "糖尿病诊断与分型"
+    pages: "1063-1068"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [dm-diagnose-fpg, dm-diagnose-ogtt, dm-diagnose-hba1c, dm-type-classify]
+
+  - id: "§3"
+    title: "综合控制目标"
+    pages: "1069-1073"
+    stage_ids: [S3]
+    rule_ids: [dm-target-hba1c, dm-target-bp, dm-target-lipid, dm-target-weight]
+
+  - id: "§5"
+    title: "生活方式干预"
+    pages: "1075-1080"
+    stage_ids: [S4]
+    rule_ids: [dm-diet, dm-exercise, dm-weight-mgmt, dm-smoking-cessation]
+
+  - id: "§6-§9"
+    title: "药物治疗（口服/胰岛素/GLP-1RA/SGLT2i）"
+    pages: "1081-1098"
+    stage_ids: [S4, S5]
+    rule_ids: [dm-metformin, dm-sulfonylurea, dm-dpp4i, dm-sglt2i, dm-glp1ra, dm-insulin]
+
+  - id: "§10-§14"
+    title: "急慢性并发症管理"
+    pages: "1099-1103"
+    stage_ids: [S4, S5, S6]
+    rule_ids: [dm-dka, dm-nephropathy, dm-retinopathy, dm-neuropathy, dm-cvd]
+
+  - id: "§15-§16"
+    title: "特殊人群与儿童青少年"
+    pages: "1104-1108"
+    stage_ids: [S4, S5]
+    rule_ids: [dm-elderly, dm-pregnancy, dm-children, dm-t1dm]
+
+  - id: "§17"
+    title: "糖尿病随访管理"
+    pages: "1109-1110"
+    stage_ids: [S6]
+    rule_ids: [dm-followup-3m, dm-followup-annual, dm-screening-complication]
+
+rule_sets_covered:
+  - dm_diagnosis
+  - dm_treatment
+  - dm_complication
+  - dm_special_population
+  - dm_followup
+
+derived_rule_count: 6
+last_updated: 2026-07-10

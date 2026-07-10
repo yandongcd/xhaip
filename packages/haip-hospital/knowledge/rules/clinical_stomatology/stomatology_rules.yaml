@@ -1,0 +1,130 @@
+# 口腔科临床规则 — 牙周评估 + 龋坏分级 + 口腔黏膜病筛查
+rule_type: diagnosis
+department: 口腔科
+capability: cap-l3-stomatology-diagnosis
+business_process: bp-stomatology-diagnosis
+data_entities:
+  consumes: [de-patient, de-exam-oral, de-imaging-dental]
+  produces: [de-diagnosis-result]
+guideline: 中华口腔医学杂志 牙周病诊疗指南 (2023)
+stakeholder: 口腔科医师需评估牙周状况、龋坏程度与黏膜病变
+version: "1.0.0"
+
+rules:
+  - id: sto-periodontitis-treatment
+    description: 牙周袋深度 > 5mm → 牙周治疗
+    condition:
+      field: exam.periodontal_pocket_depth
+      operator: ">"
+      value: 5
+    result:
+      diagnosis: 中重度牙周炎
+      severity: 需牙周干预
+      recommendation: 龈下刮治 + 根面平整
+
+  - id: sto-deep-caries-endodontics
+    description: 龋坏深及牙髓 → 根管治疗
+    condition:
+      field: exam.caries_depth
+      operator: "=="
+      value: deep_pulp_involvement
+    result:
+      diagnosis: 牙髓炎
+      severity: 深龋伴牙髓受累
+      recommendation: 根管治疗 + 全冠修复
+
+  - id: sto-oral-leukoplakia-biopsy
+    description: 口腔白斑持续 > 2 周 → 活检
+    condition:
+      and:
+        - field: exam.oral_leukoplakia
+          operator: "=="
+          value: true
+        - field: exam.lesion_duration_weeks
+          operator: ">"
+          value: 2
+    result:
+      diagnosis: 口腔白斑
+      severity: 需排除恶变
+      recommendation: 切取活检病理检查
+
+---
+rule_type: risk_score
+department: 口腔科
+capability: cap-l3-stomatology-risk
+business_process: bp-stomatology-risk-assessment
+data_entities:
+  consumes: [de-exam-oral, de-imaging-dental]
+  produces: [de-risk-assessment]
+guideline: 中华口腔医学杂志 拔牙与颌面创伤规范 (2023)
+stakeholder: 评估牙齿可保留性与颌面创伤紧急度
+version: "1.0.0"
+
+rules:
+  - id: sto-tooth-mobility-extraction
+    description: 牙齿松动 III 度 → 建议拔除
+    condition:
+      field: exam.tooth_mobility
+      operator: "=="
+      value: grade_3
+    result:
+      risk: 无法保留
+      severity: 重度牙周组织丧失
+      recommendation: 拔除后种植或活动义齿修复
+
+  - id: sto-maxillofacial-fracture
+    description: 颌面部骨折 → 手术评估
+    condition:
+      field: imaging.maxillofacial_fracture
+      operator: "=="
+      value: true
+    result:
+      risk: 咬合功能 + 面容损害
+      severity: 高危
+      recommendation: 口腔颌面外科会诊 + 手术固定
+
+---
+rule_type: treatment
+department: 口腔科
+capability: cap-l3-stomatology-treatment
+business_process: bp-stomatology-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment]
+  produces: [de-treatment-plan]
+guideline: 中华口腔医学杂志 口腔疾病治疗规范 (2023)
+stakeholder: 根据牙体与牙周状况选择修复或种植方案
+version: "1.0.0"
+
+rules:
+  - id: sto-scaling-periodontitis
+    description: 牙周炎 → 龈下刮治
+    condition:
+      field: diagnosis.periodontitis
+      operator: "=="
+      value: true
+    result:
+      treatment: 龈下刮治 + 根面平整
+      indication: 慢性牙周炎
+      followup: 牙周维护治疗 q3-6m
+
+  - id: sto-root-canal-pulpitis
+    description: 牙髓炎 → 根管治疗
+    condition:
+      field: diagnosis.pulpitis
+      operator: "=="
+      value: true
+    result:
+      treatment: 根管治疗 + 桩核冠修复
+      indication: 不可复性牙髓炎
+      steps: 开髓→根备→封药→根充→冠修复
+
+  - id: sto-implant-edentulous
+    description: 缺牙区骨质足够 → 种植
+    condition:
+      field: diagnosis.edentulous_with_sufficient_bone
+      operator: "=="
+      value: true
+    result:
+      treatment: 牙种植体植入
+      indication: 单颗或多颗牙缺失
+      requirement: CBCT 评估骨量 + 骨密度

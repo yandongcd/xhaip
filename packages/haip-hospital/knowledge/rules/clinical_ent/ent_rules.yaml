@@ -1,0 +1,130 @@
+# 耳鼻喉科临床规则 — 听力管理 + 声带病变 + 鼻腔疾病
+rule_type: diagnosis
+department: 耳鼻喉科
+capability: cap-l3-ent-diagnosis
+business_process: bp-ent-diagnosis
+data_entities:
+  consumes: [de-patient, de-exam-ent, de-audiometry, de-nasal-endoscopy]
+  produces: [de-diagnosis-result]
+guideline: 中华耳鼻咽喉头颈外科杂志 听力障碍诊疗指南 (2022)
+stakeholder: 耳鼻喉科医师需综合听力、内镜与症状诊断
+version: "1.0.0"
+
+rules:
+  - id: ent-hearing-aid
+    description: 纯音听阈 > 25dB → 助听器评估
+    condition:
+      field: audiometry.PTA_better_ear
+      operator: ">"
+      value: 25
+    result:
+      diagnosis: 听力损失
+      severity: 需干预
+      recommendation: 助听器验配评估 + 耳科进一步检查
+
+  - id: ent-hoarseness-laryngoscopy
+    description: 声嘶 > 3 周 → 喉镜检查
+    condition:
+      field: symptom.hoarseness_duration_weeks
+      operator: ">"
+      value: 3
+    result:
+      diagnosis: 慢性声嘶
+      severity: 需排除喉部病变
+      recommendation: 电子喉镜检查，排除声带息肉 / 肿瘤
+
+  - id: ent-epistaxis-endoscopy
+    description: 反复鼻出血 → 鼻内镜检查
+    condition:
+      field: symptom.recurrent_epistaxis
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 反复鼻出血
+      severity: 需查明病因
+      recommendation: 鼻内镜检查 + 凝血功能评估
+
+---
+rule_type: risk_score
+department: 耳鼻喉科
+capability: cap-l3-ent-risk
+business_process: bp-ent-risk-assessment
+data_entities:
+  consumes: [de-patient, de-exam-ent, de-vital]
+  produces: [de-risk-assessment]
+guideline: 中华耳鼻咽喉头颈外科杂志 耳鼻喉急症处理规范 (2022)
+stakeholder: 评估突发性聋与气道梗阻的紧急程度
+version: "1.0.0"
+
+rules:
+  - id: ent-sudden-hearing-loss
+    description: 突发性听力下降 → 紧急处理
+    condition:
+      field: symptom.sudden_hearing_loss
+      operator: "=="
+      value: true
+    result:
+      risk: 突发性聋
+      severity: 紧急
+      recommendation: 72h 内启动糖皮质激素治疗
+
+  - id: ent-airway-obstruction
+    description: 呼吸困难伴喉鸣 → 气道梗阻
+    condition:
+      and:
+        - field: symptom.dyspnea
+          operator: "=="
+          value: true
+        - field: exam.stridor
+          operator: "=="
+          value: true
+    result:
+      risk: 气道梗阻
+      severity: 危急
+      recommendation: 紧急气道管理 + 耳鼻喉科会诊
+
+---
+rule_type: treatment
+department: 耳鼻喉科
+capability: cap-l3-ent-treatment
+business_process: bp-ent-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment]
+  produces: [de-treatment-plan]
+guideline: 中华耳鼻咽喉头颈外科杂志 变应性鼻炎与 OSA 诊疗指南 (2023)
+stakeholder: 根据疾病严重度选择药物或手术方案
+version: "1.0.0"
+
+rules:
+  - id: ent-glucocorticoid-sudden-deafness
+    description: 突发性聋 → 糖皮质激素
+    condition:
+      field: diagnosis.sudden_deafness
+      operator: "=="
+      value: true
+    result:
+      treatment: 糖皮质激素口服或鼓室内注射
+      indication: 突发性聋
+      monitoring: 听力复查 q1w × 4
+
+  - id: ent-nasal-steroid-rhinitis
+    description: 变应性鼻炎 → 鼻用激素
+    condition:
+      field: diagnosis.allergic_rhinitis
+      operator: "=="
+      value: true
+    result:
+      treatment: 鼻用糖皮质激素每日喷鼻
+      indication: 中重度变应性鼻炎
+      duration: 至少 2 周起效，建议规律使用
+
+  - id: ent-tonsillectomy-osa
+    description: 扁桃体肥大 OSA → 扁桃体切除
+    condition:
+      field: diagnosis.OSA_tonsillar
+      operator: "=="
+      value: true
+    result:
+      treatment: 扁桃体切除术 ± 腺样体切除
+      indication: 扁桃体肥大所致阻塞性睡眠呼吸暂停
+      precaution: 术前评估凝血功能 + 气道风险

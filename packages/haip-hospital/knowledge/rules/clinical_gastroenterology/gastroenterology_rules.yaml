@@ -1,0 +1,131 @@
+# 消化内科临床规则 — 消化道出血 + 病毒性肝炎 + 溃疡性结肠炎
+rule_type: diagnosis
+department: 消化内科
+capability: cap-l3-gastroenterology-diagnosis
+business_process: bp-gastroenterology-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-biochemistry, de-lab-hematology, de-lab-infection, de-endoscopy]
+  produces: [de-diagnosis-result]
+guideline: 中华消化杂志 急性非静脉曲张性上消化道出血诊治指南 (2023)
+stakeholder: 消化内科医师需快速判断消化道出血严重度与肝炎抗病毒时机
+version: "1.0.0"
+
+rules:
+  - id: ge-blatchford-endoscopy
+    description: Blatchford > 6 → 急诊内镜
+    condition:
+      field: blatchford_score
+      operator: ">"
+      value: 6
+    result:
+      diagnosis: 高危上消化道出血
+      severity: 高危
+      recommendation: 24小时内急诊胃镜
+
+  - id: ge-hbsag-antiviral
+    description: HBsAg+ 且 HBV DNA > 2000 → 抗病毒治疗
+    condition:
+      and:
+        - {field: lab_results.HBsAg, operator: "==", value: positive}
+        - {field: lab_results.HBV_DNA, operator: ">", value: 2000}
+    result:
+      diagnosis: 慢性乙型肝炎（活动期）
+      severity: 中危
+      recommendation: 启动抗病毒治疗（恩替卡韦/替诺福韦）
+
+  - id: ge-hematochezia-colonoscopy
+    description: 便血 + Hb 下降 → 急诊肠镜
+    condition:
+      and:
+        - {field: symptoms, operator: contains, value: 便血}
+        - {field: lab_results.Hb, operator: "<", value: 100}
+    result:
+      diagnosis: 急性下消化道出血
+      severity: 高危
+      recommendation: 急诊结肠镜检查
+
+---
+rule_type: risk_score
+department: 消化内科
+capability: cap-l3-gastroenterology-risk
+business_process: bp-gastroenterology-assessment
+data_entities:
+  consumes: [de-patient, de-lab-biochemistry, de-lab-hematology, de-endoscopy]
+  produces: [de-risk-assessment]
+guideline: 中华消化杂志 肝硬化食管胃静脉曲张出血防治指南 (2022)
+stakeholder: 评估肝硬化严重度与再出血风险
+version: "1.0.0"
+
+rules:
+  - id: ge-child-pugh-b
+    description: Child-Pugh B → 中危
+    condition:
+      field: child_pugh
+      operator: "=="
+      value: B
+    result:
+      risk: 中危
+      severity: 肝硬化失代偿
+      recommendation: 定期内镜筛查、预防性套扎
+
+  - id: ge-rockall-high-risk
+    description: Rockall > 5 → 高危再出血
+    condition:
+      field: rockall_score
+      operator: ">"
+      value: 5
+    result:
+      risk: 高危再出血
+      severity: 上消化道出血预后不良
+      recommendation: ICU监护、内镜介入止血
+
+---
+rule_type: treatment
+department: 消化内科
+capability: cap-l3-gastroenterology-treatment
+business_process: bp-gastroenterology-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment]
+  produces: [de-treatment-plan]
+guideline: 中华消化杂志 炎症性肠病诊断与治疗共识意见 (2023)
+stakeholder: 根据消化内科常见疾病制定药物治疗方案
+version: "1.0.0"
+
+rules:
+  - id: ge-ulcer-ppi
+    description: 溃疡病 → PPI 治疗
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 溃疡
+    result:
+      treatment: 质子泵抑制剂（PPI）
+      medications:
+        - 奥美拉唑 20mg bid
+        - 根除HP（四联疗法）
+
+  - id: ge-hbv-pegifn
+    description: 乙肝 → 聚乙二醇干扰素/核苷类似物
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 乙型肝炎
+    result:
+      treatment: 聚乙二醇干扰素/核苷类似物
+      options:
+        - 恩替卡韦 0.5mg qd
+        - 替诺福韦 300mg qd
+        - 聚乙二醇干扰素 α-2a 180μg qw
+
+  - id: ge-uc-mesalazine
+    description: 溃疡性结肠炎 → 美沙拉嗪
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 溃疡性结肠炎
+    result:
+      treatment: 美沙拉嗪（5-ASA）
+      medications:
+        - 美沙拉嗪 1g qid（活动期）
+        - 美沙拉嗪 0.5g tid（维持期）
+      escalation: 激素/免疫抑制剂/生物制剂

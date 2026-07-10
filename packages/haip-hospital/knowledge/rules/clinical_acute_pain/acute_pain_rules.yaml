@@ -1,0 +1,140 @@
+# Acute Pain 智能体临床规则 — 急性疼痛评估 + 术后镇痛 + 区域麻醉
+rule_type: diagnosis
+department: acute-pain
+capability: cap-l3-acute-pain-diagnosis
+business_process: bp-acute-pain-diagnosis
+data_entities:
+  consumes: [de-patient, de-assessment-pain, de-vital]
+  produces: [de-diagnosis-result]
+guideline: IASP 疼痛管理指南 (2021)
+stakeholder: 急性疼痛团队需快速评估疼痛强度并选择镇痛方式
+version: "1.0.0"
+
+rules:
+  - id: ap-iv-analgesia-severe
+    description: VAS ≥ 7 → 静脉镇痛
+    condition:
+      field: assessment.VAS
+      operator: ">="
+      value: 7
+    result:
+      diagnosis: 重度急性疼痛
+      severity: 需静脉镇痛
+      recommendation: IV 阿片类 ± NSAIDs
+
+  - id: ap-postop-pca
+    description: 术后疼痛 → PCA
+    condition:
+      field: diagnosis.post_operative
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 术后疼痛
+      recommendation: 患者自控镇痛（PCA）泵
+
+  - id: ap-emergency-pain-intervention
+    description: NRS ≥ 8 → 急诊镇痛干预
+    condition:
+      field: assessment.NRS
+      operator: ">="
+      value: 8
+    result:
+      diagnosis: 急诊重度疼痛
+      severity: 紧急
+      recommendation: 立即镇痛 + 病因诊断
+
+  - id: ap-cauda-equina-emergency
+    description: 马尾综合征 → 紧急手术
+    condition:
+      field: diagnosis.cauda_equina_syndrome
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 马尾综合征
+      severity: 紧急
+      recommendation: 急诊 MRI + 神经外科 / 骨科手术减压
+
+---
+rule_type: risk_score
+department: acute-pain
+capability: cap-l3-acute-pain-risk
+business_process: bp-acute-pain-risk-assessment
+data_entities:
+  consumes: [de-patient, de-assessment-pain, de-vital]
+  produces: [de-risk-assessment]
+guideline: IASP 疼痛管理指南 (2021)
+stakeholder: 监测阿片类药物的副作用风险
+version: "1.0.0"
+
+rules:
+  - id: ap-opioid-urinary-retention
+    description: 阿片使用后尿潴留 → 监测
+    condition:
+      field: assessment.urinary_retention
+      operator: "=="
+      value: true
+    result:
+      risk: 阿片类药物副作用
+      severity: 中危
+      recommendation: 导尿 + 减少阿片剂量
+
+  - id: ap-opioid-respiratory-depression
+    description: 呼吸频率 < 8 次/min → 阿片过量
+    condition:
+      field: vital.respiratory_rate
+      operator: "<"
+      value: 8
+    result:
+      risk: 阿片类药物过量
+      severity: 危急
+      recommendation: 停止阿片 + 纳洛酮 + 氧疗
+
+---
+rule_type: treatment
+department: acute-pain
+capability: cap-l3-acute-pain-treatment
+business_process: bp-acute-pain-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment]
+  produces: [de-treatment-plan]
+guideline: IASP 疼痛管理指南 (2021)
+stakeholder: 根据疼痛强度与原因选择多模式镇痛方案
+version: "1.0.0"
+
+rules:
+  - id: ap-morphine-pca-postop
+    description: 术后重度疼痛 → 吗啡 PCA
+    condition:
+      and:
+        - field: diagnosis.post_operative
+          operator: "=="
+          value: true
+        - field: assessment.VAS
+          operator: ">="
+          value: 7
+    result:
+      treatment: 吗啡 PCA 静脉
+      indication: 中重度术后疼痛
+      monitoring: 疼痛评分 + 镇静评分 + 呼吸频率
+
+  - id: ap-nsaids-mild-moderate
+    description: 轻中度疼痛 → NSAIDs
+    condition:
+      field: assessment.VAS
+      operator: "<="
+      value: 6
+    result:
+      treatment: NSAIDs 口服 / 静脉
+      indication: 轻中度急性疼痛
+      monitoring: 肾功能 + 消化道反应
+
+  - id: ap-nerve-block-regional
+    description: 区域镇痛需求 → 神经阻滞
+    condition:
+      field: treatment.regional_analgesia_indicated
+      operator: "=="
+      value: true
+    result:
+      treatment: 超声引导下神经阻滞
+      indication: 四肢手术后区域镇痛
+      advantage: 减少阿片用量 + 加速康复

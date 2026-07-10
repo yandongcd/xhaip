@@ -1,0 +1,126 @@
+# 眼科临床规则 — 青光眼筛查 + 低视力评估 + 眼底病变管理
+rule_type: diagnosis
+department: 眼科
+capability: cap-l3-ophthalmology-diagnosis
+business_process: bp-ophthalmology-diagnosis
+data_entities:
+  consumes: [de-patient, de-exam-eye, de-imaging-fundus]
+  produces: [de-diagnosis-result]
+guideline: 中华眼科杂志 原发性青光眼诊疗指南 (2023)
+stakeholder: 眼科医师需综合眼压、视野与眼底检查判定疾病
+version: "1.0.0"
+
+rules:
+  - id: oph-glaucoma-suspected
+    description: 眼压 > 21mmHg → 青光眼筛查
+    condition:
+      field: exam.IOP
+      operator: ">"
+      value: 21
+    result:
+      diagnosis: 高眼压状态
+      severity: 需进一步检查
+      recommendation: 视野 + 眼底 OCT，排除青光眼
+
+  - id: oph-low-vision
+    description: 最佳矫正视力 < 0.1 → 低视力
+    condition:
+      field: exam.BCVA
+      operator: "<"
+      value: 0.1
+    result:
+      diagnosis: 低视力
+      severity: 中重度视功能损害
+      recommendation: 低视力康复评估 + 辅助器具适配
+
+  - id: oph-diabetic-retinopathy-screening
+    description: 糖尿病史 → 眼底筛查
+    condition:
+      field: patient.has_diabetes
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 需糖尿病视网膜病变筛查
+      severity: 常规随访
+      recommendation: 散瞳眼底检查 q12m
+
+---
+rule_type: risk_score
+department: 眼科
+capability: cap-l3-ophthalmology-risk
+business_process: bp-ophthalmology-risk-assessment
+data_entities:
+  consumes: [de-exam-eye, de-imaging-fundus]
+  produces: [de-risk-assessment]
+guideline: 中华眼科杂志 青光眼诊疗专家共识 (2022)
+stakeholder: 评估视神经损伤与视力威胁性进展
+version: "1.0.0"
+
+rules:
+  - id: oph-cup-disc-ratio
+    description: 杯盘比 > 0.6 → 青光眼进展高风险
+    condition:
+      field: exam.cup_disc_ratio
+      operator: ">"
+      value: 0.6
+    result:
+      risk: 青光眼进展高风险
+      severity: 视神经严重受损
+      recommendation: 强化降眼压治疗 + 密切随访
+
+  - id: oph-macular-edema
+    description: 黄斑水肿 → 视力威胁
+    condition:
+      field: imaging.OCT_macular_edema
+      operator: "=="
+      value: true
+    result:
+      risk: 中心视力永久损害风险
+      severity: 高危
+      recommendation: 抗 VEGF 或糖皮质激素治疗
+
+---
+rule_type: treatment
+department: 眼科
+capability: cap-l3-ophthalmology-treatment
+business_process: bp-ophthalmology-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-exam-eye]
+  produces: [de-treatment-plan]
+guideline: 中华眼科杂志 眼科药物与手术治疗指南 (2023)
+stakeholder: 根据疾病类型与进展选择药物或手术干预
+version: "1.0.0"
+
+rules:
+  - id: oph-prostaglandin-glaucoma
+    description: 开角型青光眼 → 前列腺素类滴眼液
+    condition:
+      field: diagnosis.glaucoma_type
+      operator: "=="
+      value: open_angle
+    result:
+      treatment: 前列腺素类滴眼液 qd
+      indication: 原发性开角型青光眼
+      monitoring: 眼压月复查 + 视野半年复查
+
+  - id: oph-anti-vegf-amd
+    description: 湿性 AMD → 抗 VEGF 玻璃体注射
+    condition:
+      field: diagnosis.AMD_type
+      operator: "=="
+      value: wet
+    result:
+      treatment: 抗 VEGF 玻璃体腔注射
+      indication: 湿性老年性黄斑变性
+      schedule: 每月注射 ×3 次 → 按需延长
+
+  - id: oph-phaco-cataract
+    description: 白内障影响生活 → 超声乳化
+    condition:
+      field: diagnosis.cataract_significant
+      operator: "=="
+      value: true
+    result:
+      treatment: 超声乳化白内障吸除 + IOL 植入
+      indication: 显著影响视功能的白内障
+      recovery: 术后 1d/1w/1m 复查

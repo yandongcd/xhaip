@@ -1,0 +1,126 @@
+# 精神心理科临床规则 — 抑郁/焦虑筛查 + 自杀风险评估 + 精神分裂症管理
+rule_type: diagnosis
+department: 精神心理科
+capability: cap-l3-psychiatry-diagnosis
+business_process: bp-psychiatry-diagnosis
+data_entities:
+  consumes: [de-patient, de-assessment-psych, de-scale-score]
+  produces: [de-diagnosis-result]
+guideline: 中华精神科杂志 抑郁症防治指南 (2022)
+stakeholder: 精神科医师需利用量表评分与临床访谈做诊断
+version: "1.0.0"
+
+rules:
+  - id: psych-depression-antidepressant
+    description: PHQ-9 > 15 → 中重度抑郁需抗抑郁药
+    condition:
+      field: scale.PHQ9_score
+      operator: ">"
+      value: 15
+    result:
+      diagnosis: 中重度抑郁发作
+      severity: 需药物干预
+      recommendation: 启动抗抑郁药 + 心理治疗
+
+  - id: psych-suicidal-ideation
+    description: 自杀意念 → 紧急干预
+    condition:
+      field: assessment.suicidal_ideation
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 自杀风险状态
+      severity: 紧急
+      recommendation: 一对一看护 + 精神科急诊评估
+
+  - id: psych-anxiety-gad7
+    description: GAD-7 > 10 → 抗焦虑治疗
+    condition:
+      field: scale.GAD7_score
+      operator: ">"
+      value: 10
+    result:
+      diagnosis: 中重度广泛性焦虑障碍
+      severity: 需药物干预
+      recommendation: 启动抗焦虑药 ± 心理治疗
+
+---
+rule_type: risk_score
+department: 精神心理科
+capability: cap-l3-psychiatry-risk
+business_process: bp-psychiatry-risk-assessment
+data_entities:
+  consumes: [de-patient, de-assessment-psych]
+  produces: [de-risk-assessment]
+guideline: 中华精神科杂志 自杀预防与危机干预指南 (2022)
+stakeholder: 评估自杀与暴力倾向的紧急程度
+version: "1.0.0"
+
+rules:
+  - id: psych-suicide-plan
+    description: 有自杀计划 → 极高危
+    condition:
+      field: assessment.suicide_plan
+      operator: "=="
+      value: true
+    result:
+      risk: 自杀极高风险
+      severity: 极高危
+      recommendation: 强制住院 + 24h 监护
+
+  - id: psych-violence-restraint
+    description: 暴力倾向 → 约束保护
+    condition:
+      field: assessment.violence_risk
+      operator: "=="
+      value: high
+    result:
+      risk: 暴力行为风险
+      severity: 高危
+      recommendation: 保护性约束 + 镇静药物
+
+---
+rule_type: treatment
+department: 精神心理科
+capability: cap-l3-psychiatry-treatment
+business_process: bp-psychiatry-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment]
+  produces: [de-treatment-plan]
+guideline: 中华精神科杂志 精神药物治疗指南 (2022)
+stakeholder: 根据诊断与严重度选择抗抑郁、抗焦虑或抗精神病药
+version: "1.0.0"
+
+rules:
+  - id: psych-ssri-depression
+    description: 抑郁症 → SSRI 一线
+    condition:
+      field: diagnosis.depression_moderate_severe
+      operator: "=="
+      value: true
+    result:
+      treatment: SSRI 口服（艾司西酞普兰 / 舍曲林）
+      indication: 中重度抑郁发作
+      monitoring: 起效 2-4w，注意自杀风险
+
+  - id: psych-benzodiazepine-acute-anxiety
+    description: 急性严重焦虑 → 苯二氮卓类
+    condition:
+      field: assessment.acute_severe_anxiety
+      operator: "=="
+      value: true
+    result:
+      treatment: 短效苯二氮卓类（劳拉西泮 / 阿普唑仑）
+      indication: 急性焦虑发作
+      caution: 短期使用，不超过 4w
+
+  - id: psych-olanzapine-schizophrenia
+    description: 精神分裂症 → 奥氮平
+    condition:
+      field: diagnosis.schizophrenia
+      operator: "=="
+      value: true
+    result:
+      treatment: 奥氮平口服
+      indication: 精神分裂症急性期与维持期
+      monitoring: 体重、血糖、血脂

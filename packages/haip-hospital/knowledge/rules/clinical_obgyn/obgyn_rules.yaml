@@ -1,0 +1,142 @@
+# 妇产科临床规则 — 产程管理 + 高危妊娠 + 产科急症处理
+rule_type: diagnosis
+department: 妇产科
+capability: cap-l3-obgyn-diagnosis
+business_process: bp-obgyn-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-ob, de-imaging-ob, de-fetal-monitor]
+  produces: [de-diagnosis-result]
+guideline: 中华妇产科杂志 孕产妇保健指南 (2023)
+stakeholder: 产科医师需快速判定产程阶段与高危妊娠指征
+version: "1.0.0"
+
+rules:
+  - id: obg-labor-onset
+    description: 宫缩间隔 < 5min + 宫口开 → 产程启动
+    condition:
+      and:
+        - field: uterine.contraction_interval
+          operator: "<"
+          value: 5
+        - field: cervical.dilation
+          operator: ">="
+          value: 3
+    result:
+      diagnosis: 产程启动
+      stage: 第一产程活跃期
+      recommendation: 收入产房，持续胎心监护
+
+  - id: obg-ectopic-pregnancy
+    description: hCG 翻倍异常 → 异位妊娠排查
+    condition:
+      and:
+        - field: lab.hCG_48h_ratio
+          operator: "<"
+          value: 1.6
+        - field: ultrasound.gestational_sac
+          operator: "=="
+          value: absent
+    result:
+      diagnosis: 疑似异位妊娠
+      severity: 高危
+      recommendation: 急诊超声 + 妇科会诊，必要时腹腔镜探查
+
+  - id: obg-preeclampsia
+    description: 血压 > 140/90 + 蛋白尿 → 子痫前期
+    condition:
+      and:
+        - or:
+            - field: vital.BP_systolic
+              operator: ">="
+              value: 140
+            - field: vital.BP_diastolic
+              operator: ">="
+              value: 90
+        - field: lab.proteinuria
+          operator: ">="
+          value: 1
+    result:
+      diagnosis: 子痫前期
+      severity: 高危
+      recommendation: 住院监护，硫酸镁预防子痫，必要时终止妊娠
+
+---
+rule_type: risk_score
+department: 妇产科
+capability: cap-l3-obgyn-risk
+business_process: bp-obgyn-risk-assessment
+data_entities:
+  consumes: [de-patient, de-lab-ob, de-imaging-ob]
+  produces: [de-risk-assessment]
+guideline: 中华妇产科杂志 高危妊娠管理指南 (2023)
+stakeholder: 评估孕期与分娩风险，制定个体化监护方案
+version: "1.0.0"
+
+rules:
+  - id: obg-advanced-maternal-age
+    description: 高龄 ≥ 35 岁 → 高危妊娠
+    condition:
+      field: patient.age
+      operator: ">="
+      value: 35
+    result:
+      risk: 高危妊娠
+      severity: 染色体异常与妊娠并发症风险增加
+      recommendation: 产前诊断 + 加强孕期监测
+
+  - id: obg-placenta-previa
+    description: 前置胎盘 → 出血风险
+    condition:
+      field: ultrasound.placenta_position
+      operator: "=="
+      value: previa
+    result:
+      risk: 产前/产后大出血风险
+      severity: 高危
+      recommendation: 绝对卧床，孕晚期住院待产，备血
+
+---
+rule_type: treatment
+department: 妇产科
+capability: cap-l3-obgyn-treatment
+business_process: bp-obgyn-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-lab-ob]
+  produces: [de-treatment-plan]
+guideline: 中华妇产科杂志 产科急症处理指南 (2023)
+stakeholder: 根据产程进展与母胎状况选择干预方案
+version: "1.0.0"
+
+rules:
+  - id: obg-oxytocin-induction
+    description: 宫缩乏力 → 催产素静滴
+    condition:
+      field: uterine.contraction_frequency
+      operator: "<"
+      value: 3
+    result:
+      treatment: 催产素静脉滴注
+      indication: 宫缩乏力
+      monitoring: 持续胎心监护 + 宫缩强度监测
+
+  - id: obg-mgso4-preeclampsia
+    description: 子痫前期 → 硫酸镁
+    condition:
+      field: diagnosis.preeclampsia
+      operator: "=="
+      value: true
+    result:
+      treatment: 硫酸镁负荷量 + 维持量
+      indication: 子痫前期或子痫
+      precaution: 监测膝反射、呼吸、尿量
+
+  - id: obg-antibiotics-prom
+    description: 胎膜早破 → 抗生素预防
+    condition:
+      field: diagnosis.PROM
+      operator: "=="
+      value: true
+    result:
+      treatment: 广谱抗生素预防感染
+      indication: 胎膜早破 > 18h
+      recommendation: 同时评估是否需引产或剖宫产

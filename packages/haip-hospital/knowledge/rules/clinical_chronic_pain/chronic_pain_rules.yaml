@@ -1,0 +1,125 @@
+# Chronic Pain 智能体临床规则 — 慢性疼痛评估 + 多模式治疗 + 心理共病管理
+rule_type: diagnosis
+department: chronic-pain
+capability: cap-l3-chronic-pain-diagnosis
+business_process: bp-chronic-pain-diagnosis
+data_entities:
+  consumes: [de-patient, de-assessment-pain, de-assessment-psych, de-assessment-function]
+  produces: [de-diagnosis-result]
+guideline: IASP 疼痛管理指南 (2021)
+stakeholder: 慢性疼痛团队需评估疼痛慢性化因素与功能影响
+version: "1.0.0"
+
+rules:
+  - id: cp-multimodal-duration
+    description: 病程 > 3 个月 → 多模式评估
+    condition:
+      field: symptom.pain_duration_months
+      operator: ">"
+      value: 3
+    result:
+      diagnosis: 慢性疼痛
+      recommendation: 多学科评估（疼痛 + 心理 + 康复）
+
+  - id: cp-odi-functional
+    description: ODI > 40 → 功能严重受损
+    condition:
+      field: assessment.ODI
+      operator: ">"
+      value: 40
+    result:
+      diagnosis: 严重功能障碍
+      severity: 重度
+      recommendation: 强化康复 + 疼痛管理 + 职业评估
+
+  - id: cp-phq9-comorbidity
+    description: PHQ-9 > 10 → 心理共病
+    condition:
+      field: scale.PHQ9_score
+      operator: ">"
+      value: 10
+    result:
+      diagnosis: 疼痛合并抑郁
+      severity: 需心理干预
+      recommendation: CBT + 抗抑郁药评估
+
+---
+rule_type: risk_score
+department: chronic-pain
+capability: cap-l3-chronic-pain-risk
+business_process: bp-chronic-pain-risk-assessment
+data_entities:
+  consumes: [de-patient, de-assessment-pain, de-assessment-function]
+  produces: [de-risk-assessment]
+guideline: IASP 疼痛管理指南 (2021)
+stakeholder: 评估阿片依赖与功能丧失风险
+version: "1.0.0"
+
+rules:
+  - id: cp-opioid-dependence
+    description: 长期使用阿片 → 滥用风险
+    condition:
+      field: treatment.opioid_use_months
+      operator: ">"
+      value: 6
+    result:
+      risk: 阿片类药物依赖与滥用
+      severity: 高危
+      recommendation: 阿片减量计划 + 成瘾筛查
+
+  - id: cp-functional-disability
+    description: 功能持续丧失 → 残疾风险
+    condition:
+      field: assessment.functional_decline
+      operator: "=="
+      value: progressive
+    result:
+      risk: 进展性功能丧失
+      severity: 高危
+      recommendation: 多学科康复 + 职业能力评估
+
+---
+rule_type: treatment
+department: chronic-pain
+capability: cap-l3-chronic-pain-treatment
+business_process: bp-chronic-pain-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment]
+  produces: [de-treatment-plan]
+guideline: IASP 疼痛管理指南 (2021)
+stakeholder: 通过药物、心理与物理治疗实现多模式慢性疼痛管理
+version: "1.0.0"
+
+rules:
+  - id: cp-multimodal-combination
+    description: 慢性疼痛 → 多模式联合用药
+    condition:
+      field: diagnosis.chronic_pain
+      operator: "=="
+      value: true
+    result:
+      treatment: 多模式镇痛（NSAIDs + 镇痛辅助药 ± 阿片）
+      indication: 慢性非癌痛
+      goal: 功能改善优先于完全无痛
+
+  - id: cp-cbt-psychological
+    description: 疼痛伴心理因素 → CBT
+    condition:
+      field: diagnosis.pain_psychological_comorbidity
+      operator: "=="
+      value: true
+    result:
+      treatment: 认知行为治疗（CBT）
+      indication: 慢性疼痛伴焦虑 / 抑郁 / 恐惧回避
+      frequency: 每周 1 次 × 8-12 周
+
+  - id: cp-tens-physical
+    description: 肌筋膜疼痛 → TENS
+    condition:
+      field: diagnosis.myofascial_pain
+      operator: "=="
+      value: true
+    result:
+      treatment: 经皮神经电刺激（TENS）
+      indication: 肌筋膜疼痛综合征
+      frequency: 每日 30min

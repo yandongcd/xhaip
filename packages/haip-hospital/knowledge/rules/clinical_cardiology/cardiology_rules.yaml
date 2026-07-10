@@ -93,15 +93,134 @@ rules:
         - MRA
         - SGLT2i
 
-  - id: htn-combination
-    description: 高血压联合治疗
+  - id: htn-lifestyle
+    description: 高血压生活方式干预
     condition:
       field: diagnosis; operator: contains; value: 高血压
     result:
-      treatment: 个体化降压
+      treatment: 生活方式干预
+      interventions:
+        - 限盐 <5g/天
+        - 减重 BMI<24
+        - 规律运动 每周≥150min
+        - 戒烟限酒
+        - 饮食DASH模式
+
+  - id: htn-monotherapy
+    description: 高血压1级初始单药治疗
+    condition:
+      and:
+        - field: diagnosis; operator: contains; value: 高血压
+        - field: bp_systolic; operator: "<"; value: 160
+    result:
+      treatment: 单药起始
+      medications_first_line:
+        - CCB (氨氯地平/硝苯地平控释片)
+        - ACEI (培哚普利/贝那普利)
+        - ARB (缬沙坦/厄贝沙坦)
+        - 利尿剂 (氢氯噻嗪/吲达帕胺)
+
+  - id: htn-combination
+    description: 高血压2级及以上联合治疗
+    condition:
+      and:
+        - field: diagnosis; operator: contains; value: 高血压
+        - field: bp_systolic; operator: ">="; value: 160
+    result:
+      treatment: 联合降压
       medications:
-        - CCB首选
+        - A+C (ACEI/ARB + CCB) 首选
+        - A+D (ACEI/ARB + 利尿剂)
+        - C+D (CCB + 利尿剂)
+      target: "<140/90 mmHg (一般); <130/80 mmHg (高危)"
+
+  - id: htn-sphc
+    description: 单片复方制剂推荐
+    condition:
+      field: diagnosis; operator: contains; value: 高血压
+    result:
+      recommendation: 优先选用SPHC
+      benefits: 简化方案 提高依从性
+      options:
+        - 氨氯地平/贝那普利
+        - 缬沙坦/氨氯地平
+        - 厄贝沙坦/氢氯噻嗪
+
+  - id: htn-elderly
+    description: 老年高血压管理
+    condition:
+      and:
+        - field: diagnosis; operator: contains; value: 高血压
+        - field: age; operator: ">="; value: 65
+    result:
+      treatment: 老年个体化降压
+      target_bp: "<150/90 mmHg (≥80岁: <150/90)"
+      medications:
+        - CCB 首选
+        - 利尿剂
         - ACEI/ARB
+      warnings:
+        - 避免血压过低
+        - 注意体位性低血压
+
+  - id: htn-dm
+    description: 高血压合并糖尿病
+    condition:
+      and:
+        - field: diagnosis; operator: contains; value: 高血压
+        - field: diagnosis; operator: contains; value: 糖尿病
+    result:
+      target_bp: "<130/80 mmHg"
+      medications_first_line:
+        - ACEI/ARB 首选
+        - CCB
+        - 利尿剂 (小剂量)
+      priority: SGLT2i/GLP-1RA 优选
+
+  - id: htn-ckd
+    description: 高血压合并慢性肾脏病
+    condition:
+      and:
+        - field: diagnosis; operator: contains; value: 高血压
+        - field: diagnosis; operator: contains; value: 慢性肾脏病
+    result:
+      target_bp: "<130/80 mmHg"
+      medications:
+        - ACEI/ARB 首选 (肾功能保护)
+        - CCB
+        - 袢利尿剂 (eGFR<30)
+      warnings:
+        - 监测血钾与肌酐
+
+  - id: htn-pregnancy
+    description: 妊娠期高血压管理
+    condition:
+      and:
+        - field: diagnosis; operator: contains; value: 高血压
+        - field: pregnancy; operator: equals; value: true
+    result:
+      target_bp: "≥150/100 mmHg 启动治疗"
+      safe_medications:
+        - 拉贝洛尔
+        - 硝苯地平
+        - 甲基多巴
+      contraindicated:
+        - ACEI/ARB (致畸)
+      emergency: "≥160/110 mmHg 立即住院"
+
+  - id: htn-followup
+    description: 高血压随访计划
+    condition:
+      field: diagnosis; operator: contains; value: 高血压
+    result:
+      followup_schedule:
+        - time: 启动/调整后2-4周; items: 血压/不良反应/依从性
+        - time: 达标后1-3月; items: 血压/生化/心电图
+        - time: 达标后每半年; items: 全面评估/靶器官损害筛查
+      red_flags:
+        - 血压持续>160/100 mmHg
+        - 新发胸痛/呼吸困难/视力模糊
+        - 血肌酐升高>30%
 
 ---
 rule_type: followup

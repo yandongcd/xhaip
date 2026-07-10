@@ -1,0 +1,123 @@
+# Pain Rehab 智能体临床规则 — 疼痛康复评估 + 功能重建 + 心理行为干预
+rule_type: diagnosis
+department: pain-rehab
+capability: cap-l3-pain-rehab-diagnosis
+business_process: bp-pain-rehab-diagnosis
+data_entities:
+  consumes: [de-patient, de-assessment-pain, de-assessment-rehab, de-assessment-function]
+  produces: [de-diagnosis-result]
+guideline: 中国康复医学指南 (2022)
+stakeholder: 疼痛康复团队需评估功能限制与心理行为因素
+version: "1.0.0"
+
+rules:
+  - id: pr-muscle-strength-passive
+    description: 肌力 < 3 级 → 被动训练
+    condition:
+      field: assessment.MMT_grade
+      operator: "<"
+      value: 3
+    result:
+      diagnosis: 疼痛相关性肌力减退
+      recommendation: 被动关节活动度 + 等长收缩训练
+
+  - id: pr-fear-avoidance-cbt
+    description: 恐惧回避行为 → CBT 干预
+    condition:
+      field: assessment.fear_avoidance
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 恐惧回避综合征
+      recommendation: 认知行为治疗 + 分级暴露
+
+  - id: pr-return-to-work-assessment
+    description: 重返工作需求 → 职业评估
+    condition:
+      field: patient.return_to_work_goal
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 职业康复需求
+      recommendation: 功能性能力评估 + 工作模拟训练
+
+---
+rule_type: risk_score
+department: pain-rehab
+capability: cap-l3-pain-rehab-risk
+business_process: bp-pain-rehab-risk-assessment
+data_entities:
+  consumes: [de-patient, de-assessment-function, de-assessment-pain]
+  produces: [de-risk-assessment]
+guideline: 中国康复医学指南 (2022)
+stakeholder: 评估失用综合征与慢性化预后
+version: "1.0.0"
+
+rules:
+  - id: pr-disuse-syndrome
+    description: 活动减少 > 6 个月 → 失用综合征
+    condition:
+      field: assessment.activity_reduction_months
+      operator: ">"
+      value: 6
+    result:
+      risk: 失用综合征
+      severity: 功能进行性衰退
+      recommendation: 渐进性活动恢复计划
+
+  - id: pr-chronicity-poor-prognosis
+    description: 慢性化 > 6 个月 → 预后不良
+    condition:
+      field: assessment.pain_chronicity_months
+      operator: ">"
+      value: 6
+    result:
+      risk: 疼痛慢性化
+      severity: 预后不良风险
+      recommendation: 加强多学科协作 + 心理行为管理
+
+---
+rule_type: treatment
+department: pain-rehab
+capability: cap-l3-pain-rehab-treatment
+business_process: bp-pain-rehab-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment]
+  produces: [de-treatment-plan]
+guideline: 中国康复医学指南 (2022)
+stakeholder: 以功能恢复为导向的渐进性多学科疼痛康复方案
+version: "1.0.0"
+
+rules:
+  - id: pr-graded-exercise
+    description: 功能受限 → 逐步运动计划
+    condition:
+      field: diagnosis.functional_limitation
+      operator: "=="
+      value: true
+    result:
+      treatment: 渐进性运动疗法
+      indication: 慢性疼痛致功能受限
+      principle: 时间依赖性而非疼痛依赖性推进
+
+  - id: pr-cbt-pain-coping
+    description: 疼痛应对不良 → 认知行为治疗
+    condition:
+      field: assessment.poor_pain_coping
+      operator: "=="
+      value: true
+    result:
+      treatment: 认知行为治疗（CBT）
+      indication: 疼痛应对障碍
+      goals: 改善疼痛信念 + 学习应对技巧
+
+  - id: pr-multidisciplinary-complex
+    description: 复杂慢性疼痛 → 多学科方案
+    condition:
+      field: diagnosis.complex_chronic_pain
+      operator: "=="
+      value: true
+    result:
+      treatment: 多学科疼痛康复（MDT）
+      indication: 生物-心理-社会复杂因素并存
+      team: 康复医师 + 物理治疗师 + 心理治疗师 + 职业治疗师
