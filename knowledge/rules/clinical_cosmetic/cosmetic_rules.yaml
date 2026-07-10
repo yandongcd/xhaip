@@ -1,0 +1,151 @@
+# 整形美容科临床规则 — 肉毒素剂量 + 填充剂安全 + 术后感染预防 + 创面愈合
+rule_type: diagnosis
+department: 整形美容科
+capability: cap-l3-cosmetic-diagnosis
+business_process: bp-cosmetic-diagnosis
+data_entities:
+  consumes: [de-patient, de-exam-cosmetic, de-imaging-face]
+  produces: [de-diagnosis-result]
+guideline: 中国整形美容临床诊疗指南（2022）
+stakeholder: 整形美容科医师需评估面部老化、乳房形态与注射适应症
+version: "1.0.0"
+
+rules:
+  - id: cosmetic-face-aging-grade
+    description: 面部老化Glogau III-IV级 → 综合年轻化方案
+    condition:
+      field: exam.glogau_scale
+      operator: ">="
+      value: 3
+    result:
+      diagnosis: 中重度面部老化
+      severity: 需综合干预
+      recommendation: 线雕+光电+注射联合治疗
+
+  - id: cosmetic-blepharoptosis
+    description: 上睑下垂 → 提肌缩短或额肌悬吊
+    condition:
+      field: exam.blepharoptosis_mrd1
+      operator: "<="
+      value: 2
+    result:
+      diagnosis: 中重度上睑下垂
+      severity: 影响视野
+      recommendation: 提上睑肌缩短术或额肌瓣悬吊术
+
+  - id: cosmetic-breast-ptosis
+    description: 乳房下垂 Regnault III° → 乳房上提术
+    condition:
+      field: exam.breast_ptosis_grade
+      operator: "=="
+      value: grade_3
+    result:
+      diagnosis: 重度乳房下垂
+      severity: 乳头低于乳房下皱襞
+      recommendation: 乳房上提固定术 ± 假体隆乳
+
+---
+rule_type: risk_score
+department: 整形美容科
+capability: cap-l3-cosmetic-risk
+business_process: bp-cosmetic-risk
+data_entities:
+  consumes: [de-patient, de-exam-cosmetic, de-lab-coagulation]
+  produces: [de-risk-assessment]
+guideline: 中国整形美容临床诊疗指南（2022）
+stakeholder: 评估注射并发症风险、术后感染与创面愈合风险
+version: "1.0.0"
+
+rules:
+  - id: cosmetic-btx-overdose
+    description: 肉毒素单次总量 > 400U → 中毒风险
+    condition:
+      field: treatment.btx_total_dose
+      operator: ">"
+      value: 400
+    result:
+      risk: 肉毒素中毒
+      severity: 高危（全身肌无力/呼吸困难）
+      recommendation: 分次注射 + 总量控制 + 备抗毒素
+
+  - id: cosmetic-vascular-occlusion
+    description: 填充剂注射后皮肤发白/疼痛 → 血管栓塞
+    condition:
+      or:
+        - {field: exam.skin_blanching, operator: "==", value: true}
+        - {field: exam.severe_pain_post_injection, operator: "==", value: true}
+        - {field: exam.livedo_reticularis, operator: "==", value: true}
+    result:
+      risk: 填充剂血管内栓塞
+      severity: 急症（组织坏死风险）
+      recommendation: 立即停止注射 + 透明质酸酶溶解 + 热敷 + 阿司匹林
+
+  - id: cosmetic-filler-safety-zone
+    description: 高风险区域注射（眉间/鼻翼/鼻唇沟）→ 钝针
+    condition:
+      field: exam.injection_zone
+      operator: in
+      value: [glabella, nasal_ala, nasolabial_fold]
+    result:
+      risk: 血管栓塞高风险区
+      severity: 高危
+      recommendation: 使用钝针 + 低压慢推 + 回抽确认
+
+  - id: cosmetic-postop-infection
+    description: 假体置入术后体温>38.5°C → 感染排查
+    condition:
+      and:
+        - {field: exam.implant_in_situ, operator: "==", value: true}
+        - {field: vitals.temperature, operator: ">", value: 38.5}
+        - {field: surgery.days_postop, operator: "<=", value: 30}
+    result:
+      risk: 假体周围感染
+      severity: 高危（需取出假体）
+      recommendation: 血培养 + 超声 + 经验性抗生素±假体取出
+
+---
+rule_type: treatment
+department: 整形美容科
+capability: cap-l3-cosmetic-treatment
+business_process: bp-cosmetic-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment]
+  produces: [de-treatment-plan]
+guideline: 中国整形美容临床诊疗指南（2022）
+stakeholder: 根据评估结果制定注射、手术或创面修复方案
+version: "1.0.0"
+
+rules:
+  - id: cosmetic-btx-dosing-glabella
+    description: 眉间纹肉毒素标准剂量 20U（女性）/ 30U（男性）
+    condition:
+      field: diagnosis.glabellar_lines
+      operator: "=="
+      value: moderate_to_severe
+    result:
+      treatment: A型肉毒毒素眉间注射
+      dose_female: 20U（5点×4U）
+      dose_male: 30U（5点×6U）
+      interval: q4-6m
+
+  - id: cosmetic-wound-healing-smoking
+    description: 吸烟者术前戒烟 ≥ 4周 → 降低皮瓣坏死
+    condition:
+      field: patient.smoking_status
+      operator: "=="
+      value: active
+    result:
+      treatment: 术前强制戒烟 ≥ 4周
+      indication: 所有皮瓣/植皮手术
+      risk_reduction: 皮瓣坏死风险降低 50%
+
+  - id: cosmetic-hypertrophic-scar
+    description: 瘢痕疙瘩倾向 → 术后放疗或压力治疗
+    condition:
+      field: patient.hypertrophic_scar_history
+      operator: "=="
+      value: true
+    result:
+      treatment: 术后24h内放疗（单次8-12Gy）或硅酮+压力治疗
+      indication: 瘢痕疙瘩切除术后
+      followup: 瘢痕门诊 q6-8w × 6m

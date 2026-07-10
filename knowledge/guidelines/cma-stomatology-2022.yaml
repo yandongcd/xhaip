@@ -1,0 +1,47 @@
+# ============================================================
+# Guideline Asset: 中国口腔科临床诊疗指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-stomatology-2022"
+name: "中国口腔科临床诊疗指南（2022）"
+abbr: "中华口腔 2022"
+version: "2022"
+publisher: "中华口腔医学会"
+journal: "中华口腔医学杂志 2022"
+doi: ""
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国口腔科临床诊疗指南（2022），覆盖龋病/牙髓病（龋风险评估/
+  根管治疗）、牙周病（分期I-IV/龈下刮治）、口腔颌面外科（拔牙/
+  颌骨骨折）、种植牙（CBCT评估/植入规范）、口腔癌筛查、
+  抗生素预防用药。
+
+key_sections:
+  - id: "§1"
+    title: "龋病/牙髓病"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [sto-caries-risk, sto-pulpitis-diagnosis, sto-root-canal-treatment]
+
+  - id: "§2"
+    title: "牙周病"
+    stage_ids: [S1, S2, S3, S4]
+    rule_ids: [sto-periodontitis-staging, sto-periodontitis-treatment, sto-tooth-mobility]
+
+  - id: "§3"
+    title: "口腔颌面外科"
+    stage_ids: [S3, S4, S5]
+    rule_ids: [sto-extraction-indication, sto-maxillofacial-fracture, sto-antibiotic-prophylaxis]
+
+  - id: "§4"
+    title: "种植牙与口腔癌筛查"
+    stage_ids: [S3, S4]
+    rule_ids: [sto-implant-assessment, sto-implant-planning, sto-oral-cancer-screening]
+
+rule_sets_covered:
+  - clinical_stomatology
+
+derived_rule_count: 12
+last_updated: 2026-07-10

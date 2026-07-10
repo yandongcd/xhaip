@@ -1,0 +1,45 @@
+# ============================================================
+# Guideline Asset: 中国神经外科临床诊疗指南（2021）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-neurosurgery-2021"
+name: "中国神经外科临床诊疗指南（2021）"
+abbr: "神经外科指南2021"
+version: "2021"
+publisher: "中华医学会神经外科学分会"
+journal: "中华神经外科杂志 2021;37(1):1-80"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国神经外科临床诊疗指南（2021版），涵盖颅脑损伤(GCS评分与ICP管理)、
+  脑卒中(出血性/缺血性)的急诊处置、颅内肿瘤(glioma/meningioma)的
+  手术策略与综合治疗、以及术后神经功能监护与并发症管理。
+
+key_sections:
+  - id: "§1"
+    title: "颅脑损伤 — GCS评分与ICP管理"
+    stage_ids: [S1, S2]
+    rule_ids: [ns-gcs-intubation, ns-unequal-pupils, ns-midline-shift]
+
+  - id: "§2"
+    title: "脑卒中 — 出血性与缺血性"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [ns-hunt-hess-delay, ns-wfns-high-risk, ns-fisher-vasospasm]
+
+  - id: "§3"
+    title: "颅内肿瘤 — glioma/meningioma"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [ns-midline-shift, ns-ich-volume-risk]
+
+  - id: "§4"
+    title: "术后神经功能管理与并发症"
+    stage_ids: [S4, S5]
+    rule_ids: [ns-gcs-intubation, ns-sah-nimodipine, ns-ich-decompression]
+
+rule_sets_covered:
+  - clinical_neurosurgery
+
+derived_rule_count: 9
+last_updated: 2026-07-10

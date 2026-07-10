@@ -1,0 +1,47 @@
+# ============================================================
+# Guideline Asset: 中国皮肤科临床诊疗指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-dermatology-2022"
+name: "中国皮肤科临床诊疗指南（2022）"
+abbr: "中华皮肤科 2022"
+version: "2022"
+publisher: "中华医学会皮肤性病学分会"
+journal: "中华皮肤科杂志 2022"
+doi: ""
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国皮肤科临床诊疗指南（2022），覆盖湿疹/特应性皮炎（SCORAD评分/
+  阶梯治疗）、银屑病（PASI/BSA评估/生物制剂）、荨麻疹（UAS7评分/
+  抗组胺治疗）、皮肤感染（细菌/真菌/病毒）、皮肤肿瘤（ABCDE筛查/
+  基底细胞癌/鳞癌/黑色素瘤）、外用糖皮质激素强度分级。
+
+key_sections:
+  - id: "§1"
+    title: "湿疹/特应性皮炎"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [derm-scorad-assessment, derm-ad-topical-treatment, derm-ad-systemic-treatment]
+
+  - id: "§2"
+    title: "银屑病"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [derm-pasi-bsa-assessment, derm-psoriasis-topical, derm-psoriasis-biologic]
+
+  - id: "§3"
+    title: "荨麻疹"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [derm-uas7-assessment, derm-urticaria-antihistamine, derm-urticaria-omalizumab]
+
+  - id: "§4"
+    title: "皮肤感染/肿瘤与外用激素"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [derm-skin-infection, derm-melanoma-abcde, derm-topical-steroid-ladder]
+
+rule_sets_covered:
+  - clinical_dermatology
+
+derived_rule_count: 12
+last_updated: 2026-07-10

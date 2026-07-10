@@ -1,83 +1,339 @@
-# 老年病科临床规则 — 多重用药 + 老年综合征 + 个体化治疗
+# 老年病科临床规则 — CGA 综合评估 + Fried 衰弱 + TUG 跌倒 + CAM 谵妄 + STOPP/START
 rule_type: diagnosis
 department: 老年病科
 capability: cap-l3-geriatrics-diagnosis
 business_process: bp-geriatrics-diagnosis
 data_entities:
-  consumes: [de-patient, de-medication-list, de-vitals, de-cognitive-assessment]
-  produces: [de-diagnosis-result]
-guideline: 中华老年医学杂志 老年患者多重用药管理专家共识 (2023)
-stakeholder: 老年病科医师需综合评估老年综合征与多重用药风险
+  consumes:
+    - de-patient
+    - de-vitals
+    - de-cognitive-assessment
+    - de-functional-assessment
+    - de-medication-list
+    - de-nutrition
+  produces:
+    - de-diagnosis-result
+guideline: 中国老年医学临床诊疗指南（2023）
+stakeholder: 老年病科医师进行 CGA 老年综合评估与老年综合征诊断
 version: "1.0.0"
 
 rules:
-  - id: ge-polypharmacy-deprescribe
-    description: ≥5 种药物 → 精简用药
+  - id: ge-cga-medical
+    description: CGA — 医疗维度评估
+    condition:
+      field: cga_domain
+      operator: equals
+      value: medical
+    result:
+      assessment: 医疗维度
+      items:
+        - 慢性病共病评估（Charlson 共病指数）
+        - 用药审查（≥5 药触发多重用药评估）
+        - 营养筛查（MNA-SF）
+        - 疼痛评估（VAS/NRS）
+        - 视听障碍筛查
+        - 睡眠质量评估（PSQI）
+
+  - id: ge-cga-functional
+    description: CGA — 功能维度评估
+    condition:
+      field: cga_domain
+      operator: equals
+      value: functional
+    result:
+      assessment: 功能维度
+      items:
+        - ADL 日常生活能力（Barthel 指数）
+        - IADL 工具性日常生活能力（Lawton 量表）
+        - 步态与平衡（TUG 测试 / Tinetti 量表）
+        - 跌倒史与跌倒风险评估
+        - 肌力评估（握力计 / 5 次坐立试验）
+
+  - id: ge-cga-psychosocial
+    description: CGA — 心理社会维度评估
+    condition:
+      field: cga_domain
+      operator: equals
+      value: psychosocial
+    result:
+      assessment: 心理社会维度
+      items:
+        - 认知功能（MMSE / MoCA）
+        - 情绪状态（GDS-15 老年抑郁量表）
+        - 谵妄评估（CAM）
+        - 社会支持网络
+        - 照护者负担评估（Zarit 量表）
+        - 经济状况与居住环境安全
+
+  - id: ge-cga-environmental
+    description: CGA — 环境维度评估
+    condition:
+      field: cga_domain
+      operator: equals
+      value: environmental
+    result:
+      assessment: 环境维度
+      items:
+        - 居家安全评估（照明/扶手/地面防滑）
+        - 辅助器具需求评估
+        - 交通出行能力
+        - 社区资源可及性
+      recommendation: 必要时家访评估
+
+  - id: ge-frailty-fried
+    description: Fried 衰弱表型标准 — 5 项评估
+    condition:
+      field: assessment_type
+      operator: equals
+      value: frailty
+    result:
+      assessment: Fried 衰弱表型
+      criteria:
+        - id: F1; name: 不明原因体重下降; threshold: "1 年内下降 > 5% 或 > 4.5kg"
+        - id: F2; name: 自述疲乏; threshold: "CES-D 量表 ≥ 2-3 分"
+        - id: F3; name: 活动量减少; threshold: "明达休闲活动问卷（男性 < 383kcal/周，女性 < 270kcal/周）"
+        - id: F4; name: 行走速度减慢; threshold: "4.57m 步行时间 ≥ 7s（身高 ≤ 159cm）或 ≥ 6s（身高 > 159cm）"
+        - id: F5; name: 握力下降; threshold: "BMI ≤ 24: 男 ≤ 29kg 女 ≤ 17kg；BMI > 24: 男 ≤ 30kg 女 ≤ 17kg"
+      grading:
+        - count: 0; label: 无衰弱（Robust）
+        - count: "1-2"; label: 衰弱前期（Pre-frail）
+        - count: "≥ 3"; label: 衰弱（Frail）
+
+  - id: ge-frailty-prefrail
+    description: 衰弱前期 → 干预
+    condition:
+      field: frailty_count
+      operator: ">="
+      value: 1
+      and:
+        field: frailty_count
+        operator: "<="
+        value: 2
+    result:
+      diagnosis: 衰弱前期
+      severity: 中危
+      recommendation: 蛋白质补充（1.2-1.5g/kg/d）+ 抗阻训练 + 维生素 D（800-1000 IU/d）
+
+  - id: ge-frailty-frail
+    description: 衰弱 → 综合干预
+    condition:
+      field: frailty_count
+      operator: ">="
+      value: 3
+    result:
+      diagnosis: 衰弱
+      severity: 高危
+      recommendation: 多学科综合干预（老年科+康复+营养+药学）+ 个体化运动处方 + 药物重整
+
+  - id: ge-falls-tug
+    description: TUG 测试 — 跌倒风险评估
+    condition:
+      field: tud_test_seconds
+      operator: ">="
+      value: 0
+    result:
+      diagnosis: 跌倒风险评估（TUG）
+      grading:
+        - range: "< 10s"; label: 正常（低风险）; action: 常规运动建议
+        - range: "10-19s"; label: 中度跌倒风险; action: 步态训练 + 平衡训练 + 环境改造
+        - range: "20-29s"; label: 高度跌倒风险; action: 物理治疗 + 助行器具 + 居家安全改造
+        - range: "≥ 30s"; label: 极高跌倒风险; action: 全面评估 + 多因素干预 + 照护升级
+
+  - id: ge-falls-tinetti
+    description: Tinetti 平衡与步态量表
+    condition:
+      field: tinetti_score
+      operator: "<"
+      value: 19
+    result:
+      diagnosis: 跌倒高风险（Tinetti）
+      severity: 高危
+      recommendation: 平衡训练 + 肌力训练 + 助行器评估 + 环境安全干预
+
+  - id: ge-falls-intervention
+    description: 跌倒多因素干预方案
+    condition:
+      field: fall_risk_level
+      operator: in
+      value: [high, very_high]
+    result:
+      treatment: 跌倒综合干预
+      interventions:
+        - 运动干预：平衡训练（太极/奥塔戈运动）、肌力训练、步态训练
+        - 药物审查：减少精神药物、降压药物优化、维生素 D 补充
+        - 环境改造：移除绊脚物、安装扶手/夜灯、防滑地面
+        - 视力矫正：白内障手术评估
+        - 足部护理：合适鞋具、足病评估
+        - 体位性低血压管理
+
+  - id: ge-delirium-cam
+    description: CAM 谵妄评估
+    condition:
+      field: assessment_type
+      operator: equals
+      value: delirium
+    result:
+      assessment: CAM 谵妄评估法
+      criteria:
+        - id: C1; name: 急性起病与波动性病程; assessment: 精神状态急性改变 + 日间波动
+        - id: C2; name: 注意力缺损; assessment: 不能集中注意力或注意力易转移
+        - id: C3; name: 思维紊乱; assessment: 思维不连贯或答非所问
+        - id: C4; name: 意识水平改变; assessment: 警觉/嗜睡/昏睡/昏迷
+      positive: "C1 + C2 + (C3 或 C4) = CAM 阳性（谵妄）"
+
+  - id: ge-delirium-prevention
+    description: 谵妄预防策略
+    condition:
+      field: delirium_risk
+      operator: equals
+      value: high
+    result:
+      treatment: 谵妄预防多组分干预
+      interventions:
+        - 定向力维持：日历/钟表/家属照片 + 规律沟通
+        - 睡眠管理：减少夜间干扰、避免白天过度睡眠、非药物策略
+        - 活动与运动：早期活动、避免约束
+        - 感官优化：助听器/眼镜可用
+        - 容量管理：充分水化
+        - 药物审查：避免苯二氮卓类/抗胆碱能药物
+
+  - id: ge-delirium-management
+    description: 谵妄急性管理
+    condition:
+      field: cam_positive
+      operator: equals
+      value: true
+    result:
+      diagnosis: 谵妄
+      severity: 紧急
+      recommendation: 病因排查（感染/代谢/药物/脱水）+ 氟哌啶醇（严重激越时 0.5-1mg IM/PO）+ 非药物干预为主
+
+  - id: ge-polypharmacy-beers
+    description: Beers 标准 — 老年人潜在不适当用药
     condition:
       field: medication_count
       operator: ">="
       value: 5
     result:
-      diagnosis: 多重用药
-      severity: 中危
-      recommendation: 药物重整、精简非必要药物、Beers 标准评估
+      assessment: Beers 标准筛查
+      avoid_classes:
+        - 苯二氮卓类（跌倒/认知损害风险）
+        - 第一代抗组胺药（苯海拉明/氯苯那敏 — 抗胆碱能负荷）
+        - 非选择性 NSAIDs 长期使用（GI/肾/CV 风险）
+        - 质子泵抑制剂超 8 周（C.difficile/骨折/肾损害）
+        - 抗精神病药（无精神疾病适应症时 — 卒中/死亡风险）
+        - 长效磺脲类（格列本脲 — 低血糖风险）
+      caution_classes:
+        - 阿司匹林一级预防（≥70 岁获益不明确）
+        - 他汀类（预期寿命限制时考虑停药）
 
-  - id: ge-fall-prevention
-    description: 跌倒史 + 步态异常 → 防跌倒
+  - id: ge-stopp-criteria
+    description: STOPP 标准 — 老年人处方遗漏筛查启动
     condition:
-      and:
-        - {field: history, operator: contains, value: 跌倒}
-        - {field: gait, operator: contains, value: 异常}
-    result:
-      diagnosis: 跌倒高风险
-      severity: 高危
-      recommendation: 步态训练、居家环境改造、维生素 D 补充
-
-  - id: ge-cognitive-assessment
-    description: MMSE < 24 → 认知评估
-    condition:
-      field: mmse_score
-      operator: "<"
-      value: 24
-    result:
-      diagnosis: 认知功能障碍
-      severity: 中危
-      recommendation: 进一步 MoCA 评估、神经内科会诊
-
----
-rule_type: risk_score
-department: 老年病科
-capability: cap-l3-geriatrics-risk
-business_process: bp-geriatrics-assessment
-data_entities:
-  consumes: [de-patient, de-comprehensive-assessment, de-nutrition]
-  produces: [de-risk-assessment]
-guideline: 中华老年医学杂志 老年综合评估技术应用指南 (2023)
-stakeholder: 通过老年综合评估（CGA）识别衰弱与营养不良风险
-version: "1.0.0"
-
-rules:
-  - id: ge-frailty-high-risk
-    description: 衰弱 ≥ 3 项 → 高危
-    condition:
-      field: frailty_criteria
+      field: medication_count
       operator: ">="
-      value: 3
+      value: 5
     result:
-      risk: 衰弱高危
-      severity: 失能、跌倒、死亡风险显著增加
-      recommendation: 多学科综合干预、康复训练
+      assessment: STOPP/START 标准
+      stop_criteria:
+        - 非必要 PPI 持续使用 > 8 周
+        - 未联用保护剂的 NSAIDs（有消化性溃疡史）
+        - 未监测肾功能的 ACEI/ARB
+        - 无适应症的抗精神病药
+        - 噻唑烷二酮类用于心衰患者
+      start_criteria:
+        - 骨质疏松 → 钙 + 维生素 D + 双膦酸盐
+        - 冠心病 → 他汀 + ACEI（EF 降低时）
+        - 房颤 → 抗凝治疗（CHA2DS2-VASc ≥ 2）
+        - 糖尿病 + 蛋白尿 → ACEI/ARB
 
-  - id: ge-malnutrition
-    description: 营养不良 → 风险升级
+  - id: ge-start-criteria
+    description: START 标准 — 应启用但遗漏的药物
     condition:
-      field: mna_score
-      operator: "<"
-      value: 17
+      field: age
+      operator: ">="
+      value: 65
     result:
-      risk: 营养不良高危
-      severity: 免疫功能下降、伤口愈合延迟
-      recommendation: 营养支持、蛋白质补充 1.2-1.5g/kg/d
+      recommendation: START 标准核查
+      start_recommendations:
+        - 冠心病二级预防：他汀 + 抗血小板
+        - 收缩性心衰：ACEI/ARB/ARNI + β 阻滞剂
+        - 房颤：口服抗凝药（CHA2DS2-VASc ≥ 2）
+        - 骨质疏松：钙 + 维生素 D ± 双膦酸盐
+        - 糖尿病 + 心血管病：SGLT2i / GLP-1RA
+        - 抑郁：SSRI（非 TCA 或苯二氮卓）
+
+  - id: ge-nutrition-mna
+    description: MNA-SF 简易营养评估
+    condition:
+      field: assessment_type
+      operator: equals
+      value: nutrition
+    result:
+      assessment: MNA-SF 简易营养评估
+      scoring:
+        - range: "12-14"; label: 营养正常; action: 常规监测
+        - range: "8-11"; label: 营养不良风险; action: 营养评估 + 3 天饮食记录 + 营养指导
+        - range: "0-7"; label: 营养不良; action: 全面营养评估 + 个体化营养支持 + 营养师会诊
+
+  - id: ge-nutrition-malnutrition
+    description: 老年营养不良 → 干预
+    condition:
+      field: mna_sf
+      operator: "<"
+      value: 8
+    result:
+      diagnosis: 营养不良
+      severity: 中危
+      recommendation: 蛋白质 1.2-1.5g/kg/d + 热量 30-35kcal/kg/d + 维生素 D 800-1000 IU/d + ONS 口服营养补充
+
+  - id: ge-nutrition-support
+    description: 老年营养支持方案
+    condition:
+      field: nutrition_status
+      operator: in
+      value: [malnutrition_risk, malnutrition]
+    result:
+      treatment: 营养支持
+      strategies:
+        - 口服营养补充（ONS）：两餐间补充 200-400kcal/d
+        - 肠内营养：无法经口进食时 鼻胃管/鼻肠管
+        - 肠外营养：肠道衰竭时考虑
+        - 微量营养素：钙 1000-1200mg/d + 维生素 D 800-1000 IU/d + 维生素 B12
+      monitoring:
+        - 每周体重
+        - 血清白蛋白/前白蛋白
+        - 进食量记录
+
+  - id: ge-incontinence-assessment
+    description: 老年失禁评估
+    condition:
+      field: incontinence
+      operator: equals
+      value: true
+    result:
+      diagnosis: 老年失禁
+      assessment:
+        - 类型鉴别：压力性/急迫性/充盈性/功能性
+        - 排尿日记（3-7 天）
+        - 残余尿量测定
+        - 尿常规 + 尿培养
+        - 药物审查（利尿剂/α 阻滞剂/抗胆碱能药）
+
+  - id: ge-incontinence-management
+    description: 老年失禁分级管理
+    condition:
+      field: incontinence_type
+      operator: not_null
+      value: true
+    result:
+      treatment: 失禁分级管理
+      interventions:
+        - 行为治疗：定时排尿/膀胱训练/盆底肌训练（Kegel）
+        - 急迫性：抗胆碱能药（索利那新/托特罗定）或 β3 激动剂（米拉贝隆）
+        - 压力性：盆底肌训练 + 阴道雌激素（女性）+ 手术评估
+        - 功能性：如厕辅助 + 环境优化
+        - 充盈性：导尿 + 病因治疗
 
 ---
 rule_type: treatment
@@ -85,49 +341,63 @@ department: 老年病科
 capability: cap-l3-geriatrics-treatment
 business_process: bp-geriatrics-treatment
 data_entities:
-  consumes: [de-diagnosis-result, de-risk-assessment, de-comprehensive-assessment]
-  produces: [de-treatment-plan]
-guideline: 中华老年医学杂志 老年患者合理用药指南 (2023)
-stakeholder: 基于老年综合评估制定个体化、精简化治疗方案
+  consumes:
+    - de-diagnosis-result
+    - de-comprehensive-assessment
+    - de-medication-list
+  produces:
+    - de-treatment-plan
+guideline: 中国老年医学临床诊疗指南（2023）
+stakeholder: 基于 CGA 制定个体化、精简化老年综合治疗方案
 version: "1.0.0"
 
 rules:
-  - id: ge-cga-individualized
-    description: 综合评估 → 个体化方案
+  - id: ge-cga-care-plan
+    description: CGA 综合照护计划
     condition:
       field: cga_completed
-      operator: "=="
+      operator: equals
       value: true
     result:
-      treatment: 老年综合评估（CGA）指导个体化方案
+      treatment: 老年综合照护计划
       domains:
-        - 医疗：慢病管理、合理用药
-        - 功能：康复训练、辅助器具
-        - 心理：认知干预、情绪支持
-        - 社会：照护计划、家庭支持
+        - 医疗管理：慢病优化、多重用药精简、预防保健（疫苗/筛查）
+        - 康复训练：物理治疗（肌力/平衡/步态）+ 作业治疗（ADL 训练）
+        - 营养支持：个体化营养方案 + ONS
+        - 认知心理：认知训练 + 情绪支持 + 社会参与
+        - 照护支持：照护者教育 + 长期照护保险评估
+        - 预立医疗照护计划（ACP）：意愿讨论与记录
 
   - id: ge-anticholinergic-reduction
-    description: 减少抗胆碱能药
+    description: 减少抗胆碱能药物负荷
     condition:
       field: medication_list
-      operator: contains
-      value: 抗胆碱能
+      operator: contains_any
+      value: [苯海拉明, 奥昔布宁, 阿米替林, 帕罗西汀, 氯苯那敏]
     result:
-      treatment: 减少抗胆碱能药物负荷
+      treatment: 抗胆碱能药物减量
       actions:
-        - 停用非必要抗胆碱能药（苯海拉明/奥昔布宁等）
-        - 替换为认知友好替代方案
-        - 抗胆碱能负荷量表（ACB）定期评估
+        - 抗胆碱能负荷量表（ACB）评估
+        - 停用非必要抗胆碱能药
+        - 替换方案：过敏 → 西替利嗪/氯雷他定；膀胱过度活动 → 米拉贝隆；抑郁 → 舍曲林/艾司西酞普兰
+        - 定期复评 ACB 评分
 
   - id: ge-vitd-calcium
-    description: 补充 VitD + 钙 → 骨质疏松
+    description: 补充维生素 D + 钙 → 骨质疏松/跌倒预防
     condition:
-      field: diagnosis
-      operator: contains
-      value: 骨质疏松
+      and:
+        - field: diagnosis
+          operator: contains
+          value: 骨质疏松
+        - field: age
+          operator: ">="
+          value: 65
     result:
       treatment: 维生素 D + 钙剂联合补充
       medications:
         - 维生素 D3 800-1000 IU qd
-        - 碳酸钙 600mg bid
-      adjunct: 负重运动、日照
+        - 碳酸钙 1200mg/d（分次）
+      adjunct:
+        - 负重运动
+        - 日照 15-30min/d
+        - 双膦酸盐（T-score ≤ -2.5 或脆性骨折史）

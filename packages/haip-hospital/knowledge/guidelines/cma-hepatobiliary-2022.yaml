@@ -1,0 +1,45 @@
+# ============================================================
+# Guideline Asset: 中国肝胆外科临床诊疗指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-hepatobiliary-2022"
+name: "中国肝胆外科临床诊疗指南（2022）"
+abbr: "肝胆外科指南2022"
+version: "2022"
+publisher: "中华医学会外科学分会肝脏外科学组"
+journal: "中华肝胆外科杂志 2022;28(1):1-72"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国肝胆外科临床诊疗指南（2022版），涵盖肝癌(BCLC分期/手术切除/介入
+  治疗)的全程管理、胆石症(LC/ERCP)的微创治疗策略、门脉高压症的外科
+  干预指征、以及肝移植的适应证与时機选择。
+
+key_sections:
+  - id: "§1"
+    title: "肝癌 — BCLC分期与手术/介入策略"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [hb-child-c, hb-large-hcc-tace, hb-anatomic-resection]
+
+  - id: "§2"
+    title: "胆石症 — LC与ERCP微创治疗"
+    stage_ids: [S1, S2]
+    rule_ids: [hb-bilirubin-drainage, gs-cholecystectomy]
+
+  - id: "§3"
+    title: "门脉高压症 — 外科干预"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [hb-child-b-risk, hb-child-c, hb-meld-transplant]
+
+  - id: "§4"
+    title: "肝移植 — 适应证与时機"
+    stage_ids: [S1, S3]
+    rule_ids: [hb-meld-transplant, hb-child-c, hb-residual-liver]
+
+rule_sets_covered:
+  - clinical_hepatobiliary
+
+derived_rule_count: 8
+last_updated: 2026-07-10

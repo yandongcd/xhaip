@@ -1,0 +1,48 @@
+# ============================================================
+# Guideline Asset: NCCN Guidelines: Non-Small Cell Lung Cancer (2023)
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-nccn-nsclc-2023"
+name: "NCCN Guidelines: Non-Small Cell Lung Cancer (2023)"
+abbr: "NCCN NSCLC 2023"
+version: "2023"
+publisher: "National Comprehensive Cancer Network"
+journal: "NCCN Clinical Practice Guidelines in Oncology 2023; Version 3.2023"
+doi: "10.6004/jnccn.2023.0026"
+language: en
+trust_level: T1
+
+description: >
+  NCCN Guidelines for Non-Small Cell Lung Cancer (Version 3.2023),
+  covering NSCLC staging (TNM 8th edition with mediastinoscopy),
+  surgical resection criteria for stage I-IIIA, perioperative systemic
+  therapy (neoadjuvant/adjuvant chemoimmunotherapy), and management of
+  locally advanced and metastatic disease.
+
+key_sections:
+  - id: "§1"
+    title: "NSCLC Staging — TNM 8th + Mediastinoscopy"
+    stage_ids: [S1, S2]
+    rule_ids: [ts-nodule-biopsy, ts-mediastinal-differential, ts-effusion-staging]
+
+  - id: "§2"
+    title: "Surgical Resection — Stage I-IIIA Criteria"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [ts-fev1-inoperable, ts-early-vats, ts-locally-advanced, ts-pneumonectomy]
+
+  - id: "§3"
+    title: "Esophageal Cancer Management"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [ts-dlco-high-risk, ts-comorbidity-risk]
+
+  - id: "§4"
+    title: "VATS & Thoracic Trauma"
+    stage_ids: [S2, S3, S4]
+    rule_ids: [ts-early-vats, ts-pneumonectomy]
+
+rule_sets_covered:
+  - clinical_thoracic_surgery
+
+derived_rule_count: 9
+last_updated: 2026-07-10

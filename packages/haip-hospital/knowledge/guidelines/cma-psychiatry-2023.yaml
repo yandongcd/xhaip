@@ -1,0 +1,67 @@
+# ============================================================
+# Guideline Asset: CMA Psychiatry Prevention & Treatment Guidelines 2023
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T2
+# ============================================================
+id: "guideline-cma-psychiatry-2023"
+name: "中国精神障碍防治指南（2023）"
+abbr: "CMA Psychiatry 2023"
+version: "2023"
+publisher: "中华医学会精神医学分会"
+journal: "中华精神科杂志 2023"
+doi: ""
+language: zh-CN
+trust_level: T2
+
+description: >
+  中国精神障碍防治指南（2023）。覆盖抑郁症筛查与分级治疗（PHQ-9 / HAMD）、
+  焦虑障碍评估（GAD-7）、精神分裂症抗精神病药物选择、睡眠障碍 CBT-I、
+  自杀风险评估与分层干预、双相障碍、创伤后应激障碍（PTSD）。
+
+key_sections:
+  - id: "§1"
+    title: "抑郁症 — PHQ-9 筛查与分级治疗"
+    stage_ids: [S1, S2]
+    rule_ids: [psych-phq9-mild, psych-phq9-moderate, psych-phq9-severe, psych-hamd-severity]
+
+  - id: "§2"
+    title: "焦虑障碍 — GAD-7 评估"
+    stage_ids: [S1, S2]
+    rule_ids: [psych-gad7-mild, psych-gad7-moderate, psych-gad7-severe]
+
+  - id: "§3"
+    title: "精神分裂症 — 抗精神病药物选择"
+    stage_ids: [S2, S3]
+    rule_ids: [psych-schizophrenia-first-episode, psych-schizophrenia-relapse, psych-antipsychotic-selection]
+
+  - id: "§4"
+    title: "自杀风险评估与分层干预"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [psych-suicide-low, psych-suicide-med, psych-suicide-high, psych-suicide-imminent]
+
+  - id: "§5"
+    title: "睡眠障碍 — CBT-I 与药物治疗"
+    stage_ids: [S2, S3]
+    rule_ids: [psych-insomnia-cbti, psych-insomnia-pharmacotherapy, psych-insomnia-assessment]
+
+  - id: "§6"
+    title: "双相障碍管理"
+    stage_ids: [S2, S3]
+    rule_ids: [psych-bipolar-manic, psych-bipolar-depressed, psych-mood-stabilizer]
+
+  - id: "§7"
+    title: "PTSD 评估与治疗"
+    stage_ids: [S1, S2]
+    rule_ids: [psych-ptsd-screening, psych-ptsd-psychotherapy, psych-ptsd-pharmacotherapy]
+
+rule_sets_covered:
+  - psychiatry_depression
+  - psychiatry_anxiety
+  - psychiatry_schizophrenia
+  - psychiatry_suicide_risk
+  - psychiatry_insomnia
+  - psychiatry_bipolar
+  - psychiatry_ptsd
+
+derived_rule_count: 25
+last_updated: 2026-07-10

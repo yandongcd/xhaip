@@ -1,0 +1,48 @@
+# ============================================================
+# Guideline Asset: NCCN Guidelines: Breast Cancer (2023)
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-nccn-breast-2023"
+name: "NCCN Guidelines: Breast Cancer (2023)"
+abbr: "NCCN Breast 2023"
+version: "2023"
+publisher: "National Comprehensive Cancer Network"
+journal: "NCCN Clinical Practice Guidelines in Oncology"
+doi: ""
+language: en
+trust_level: T1
+
+description: >
+  NCCN Clinical Practice Guidelines for Breast Cancer (Version 4.2023).
+  Covers screening (mammography/ultrasound/MRI), molecular subtyping
+  (Luminal A/B, HER2-enriched, TNBC), surgical management (breast-conserving
+  vs mastectomy with reconstruction), sentinel lymph node biopsy,
+  neoadjuvant/adjuvant systemic therapy, and radiation therapy.
+
+key_sections:
+  - id: "§1"
+    title: "筛查（钼靶/超声/MRI）"
+    stage_ids: [S1, S2]
+    rule_ids: [breast-screening-mammo, breast-screening-ultrasound, breast-screening-mri, breast-birads-class]
+
+  - id: "§2"
+    title: "分子分型（Luminal/HER2/TNBC）"
+    stage_ids: [S2, S3]
+    rule_ids: [breast-molecular-er-pr, breast-molecular-her2, breast-molecular-ki67, breast-molecular-tnbc]
+
+  - id: "§3"
+    title: "手术（保乳/重建/前哨）"
+    stage_ids: [S4, S5]
+    rule_ids: [breast-bcs-indication, breast-mastectomy-indication, breast-slnb, breast-reconstruction-timing]
+
+  - id: "§4"
+    title: "辅助治疗"
+    stage_ids: [S5, S6]
+    rule_ids: [breast-neoadjuvant-chemo, breast-adjuvant-endocrine, breast-adjuvant-her2, breast-adjuvant-rt]
+
+rule_sets_covered:
+  - clinical_breast
+
+derived_rule_count: 16
+last_updated: 2026-07-10

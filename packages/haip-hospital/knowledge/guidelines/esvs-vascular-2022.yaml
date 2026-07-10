@@ -1,0 +1,48 @@
+# ============================================================
+# Guideline Asset: ESVS Clinical Practice Guidelines (2022)
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-esvs-vascular-2022"
+name: "ESVS Clinical Practice Guidelines (2022)"
+abbr: "ESVS 2022"
+version: "2022"
+publisher: "European Society for Vascular Surgery"
+journal: "European Journal of Vascular and Endovascular Surgery 2022;63(1):1-124"
+doi: "10.1016/j.ejvs.2021.09.008"
+language: en
+trust_level: T1
+
+description: >
+  ESVS Clinical Practice Guidelines (2022), covering abdominal aortic
+  aneurysm (AAA) surveillance thresholds and repair indications, lower
+  extremity arterial disease (ABI/Rutherford classification), venous
+  thromboembolism (VTE/PE) diagnosis and management, and carotid artery
+  stenosis intervention criteria.
+
+key_sections:
+  - id: "§1"
+    title: "Abdominal Aortic Aneurysm — Surveillance & Repair"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [vs-aneurysm-elective, vs-rupture-risk, vs-aneurysm-evar]
+
+  - id: "§2"
+    title: "Lower Extremity Arterial Disease — ABI & Rutherford"
+    stage_ids: [S1, S2]
+    rule_ids: [vs-cli-diagnosis, vs-rutherford-amputation, vs-pad-revascularization]
+
+  - id: "§3"
+    title: "Venous Thromboembolism — DVT/PE"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [vs-dvt-diagnosis, vs-dvt-treatment]
+
+  - id: "§4"
+    title: "Carotid Artery Stenosis — Intervention Criteria"
+    stage_ids: [S1, S2]
+    rule_ids: [vs-carotid-stroke]
+
+rule_sets_covered:
+  - clinical_vascular_surgery
+
+derived_rule_count: 8
+last_updated: 2026-07-10

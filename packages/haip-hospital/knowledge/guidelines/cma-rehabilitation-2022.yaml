@@ -1,0 +1,66 @@
+# ============================================================
+# Guideline Asset: CMA Rehabilitation Clinical Guidelines 2022
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T2
+# ============================================================
+id: "guideline-cma-rehabilitation-2022"
+name: "中国康复医学临床诊疗指南（2022）"
+abbr: "CMA Rehabilitation 2022"
+version: "2022"
+publisher: "中华医学会物理医学与康复学分会"
+journal: "中华物理医学与康复杂志 2022"
+doi: ""
+language: zh-CN
+trust_level: T2
+
+description: >
+  中国康复医学临床诊疗指南（2022）。覆盖神经康复（脑卒中 Brunnstrom 分期、
+  脊髓损伤 ASIA 分级）、骨科康复（关节置换术后、骨折后）、心肺康复、
+  言语/吞咽康复、早期活动方案、深静脉血栓预防。
+
+key_sections:
+  - id: "§1"
+    title: "神经康复 — 脑卒中（Brunnstrom 分期）"
+    stage_ids: [S1, S2]
+    rule_ids: [rehab-brunnstrom-stage, rehab-stroke-early-mobilization, rehab-stroke-spasticity]
+
+  - id: "§2"
+    title: "神经康复 — 脊髓损伤（ASIA 分级）"
+    stage_ids: [S1, S2]
+    rule_ids: [rehab-sci-asia, rehab-sci-level, rehab-sci-complete]
+
+  - id: "§3"
+    title: "功能评估 — Barthel ADL / FIM"
+    stage_ids: [S1, S2]
+    rule_ids: [rehab-barthel-scoring, rehab-fim-scoring, rehab-adl-intervention]
+
+  - id: "§4"
+    title: "骨科康复 — 关节置换/骨折"
+    stage_ids: [S2, S3]
+    rule_ids: [rehab-arthroplasty-protocol, rehab-fracture-rehab, rehab-weight-bearing]
+
+  - id: "§5"
+    title: "心肺康复"
+    stage_ids: [S2, S3]
+    rule_ids: [rehab-cardiac-phase, rehab-pulmonary-rehab, rehab-exercise-prescription]
+
+  - id: "§6"
+    title: "言语/吞咽康复"
+    stage_ids: [S2, S3]
+    rule_ids: [rehab-dysphagia-vfss, rehab-aphasia-assessment, rehab-speech-therapy]
+
+  - id: "§7"
+    title: "早期活动与 DVT 预防"
+    stage_ids: [S3, S4]
+    rule_ids: [rehab-early-mobilization, rehab-dvt-prevention, rehab-dvt-mechanical]
+
+rule_sets_covered:
+  - rehabilitation_neuro
+  - rehabilitation_ortho
+  - rehabilitation_cardiopulmonary
+  - rehabilitation_speech_swallow
+  - rehabilitation_mobilization
+  - rehabilitation_dvt
+
+derived_rule_count: 22
+last_updated: 2026-07-10

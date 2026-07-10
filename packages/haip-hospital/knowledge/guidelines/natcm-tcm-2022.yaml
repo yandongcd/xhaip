@@ -1,0 +1,62 @@
+# ============================================================
+# Guideline Asset: NATCM Clinical Diagnosis & Treatment Guidelines 2022
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T2
+# ============================================================
+id: "guideline-natcm-tcm-2022"
+name: "国家中医药临床诊疗指南（2022）"
+abbr: "NATCM TCM 2022"
+version: "2022"
+publisher: "国家中医药管理局"
+journal: ""
+doi: ""
+language: zh-CN
+trust_level: T2
+
+description: >
+  国家中医药临床诊疗指南（2022）。覆盖中医辨证论治体系（八纲辨证：
+  阴阳/表里/寒热/虚实、脏腑辨证、六经辨证、卫气营血辨证）、常见病
+  中医诊疗、针灸/推拿技术规范、中药合理使用（十八反十九畏、妊娠
+  禁忌）、中医体质分类（9 种体质）与调养指导。
+
+key_sections:
+  - id: "§1"
+    title: "八纲辨证 — 阴阳/表里/寒热/虚实"
+    stage_ids: [S1, S2]
+    rule_ids: [tcm-bagang-yinyang, tcm-bagang-biaoli, tcm-bagang-hanre, tcm-bagang-xushi]
+
+  - id: "§2"
+    title: "脏腑辨证"
+    stage_ids: [S1, S2]
+    rule_ids: [tcm-zangfu-heart, tcm-zangfu-liver, tcm-zangfu-spleen, tcm-zangfu-lung, tcm-zangfu-kidney]
+
+  - id: "§3"
+    title: "常见病中医诊疗"
+    stage_ids: [S2, S3]
+    rule_ids: [tcm-common-cold, tcm-common-insomnia, tcm-common-constipation, tcm-common-headache]
+
+  - id: "§4"
+    title: "针灸/推拿技术规范"
+    stage_ids: [S3, S4]
+    rule_ids: [tcm-acu-point-selection, tcm-acu-headache, tcm-acu-lumbago, tcm-acu-insomnia, tcm-acu-stroke]
+
+  - id: "§5"
+    title: "中药合理使用 — 十八反十九畏"
+    stage_ids: [S3, S4]
+    rule_ids: [tcm-herb-18incompatible, tcm-herb-19fear, tcm-herb-pregnancy-contra, tcm-herb-ddi]
+
+  - id: "§6"
+    title: "中医体质分类（9 型）"
+    stage_ids: [S1, S2]
+    rule_ids: [tcm-constitution-neutral, tcm-constitution-qi-deficiency, tcm-constitution-yang-deficiency, tcm-constitution-yin-deficiency, tcm-constitution-phlegm-dampness, tcm-constitution-damp-heat, tcm-constitution-blood-stasis, tcm-constitution-qi-stagnation, tcm-constitution-intrinsic]
+
+rule_sets_covered:
+  - tcm_syndrome_differentiation
+  - tcm_zangfu
+  - tcm_common_diseases
+  - tcm_acupuncture
+  - tcm_herb_safety
+  - tcm_constitution
+
+derived_rule_count: 28
+last_updated: 2026-07-10

@@ -1,0 +1,46 @@
+# ============================================================
+# Guideline Asset: 中国整形美容临床诊疗指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-cosmetic-2022"
+name: "中国整形美容临床诊疗指南（2022）"
+abbr: "中华整形 2022"
+version: "2022"
+publisher: "中华医学会整形外科学分会"
+journal: "中华整形外科杂志 2022"
+doi: ""
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国整形美容临床诊疗指南（2022），覆盖面部年轻化（线雕/光电/注射）、
+  乳房整形（隆乳/缩小/重建）、脂肪移植（Coleman技术）、
+  微创注射（肉毒素剂量/填充剂安全管理）、术后感染预防与创面愈合优化。
+
+key_sections:
+  - id: "§1"
+    title: "面部年轻化"
+    stage_ids: [S1, S2]
+    rule_ids: [cosmetic-face-aging-assessment, cosmetic-face-treatment-plan]
+
+  - id: "§2"
+    title: "乳房整形"
+    stage_ids: [S3, S4]
+    rule_ids: [cosmetic-breast-augmentation, cosmetic-breast-reduction, cosmetic-breast-reconstruction]
+
+  - id: "§3"
+    title: "脂肪移植"
+    stage_ids: [S4, S5]
+    rule_ids: [cosmetic-fat-graft-harvest, cosmetic-fat-graft-injection]
+
+  - id: "§4"
+    title: "微创注射（肉毒素/填充剂）"
+    stage_ids: [S3, S4, S5]
+    rule_ids: [cosmetic-btx-dosing, cosmetic-filler-safety, cosmetic-vascular-occlusion, cosmetic-filler-complication]
+
+rule_sets_covered:
+  - clinical_cosmetic
+
+derived_rule_count: 10
+last_updated: 2026-07-10

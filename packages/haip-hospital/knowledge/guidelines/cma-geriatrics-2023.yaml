@@ -1,0 +1,67 @@
+# ============================================================
+# Guideline Asset: CMA Geriatrics Clinical Guidelines 2023
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T2
+# ============================================================
+id: "guideline-cma-geriatrics-2023"
+name: "中国老年医学临床诊疗指南（2023）"
+abbr: "CMA Geriatrics 2023"
+version: "2023"
+publisher: "中华医学会老年医学分会"
+journal: "中华老年医学杂志 2023"
+doi: ""
+language: zh-CN
+trust_level: T2
+
+description: >
+  中国老年医学临床诊疗指南（2023）。覆盖老年综合评估（CGA）、
+  老年综合征（跌倒/谵妄/失禁/衰弱）、多重用药管理（Beers 标准、
+  STOPP/START 标准）、老年营养支持、认知功能评估与干预。
+
+key_sections:
+  - id: "§1"
+    title: "CGA 老年综合评估"
+    stage_ids: [S1, S2]
+    rule_ids: [ge-cga-medical, ge-cga-functional, ge-cga-psychosocial, ge-cga-environmental]
+
+  - id: "§2"
+    title: "老年综合征 — 衰弱（Fried 标准）"
+    stage_ids: [S1, S2]
+    rule_ids: [ge-frailty-fried, ge-frailty-prefrail, ge-frailty-frail]
+
+  - id: "§3"
+    title: "老年综合征 — 跌倒风险评估（TUG 测试）"
+    stage_ids: [S2, S3]
+    rule_ids: [ge-falls-tug, ge-falls-tinetti, ge-falls-intervention]
+
+  - id: "§4"
+    title: "老年综合征 — 谵妄评估（CAM）"
+    stage_ids: [S2, S3]
+    rule_ids: [ge-delirium-cam, ge-delirium-prevention, ge-delirium-management]
+
+  - id: "§5"
+    title: "多重用药 — Beers 标准 / STOPP/START"
+    stage_ids: [S3, S4]
+    rule_ids: [ge-polypharmacy-beers, ge-stopp-criteria, ge-start-criteria]
+
+  - id: "§6"
+    title: "老年营养评估与支持"
+    stage_ids: [S2, S3]
+    rule_ids: [ge-nutrition-mna, ge-nutrition-malnutrition, ge-nutrition-support]
+
+  - id: "§7"
+    title: "老年失禁管理"
+    stage_ids: [S3, S4]
+    rule_ids: [ge-incontinence-assessment, ge-incontinence-management]
+
+rule_sets_covered:
+  - geriatrics_cga
+  - geriatrics_frailty
+  - geriatrics_falls
+  - geriatrics_delirium
+  - geriatrics_polypharmacy
+  - geriatrics_nutrition
+  - geriatrics_incontinence
+
+derived_rule_count: 21
+last_updated: 2026-07-10

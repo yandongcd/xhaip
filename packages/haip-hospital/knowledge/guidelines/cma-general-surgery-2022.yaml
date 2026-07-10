@@ -1,0 +1,45 @@
+# ============================================================
+# Guideline Asset: 中国普通外科临床诊疗指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-general-surgery-2022"
+name: "中国普通外科临床诊疗指南（2022）"
+abbr: "普外科指南2022"
+version: "2022"
+publisher: "中华医学会外科学分会"
+journal: "中华普通外科杂志 2022;37(1):1-96"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国普通外科临床诊疗指南（2022版），涵盖急腹症(阑尾炎/肠梗阻/穿孔)的
+  快速鉴别与手术决策、甲状腺/乳腺疾病的外科治疗规范、腹壁疝的分类与
+  修补策略、以及围术期管理(ASA分级/DVT预防/营养支持)。
+
+key_sections:
+  - id: "§1"
+    title: "急腹症 — 阑尾炎/肠梗阻/穿孔"
+    stage_ids: [S1, S2]
+    rule_ids: [gs-acute-abdomen, gs-ileus-surgery, gs-peritonitis-risk]
+
+  - id: "§2"
+    title: "甲状腺与乳腺疾病"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [gs-asa-high-risk]
+
+  - id: "§3"
+    title: "疝 — 分类与修补策略"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [gs-hernia-repair]
+
+  - id: "§4"
+    title: "围术期管理 — DVT预防与风险评估"
+    stage_ids: [S4, S5]
+    rule_ids: [gs-asa-high-risk, gs-blatchford-endoscopy]
+
+rule_sets_covered:
+  - clinical_general_surgery
+
+derived_rule_count: 8
+last_updated: 2026-07-10

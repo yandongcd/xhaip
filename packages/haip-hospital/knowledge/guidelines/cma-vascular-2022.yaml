@@ -1,0 +1,46 @@
+# ============================================================
+# Guideline Asset: 中国血管外科疾病诊疗指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-vascular-2022"
+name: "中国血管外科疾病诊疗指南（2022）"
+abbr: "血管外科指南2022"
+version: "2022"
+publisher: "中华医学会外科学分会血管外科学组"
+journal: "中华血管外科杂志 2022;7(1):1-88"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国血管外科疾病诊疗指南（2022版），涵盖主动脉瘤/夹层的诊断与手术
+  时机选择、下肢动脉硬化闭塞症(ABI/Rutherford分级)的血运重建策略、
+  深静脉血栓(VTE/PE)的规范化抗凝与滤器植入指征、以及颈动脉狭窄的
+  CEA/CAS手术适应证(>50%症状性狭窄)。
+
+key_sections:
+  - id: "§1"
+    title: "主动脉瘤与夹层"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [vs-aneurysm-elective, vs-rupture-risk, vs-aneurysm-evar]
+
+  - id: "§2"
+    title: "下肢动脉疾病 — ABI/Rutherford分级"
+    stage_ids: [S1, S2]
+    rule_ids: [vs-cli-diagnosis, vs-rutherford-amputation, vs-pad-revascularization]
+
+  - id: "§3"
+    title: "静脉血栓栓塞症 — VTE/PE"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [vs-dvt-diagnosis, vs-dvt-treatment]
+
+  - id: "§4"
+    title: "颈动脉狭窄 — CEA/CAS适应证"
+    stage_ids: [S1, S2]
+    rule_ids: [vs-carotid-stroke]
+
+rule_sets_covered:
+  - clinical_vascular_surgery
+
+derived_rule_count: 8
+last_updated: 2026-07-10

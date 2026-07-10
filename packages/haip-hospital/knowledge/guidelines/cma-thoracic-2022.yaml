@@ -1,0 +1,45 @@
+# ============================================================
+# Guideline Asset: 中国胸外科临床诊疗指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-thoracic-2022"
+name: "中国胸外科临床诊疗指南（2022）"
+abbr: "胸外科指南2022"
+version: "2022"
+publisher: "中华医学会胸心血管外科学分会"
+journal: "中华胸心血管外科杂志 2022;38(1):1-96"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国胸外科临床诊疗指南（2022版），涵盖NSCLC分期与手术(TNM分期+
+  纵隔镜评估)、食管癌的外科治疗与综合管理、胸腔镜(VATS)微创手术的
+  适应证与技术规范、以及胸部创伤(气胸/血胸/连枷胸)的急诊处置原则。
+
+key_sections:
+  - id: "§1"
+    title: "NSCLC — TNM分期与手术评估"
+    stage_ids: [S1, S2]
+    rule_ids: [ts-nodule-biopsy, ts-fev1-inoperable, ts-dlco-high-risk]
+
+  - id: "§2"
+    title: "食管癌 — 外科与综合治疗"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [ts-comorbidity-risk]
+
+  - id: "§3"
+    title: "胸腔镜 — VATS微创手术"
+    stage_ids: [S2, S3]
+    rule_ids: [ts-early-vats, ts-pneumonectomy]
+
+  - id: "§4"
+    title: "胸部创伤 — 气胸/血胸/连枷胸"
+    stage_ids: [S1, S2]
+    rule_ids: [ts-effusion-staging, ts-comorbidity-risk]
+
+rule_sets_covered:
+  - clinical_thoracic_surgery
+
+derived_rule_count: 9
+last_updated: 2026-07-10

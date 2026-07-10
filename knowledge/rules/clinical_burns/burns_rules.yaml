@@ -1,0 +1,154 @@
+# 烧伤整形科临床规则 — TBSA评估 + Parkland液体复苏 + 吸入性损伤 + 切痂指征
+rule_type: diagnosis
+department: 烧伤整形科
+capability: cap-l3-burns-diagnosis
+business_process: bp-burns-diagnosis
+data_entities:
+  consumes: [de-patient, de-exam-burn, de-lab-ablg]
+  produces: [de-diagnosis-result]
+guideline: 中国烧伤整形临床诊疗指南（2021）
+stakeholder: 烧伤科医师需评估烧伤深度、TBSA面积与吸入性损伤
+version: "1.0.0"
+
+rules:
+  - id: burns-depth-third-degree
+    description: 烧伤深度 III° → 需手术切痂植皮
+    condition:
+      field: exam.burn_depth
+      operator: "=="
+      value: third_degree
+    result:
+      diagnosis: III°烧伤
+      severity: 全层皮肤损伤
+      recommendation: 切痂+自体皮片移植
+
+  - id: burns-tbsa-major-burn
+    description: TBSA ≥ 20%（成人）→ 重度烧伤
+    condition:
+      and:
+        - {field: exam.tbsa_percent, operator: ">=", value: 20}
+        - {field: patient.age, operator: ">=", value: 18}
+    result:
+      diagnosis: 重度烧伤（成人）
+      severity: 高危
+      recommendation: 收治烧伤ICU + 液体复苏
+
+  - id: burns-rule-of-nines-adult
+    description: 成人九分法 TBSA > 25% → 严重烧伤需液体复苏
+    condition:
+      and:
+        - {field: exam.tbsa_rule_of_nines, operator: ">", value: 25}
+        - {field: patient.age, operator: ">=", value: 18}
+    result:
+      diagnosis: 大面积烧伤
+      severity: 高危
+      recommendation: Parkland公式液体复苏
+
+---
+rule_type: risk_score
+department: 烧伤整形科
+capability: cap-l3-burns-risk
+business_process: bp-burns-risk
+data_entities:
+  consumes: [de-patient, de-exam-burn, de-lab-ablg, de-imaging-chest]
+  produces: [de-risk-assessment]
+guideline: 中国烧伤整形临床诊疗指南（2021）
+stakeholder: 评估液体复苏需求、吸入性损伤与切痂时机
+version: "1.0.0"
+
+rules:
+  - id: burns-parkland-formula
+    description: Parkland公式：4mL × 体重(kg) × TBSA(%) → 前8h输注1/2
+    condition:
+      and:
+        - {field: exam.tbsa_percent, operator: ">=", value: 15}
+        - {field: patient.weight_kg, operator: ">", value: 0}
+    result:
+      risk: 需液体复苏
+      formula: 4mL × 体重(kg) × TBSA(%)
+      fluid_type: 乳酸林格液
+      schedule: 前8h输注总量的1/2，后16h输注剩余1/2
+      titration: 维持尿量0.5-1.0mL/kg/h
+
+  - id: burns-inhalation-injury
+    description: 吸入性损伤 → 早期气管插管
+    condition:
+      or:
+        - {field: exam.facial_burns, operator: "==", value: true}
+        - {field: exam.soot_in_sputum, operator: "==", value: true}
+        - {field: exam.hoarseness, operator: "==", value: true}
+        - {field: lab.ablg_carboxyhemoglobin, operator: ">", value: 10}
+    result:
+      risk: 吸入性损伤
+      severity: 高危
+      recommendation: 早期气管插管 + 支气管镜检查
+      monitoring: 连续SpO2 + ABG q4h
+
+  - id: burns-escharotomy-indication
+    description: 环形焦痂 + 肢体远端灌注不足 → 切痂减压
+    condition:
+      and:
+        - {field: exam.circumferential_eschar, operator: "==", value: true}
+        - {field: exam.distal_perfusion, operator: "==", value: compromised}
+    result:
+      risk: 骨筋膜室综合征
+      severity: 急症
+      recommendation: 急诊焦痂切开减压术
+      timing: 烧伤后6-8h内
+
+  - id: burns-electrical-burn
+    description: 电击伤 → 肌红蛋白尿监测 + 筋膜切开
+    condition:
+      field: exam.burn_type
+      operator: "=="
+      value: electrical
+    result:
+      risk: 肌红蛋白尿 + 急性肾损伤
+      severity: 高危
+      recommendation: 筋膜切开减压 + 碱化尿液 + 监测CK/肌红蛋白
+
+---
+rule_type: treatment
+department: 烧伤整形科
+capability: cap-l3-burns-treatment
+business_process: bp-burns-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-exam-burn]
+  produces: [de-treatment-plan]
+guideline: 中国烧伤整形临床诊疗指南（2021）
+stakeholder: 根据烧伤深度与面积制定创面处理与瘢痕管理方案
+version: "1.0.0"
+
+rules:
+  - id: burns-superficial-partial
+    description: 浅II°烧伤 → 保守换药
+    condition:
+      field: exam.burn_depth
+      operator: "=="
+      value: superficial_partial_thickness
+    result:
+      treatment: 保守换药 + 银离子敷料
+      indication: 浅II°烧伤（预计2周内愈合）
+      followup: 门诊换药 q2-3d
+
+  - id: burns-deep-partial-graft
+    description: 深II°烧伤 → 削痂+植皮
+    condition:
+      field: exam.burn_depth
+      operator: "=="
+      value: deep_partial_thickness
+    result:
+      treatment: 削痂 + 自体薄中厚皮片移植
+      indication: 深II°烧伤（预计>3周愈合或功能部位）
+      timing: 伤后3-7d
+
+  - id: burns-scar-vancouver
+    description: Vancouver瘢痕量表 ≥ 8 → 压力治疗 + 硅酮
+    condition:
+      field: exam.vancouver_scar_scale
+      operator: ">="
+      value: 8
+    result:
+      treatment: 压力衣 + 硅酮凝胶 + 功能锻炼
+      indication: 增生性瘢痕
+      followup: 瘢痕门诊 q1-3m
