@@ -2,16 +2,16 @@
 
 PROCESS_JS = """var PATIENTS = {patients_json};
 var STAGES = {stages_json};
-var GUARD_TRIGGERS = {json.dumps(guard_triggers, ensure_ascii=False)};
-var DEPENDS_ON = {json.dumps(depends_on or [], ensure_ascii=False)};
+var GUARD_TRIGGERS = {guard_triggers_json};
+var DEPENDS_ON = {depends_on_json};
 var AGENT_NAME = "{name}";
 var AGENT_CN = "{cn_name}";
 var AGENT_TYPE = "{agent_type}";
-var DEPT = "{department or '—'}";
+var DEPT = "{department}";
 var currentPatient = null;
 var currentStage = 1;
 var completedStages = {{}};
-var currentRole = "{roles[0]['id'] if roles else 'attending'}";
+var currentRole = "{default_role_id}";
 
 function init(){{
   try {{
@@ -23,7 +23,7 @@ function init(){{
   clickStage(1);
   document.getElementById('home-stages').textContent = STAGES.length;
   document.getElementById('home-patients').textContent = PATIENTS.length;
-  document.getElementById('home-roles').textContent = {len(roles)};
+  document.getElementById('home-roles').textContent = {roles_count};
   document.getElementById('home-guards').textContent = GUARD_TRIGGERS.length;
   renderDepsPage();
   renderGuidelinesPage();

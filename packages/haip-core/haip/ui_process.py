@@ -97,6 +97,20 @@ def render_process_ui(
             f'<div style="font-size:10px;color:var(--text3);margin-top:4px">{deps}</div></div>'
         )
 
+    # Resolve JS variables (extracted to ui_process_js.py, needs format)
+    import json as _json
+    resolved_js = PROCESS_JS.format(
+        patients_json=patients_json,
+        stages_json=stages_json,
+        guard_triggers_json=_json.dumps(guard_triggers, ensure_ascii=False),
+        depends_on_json=_json.dumps(depends_on or [], ensure_ascii=False),
+        name=name, cn_name=cn_name, agent_type=agent_type,
+        department=department or '—',
+        default_role_id=roles[0]['id'] if roles else 'attending',
+        roles_count=str(len(roles)),
+        stages_count=str(len(stages)),
+    )
+
     return f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -448,7 +462,7 @@ tr:hover td{{background:var(--bg-overlay)}}
 <div class="toast" id="toast"></div>
 
 <script>
-{PROCESS_JS}
+{resolved_js}
 </script>
 </body>
 </html>"""
