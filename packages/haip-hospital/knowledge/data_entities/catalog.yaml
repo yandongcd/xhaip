@@ -1,0 +1,156 @@
+# TOGAF Data Entities Catalog — 临床数据实体注册
+# 从 116 条临床规则中提取的所有数据引用，按类别组织
+# 对应 TOGAF Phase C: Information Systems Architecture
+
+entities:
+  # ── 患者基本信息 ──
+  - id: de-patient
+    name: 患者信息
+    category: Master
+    fields: [patient_id, name, age, gender, weight_kg, height_cm, diagnosis, department]
+  - id: de-vitals
+    name: 生命体征
+    category: Transaction
+    fields: [BP, HR, RR, SpO2, Temp]
+
+  # ── 实验室检查 ──
+  - id: de-lab-hematology
+    name: 血常规
+    category: Transaction
+    fields: [Hb, WBC, PLT, HCT, MCV, MCH]
+  - id: de-lab-biochemistry
+    name: 生化全项
+    category: Transaction
+    fields: [ALT, AST, TBIL, ALB, BUN, Cr, eGFR, GLU, K, Na, Ca, P, Mg]
+  - id: de-lab-coagulation
+    name: 凝血功能
+    category: Transaction
+    fields: [PT, APTT, INR, FIB, D-Dimer]
+  - id: de-lab-cardiac
+    name: 心肌标志物
+    category: Transaction
+    fields: [Troponin, CK-MB, NT-proBNP, BNP, Myo]
+  - id: de-lab-endocrine
+    name: 内分泌检验
+    category: Transaction
+    fields: [HbA1c, FPG, TSH, FT3, FT4, Cortisol]
+  - id: de-lab-infection
+    name: 感染指标
+    category: Transaction
+    fields: [CRP, PCT, ESR, IL-6]
+  - id: de-lab-tumor
+    name: 肿瘤标志物
+    category: Transaction
+    fields: [CEA, AFP, CA125, CA19-9, PSA]
+  - id: de-lab-immunology
+    name: 免疫学检查
+    category: Transaction
+    fields: [ANA, dsDNA, RF, anti-CCP, ANCA]
+  - id: de-lab-virology
+    name: 病毒学检查
+    category: Transaction
+    fields: [HBsAg, HBsAb, HBeAg, HCV-RNA, HIV-Ab]
+  - id: de-lab-pulmonary
+    name: 肺功能检查
+    category: Transaction
+    fields: [FEV1, FVC, FEV1/FVC, DLCO, PaO2, PaCO2, pH]
+
+  # ── 影像学 ──
+  - id: de-imaging-xray
+    name: X线报告
+    category: Transaction
+    fields: [部位, 发现, 诊断, BI-RADS]
+  - id: de-imaging-ct
+    name: CT报告
+    category: Transaction
+    fields: [部位, 发现, 结节大小, 毛刺征, TNM分期]
+  - id: de-imaging-mri
+    name: MRI报告
+    category: Transaction
+    fields: [部位, 序列, 发现, GCS相关]
+  - id: de-imaging-ultrasound
+    name: 超声报告
+    category: Transaction
+    fields: [部位, 发现, 大小, 血流, BI-RADS]
+
+  # ── 临床评分与评估 ──
+  - id: de-score-gcs
+    name: GCS昏迷评分
+    category: Analytics
+    fields: [睁眼E, 语言V, 运动M, 总分]
+  - id: de-score-child-pugh
+    name: Child-Pugh评分
+    category: Analytics
+    fields: [白蛋白, 胆红素, PT延長, 腹水, 肝性脑病, 总分, 分级]
+  - id: de-score-meld
+    name: MELD评分
+    category: Analytics
+    fields: [胆红素, Cr, INR, 总分]
+  - id: de-score-sofa
+    name: SOFA评分
+    category: Analytics
+    fields: [呼吸PaO2, 凝血PLT, 肝TBIL, 心血管MAP, 神经GCS, 肾Cr, 总分]
+  - id: de-score-das28
+    name: DAS28评分
+    category: Analytics
+    fields: [关节压痛数, 关节肿胀数, ESR, VAS, 总分]
+  - id: de-score-apgar
+    name: APGAR评分
+    category: Analytics
+    fields: [心率, 呼吸, 肌张力, 反射, 肤色, 总分]
+
+  # ── 临床决策结果 ──
+  - id: de-diagnosis-result
+    name: 诊断结果
+    category: Analytics
+    fields: [诊断名称, 分型, 分期, 严重度, ICD编码]
+  - id: de-risk-assessment
+    name: 风险评估报告
+    category: Analytics
+    fields: [风险类型, 风险等级, 评分, 建议]
+  - id: de-treatment-plan
+    name: 治疗方案
+    category: Analytics
+    fields: [方案名称, 药物, 剂量, 疗程, 监测计划]
+  - id: de-surgery-record
+    name: 手术记录
+    category: Transaction
+    fields: [手术名称, 术式, 入路, 麻醉方式, 出血量, 时长]
+  - id: de-followup-plan
+    name: 随访计划
+    category: Analytics
+    fields: [时间节点, 检查项目, 频率, 红旗症状]
+
+  # ── 科室专项 ──
+  - id: de-obstetric
+    name: 产科数据
+    category: Transaction
+    fields: [孕周, 宫缩频率, 宫口开大, 胎心, hCG, 血压, 尿蛋白]
+  - id: de-pediatric
+    name: 儿科数据
+    category: Transaction
+    fields: [生长曲线, 体重百分位, 身高百分位, BMI百分位, 发育里程碑]
+  - id: de-ophthalmology
+    name: 眼科数据
+    category: Transaction
+    fields: [视力, 眼压, 眼底, 屈光度]
+  - id: de-audiometry
+    name: 听力数据
+    category: Transaction
+    fields: [听力阈值, 鼓室图, 声反射]
+  - id: de-dental
+    name: 口腔数据
+    category: Transaction
+    fields: [牙位, 龋坏深度, 牙周袋深度, 松动度]
+  - id: de-dermatology
+    name: 皮肤科数据
+    category: Transaction
+    fields: [皮疹面积, 皮疹形态, ABCDE征, 病理类型]
+  - id: de-psychiatric
+    name: 精神科数据
+    category: Transaction
+    fields: [PHQ9, GAD7, MMSE, 自杀意念评分]
+
+version: "1.0.0"
+generated: 2026-07-10
+source: RuleEngine clinical rules analysis

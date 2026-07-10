@@ -1,152 +1,172 @@
-# 急诊科临床规则 — ESI分诊 + SOFA危重症评分
 rule_type: diagnosis
 department: 急诊科
 guideline: 中国急诊医学杂志 急诊诊疗指南 (2023)
-version: "1.0.0"
-
+version: 1.0.0
 rules:
-  - id: esi-level-1
-    description: ESI 1级 — 需立即抢救
-    condition:
-      or:
-        - field: diagnosis
-          operator: contains
-          value: 心脏骤停
-        - field: diagnosis
-          operator: contains
-          value: 休克
-        - field: diagnosis
-          operator: contains
-          value: 主动脉夹层
-        - field: diagnosis
-          operator: contains
-          value: 急性ST段抬高心梗
-    result:
-      triage_level: 1
-      triage_name: 即刻抢救
-      color: 红色
-      target_time: 0分钟
-      recommendation: 立即进入抢救室
-
-  - id: esi-level-2
-    description: ESI 2级 — 高危
-    condition:
-      or:
-        - field: diagnosis
-          operator: contains
-          value: 急性脑卒中
-        - field: diagnosis
-          operator: contains
-          value: 严重多发伤
-        - field: diagnosis
-          operator: contains
-          value: 过敏性休克
-        - field: diagnosis
-          operator: contains
-          value: 急性中毒
-        - and:
-            - field: urgency
-              operator: "=="
-              value: high
-            - field: age
-              operator: ">="
-              value: 75
-    result:
-      triage_level: 2
-      triage_name: 高危
-      color: 橙色
-      target_time: 10分钟
-      recommendation: 优先接诊
-
-  - id: esi-level-3
-    description: ESI 3级
-    condition:
-      or:
-        - field: diagnosis
-          operator: contains
-          value: 骨折
-        - field: diagnosis
-          operator: contains
-          value: 腹痛
-        - field: diagnosis
-          operator: contains
-          value: 胸痛
-        - field: lab_results.WBC
-          operator: ">="
-          value: 12.0
-    result:
-      triage_level: 3
-      triage_name: 急诊
-      color: 黄色
-      target_time: 30分钟
-      recommendation: 安排辅助检查
-
-  - id: esi-level-4
-    description: ESI 4级
-    condition:
-      and:
-        - field: urgency
-          operator: "!="
-          value: high
-        - field: age
-          operator: "<"
-          value: 65
-    result:
-      triage_level: 4
-      triage_name: 亚急诊
-      color: 绿色
-      target_time: 60分钟
-      recommendation: 常规接诊
-
+- id: esi-level-1
+  description: ESI 1级 — 需立即抢救
+  condition:
+    or:
+    - field: diagnosis
+      operator: contains
+      value: 心脏骤停
+    - field: diagnosis
+      operator: contains
+      value: 休克
+    - field: diagnosis
+      operator: contains
+      value: 主动脉夹层
+    - field: diagnosis
+      operator: contains
+      value: 急性ST段抬高心梗
+  result:
+    triage_level: 1
+    triage_name: 即刻抢救
+    color: 红色
+    target_time: 0分钟
+    recommendation: 立即进入抢救室
+- id: esi-level-2
+  description: ESI 2级 — 高危
+  condition:
+    or:
+    - field: diagnosis
+      operator: contains
+      value: 急性脑卒中
+    - field: diagnosis
+      operator: contains
+      value: 严重多发伤
+    - field: diagnosis
+      operator: contains
+      value: 过敏性休克
+    - field: diagnosis
+      operator: contains
+      value: 急性中毒
+    - and:
+      - field: urgency
+        operator: ==
+        value: high
+      - field: age
+        operator: '>='
+        value: 75
+  result:
+    triage_level: 2
+    triage_name: 高危
+    color: 橙色
+    target_time: 10分钟
+    recommendation: 优先接诊
+- id: esi-level-3
+  description: ESI 3级
+  condition:
+    or:
+    - field: diagnosis
+      operator: contains
+      value: 骨折
+    - field: diagnosis
+      operator: contains
+      value: 腹痛
+    - field: diagnosis
+      operator: contains
+      value: 胸痛
+    - field: lab_results.WBC
+      operator: '>='
+      value: 12.0
+  result:
+    triage_level: 3
+    triage_name: 急诊
+    color: 黄色
+    target_time: 30分钟
+    recommendation: 安排辅助检查
+- id: esi-level-4
+  description: ESI 4级
+  condition:
+    and:
+    - field: urgency
+      operator: '!='
+      value: high
+    - field: age
+      operator: <
+      value: 65
+  result:
+    triage_level: 4
+    triage_name: 亚急诊
+    color: 绿色
+    target_time: 60分钟
+    recommendation: 常规接诊
+capability: cap-l3-emergency-triage
+business_process: bp-emergency-triage
+stakeholder: 快速判定患者优先级别
+data_entities:
+  consumes:
+  - de-lab-cardiac
+  - de-lab-biochemistry
+  - de-lab-hematology
+  - de-lab-infection
+  - de-patient
+  - de-vitals
+  produces:
+  - de-diagnosis-result
+  - de-risk-assessment
 ---
 rule_type: risk_score
 department: 急诊科
 guideline: SCCM Surviving Sepsis Campaign 2021
-
 rules:
-  - id: sofa-respiratory
-    description: SOFA 呼吸 — PaO2
-    condition:
-      field: lab_results.PaO2
-      operator: "<="
-      value: 60
-    result:
-      risk: 危重
-      score_component: SOFA呼吸
-      recommendation: 考虑无创有创通气
-
-  - id: sofa-cardiovascular
-    description: SOFA 心血管 — 休克
-    condition:
-      or:
-        - field: diagnosis
-          operator: contains
-          value: 休克
-        - field: diagnosis
-          operator: contains
-          value: 脓毒性
-        - field: lab_results.Troponin
-          operator: ">="
-          value: 0.5
-    result:
-      risk: 危重
-      score_component: SOFA心血管
-      recommendation: 启动血管活性药物
-
-  - id: sirs-criteria
-    description: SIRS 标准
-    condition:
-      or:
-        - field: lab_results.WBC
-          operator: ">="
-          value: 12.0
-        - field: lab_results.WBC
-          operator: "<="
-          value: 4.0
-        - field: lab_results.CRP
-          operator: ">="
-          value: 100
-    result:
-      risk: 高危感染
-      score_component: SIRS
-      recommendation: 血培养加抗生素
+- id: sofa-respiratory
+  description: SOFA 呼吸 — PaO2
+  condition:
+    field: lab_results.PaO2
+    operator: <=
+    value: 60
+  result:
+    risk: 危重
+    score_component: SOFA呼吸
+    recommendation: 考虑无创有创通气
+- id: sofa-cardiovascular
+  description: SOFA 心血管 — 休克
+  condition:
+    or:
+    - field: diagnosis
+      operator: contains
+      value: 休克
+    - field: diagnosis
+      operator: contains
+      value: 脓毒性
+    - field: lab_results.Troponin
+      operator: '>='
+      value: 0.5
+  result:
+    risk: 危重
+    score_component: SOFA心血管
+    recommendation: 启动血管活性药物
+- id: sirs-criteria
+  description: SIRS 标准
+  condition:
+    or:
+    - field: lab_results.WBC
+      operator: '>='
+      value: 12.0
+    - field: lab_results.WBC
+      operator: <=
+      value: 4.0
+    - field: lab_results.CRP
+      operator: '>='
+      value: 100
+  result:
+    risk: 高危感染
+    score_component: SIRS
+    recommendation: 血培养加抗生素
+capability: cap-l3-emergency-risk
+business_process: bp-emergency-rescue
+stakeholder: 评估危重度和器官功能
+version: 1.0.0
+data_entities:
+  consumes:
+  - de-lab-cardiac
+  - de-lab-biochemistry
+  - de-lab-hematology
+  - de-lab-infection
+  - de-patient
+  - de-vitals
+  produces:
+  - de-diagnosis-result
+  - de-risk-assessment

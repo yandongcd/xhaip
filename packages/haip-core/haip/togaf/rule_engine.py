@@ -228,3 +228,60 @@ class RuleEngine:
             if current is None:
                 return None
         return current
+
+
+# ── TOGAF ABB Validation ──
+
+@dataclass
+class ABBValidationResult:
+    rule_file: str
+    department: str
+    rule_type: str
+    passed: bool = True
+    issues: list[str] = field(default_factory=list)
+
+
+def validate_all_rules(engine: RuleEngine | None = None) -> list[ABBValidationResult]:
+    """Validate ABB traceability for all loaded rule groups."""
+    if engine is None:
+        engine = RuleEngine()
+        engine.load_all()
+    results: list[ABBValidationResult] = []
+    for dept, rule_list in engine._rules.items():
+        for rg in rule_list:
+            v = ABBValidationResult(
+                rule_file=f"{dept}/{rg.get('rule_type', '?')}",
+                department=dept, rule_type=rg.get("rule_type", ""),
+            )
+            if not rg.get("capability"):
+                v.passed = False
+                v.issues.append("缺少 capability")
+            if not rg.get("business_process"):
+                v.passed = False
+                v.issues.append("缺少 business_process")
+            if not rg.get("data_entities"):
+                v.passed = False
+                v.issues.append("缺少 data_entities")
+            if not rg.get("guideline"):
+                v.passed = False
+                v.issues.append("缺少 guideline")
+            if not rg.get("stakeholder"):
+                v.issues.append("缺 stakeholder (Phase A)")
+            if not rg.get("version"):
+                v.issues.append("缺 version (Phase H)")
+            results.append(v)
+    return results
+
+
+def print_abb_report(results: list[ABBValidationResult] | None = None) -> str:
+    if results is None:
+        results = validate_all_rules()
+    lines: list[str] = []
+    passed = sum(1 for r in results if r.passed)
+    lines.append(f"ABB Traceability: {passed}/{len(results)} passed")
+    for r in results:
+        s = "OK" if r.passed else "GAP"
+        lines.append(f"  [{s}] {r.rule_file}")
+        for i in r.issues:
+            lines.append(f"       {i}")
+    return "\n".join(lines)

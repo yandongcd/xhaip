@@ -1,0 +1,105 @@
+# 外科通用术前评估规则 — 跨科室共享
+# 适用科室: 所有外科 (神经外科/胸外科/普通外科/肝胆外科/血管外科/肾移植科/介入治疗科)
+# TOGAF: 共享 BusinessService ABB，避免 9 个科室重复定义
+
+rule_type: diagnosis
+department: "shared:surgery"
+capability: cap-l3-surgical-preop-assessment
+business_process: bp-preop-surgery
+data_entities:
+  consumes: [de-lab-hematology, de-lab-coagulation, de-lab-cardiac, de-lab-biochemistry]
+  produces: [de-risk-assessment]
+guideline: 外科术前评估共识
+stakeholder: 麻醉医师与外科医师需要快速评估手术风险
+clinical_scenario: 术前评估，判定手术禁忌和风险等级
+version: "1.0.0"
+
+rules:
+  - id: preop-anemia-check
+    description: 术前贫血 — Hb<90 需纠正
+    condition:
+      field: lab_results.Hb
+      operator: "<"
+      value: 90
+    result:
+      risk: 术前贫血
+      severity: 中危
+      action: 查明贫血原因，必要时输注红细胞
+
+  - id: preop-coagulopathy
+    description: 术前凝血障碍 — INR>1.5 或 PLT<50
+    condition:
+      or:
+        - field: lab_results.INR
+          operator: ">"
+          value: 1.5
+        - field: lab_results.PLT
+          operator: "<"
+          value: 50
+    result:
+      risk: 凝血障碍
+      severity: 高危
+      action: 暂停择期手术，纠正凝血
+
+  - id: preop-cardiac-risk
+    description: 术前心脏风险 — Troponin>0.1 或 NT-proBNP>1000
+    condition:
+      or:
+        - field: lab_results.Troponin
+          operator: ">"
+          value: 0.1
+        - field: lab_results.NT-proBNP
+          operator: ">"
+          value: 1000
+    result:
+      risk: 围术期心脏事件风险
+      severity: 高危
+      action: 心脏科会诊，冠脉评估
+
+  - id: preop-renal-risk
+    description: 术前肾损伤 — Cr>176或eGFR<30
+    condition:
+      or:
+        - field: lab_results.Cr
+          operator: ">"
+          value: 176
+        - field: lab_results.eGFR
+          operator: "<"
+          value: 30
+    result:
+      risk: 围术期肾损伤风险
+      severity: 中危
+      action: 肾内科会诊，调整肾毒性药物
+
+  - id: preop-infection
+    description: 术前感染 — WBC>15或CRP>100
+    condition:
+      or:
+        - field: lab_results.WBC
+          operator: ">"
+          value: 15
+        - field: lab_results.CRP
+          operator: ">"
+          value: 100
+    result:
+      risk: 活动性感染
+      severity: 高危
+      action: 控制感染后再手术
+
+  - id: preop-clear
+    description: 术前评估通过
+    condition:
+      and:
+        - field: lab_results.Hb
+          operator: ">="
+          value: 90
+        - field: lab_results.PLT
+          operator: ">="
+          value: 50
+        - field: lab_results.CRP
+          operator: "<"
+          value: 100
+    result:
+      risk: 低风险
+      severity: 低危
+      action: 可安排手术，常规术前准备
