@@ -1,0 +1,48 @@
+# ============================================================
+# Guideline Asset: KDIGO 2024 CKD
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-kdigo-ckd-2024"
+name: "KDIGO 2024 Clinical Practice Guideline for CKD Evaluation and Management"
+abbr: "KDIGO CKD 2024"
+version: "2024"
+publisher: "Kidney Disease: Improving Global Outcomes"
+doi: "10.1016/j.kint.2024.01.001"
+language: en
+trust_level: T1
+
+description: >
+  KDIGO 2024 CKD评估与管理临床实践指南。涵盖CKD定义（eGFR<60或
+  肾损伤标志≥3月）、CGA分期（病因-GFR-白蛋白尿）、延缓进展策略
+  （SGLT2i/RAASi）、并发症管理（贫血/骨病/酸中毒）。
+
+key_sections:
+  - id: "§1"
+    title: "CKD定义与CGA分期"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [ckd-diagnose, ckd-staging, ckd-egfr]
+
+  - id: "§2"
+    title: "延缓CKD进展策略"
+    stage_ids: [S4, S5]
+    rule_ids: [ckd-raasi, ckd-sglt2i, ckd-bp-target, ckd-protein]
+
+  - id: "§3"
+    title: "CKD并发症管理（贫血/骨病/酸中毒）"
+    stage_ids: [S4, S5, S6]
+    rule_ids: [ckd-anemia, ckd-mbd, ckd-acidosis, ckd-hyperkalemia]
+
+  - id: "§4"
+    title: "肾脏替代治疗准备与转诊"
+    stage_ids: [S6]
+    rule_ids: [ckd-referral, ckd-rrt-prep]
+
+rule_sets_covered:
+  - ckd_diagnosis
+  - ckd_treatment
+  - ckd_complication
+  - ckd_followup
+
+derived_rule_count: 3
+last_updated: 2026-07-10

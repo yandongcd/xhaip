@@ -1,18 +1,36 @@
-# 新生儿科临床规则 — 早产管理 + 黄疸筛查 + 呼吸评估
+# 新生儿科临床规则 — 复苏 + 早产管理 + 黄疸 + 感染筛查
 rule_type: diagnosis
 department: 新生儿科
 capability: cap-l3-neonatology-diagnosis
-business_process: bp-neonatology-diagnosis
+business_process: bp-neonatology
 data_entities:
-  consumes: [de-patient, de-lab-neonate, de-vital-neonate]
-  produces: [de-diagnosis-result]
-guideline: 中国新生儿复苏指南 (2021)
-stakeholder: 新生儿科医师需快速判定新生儿危重症
+  consumes:
+    - de-patient
+    - de-vital-neonate
+    - de-lab-neonate
+  produces:
+    - de-diagnosis-result
+guideline: 中国新生儿临床诊疗指南（2022）
+stakeholder: 新生儿科医师快速判定危重症与制定诊疗方案
 version: "1.0.0"
 
 rules:
+  - id: neo-apgar-assessment
+    description: Apgar 评分与复苏指征
+    condition:
+      field: assessment.apgar_1min
+      operator: "<"
+      value: 7
+    result:
+      diagnosis: 新生儿窒息风险
+      grading:
+        - grade: "Apgar 7-10"; label: 正常; action: "常规保暖 + 清理呼吸道"
+        - grade: "Apgar 4-6"; label: 轻度窒息; action: "触觉刺激 + 面罩正压通气"
+        - grade: "Apgar 0-3"; label: 重度窒息; action: "气管插管 + 胸外按压 + 肾上腺素"
+      recommendation: 5 分钟 Apgar 复评 + 脐动脉血气分析
+
   - id: neo-very-low-bw
-    description: 出生体重 < 1500g → NICU
+    description: 极低出生体重儿判定
     condition:
       field: patient.birth_weight
       operator: "<"
@@ -20,107 +38,198 @@ rules:
     result:
       diagnosis: 极低出生体重儿
       severity: 高危
-      recommendation: 收入 NICU，恒温箱管理
+      sub_classification:
+        - type: "LBW (1500-2499g)"; risk: 中等; plan: "恒温箱 + 严密监测"
+        - type: "VLBW (1000-1499g)"; risk: 高; plan: "NICU + 静脉营养 + 呼吸支持"
+        - type: "ELBW (<1000g)"; risk: 极高; plan: "NICU 特级护理 + 多学科共管"
 
   - id: neo-hyperbilirubinemia
-    description: 黄疸 > 15mg/dl → 光疗
+    description: 新生儿高胆红素血症分度
     condition:
       field: lab.total_bilirubin
       operator: ">="
-      value: 15
+      value: 5
     result:
       diagnosis: 新生儿高胆红素血症
-      severity: 需干预
-      recommendation: 双面光疗 + 监测胆红素变化
+      phototherapy_threshold:
+        - age: "出生 24-48h"; threshold_mgdl: 12; action: "开始光疗"
+        - age: "出生 48-72h"; threshold_mgdl: 15; action: "开始光疗"
+        - age: "出生 >72h"; threshold_mgdl: 18; action: "开始光疗"
+      exchange_threshold:
+        - age: "出生 24-48h"; threshold_mgdl: 20; action: "考虑换血"
+        - age: "出生 48-72h"; threshold_mgdl: 25; action: "换血治疗"
+        - age: "出生 >72h"; threshold_mgdl: 25; action: "换血治疗"
+      risk_factors:
+        - 溶血性疾病 (ABO/Rh)
+        - G6PD 缺乏
+        - 早产
+        - 出生窒息
 
-  - id: neo-respiratory-distress
-    description: 呼吸频率 > 60次/min → 呼吸窘迫
+  - id: neo-sepsis-screen
+    description: 新生儿败血症筛查
     condition:
-      field: vital.respiratory_rate
-      operator: ">"
-      value: 60
+      or:
+        - field: vital.temperature_instability
+          operator: equals
+          value: true
+        - field: symptoms.feed_intolerance
+          operator: equals
+          value: true
+        - field: lab.CRP
+          operator: ">="
+          value: 10
     result:
-      diagnosis: 新生儿呼吸窘迫
-      severity: 高危
-      recommendation: 血氧监测 + 血气分析 + 必要时辅助通气
+      diagnosis: 疑似新生儿败血症
+      diagnostic_criteria:
+        lab:
+          - CRP ≥ 10 mg/L (连续 2 次)
+          - PCT ≥ 0.5 ng/mL
+          - WBC < 5×10⁹/L 或 > 30×10⁹/L
+          - I/T 比值 > 0.2
+        clinical:
+          - 体温不稳定 (发热或低体温)
+          - 喂养困难 / 腹胀
+          - 呼吸暂停 / 呻吟
+          - 精神萎靡
+      action: "血培养 + 腰穿 (必要时) + 经验性抗生素"
 
 ---
-rule_type: risk_score
+rule_type: acute_care
 department: 新生儿科
-capability: cap-l3-neonatology-risk
-business_process: bp-neonatology-risk-assessment
+capability: cap-l3-neonatology-acute
+business_process: bp-neonatology
 data_entities:
-  consumes: [de-patient, de-vital-neonate]
-  produces: [de-risk-assessment]
-guideline: 中国早产儿保健指南 (2022)
-stakeholder: 评估早产儿与窒息相关风险，制定监护级别
+  consumes:
+    - de-diagnosis-result
+    - de-vital-neonate
+    - de-risk-assessment
+  produces:
+    - de-treatment-plan
+guideline: 中国新生儿临床诊疗指南（2022）
+stakeholder: 新生儿复苏与早产儿急症处理
 version: "1.0.0"
 
 rules:
-  - id: neo-preterm-high-risk
-    description: 孕周 < 32w → 高危早产
+  - id: neo-nrp-algorithm
+    description: 新生儿复苏流程 (NRP)
+    condition:
+      and:
+        - field: assessment.apgar_1min
+          operator: "<"
+          value: 7
+        - field: patient.birth_minutes
+          operator: "<="
+          value: 5
+    result:
+      treatment: NRP 复苏流程
+      steps:
+        - step: "A (Airway)"; action: "保暖 + 摆正体位 + 清理气道 + 擦干刺激"; duration: 30s
+        - step: "B (Breathing)"; action: "面罩正压通气 (PIP 20-25 cmH₂O + PEEP 5 cmH₂O + FiO₂ 21-100%)"; duration: 30s; trigger: "HR<100 或 呼吸暂停"
+        - step: "C (Circulation)"; action: "胸外按压 (3:1 比例 + 90次/min按压+30次/min通气)"; trigger: "HR<60 经有效通气后"
+        - step: "D (Drug)"; action: "肾上腺素 0.01-0.03 mg/kg IV (1:10000)"; trigger: "HR<60 经胸外按压后"
+      monitoring: "持续 SpO₂ + HR + 血气 + 血糖"
+
+  - id: neo-preterm-thermoregulation
+    description: 早产儿体温管理与暖箱设置
     condition:
       field: patient.gestational_age
       operator: "<"
-      value: 32
+      value: 37
     result:
-      risk: 高危早产儿
-      severity: 多器官发育不全风险
-      recommendation: NICU 长期监护 + 多学科管理
+      treatment: 暖箱恒温管理
+      settings:
+        - weight: "< 1000g"; incubator_temp: "35-36°C"; humidity: "80-90%"
+        - weight: "1000-1500g"; incubator_temp: "34-35°C"; humidity: "70-80%"
+        - weight: "1500-2000g"; incubator_temp: "32-34°C"; humidity: "60-70%"
+        - weight: "2000-2500g"; incubator_temp: "30-32°C"; humidity: "50-60%"
+      target: "腋温 36.5-37.5°C"
+      monitoring: "持续体温监测 + q1h 记录暖箱温度"
 
-  - id: neo-apgar-asphyxia
-    description: Apgar 1min < 7 → 窒息风险
-    condition:
-      field: assessment.apgar_1min
-      operator: "<"
-      value: 7
-    result:
-      risk: 新生儿窒息
-      severity: 高危
-      recommendation: 即刻复苏 + 5分钟 Apgar 复评
-
----
-rule_type: treatment
-department: 新生儿科
-capability: cap-l3-neonatology-treatment
-business_process: bp-neonatology-treatment
-data_entities:
-  consumes: [de-diagnosis-result, de-risk-assessment, de-lab-neonate]
-  produces: [de-treatment-plan]
-guideline: 中国新生儿呼吸窘迫综合征诊治指南 (2021)
-stakeholder: 根据新生儿状况实施药物与支持治疗
-version: "1.0.0"
-
-rules:
-  - id: neo-surfactant-rds
-    description: 新生儿 RDS → 肺表面活性物质
-    condition:
-      field: diagnosis.RDS
-      operator: "=="
-      value: true
-    result:
-      treatment: 肺表面活性物质气管内给药
-      indication: 新生儿呼吸窘迫综合征
-      monitoring: 血气 + 胸片 + 呼吸机参数
-
-  - id: neo-phototherapy
-    description: 黄疸超标 → 持续光疗
-    condition:
-      field: lab.total_bilirubin
-      operator: ">="
-      value: 15
-    result:
-      treatment: 双面光疗持续照射
-      indication: 新生儿高胆红素血症
-      monitoring: q12h 胆红素复查
-
-  - id: neo-tpn-preterm
-    description: 早产儿不能经口喂养 → 静脉营养
+  - id: neo-preterm-nutrition
+    description: 早产儿营养支持方案
     condition:
       field: patient.gestational_age
       operator: "<"
       value: 34
     result:
-      treatment: 全静脉营养（TPN）
-      indication: 早产儿肠道功能不成熟
-      recommendation: 逐步过渡至肠道内营养
+      treatment: 早产儿营养管理
+      parenteral_nutrition:
+        - component: "氨基酸"; start: "生后 24h 内"; dose: "1.5-2.0 g/kg/d 起始 → 3.5-4.0 g/kg/d"
+        - component: "脂肪乳 (20%)"; start: "生后 24-48h"; dose: "1.0 g/kg/d 起始 → 3.0-3.5 g/kg/d"
+        - component: "葡萄糖"; start: "生后即刻"; dose: "4-8 mg/kg/min (GIR) → 渐增至 12-14"
+      enteral_nutrition:
+        start: 生后 24-72h (血流动力学稳定后)
+        type: 母乳优先; 早产儿配方奶次选
+        volume: "10-20 mL/kg/d 起始 → 每日递增 10-30 mL/kg/d → 目标 150-180 mL/kg/d"
+      monitoring: "每日体重 + 出入量 + 血电解质 + BUN/Cr + TG"
+
+  - id: neo-sepsis-antibiotics
+    description: 新生儿败血症经验性抗生素
+    condition:
+      field: diagnosis.suspected_sepsis
+      operator: equals
+      value: true
+    result:
+      treatment: 经验性抗生素方案
+      early_onset (≤ 72h):
+        - regimen: "氨苄西林 50 mg/kg q12h + 庆大霉素 4 mg/kg q24h"
+        - alternatives: "头孢噻肟 (化脑顾虑时) 替代庆大霉素"
+      late_onset (> 72h):
+        - regimen: "万古霉素 10 mg/kg q8-12h + 头孢他啶 50 mg/kg q8-12h"
+        - alternatives: "美罗培南 (重症/耐药风险)"
+      duration: 血培养阴性 → 48-72h 停药; 血培养阳性 → 7-14 天 (化脑 14-21 天)
+
+---
+rule_type: followup
+department: 新生儿科
+capability: cap-l3-neonatology-followup
+business_process: bp-neonatology
+data_entities:
+  consumes:
+    - de-treatment-plan
+    - de-patient
+  produces:
+    - de-followup-plan
+guideline: 中国新生儿临床诊疗指南（2022）
+stakeholder: 新生儿出院后随访与高危儿长期管理
+version: "1.0.0"
+
+rules:
+  - id: neo-discharge-criteria
+    description: 新生儿出院标准
+    condition:
+      field: stage
+      operator: equals
+      value: discharge
+    result:
+      discharge_criteria:
+        - 生命体征稳定 ≥ 12h (非暖箱环境)
+        - 完全经口喂养 (母乳/奶瓶)
+        - 体重增长 ≥ 15-20 g/d 连续 3 天
+        - 无呼吸暂停/心动过缓发作 ≥ 5 天
+        - 体温维持 36.5-37.5°C (开放式暖床)
+        - 黄疸已消退或无需光疗
+      parent_education:
+        - 喂养方法 (母乳/配方奶)
+        - 体温测量
+        - 黄疸观察
+        - 应急处理 (窒息/呛奶)
+
+  - id: neo-preterm-followup
+    description: 早产儿出院后随访计划
+    condition:
+      field: patient.gestational_age
+      operator: "<"
+      value: 37
+    result:
+      followup_schedule:
+        - time: "出院后 3-7 天"; items: "体重增长 + 喂养评估 + 黄疸复查"
+        - time: "纠正胎龄 40 周"; items: "神经行为评估 (NBNA) + 眼底筛查 + 听力筛查"
+        - time: "纠正月龄 1-3 月"; interval: "每月 1 次"; items: "体格生长 + 神经发育 + 贫血筛查 + 代谢性骨病筛查"
+        - time: "纠正月龄 4-6 月"; items: "发育里程碑 + 辅食添加评估 + 铁剂补充"
+        - time: "纠正月龄 12 月"; items: "全面神经发育评估 (Gesell/Bayley) + 视力听力随访"
+        - time: "至学龄前"; interval: "每 6-12 月"; items: "生长追赶 + 认知发育 + 学习能力评估"
+      high_risk_flags:
+        - "出生体重 < 1000g 或 孕周 < 28w → 高危儿专科门诊随访至学龄期"
+        - "颅内出血 ≥ III 度 / PVL → 康复科 + 神经科共管"
+        - "BPD 需要家庭氧疗 → 呼吸科共管"

@@ -1,48 +1,38 @@
-# 妇产科临床规则 — 产程管理 + 高危妊娠 + 产科急症处理
+# 妇产科临床规则 — 妊娠期管理 + 分娩管理 + 妇科肿瘤筛查 + 产后随访
 rule_type: diagnosis
 department: 妇产科
 capability: cap-l3-obgyn-diagnosis
-business_process: bp-obgyn-diagnosis
+business_process: bp-obgyn
 data_entities:
-  consumes: [de-patient, de-lab-ob, de-imaging-ob, de-fetal-monitor]
-  produces: [de-diagnosis-result]
-guideline: 中华妇产科杂志 孕产妇保健指南 (2023)
-stakeholder: 产科医师需快速判定产程阶段与高危妊娠指征
+  consumes:
+    - de-patient
+    - de-lab-ob
+    - de-imaging-ob
+    - de-fetal-monitor
+  produces:
+    - de-diagnosis-result
+guideline: 中国妇产科学临床指南（2022）
+stakeholder: 产科医师快速判定妊娠风险、产程阶段与高危指征
 version: "1.0.0"
 
 rules:
-  - id: obg-labor-onset
-    description: 宫缩间隔 < 5min + 宫口开 → 产程启动
+  - id: obg-pregnancy-risk
+    description: 妊娠风险综合评估
     condition:
       and:
-        - field: uterine.contraction_interval
-          operator: "<"
-          value: 5
-        - field: cervical.dilation
+        - field: patient.age
+          operator: ">="
+          value: 35
+        - field: patient.gravidity
           operator: ">="
           value: 3
     result:
-      diagnosis: 产程启动
-      stage: 第一产程活跃期
-      recommendation: 收入产房，持续胎心监护
+      diagnosis: 高龄多产妊娠
+      risk_level: 中高危
+      recommendation: 产前诊断咨询 + 加强孕期监测频次 (每2周)
 
-  - id: obg-ectopic-pregnancy
-    description: hCG 翻倍异常 → 异位妊娠排查
-    condition:
-      and:
-        - field: lab.hCG_48h_ratio
-          operator: "<"
-          value: 1.6
-        - field: ultrasound.gestational_sac
-          operator: "=="
-          value: absent
-    result:
-      diagnosis: 疑似异位妊娠
-      severity: 高危
-      recommendation: 急诊超声 + 妇科会诊，必要时腹腔镜探查
-
-  - id: obg-preeclampsia
-    description: 血压 > 140/90 + 蛋白尿 → 子痫前期
+  - id: obg-preeclampsia-screen
+    description: 妊娠期高血压 / 子痫前期筛查
     condition:
       and:
         - or:
@@ -58,52 +48,83 @@ rules:
     result:
       diagnosis: 子痫前期
       severity: 高危
-      recommendation: 住院监护，硫酸镁预防子痫，必要时终止妊娠
+      recommendation: 住院监护 + 硫酸镁预防子痫 + 必要时终止妊娠
 
----
-rule_type: risk_score
-department: 妇产科
-capability: cap-l3-obgyn-risk
-business_process: bp-obgyn-risk-assessment
-data_entities:
-  consumes: [de-patient, de-lab-ob, de-imaging-ob]
-  produces: [de-risk-assessment]
-guideline: 中华妇产科杂志 高危妊娠管理指南 (2023)
-stakeholder: 评估孕期与分娩风险，制定个体化监护方案
-version: "1.0.0"
-
-rules:
-  - id: obg-advanced-maternal-age
-    description: 高龄 ≥ 35 岁 → 高危妊娠
+  - id: obg-gdm-screen
+    description: 妊娠期糖尿病筛查
     condition:
-      field: patient.age
-      operator: ">="
-      value: 35
+      and:
+        - field: lab.OGTT_fasting
+          operator: ">="
+          value: 5.1
+        - field: lab.OGTT_1h
+          operator: ">="
+          value: 10.0
+        - field: lab.OGTT_2h
+          operator: ">="
+          value: 8.5
     result:
-      risk: 高危妊娠
-      severity: 染色体异常与妊娠并发症风险增加
-      recommendation: 产前诊断 + 加强孕期监测
+      diagnosis: 妊娠期糖尿病
+      severity: 中危
+      recommendation: 饮食控制 + 血糖监测 + 胰岛素必要时
 
-  - id: obg-placenta-previa
-    description: 前置胎盘 → 出血风险
+  - id: obg-cervical-screen
+    description: 宫颈癌筛查 — TCT + HPV 联合
     condition:
-      field: ultrasound.placenta_position
-      operator: "=="
-      value: previa
+      or:
+        - field: lab.TCT
+          operator: "in"
+          value: [ASCUS, LSIL, HSIL, ASC-H]
+        - field: lab.HPV_high_risk
+          operator: equals
+          value: positive
     result:
-      risk: 产前/产后大出血风险
-      severity: 高危
-      recommendation: 绝对卧床，孕晚期住院待产，备血
+      diagnosis: 宫颈细胞学异常
+      screening: 阴道镜检查指征
+      recommendation: 阴道镜 + 必要时宫颈活检
+
+  - id: obg-labor-stage
+    description: 产程进展判断
+    condition:
+      and:
+        - field: uterine.contraction_interval
+          operator: "<"
+          value: 5
+        - field: cervical.dilation
+          operator: ">="
+          value: 3
+    result:
+      diagnosis: 第一产程活跃期
+      stage: 产程启动
+      recommendation: 收入产房 + 持续胎心监护 + 产程图记录
+
+  - id: obg-postpartum-42d
+    description: 产后 42 天随访筛查
+    condition:
+      and:
+        - field: postpartum.days
+          operator: ">="
+          value: 42
+        - field: postpartum.visited
+          operator: equals
+          value: false
+    result:
+      diagnosis: 产后随访到期
+      recommendation: 盆底功能评估 + 产后抑郁筛查 + 避孕指导 + 子宫复旧 B 超
 
 ---
 rule_type: treatment
 department: 妇产科
 capability: cap-l3-obgyn-treatment
-business_process: bp-obgyn-treatment
+business_process: bp-obgyn
 data_entities:
-  consumes: [de-diagnosis-result, de-risk-assessment, de-lab-ob]
-  produces: [de-treatment-plan]
-guideline: 中华妇产科杂志 产科急症处理指南 (2023)
+  consumes:
+    - de-diagnosis-result
+    - de-risk-assessment
+    - de-lab-ob
+  produces:
+    - de-treatment-plan
+guideline: 中国妇产科学临床指南（2022）
 stakeholder: 根据产程进展与母胎状况选择干预方案
 version: "1.0.0"
 
@@ -116,27 +137,91 @@ rules:
       value: 3
     result:
       treatment: 催产素静脉滴注
-      indication: 宫缩乏力
-      monitoring: 持续胎心监护 + 宫缩强度监测
+      indication: 宫缩乏力（原发性/继发性）
+      monitoring: 持续胎心监护 + 宫缩强度监测 + 10min 调整滴速
 
   - id: obg-mgso4-preeclampsia
-    description: 子痫前期 → 硫酸镁
+    description: 子痫前期/子痫 → 硫酸镁
     condition:
       field: diagnosis.preeclampsia
-      operator: "=="
+      operator: equals
       value: true
     result:
-      treatment: 硫酸镁负荷量 + 维持量
-      indication: 子痫前期或子痫
-      precaution: 监测膝反射、呼吸、尿量
+      treatment: 硫酸镁 4g 负荷量 IV (20min) + 1-2g/h 维持
+      indication: 子痫前期或子痫预防/治疗
+      precaution: 每 4h 监测膝反射 + 呼吸≥16次/min + 尿量≥25mL/h
+
+  - id: obg-pph-prevent
+    description: 产后出血预防
+    condition:
+      and:
+        - field: stage
+          operator: equals
+          value: 第三产程
+        - field: placenta.delivery
+          operator: equals
+          value: completed
+    result:
+      treatment: 缩宫素 10U IM + 子宫按摩
+      indication: 预防产后出血
+      monitoring: 出血量评估 + 生命体征监测 + 宫底高度记录
 
   - id: obg-antibiotics-prom
     description: 胎膜早破 → 抗生素预防
     condition:
       field: diagnosis.PROM
-      operator: "=="
+      operator: equals
       value: true
     result:
       treatment: 广谱抗生素预防感染
-      indication: 胎膜早破 > 18h
-      recommendation: 同时评估是否需引产或剖宫产
+      indication: 胎膜早破 > 18h 或 preterm PROM
+      recommendation: 青霉素类 GBS 预防 + 同时评估是否需引产或剖宫产
+
+---
+rule_type: followup
+department: 妇产科
+capability: cap-l3-obgyn-followup
+business_process: bp-obgyn
+data_entities:
+  consumes:
+    - de-treatment-plan
+    - de-delivery-record
+  produces:
+    - de-followup-plan
+guideline: 中国妇产科学临床指南（2022）
+stakeholder: 产后随访与妇科肿瘤长期筛查
+version: "1.0.0"
+
+rules:
+  - id: obg-postpartum-visit
+    description: 产后访视计划
+    condition:
+      field: stage
+      operator: equals
+      value: postpartum
+    result:
+      followup_schedule:
+        - time: 产后 7 天; items: "切口/会阴愈合 + 子宫复旧 + 泌乳评估"
+        - time: 产后 42 天; items: "盆底功能 + 产后抑郁筛查 (EPDS) + 避孕指导 + 子宫 B 超"
+        - time: 产后 3 个月; items: "贫血纠正 + 甲状腺功能复查 (妊娠期甲减)"
+      red_flags:
+        - 产后出血 > 1000mL → 住院观察
+        - EPDS 评分 ≥ 13 → 精神科会诊
+        - 血压持续 ≥ 140/90 → 心内科共管
+
+  - id: obg-cervical-screening-schedule
+    description: 宫颈癌筛查频次指南
+    condition:
+      and:
+        - field: patient.sex
+          operator: equals
+          value: female
+        - field: patient.age
+          operator: ">="
+          value: 25
+    result:
+      screening_schedule:
+        - method: "HPV 初筛 (25-64岁)"; interval: "每 5 年"
+        - method: "TCT+HPV 联合 (30-64岁)"; interval: "每 5 年"
+        - method: "TCT 单独 (25-29岁)"; interval: "每 3 年"
+      stop: "65 岁以上既往筛查充分可停止"

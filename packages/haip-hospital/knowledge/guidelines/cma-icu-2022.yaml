@@ -1,0 +1,55 @@
+# ============================================================
+# Guideline Asset: 中国重症医学临床诊疗指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-icu-2022"
+name: "中国重症医学临床诊疗指南（2022）"
+abbr: "重症医学指南2022"
+version: "2022"
+publisher: "中华医学会重症医学分会"
+journal: "中华重症医学电子杂志 2022;8(1):1-80"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国重症医学临床诊疗指南（2022版），涵盖脓毒症/脓毒性休克早期识别与治疗、
+  ARDS肺保护性通气策略（Vt 6mL/kg PBW, Pplat ≤ 30 cmH₂O）、
+  血流动力学监测（MAP ≥ 65 mmHg）、镇痛镇静（RASS目标）、
+  营养支持（早期肠内营养）及 AKI/CRRT 肾脏替代治疗指征。
+
+key_sections:
+  - id: "§2"
+    title: "脓毒症/脓毒性休克诊断与治疗"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [icu-sepsis-screen, icu-sepsis-fluid, icu-sepsis-antimicrobial]
+
+  - id: "§3"
+    title: "ARDS 肺保护性机械通气"
+    stage_ids: [S4, S5]
+    rule_ids: [icu-ards-lung-protective, icu-ards-pplat-limit, icu-ards-pronation-china]
+
+  - id: "§4"
+    title: "血流动力学监测与管理"
+    stage_ids: [S4, S5]
+    rule_ids: [icu-hd-monitoring, icu-hd-fluid-responsiveness, icu-hd-vasopressor-titration]
+
+  - id: "§5"
+    title: "镇痛镇静与谵妄管理"
+    stage_ids: [S4, S5]
+    rule_ids: [icu-sedation-target, icu-analgesia-assessment, icu-delirium-prevention]
+
+  - id: "§6"
+    title: "营养支持策略"
+    stage_ids: [S4, S5]
+    rule_ids: [icu-nutrition-screening, icu-enteral-timing, icu-pn-indication]
+
+rule_sets_covered:
+  - icu_sepsis
+  - icu_ards
+  - icu_hemodynamics
+  - icu_sedation
+  - icu_nutrition_china
+
+derived_rule_count: 11
+last_updated: 2026-07-10

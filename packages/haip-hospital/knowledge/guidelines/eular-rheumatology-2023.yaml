@@ -1,0 +1,51 @@
+# ============================================================
+# Guideline Asset: EULAR Recommendations for Rheumatic Diseases (2023)
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-eular-rheum-2023"
+name: "EULAR Recommendations for Rheumatic Diseases (2023)"
+abbr: "EULAR 2023"
+version: "2023"
+publisher: "European League Against Rheumatism"
+journal: "Annals of the Rheumatic Diseases 2023;82:3-18"
+doi: "10.1136/ard-2023-223726"
+language: en
+trust_level: T1
+
+description: >
+  EULAR 2023 recommendations for the management of rheumatic and musculoskeletal
+  diseases. Covers RA classification (2010 ACR/EULAR criteria), SLE diagnosis
+  (2019 EULAR/ACR criteria), DMARDs treatment strategy (treat-to-target),
+  gout management (acute flare vs urate-lowering therapy), and management of
+  psoriatic arthritis and axial spondyloarthritis.
+
+key_sections:
+  - id: "§1"
+    title: "RA Classification & Management"
+    stage_ids: [S2, S3, S4]
+    rule_ids: [rh-ra-classification, rh-das28-biologic, rh-mtx-ra, rh-biologic-refractory]
+
+  - id: "§2"
+    title: "SLE Diagnosis & Treatment"
+    stage_ids: [S2, S3, S4]
+    rule_ids: [rh-sle-slicc, rh-sle-acr, rh-ana-lupus, rh-anti-dsdna-active, rh-hcq-sle]
+
+  - id: "§3"
+    title: "DMARDs & Treat-to-Target"
+    stage_ids: [S4, S5]
+    rule_ids: [rh-dmard-csdmard, rh-dmard-biologic, rh-dmard-jak, rh-t2t-monitoring]
+
+  - id: "§4"
+    title: "Gout Management"
+    stage_ids: [S3, S4, S5]
+    rule_ids: [rh-gout-acute, rh-gout-urate, rh-gout-prophylaxis]
+
+rule_sets_covered:
+  - rheumatology_ra
+  - rheumatology_sle
+  - rheumatology_dmard
+  - rheumatology_gout
+
+derived_rule_count: 14
+last_updated: 2026-07-10

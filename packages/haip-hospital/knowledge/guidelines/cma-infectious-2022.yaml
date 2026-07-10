@@ -1,0 +1,61 @@
+# ============================================================
+# Guideline Asset: 中国感染性疾病诊疗指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-infectious-2022"
+name: "中国感染性疾病诊疗指南（2022）"
+abbr: "感染指南2022"
+version: "2022"
+publisher: "中华医学会感染病学分会"
+journal: "中华传染病杂志 2022;40(1):1-60"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国感染性疾病诊疗指南（2022版），涵盖抗菌药物合理使用（窄谱优先、
+  降阶梯策略）、结核病诊疗（IGRA / Xpert MTB/RIF）、
+  病毒性肝炎（乙肝抗病毒指征、丙肝 DAA）、HIV/AIDS 全程管理（CD4 阈值、
+  ART 启动时机）、发热待查（FUO）规范化诊疗路径及 COVID-19 抗病毒治疗。
+
+key_sections:
+  - id: "§2"
+    title: "抗菌药物合理使用"
+    stage_ids: [S3, S4]
+    rule_ids: [id-abx-narrow, id-abx-deescalation, id-abx-stewardship]
+
+  - id: "§3"
+    title: "结核病诊疗"
+    stage_ids: [S2, S3]
+    rule_ids: [id-tb-igra, id-tb-xpert, id-tb-treatment]
+
+  - id: "§4"
+    title: "病毒性肝炎"
+    stage_ids: [S2, S3, S4]
+    rule_ids: [id-hbv-antiviral-indication, id-hcv-daa, id-hbv-surveillance]
+
+  - id: "§5"
+    title: "HIV/AIDS 管理"
+    stage_ids: [S2, S3, S4]
+    rule_ids: [id-hiv-art-cd4, id-hiv-oi-prophylaxis, id-hiv-viral-load]
+
+  - id: "§6"
+    title: "发热待查（FUO）"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [id-fuo-definition, id-fuo-workup-tier1, id-fuo-workup-tier2]
+
+  - id: "§7"
+    title: "COVID-19 抗病毒治疗"
+    stage_ids: [S3, S4]
+    rule_ids: [id-covid-nirmatrelvir, id-covid-remdesivir, id-covid-molnupiravir]
+
+rule_sets_covered:
+  - infectious_antibiotic_stewardship
+  - infectious_tb
+  - infectious_hepatitis
+  - infectious_hiv
+  - infectious_fuo
+  - infectious_covid19
+
+derived_rule_count: 18
+last_updated: 2026-07-10

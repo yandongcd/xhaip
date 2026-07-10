@@ -1,131 +1,143 @@
-# 消化内科临床规则 — 消化道出血 + 病毒性肝炎 + 溃疡性结肠炎
+# 消化内科临床规则 — 慢性胃炎 + H.pylori + 溃疡
 rule_type: diagnosis
 department: 消化内科
-capability: cap-l3-gastroenterology-diagnosis
+capability: cap-l3-gastro-diagnosis
 business_process: bp-gastroenterology-diagnosis
 data_entities:
-  consumes: [de-patient, de-lab-biochemistry, de-lab-hematology, de-lab-infection, de-endoscopy]
-  produces: [de-diagnosis-result]
-guideline: 中华消化杂志 急性非静脉曲张性上消化道出血诊治指南 (2023)
-stakeholder: 消化内科医师需快速判断消化道出血严重度与肝炎抗病毒时机
+  consumes:
+  - de-lab-hp
+  - de-endoscopy
+  - de-patient
+  produces:
+  - de-diagnosis-result
+guideline: 中国慢性胃炎共识（2022）
+stakeholder: 胃炎诊断与Hp检测
 version: "1.0.0"
 
 rules:
-  - id: ge-blatchford-endoscopy
-    description: Blatchford > 6 → 急诊内镜
+  - id: gastritis-hp-test
+    description: H.pylori检测指征
     condition:
-      field: blatchford_score
-      operator: ">"
-      value: 6
+      or:
+        - field: symptoms; operator: contains; value: 上腹痛
+        - field: symptoms; operator: contains; value: 腹胀
+        - field: symptoms; operator: contains; value: 消化不良
     result:
-      diagnosis: 高危上消化道出血
-      severity: 高危
-      recommendation: 24小时内急诊胃镜
+      test: H.pylori检测
+      methods:
+        - "C13/C14 呼气试验 (首选)"
+        - 粪便Hp抗原
+        - 胃镜快速尿素酶 (胃镜检查时)
 
-  - id: ge-hbsag-antiviral
-    description: HBsAg+ 且 HBV DNA > 2000 → 抗病毒治疗
+  - id: gastritis-classify
+    description: 慢性胃炎分类
     condition:
-      and:
-        - {field: lab_results.HBsAg, operator: "==", value: positive}
-        - {field: lab_results.HBV_DNA, operator: ">", value: 2000}
+      field: endoscopy; operator: contains; value: 胃炎
     result:
-      diagnosis: 慢性乙型肝炎（活动期）
-      severity: 中危
-      recommendation: 启动抗病毒治疗（恩替卡韦/替诺福韦）
+      classification:
+        - 慢性非萎缩性胃炎 (CNAG)
+        - 慢性萎缩性胃炎 (CAG)
+        - 自身免疫性胃炎 (AIG)
+      pathology: "OLGA/OLGIM分期评估萎缩/肠化严重度"
 
-  - id: ge-hematochezia-colonoscopy
-    description: 便血 + Hb 下降 → 急诊肠镜
+  - id: gastritis-olga
+    description: OLGA/OLGIM分期评估
     condition:
-      and:
-        - {field: symptoms, operator: contains, value: 便血}
-        - {field: lab_results.Hb, operator: "<", value: 100}
+      field: endoscopy; operator: contains; value: 萎缩
     result:
-      diagnosis: 急性下消化道出血
-      severity: 高危
-      recommendation: 急诊结肠镜检查
-
----
-rule_type: risk_score
-department: 消化内科
-capability: cap-l3-gastroenterology-risk
-business_process: bp-gastroenterology-assessment
-data_entities:
-  consumes: [de-patient, de-lab-biochemistry, de-lab-hematology, de-endoscopy]
-  produces: [de-risk-assessment]
-guideline: 中华消化杂志 肝硬化食管胃静脉曲张出血防治指南 (2022)
-stakeholder: 评估肝硬化严重度与再出血风险
-version: "1.0.0"
-
-rules:
-  - id: ge-child-pugh-b
-    description: Child-Pugh B → 中危
-    condition:
-      field: child_pugh
-      operator: "=="
-      value: B
-    result:
-      risk: 中危
-      severity: 肝硬化失代偿
-      recommendation: 定期内镜筛查、预防性套扎
-
-  - id: ge-rockall-high-risk
-    description: Rockall > 5 → 高危再出血
-    condition:
-      field: rockall_score
-      operator: ">"
-      value: 5
-    result:
-      risk: 高危再出血
-      severity: 上消化道出血预后不良
-      recommendation: ICU监护、内镜介入止血
+      staging: "OLGA III-IV期或OLGIM III-IV期为胃癌高风险"
+      followup: "OLGA II+ → 每1-3年胃镜监测"
 
 ---
 rule_type: treatment
 department: 消化内科
-capability: cap-l3-gastroenterology-treatment
+capability: cap-l3-gastro-treatment
 business_process: bp-gastroenterology-treatment
 data_entities:
-  consumes: [de-diagnosis-result, de-risk-assessment]
-  produces: [de-treatment-plan]
-guideline: 中华消化杂志 炎症性肠病诊断与治疗共识意见 (2023)
-stakeholder: 根据消化内科常见疾病制定药物治疗方案
+  consumes:
+  - de-diagnosis-result
+  produces:
+  - de-treatment-plan
+guideline: 中国慢性胃炎共识（2022）
+stakeholder: Hp根除与胃炎治疗
 version: "1.0.0"
 
 rules:
-  - id: ge-ulcer-ppi
-    description: 溃疡病 → PPI 治疗
+  - id: hp-eradication
+    description: H.pylori根除治疗（铋剂四联）
     condition:
-      field: diagnosis
-      operator: contains
-      value: 溃疡
+      field: lab_results.Hp; operator: equals; value: positive
     result:
-      treatment: 质子泵抑制剂（PPI）
-      medications:
-        - 奥美拉唑 20mg bid
-        - 根除HP（四联疗法）
+      treatment: 铋剂四联疗法 14天
+      regimen:
+        - PPI (艾司奥美拉唑 20mg bid)
+        - 铋剂 (枸橼酸铋钾 220mg bid)
+        - 阿莫西林 1g bid
+        - 克拉霉素 500mg bid
+      alternative: "青霉素过敏: 甲硝唑 400mg tid 替代阿莫西林"
+      post_treatment: 停药4周后复查C13/C14
 
-  - id: ge-hbv-pegifn
-    description: 乙肝 → 聚乙二醇干扰素/核苷类似物
+  - id: gastritis-symptom
+    description: 慢性胃炎对症治疗
     condition:
-      field: diagnosis
-      operator: contains
-      value: 乙型肝炎
+      field: diagnosis; operator: contains; value: 胃炎
     result:
-      treatment: 聚乙二醇干扰素/核苷类似物
-      options:
-        - 恩替卡韦 0.5mg qd
-        - 替诺福韦 300mg qd
-        - 聚乙二醇干扰素 α-2a 180μg qw
-
-  - id: ge-uc-mesalazine
-    description: 溃疡性结肠炎 → 美沙拉嗪
-    condition:
-      field: diagnosis
-      operator: contains
-      value: 溃疡性结肠炎
-    result:
-      treatment: 美沙拉嗪（5-ASA）
+      treatment: 对症治疗
       medications:
-        - 美沙拉嗪 1g qid（活动期）
-        - 美沙拉嗪 0.5g tid（维持期）
-      escalation: 激素/免疫抑制剂/生物制剂
+        - PPI/H2RA (抑酸)
+        - 胃黏膜保护剂 (铝碳酸镁/瑞巴派特)
+        - 促动力药 (莫沙必利) 腹胀时
+        - 消化酶制剂 (复方消化酶) 消化不良时
+
+  - id: peptic-ulcer
+    description: 消化性溃疡治疗
+    condition:
+      field: diagnosis; operator: contains; value: 溃疡
+    result:
+      treatment: PPI + Hp根除
+      medications:
+        - PPI 标准剂量 4-8周 (十二指肠) / 6-8周 (胃)
+        - Hp阳性: 铋剂四联
+      warnings:
+        - NSAIDs相关: 停用NSAIDs + PPI
+        - 出血征象: 急诊胃镜
+
+---
+rule_type: followup
+department: 消化内科
+capability: cap-l3-gastro-followup
+business_process: bp-gastroenterology-followup
+data_entities:
+  consumes:
+  - de-treatment-plan
+  produces:
+  - de-followup-plan
+guideline: 中国慢性胃炎共识（2022）
+stakeholder: 萎缩性胃炎随访监测
+version: "1.0.0"
+
+rules:
+  - id: cag-surveillance
+    description: 萎缩性胃炎内镜监测
+    condition:
+      and:
+        - field: diagnosis; operator: contains; value: 萎缩性胃炎
+        - field: pathology.OLGA; operator: ">="; value: 2
+    result:
+      surveillance:
+        - risk: OLGA I-II; interval: 每3年
+        - risk: OLGA III-IV; interval: 每1-2年
+        - risk: 低级别上皮内瘤变; interval: 每6-12月
+        - risk: 高级别上皮内瘤变; action: 立即ESD
+      red_flags:
+        - 新发消瘦/贫血/黑便 → 紧急胃镜
+
+  - id: hp-retest
+    description: Hp根除后复查
+    condition:
+      field: treatment; operator: contains; value: 根除Hp
+    result:
+      retest: 停药≥4周后C13/C14呼气试验
+      actions:
+        - 阴性: 常规随访
+        - 阳性: 二线方案 (含左氧氟沙星/四环素/呋喃唑酮)

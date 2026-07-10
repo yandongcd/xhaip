@@ -1,0 +1,49 @@
+# ============================================================
+# Guideline Asset: 中国血液病诊疗指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-hematology-2022"
+name: "中国血液病诊疗指南（2022）"
+abbr: "中华血液学2022"
+version: "2022"
+publisher: "中华医学会血液学分会"
+journal: "中华血液学杂志 2022;43(10):793-831"
+doi: ""
+language: zh-CN
+trust_level: T1
+
+description: >
+  中华医学会血液学分会发布的血液病诊疗指南（2022版），涵盖贫血鉴别诊断、
+  白血病分型与诊疗、淋巴瘤诊疗路径、出凝血疾病评估与管理。强调骨髓穿刺
+  与流式免疫分型在血液肿瘤诊断中的核心地位，规范输血指征与 DIC 评分。
+
+key_sections:
+  - id: "§1"
+    title: "贫血诊断"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [he-ida-diagnosis, he-megaloblastic-diagnosis, he-hemolytic-diagnosis, he-hb-transfusion]
+
+  - id: "§2"
+    title: "白血病分型"
+    stage_ids: [S2, S3]
+    rule_ids: [he-blast-leukemia, he-aml-chemotherapy, he-cml-hydroxyurea, he-wbc-leukemia-alert]
+
+  - id: "§3"
+    title: "淋巴瘤诊疗"
+    stage_ids: [S3, S4]
+    rule_ids: [he-lymphoma-staging, he-lymphoma-chemotherapy]
+
+  - id: "§4"
+    title: "出凝血疾病"
+    stage_ids: [S2, S3, S4]
+    rule_ids: [he-dic-score, he-plt-transfusion, he-aptt-prolonged]
+
+rule_sets_covered:
+  - hematology_anemia
+  - hematology_leukemia
+  - hematology_lymphoma
+  - hematology_coagulation
+
+derived_rule_count: 12
+last_updated: 2026-07-10

@@ -1,0 +1,49 @@
+# ============================================================
+# Guideline Asset: 中国新生儿临床诊疗指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-neonatology-2022"
+name: "中国新生儿临床诊疗指南（2022）"
+abbr: "新生儿指南2022"
+version: "2022"
+publisher: "中华医学会儿科学分会新生儿学组"
+journal: "中华儿科杂志 2022;60(3):181-300"
+doi: "10.3760/cma.j.cn112140-20220301-00001"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中华医学会儿科学分会新生儿学组发布的2022版中国新生儿临床诊疗指南。
+  涵盖新生儿复苏、早产儿管理、新生儿黄疸、新生儿感染筛查等核心领域。
+  适用于新生儿科及 NICU 临床医师。
+
+key_sections:
+  - id: "§1"
+    title: "新生儿复苏"
+    stage_ids: [S1, S3]
+    rule_ids: [neo-nrp-initial, neo-nrp-ventilation, neo-nrp-chest-compression, neo-apgar]
+
+  - id: "§2"
+    title: "早产儿管理"
+    stage_ids: [S3, S4, S5]
+    rule_ids: [neo-preterm-thermo, neo-preterm-nutrition, neo-preterm-tpn, neo-preterm-apnea]
+
+  - id: "§3"
+    title: "新生儿黄疸"
+    stage_ids: [S2, S3, S4]
+    rule_ids: [neo-bili-threshold, neo-phototherapy, neo-exchange-transfusion, neo-bili-risk]
+
+  - id: "§4"
+    title: "新生儿感染筛查"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [neo-sepsis-screen, neo-sepsis-crp, neo-sepsis-antibiotics, neo-gbs-prophylaxis]
+
+rule_sets_covered:
+  - neonatology_resuscitation
+  - neonatology_preterm
+  - neonatology_jaundice
+  - neonatology_sepsis
+
+derived_rule_count: 12
+last_updated: 2026-07-10

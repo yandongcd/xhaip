@@ -1,0 +1,68 @@
+# ============================================================
+# Guideline Asset: SCCM Surviving Sepsis Campaign Guidelines (2021)
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-sccm-icu-2021"
+name: "SCCM Surviving Sepsis Campaign Guidelines (2021)"
+abbr: "SSC 2021"
+version: "2021"
+publisher: "Society of Critical Care Medicine"
+journal: "Intensive Care Medicine 2021;47:1181-1247"
+doi: "10.1007/s00134-021-06506-y"
+language: en
+trust_level: T1
+
+description: >
+  Surviving Sepsis Campaign: International Guidelines for Management
+  of Sepsis and Septic Shock 2021. Covers screening (qSOFA/SOFA),
+  1-hour bundle (lactate, blood culture, antibiotics, fluids, vasopressors),
+  hemodynamic monitoring, ARDS mechanical ventilation, sedation/analgesia,
+  nutrition support, and AKI/CRRT management.
+
+key_sections:
+  - id: "§2"
+    title: "脓毒症筛查与诊断（qSOFA / SOFA）"
+    stage_ids: [S1, S2]
+    rule_ids: [icu-qsofa, icu-sofa, icu-lactate]
+
+  - id: "§3"
+    title: "1-Hour Bundle 集束化治疗"
+    stage_ids: [S3]
+    rule_ids: [icu-bundle-lactate, icu-bundle-culture, icu-bundle-antibiotics, icu-bundle-fluids, icu-bundle-vasopressor]
+
+  - id: "§4"
+    title: "ARDS 机械通气"
+    stage_ids: [S4, S5]
+    rule_ids: [icu-ards-tv, icu-ards-pplat, icu-ards-pronation, icu-ards-recruitment]
+
+  - id: "§5"
+    title: "血流动力学监测"
+    stage_ids: [S4, S5]
+    rule_ids: [icu-hd-map, icu-hd-cvp, icu-hd-scvo2, icu-hd-echo]
+
+  - id: "§6"
+    title: "镇痛镇静管理"
+    stage_ids: [S4, S5]
+    rule_ids: [icu-sedation-rass, icu-analgesia-cpot, icu-delirium-cam-icu]
+
+  - id: "§7"
+    title: "营养支持"
+    stage_ids: [S4, S5]
+    rule_ids: [icu-nutrition-enteral, icu-nutrition-pn, icu-nutrition-glucose]
+
+  - id: "§8"
+    title: "急性肾损伤与 CRRT"
+    stage_ids: [S4, S5]
+    rule_ids: [icu-aki-kdigo, icu-crrt-indication, icu-crrt-dose]
+
+rule_sets_covered:
+  - icu_sepsis_screening
+  - icu_hemodynamic
+  - icu_ards_ventilation
+  - icu_sedation_analgesia
+  - icu_nutrition
+  - icu_aki_crrt
+
+derived_rule_count: 17
+last_updated: 2026-07-10

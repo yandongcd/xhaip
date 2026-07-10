@@ -1,0 +1,47 @@
+# ============================================================
+# Guideline Asset: 中国慢性胃炎共识（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T2
+# ============================================================
+id: "guideline-cma-gastritis-2022"
+name: "中国慢性胃炎共识意见（2022年，上海）"
+abbr: "慢性胃炎共识2022"
+version: "2022"
+publisher: "中华医学会消化病学分会"
+journal: "中华消化杂志 2023;43(3):145-170"
+language: zh-CN
+trust_level: T2
+
+description: >
+  中国慢性胃炎共识意见，涵盖慢性胃炎分类（萎缩性/非萎缩性）、
+  病因（H.pylori/自身免疫）、诊断（内镜+病理 OLGA/OLGIM）、
+  治疗（根除Hp/PPI/胃黏膜保护剂）及随访策略。
+
+key_sections:
+  - id: "§2"
+    title: "慢性胃炎分类与病因"
+    stage_ids: [S1, S3]
+    rule_ids: [gastritis-classify, gastritis-hp-test]
+
+  - id: "§3"
+    title: "内镜与病理诊断"
+    stage_ids: [S2, S3]
+    rule_ids: [gastritis-endoscopy, gastritis-olga, gastritis-biopsy]
+
+  - id: "§4"
+    title: "根除H.pylori治疗"
+    stage_ids: [S4]
+    rule_ids: [gastritis-hp-eradication, gastritis-bismuth-quadruple]
+
+  - id: "§5"
+    title: "萎缩性胃炎随访"
+    stage_ids: [S6]
+    rule_ids: [gastritis-followup, gastritis-surveillance]
+
+rule_sets_covered:
+  - gastritis_diagnosis
+  - gastritis_treatment
+  - gastritis_followup
+
+derived_rule_count: 2
+last_updated: 2026-07-10

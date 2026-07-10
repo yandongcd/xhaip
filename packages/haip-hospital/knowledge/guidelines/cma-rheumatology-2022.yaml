@@ -1,0 +1,50 @@
+# ============================================================
+# Guideline Asset: 中国风湿免疫病诊疗指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-rheum-2022"
+name: "中国风湿免疫病诊疗指南（2022）"
+abbr: "中华风湿2022"
+version: "2022"
+publisher: "中华医学会风湿病学分会"
+journal: "中华风湿病学杂志 2022;26(10):649-715"
+doi: ""
+language: zh-CN
+trust_level: T1
+
+description: >
+  中华医学会风湿病学分会发布的风湿免疫病诊疗指南（2022版），涵盖类风湿
+  关节炎（RA）、系统性红斑狼疮（SLE）、痛风、强直性脊柱炎等常见风湿免疫病
+  的诊断标准、疾病活动度评估与阶梯治疗策略。强调达标治疗（T2T）与生物制剂
+  的合理应用时机。
+
+key_sections:
+  - id: "§1"
+    title: "类风湿关节炎诊断与治疗"
+    stage_ids: [S2, S3, S4]
+    rule_ids: [rh-ra-classification, rh-das28-biologic, rh-mtx-ra, rh-rf-joint-damage]
+
+  - id: "§2"
+    title: "系统性红斑狼疮诊断"
+    stage_ids: [S2, S3]
+    rule_ids: [rh-sle-slicc, rh-ana-lupus, rh-anti-dsdna-active, rh-hcq-sle]
+
+  - id: "§3"
+    title: "痛风与高尿酸血症"
+    stage_ids: [S2, S3, S4]
+    rule_ids: [rh-gout-acute, rh-gout-urate, rh-gout-prophylaxis, rh-hyperuricemia]
+
+  - id: "§4"
+    title: "DMARDs与达标治疗"
+    stage_ids: [S4, S5, S6]
+    rule_ids: [rh-dmard-csdmard, rh-dmard-biologic, rh-t2t-monitoring]
+
+rule_sets_covered:
+  - rheumatology_ra
+  - rheumatology_sle
+  - rheumatology_gout
+  - rheumatology_dmard
+
+derived_rule_count: 11
+last_updated: 2026-07-10

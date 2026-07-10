@@ -126,3 +126,239 @@ rules:
         - TNF-α 抑制剂（阿达木单抗/英夫利西单抗）
         - JAK 抑制剂（托法替布/巴瑞替尼）
         - IL-6 受体拮抗剂（托珠单抗）
+
+---
+# RA 分类标准规则（ACR/EULAR 2010）
+rule_type: ra_classification
+department: 风湿免疫科
+capability: cap-l3-rheumatology-diagnosis
+business_process: bp-rheumatology-diagnosis
+data_entities:
+  consumes: [de-patient, de-physical-exam, de-lab-immune, de-lab-infection]
+  produces: [de-ra-score]
+guideline: 中国风湿免疫病诊疗指南（2022）
+stakeholder: 基于 2010 ACR/EULAR 标准的 RA 分类与早期诊断
+version: "1.0.0"
+
+rules:
+  - id: rh-ra-classification
+    description: 肿胀关节 ≥ 1 + 总分 ≥ 6 → 确诊 RA
+    condition:
+      and:
+        - {field: physical_exam.swollen_joints, operator: ">=", value: 1}
+        - {field: ra_classification_score, operator: ">=", value: 6}
+    result:
+      diagnosis: 类风湿关节炎（ACR/EULAR 2010 确诊）
+      severity: 中危
+      recommendation: 起始 csDMARD 治疗、DAS28 评分每 3 月评估
+      score_breakdown: "关节受累(0-5) + 血清学 RF/ACPA(0-3) + 急性时相 CRP/ESR(0-1) + 病程≥6w(0-1)"
+
+  - id: rh-ra-early-warning
+    description: 晨僵 > 30min + RF 阳性 → 早期 RA 高度可疑
+    condition:
+      and:
+        - {field: symptoms, operator: contains, value: 晨僵}
+        - {field: lab_results.RF, operator: "==", value: positive}
+    result:
+      diagnosis: 早期类风湿关节炎（高度可疑）
+      severity: 中危
+      recommendation: 关节超声/MRI、ACPA 检测、DAS28 评分、X 线双手
+
+  - id: rh-ra-anti-ccp
+    description: 抗 CCP 抗体阳性 → RA 特异性诊断
+    condition:
+      field: lab_results.anti_CCP
+      operator: "=="
+      value: positive
+    result:
+      diagnosis: ACPA 阳性 → RA 诊断特异性 > 95%
+      severity: 高危（预测关节破坏）
+      recommendation: 早期 csDMARD 干预、目标 DAS28-ESR < 2.6
+
+---
+# SLE 诊断规则（SLICC/ACR 2019）
+rule_type: sle_diagnosis
+department: 风湿免疫科
+capability: cap-l3-rheumatology-diagnosis
+business_process: bp-rheumatology-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-immune, de-lab-renal, de-lab-hematology]
+  produces: [de-sle-score]
+guideline: EULAR Recommendations for Rheumatic Diseases (2023)
+stakeholder: 基于 2019 EULAR/ACR 标准的 SLE 分类诊断
+version: "1.0.0"
+
+rules:
+  - id: rh-sle-slicc
+    description: ANA ≥ 1:80 + 总分 ≥ 10 → 确诊 SLE
+    condition:
+      and:
+        - {field: lab_results.ANA_titer, operator: ">=", value: 80}
+        - {field: sle_eular_acr_score, operator: ">=", value: 10}
+    result:
+      diagnosis: 系统性红斑狼疮（EULAR/ACR 2019 确诊）
+      severity: 高危
+      recommendation: SLEDAI 评分、尿蛋白定量、补体 C3/C4、羟氯喹基础治疗
+      criteria: "ANA ≥ 1:80 为必要条件 + 临床表现(0-10) + 免疫学(0-7)"
+
+  - id: rh-sle-acr
+    description: 同时满足 ≥ 4 项 ACR 标准 → 临床 SLE
+    condition:
+      and:
+        - {field: physical_exam, operator: contains, value: 颧部红斑}
+        - {field: lab_results.anti_dsDNA, operator: "==", value: positive}
+        - {field: lab_results.anti_Sm, operator: "==", value: positive}
+        - {field: lab_results.proteinuria, operator: ">", value: 0.5}
+    result:
+      diagnosis: 系统性红斑狼疮（ACR 临床标准 ≥ 4 项）
+      severity: 高危（狼疮性肾炎）
+      recommendation: 肾活检、糖皮质激素 + 霉酚酸酯/环磷酰胺
+
+  - id: rh-sle-thrombocytopenia
+    description: PLT < 100 + ANA 阳性 → SLE 血液系统受累
+    condition:
+      and:
+        - {field: lab_results.PLT, operator: "<", value: 100}
+        - {field: lab_results.ANA, operator: "==", value: positive}
+    result:
+      diagnosis: SLE 血液系统受累（免疫性血小板减少）
+      severity: 中危
+      recommendation: 大剂量糖皮质激素、羟氯喹、评估抗磷脂抗体
+
+---
+# DMARDs 达标治疗规则
+rule_type: dmard
+department: 风湿免疫科
+capability: cap-l3-rheumatology-treatment
+business_process: bp-rheumatology-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-lab-immune, de-lab-infection]
+  produces: [de-treatment-plan]
+guideline: EULAR Recommendations for Rheumatic Diseases (2023)
+stakeholder: 基于 treat-to-target 策略的 DMARD 选择与升级路径
+version: "1.0.0"
+
+rules:
+  - id: rh-dmard-csdmard
+    description: 初诊 RA → csDMARD 单药（MTX 优先）
+    condition:
+      and:
+        - {field: diagnosis, operator: contains, value: 类风湿关节炎}
+        - {field: treatment_history, operator: not_contains, value: csDMARD}
+    result:
+      treatment: csDMARD 一线治疗
+      first_line: 甲氨蝶呤（MTX）10-15mg qw + 叶酸 5mg qw
+      alternatives:
+        - 来氟米特 10-20mg qd
+        - 柳氮磺吡啶 1g bid
+      monitoring: DAS28-ESR 每 3 月、ALT/AST 每 4-8 周
+      target: DAS28-ESR < 2.6（临床缓解）或 DAS28 < 3.2（低活动度）
+
+  - id: rh-dmard-biologic
+    description: csDMARD 3 月无效 → 生物制剂升级
+    condition:
+      and:
+        - {field: diagnosis, operator: contains, value: 类风湿关节炎}
+        - {field: das28_score, operator: ">", value: 3.2}
+        - {field: treatment_history, operator: contains, value: MTX不足}
+    result:
+      treatment: 生物制剂/靶向合成 DMARD
+      options:
+        - TNF-α 抑制剂（阿达木单抗 40mg q2w）
+        - IL-6 受体拮抗剂（托珠单抗 8mg/kg q4w）
+        - JAK 抑制剂（托法替布 5mg bid / 巴瑞替尼 4mg qd）
+      prerequisite: 结核筛查阴性、乙肝筛查阴性
+
+  - id: rh-dmard-jak
+    description: 传统 DMARD 禁忌/不耐受 → JAK 抑制剂
+    condition:
+      and:
+        - {field: diagnosis, operator: contains, value: 类风湿关节炎}
+        - {field: treatment_history, operator: contains, value: MTX禁忌}
+    result:
+      treatment: JAK 抑制剂替代治疗
+      options:
+        - 托法替布 5mg bid
+        - 巴瑞替尼 4mg qd
+        - 乌帕替尼 15mg qd
+      monitoring: 血脂、肝酶、血常规每 3 月
+      warning: 高龄 + 心血管风险因素者慎用
+
+  - id: rh-t2t-monitoring
+    description: DAS28 持续达标 > 6 月 → 减量策略
+    condition:
+      and:
+        - {field: das28_score, operator: "<", value: 2.6}
+        - {field: patient.remission_months, operator: ">=", value: 6}
+    result:
+      treatment: 达标减量
+      strategy: 先减激素 → 再拉长生物制剂间隔 → 最后减 csDMARD
+      monitoring: DAS28-ESR 每 3-6 月、警惕减量后复发
+      target: 维持低活动度或临床缓解
+
+---
+# 痛风管理规则
+rule_type: gout
+department: 风湿免疫科
+capability: cap-l3-rheumatology-treatment
+business_process: bp-rheumatology-treatment
+data_entities:
+  consumes: [de-patient, de-lab-biochemistry, de-lab-renal]
+  produces: [de-treatment-plan]
+guideline: EULAR Recommendations for Rheumatic Diseases (2023)
+stakeholder: 痛风急性发作与降尿酸治疗的规范化管理
+version: "1.0.0"
+
+rules:
+  - id: rh-gout-acute
+    description: 单关节红肿热痛 + 尿酸 > 420 → 痛风急性发作
+    condition:
+      and:
+        - {field: physical_exam, operator: contains, value: 关节红肿热痛}
+        - {field: lab_results.uric_acid, operator: ">", value: 420}
+    result:
+      diagnosis: 急性痛风性关节炎
+      treatment: 秋水仙碱（首剂 1mg → 0.5mg q1h × 3）或 NSAIDs
+      alternatives:
+        - 秋水仙碱 0.5mg bid（低剂量方案）
+        - 依托考昔 120mg qd
+        - 泼尼松 30mg qd（多关节/NSAIDs 禁忌）
+      note: 急性期不启动降尿酸治疗
+
+  - id: rh-gout-urate
+    description: 痛风反复发作 > 2 次/年 → 启动降尿酸治疗
+    condition:
+      and:
+        - {field: diagnosis, operator: contains, value: 痛风}
+        - {field: patient.gout_flares_year, operator: ">=", value: 2}
+    result:
+      treatment: 降尿酸长期治疗
+      medications:
+        - 别嘌醇 50-100mg qd（起始），逐步加量至 300-600mg qd
+        - 非布司他 20-40mg qd（别嘌醇不耐受时）
+      target: 尿酸 < 360μmol/L（普通）或 < 300μmol/L（痛风石/慢性痛风）
+      precondition: 急性发作完全缓解后 2 周启动
+
+  - id: rh-gout-prophylaxis
+    description: 启动降尿酸 → 急性发作预防
+    condition:
+      field: treatment_history
+      operator: contains
+      value: 启动降尿酸治疗
+    result:
+      prophylaxis: 秋水仙碱 0.5mg qd 或 NSAIDs 小剂量
+      duration: 降尿酸达标后继续 3-6 月
+      note: 降尿酸初期因尿酸波动可诱发急性发作
+
+  - id: rh-hyperuricemia
+    description: 无症状高尿酸血症 > 540 → 干预指征
+    condition:
+      field: lab_results.uric_acid
+      operator: ">"
+      value: 540
+    result:
+      diagnosis: 无症状高尿酸血症（需干预）
+      severity: 中危
+      recommendation: 生活方式干预 + 别嘌醇起始治疗
+      target: 尿酸 < 360μmol/L
+      comorbidities: 合并高血压/糖尿病/肾功不全时 > 480 即启动

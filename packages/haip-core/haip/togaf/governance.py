@@ -21,6 +21,7 @@ import importlib
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+import logging
 
 
 # ── Known data entity IDs (used by business process steps) ──
@@ -323,7 +324,7 @@ def _check_guideline_refs(
                 gstem = gname.lower().replace(" ", "-").replace("/", "-")[:30]
                 existing.add(gstem)
     except Exception:
-        pass
+            logging.debug("silenced", exc_info=True)
 
     missing: list[str] = []
     for ref_id in refs:

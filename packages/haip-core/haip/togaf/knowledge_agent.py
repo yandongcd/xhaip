@@ -21,6 +21,7 @@ from __future__ import annotations
 from pathlib import Path
 import json
 from typing import Any
+import logging
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent  # xhaip root
 KNOWLEDGE_DIR = PROJECT_ROOT / "packages" / "haip-hospital" / "knowledge"

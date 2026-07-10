@@ -1,0 +1,54 @@
+# ============================================================
+# Guideline Asset: 中国急诊临床诊疗指南（2023）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-emergency-2023"
+name: "中国急诊临床诊疗指南（2023）"
+abbr: "急诊指南2023"
+version: "2023"
+publisher: "中华医学会急诊医学分会"
+journal: "中华急诊医学杂志 2023;32(1):1-50"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国急诊临床诊疗指南（2023版），涵盖心肺复苏(CPR)规范化流程、
+  急性中毒识别与解毒剂应用、严重创伤评估(ABCDE)、急性胸痛与卒中快速筛查、
+  危重评分(MEWS/NEWS/SOFA)等急诊核心诊疗环节。
+
+key_sections:
+  - id: "§2"
+    title: "心肺复苏（CPR）"
+    stage_ids: [S1]
+    rule_ids: [em-cpr-acls, em-cpr-defib, em-cpr-airway]
+
+  - id: "§3"
+    title: "急性中毒"
+    stage_ids: [S1, S2]
+    rule_ids: [em-tox-triage, em-tox-antidote, em-tox-decontamination]
+
+  - id: "§4"
+    title: "创伤评估（ABCDE）"
+    stage_ids: [S1, S2]
+    rule_ids: [em-trauma-airway, em-trauma-bleeding, em-trauma-spine]
+
+  - id: "§5"
+    title: "急性胸痛与卒中筛查"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [em-stemi-ecg, em-stroke-fast, em-stroke-thrombolysis]
+
+  - id: "§6"
+    title: "危重评分系统"
+    stage_ids: [S1, S3]
+    rule_ids: [em-mews, em-news, em-sofa-initial]
+
+rule_sets_covered:
+  - emergency_cpr
+  - emergency_toxicology
+  - emergency_trauma
+  - emergency_cardiac_neuro
+  - emergency_scoring
+
+derived_rule_count: 14
+last_updated: 2026-07-10

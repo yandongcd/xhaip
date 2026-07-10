@@ -1,172 +1,199 @@
+# 急诊科临床规则 — CPR/ACLS + 脑卒中 + 急性胸痛 + 创伤 + 中毒 + 危重评分
 rule_type: diagnosis
 department: 急诊科
-guideline: 中国急诊医学杂志 急诊诊疗指南 (2023)
-version: 1.0.0
-rules:
-- id: esi-level-1
-  description: ESI 1级 — 需立即抢救
-  condition:
-    or:
-    - field: diagnosis
-      operator: contains
-      value: 心脏骤停
-    - field: diagnosis
-      operator: contains
-      value: 休克
-    - field: diagnosis
-      operator: contains
-      value: 主动脉夹层
-    - field: diagnosis
-      operator: contains
-      value: 急性ST段抬高心梗
-  result:
-    triage_level: 1
-    triage_name: 即刻抢救
-    color: 红色
-    target_time: 0分钟
-    recommendation: 立即进入抢救室
-- id: esi-level-2
-  description: ESI 2级 — 高危
-  condition:
-    or:
-    - field: diagnosis
-      operator: contains
-      value: 急性脑卒中
-    - field: diagnosis
-      operator: contains
-      value: 严重多发伤
-    - field: diagnosis
-      operator: contains
-      value: 过敏性休克
-    - field: diagnosis
-      operator: contains
-      value: 急性中毒
-    - and:
-      - field: urgency
-        operator: ==
-        value: high
-      - field: age
-        operator: '>='
-        value: 75
-  result:
-    triage_level: 2
-    triage_name: 高危
-    color: 橙色
-    target_time: 10分钟
-    recommendation: 优先接诊
-- id: esi-level-3
-  description: ESI 3级
-  condition:
-    or:
-    - field: diagnosis
-      operator: contains
-      value: 骨折
-    - field: diagnosis
-      operator: contains
-      value: 腹痛
-    - field: diagnosis
-      operator: contains
-      value: 胸痛
-    - field: lab_results.WBC
-      operator: '>='
-      value: 12.0
-  result:
-    triage_level: 3
-    triage_name: 急诊
-    color: 黄色
-    target_time: 30分钟
-    recommendation: 安排辅助检查
-- id: esi-level-4
-  description: ESI 4级
-  condition:
-    and:
-    - field: urgency
-      operator: '!='
-      value: high
-    - field: age
-      operator: <
-      value: 65
-  result:
-    triage_level: 4
-    triage_name: 亚急诊
-    color: 绿色
-    target_time: 60分钟
-    recommendation: 常规接诊
-capability: cap-l3-emergency-triage
+capability: cap-l3-emergency-diagnosis
 business_process: bp-emergency-triage
-stakeholder: 快速判定患者优先级别
 data_entities:
-  consumes:
-  - de-lab-cardiac
-  - de-lab-biochemistry
-  - de-lab-hematology
-  - de-lab-infection
-  - de-patient
-  - de-vitals
-  produces:
-  - de-diagnosis-result
-  - de-risk-assessment
+  consumes: [de-patient, de-vitals, de-lab-cardiac, de-lab-hematology, de-imaging]
+  produces: [de-diagnosis-result]
+guideline: 中华医学会急诊医学分会 中国急诊临床诊疗指南 (2023)
+stakeholder: 急诊医师需快速识别心脏骤停、脑卒中、STEMI、严重创伤和急性中毒
+version: "1.0.0"
+
+rules:
+  - id: em-cardiac-arrest
+    description: 心脏骤停 → ACLS 流程启动
+    condition:
+      or:
+        - {field: vitals.pulse, operator: "==", value: absent}
+        - {field: vitals.respiration, operator: "==", value: absent}
+        - {field: ecg.rhythm, operator: in, value: [VF, VT_pulseless, asystole, PEA]}
+    result:
+      diagnosis: 心脏骤停
+      severity: 危急
+      recommendation: 立即启动 ACLS — 高质量 CPR + 除颤 + 肾上腺素
+
+  - id: em-stroke-fast
+    description: FAST 阳性 → 急性脑卒中
+    condition:
+      or:
+        - {field: neuro.face_droop, operator: "==", value: true}
+        - {field: neuro.arm_weakness, operator: "==", value: true}
+        - {field: neuro.speech_abnormal, operator: "==", value: true}
+    result:
+      diagnosis: 疑似急性脑卒中
+      severity: 高危
+      recommendation: 立即头颅 CT、NIHSS 评分、溶栓时间窗评估
+
+  - id: em-stemi-ecg
+    description: ST 段抬高 → 急性 STEMI
+    condition:
+      or:
+        - {field: ecg.ST_elevation_mm, operator: ">=", value: 2}
+        - {field: ecg.ST_elevation_lead, operator: ">=", value: 1}
+    result:
+      diagnosis: 急性 ST 段抬高型心肌梗死（STEMI）
+      severity: 高危
+      recommendation: 立即启动导管室、负荷双抗 + 肝素、目标 D2B < 90min
+
+  - id: em-trauma-abcde
+    description: 严重创伤 → ABCDE 评估
+    condition:
+      or:
+        - {field: trauma.ISS, operator: ">=", value: 16}
+        - {field: trauma.mechanism, operator: in, value: [fall_gt_5m, MVA_high_speed, penetrating]}
+        - {field: vitals.sBP, operator: "<", value: 90}
+    result:
+      diagnosis: 严重多发伤
+      severity: 高危
+      recommendation: ABCDE 评估顺序 — 气道/呼吸/循环/神经/暴露 + 损伤控制复苏
+
+  - id: em-poisoning-triage
+    description: 急性中毒 → 毒素识别
+    condition:
+      or:
+        - {field: history.toxin_exposure, operator: "==", value: confirmed}
+        - {field: diagnosis, operator: contains, value: 中毒}
+        - {field: lab_results.tox_screen, operator: "==", value: positive}
+    result:
+      diagnosis: 急性中毒（待毒素识别）
+      severity: 高危
+      recommendation: 洗胃/活性炭/利尿 + 毒物鉴定 + 特效解毒剂准备
+
 ---
 rule_type: risk_score
 department: 急诊科
-guideline: SCCM Surviving Sepsis Campaign 2021
-rules:
-- id: sofa-respiratory
-  description: SOFA 呼吸 — PaO2
-  condition:
-    field: lab_results.PaO2
-    operator: <=
-    value: 60
-  result:
-    risk: 危重
-    score_component: SOFA呼吸
-    recommendation: 考虑无创有创通气
-- id: sofa-cardiovascular
-  description: SOFA 心血管 — 休克
-  condition:
-    or:
-    - field: diagnosis
-      operator: contains
-      value: 休克
-    - field: diagnosis
-      operator: contains
-      value: 脓毒性
-    - field: lab_results.Troponin
-      operator: '>='
-      value: 0.5
-  result:
-    risk: 危重
-    score_component: SOFA心血管
-    recommendation: 启动血管活性药物
-- id: sirs-criteria
-  description: SIRS 标准
-  condition:
-    or:
-    - field: lab_results.WBC
-      operator: '>='
-      value: 12.0
-    - field: lab_results.WBC
-      operator: <=
-      value: 4.0
-    - field: lab_results.CRP
-      operator: '>='
-      value: 100
-  result:
-    risk: 高危感染
-    score_component: SIRS
-    recommendation: 血培养加抗生素
 capability: cap-l3-emergency-risk
 business_process: bp-emergency-rescue
-stakeholder: 评估危重度和器官功能
-version: 1.0.0
 data_entities:
-  consumes:
-  - de-lab-cardiac
-  - de-lab-biochemistry
-  - de-lab-hematology
-  - de-lab-infection
-  - de-patient
-  - de-vitals
-  produces:
-  - de-diagnosis-result
-  - de-risk-assessment
+  consumes: [de-vitals, de-lab-cardiac, de-lab-biochemistry, de-lab-hematology]
+  produces: [de-risk-assessment]
+guideline: 中华医学会急诊医学分会 中国急诊临床诊疗指南 (2023)
+stakeholder: 利用 MEWS/NEWS/GCS 评分系统量化患者危重度
+version: "1.0.0"
+
+rules:
+  - id: em-mews-high
+    description: MEWS ≥ 5 → 高危预警
+    condition:
+      field: assessment.MEWS
+      operator: ">="
+      value: 5
+    result:
+      risk: 病情恶化高危预警
+      severity: 中高危
+      recommendation: 急诊医师立即评估 + ICU 会诊
+
+  - id: em-mews-critical
+    description: MEWS ≥ 9 → 极高危
+    condition:
+      field: assessment.MEWS
+      operator: ">="
+      value: 9
+    result:
+      risk: 极高危，死亡风险显著升高
+      severity: 危急
+      recommendation: 立即转入抢救室 + ICU 准备
+
+  - id: em-news-high
+    description: NEWS ≥ 7 → 紧急响应
+    condition:
+      field: assessment.NEWS
+      operator: ">="
+      value: 7
+    result:
+      risk: 临床恶化高风险
+      severity: 高危
+      recommendation: 启动紧急响应团队（RRT）
+
+  - id: em-gcs-critical
+    description: GCS ≤ 8 → 气道保护
+    condition:
+      field: neuro.GCS
+      operator: "<="
+      value: 8
+    result:
+      risk: 意识障碍、气道保护能力丧失
+      severity: 危急
+      recommendation: 立即气管插管 + 机械通气
+
+---
+rule_type: treatment
+department: 急诊科
+capability: cap-l3-emergency-treatment
+business_process: bp-emergency-rescue
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-vitals]
+  produces: [de-treatment-plan]
+guideline: 中华医学会急诊医学分会 中国急诊临床诊疗指南 (2023)
+stakeholder: 根据急性病因实施 CPR/中毒/溶栓急诊干预
+version: "1.0.0"
+
+rules:
+  - id: em-acls-defibrillation
+    description: 室颤/无脉室速 → 立即除颤
+    condition:
+      field: ecg.rhythm
+      operator: in
+      value: [VF, VT_pulseless]
+    result:
+      treatment: 电除颤 + CPR + 肾上腺素
+      indication: 可电击心律心脏骤停
+      regimen: 双相波 200J → 肾上腺素 1mg q3-5min
+
+  - id: em-antidote-opioid
+    description: 阿片类中毒 → 纳洛酮
+    condition:
+      and:
+        - {field: history.toxin_type, operator: "==", value: opioid}
+        - {field: vitals.RR, operator: "<", value: 10}
+    result:
+      treatment: 纳洛酮
+      dosage: 纳洛酮 0.4-2mg IV q2-3min（至呼吸恢复）
+      indication: 阿片类药物中毒致呼吸抑制
+
+  - id: em-antidote-benzodiazepine
+    description: 苯二氮䓬类中毒 → 氟马西尼
+    condition:
+      and:
+        - {field: history.toxin_type, operator: "==", value: benzodiazepine}
+        - {field: neuro.GCS, operator: "<", value: 12}
+    result:
+      treatment: 氟马西尼
+      dosage: 氟马西尼 0.2mg IV q1min（最大 1mg）
+      indication: 苯二氮䓬类药物过量
+      precaution: 排除三环类抗抑郁药共毒 / 癫痫史
+
+  - id: em-antidote-organophosphate
+    description: 有机磷中毒 → 阿托品 + 解磷定
+    condition:
+      and:
+        - {field: history.toxin_type, operator: "==", value: organophosphate}
+        - {field: vitals.HR, operator: "<", value: 60}
+    result:
+      treatment: 阿托品 + 氯解磷定
+      dosage: 阿托品 2-5mg IV q5-10min（至阿托品化） + 解磷定 1-2g IV
+      indication: 有机磷农药中毒（胆碱能危象）
+
+  - id: em-stroke-thrombolysis
+    description: 缺血性卒中溶栓
+    condition:
+      and:
+        - {field: diagnosis, operator: contains, value: 急性缺血性脑卒中}
+        - {field: assessment.time_from_onset_h, operator: "<=", value: 4.5}
+        - {field: imaging.CT_hemorrhage, operator: "==", value: excluded}
+    result:
+      treatment: 阿替普酶（rt-PA）溶栓
+      dosage: 0.9mg/kg（10% 团注 + 90% 1h 泵入），最大 90mg
+      indication: 急性缺血性脑卒中 ≤ 4.5h 时间窗
+      precaution: 排除禁忌症（近期手术/出血/INR > 1.7）

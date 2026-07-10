@@ -130,3 +130,209 @@ rules:
       alternatives:
         - 羟基脲（无法耐受 TKI 时）
         - 第二代 TKI（达沙替尼/尼洛替尼）
+
+---
+# 贫血鉴别诊断规则
+rule_type: anemia_differential
+department: 血液内科
+capability: cap-l3-hematology-diagnosis
+business_process: bp-hematology-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-hematology, de-lab-iron, de-lab-vitamin]
+  produces: [de-diagnosis-result]
+guideline: 中华血液学杂志 中国贫血诊断标准与治疗指南 (2023)
+stakeholder: 基于 MCV 与铁代谢指标的贫血鉴别诊断
+version: "1.0.0"
+
+rules:
+  - id: he-ida-diagnosis
+    description: MCV < 80 + 铁蛋白 < 15 → 缺铁性贫血
+    condition:
+      and:
+        - {field: lab_results.MCV, operator: "<", value: 80}
+        - {field: lab_results.ferritin, operator: "<", value: 15}
+    result:
+      diagnosis: 缺铁性贫血（IDA）
+      severity: 中危
+      recommendation: 口服铁剂（琥珀酸亚铁 0.1g tid）+ 维生素 C
+      etiology: 排查消化道出血、月经过多等失血原因
+
+  - id: he-megaloblastic-diagnosis
+    description: MCV > 100 + 维生素 B12 < 200 → 巨幼细胞性贫血
+    condition:
+      and:
+        - {field: lab_results.MCV, operator: ">", value: 100}
+        - {field: lab_results.Vitamin_B12, operator: "<", value: 200}
+    result:
+      diagnosis: 巨幼细胞性贫血（MA）
+      severity: 中危
+      recommendation: 维生素 B12 1000μg im qd × 1 周 + 叶酸 5mg qd
+      etiology: 营养不良、胃切除、恶性贫血
+
+  - id: he-hemolytic-diagnosis
+    description: Hb < 100 + LDH > 250 + 网织红细胞 > 2% → 溶血性贫血
+    condition:
+      and:
+        - {field: lab_results.Hb, operator: "<", value: 100}
+        - {field: lab_results.LDH, operator: ">", value: 250}
+        - {field: lab_results.reticulocyte, operator: ">", value: 2}
+    result:
+      diagnosis: 溶血性贫血（HA）
+      severity: 高危
+      recommendation: Coombs 试验、血红蛋白电泳、结合珠蛋白
+      etiology: 自身免疫性、遗传性球形/椭圆形红细胞增多症
+
+  - id: he-hb70-transfusion
+    description: Hb < 70 → 输血指征（非心血管病患者）
+    condition:
+      field: lab_results.Hb
+      operator: "<"
+      value: 70
+    result:
+      diagnosis: 中度贫血（限制性输血策略）
+      severity: 高危
+      recommendation: 输注红细胞悬液 1-2U、Hb 目标 70-90g/L
+
+---
+# 白血病 WBC 阈值规则
+rule_type: leukemia_alert
+department: 血液内科
+capability: cap-l3-hematology-risk
+business_process: bp-hematology-assessment
+data_entities:
+  consumes: [de-patient, de-lab-hematology, de-bone-marrow]
+  produces: [de-risk-assessment]
+guideline: 中华血液学杂志 中国急性白血病诊疗指南 (2022)
+stakeholder: 白血病相关血常规危急值的早期识别与分诊
+version: "1.0.0"
+
+rules:
+  - id: he-wbc-leukemia-alert
+    description: WBC > 100 ×10⁹/L → 白细胞淤滞风险
+    condition:
+      field: lab_results.WBC
+      operator: ">"
+      value: 100
+    result:
+      diagnosis: 高白细胞性白血病（白细胞淤滞）
+      severity: 危重
+      recommendation: 水化、别嘌醇/拉布立酶预防 TLS、紧急白细胞分离术
+
+  - id: he-wbc-leukopenia
+    description: WBC < 0.5 → 极重度粒缺
+    condition:
+      field: lab_results.WBC
+      operator: "<"
+      value: 0.5
+    result:
+      diagnosis: 极重度粒细胞缺乏
+      severity: 危重
+      recommendation: 严格保护性隔离、G-CSF 5μg/kg qd、广谱抗生素
+
+  - id: he-hyperleukocytosis-risk
+    description: WBC > 50 + 幼稚细胞 > 10% → 白血病高白细胞
+    condition:
+      and:
+        - {field: lab_results.WBC, operator: ">", value: 50}
+        - {field: lab_results.blast_percent, operator: ">", value: 10}
+    result:
+      diagnosis: 高白细胞性白血病（高风险）
+      severity: 高危
+      recommendation: 紧急骨髓穿刺、白细胞分离术准备、TLS 预防
+
+---
+# DIC 评分规则
+rule_type: dic_scoring
+department: 血液内科
+capability: cap-l3-hematology-coagulation
+business_process: bp-hematology-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-coagulation, de-lab-hematology]
+  produces: [de-dic-score]
+guideline: 中华血液学杂志 弥漫性血管内凝血诊断与治疗中国专家共识 (2022)
+stakeholder: ISTH DIC 评分系统用于 DIC 早期诊断与分级
+version: "1.0.0"
+
+rules:
+  - id: he-dic-score-alert
+    description: DIC 评分 ≥ 5 → 显性 DIC
+    condition:
+      and:
+        - {field: lab_results.PLT_drop, operator: "==", value: true}
+        - {field: lab_results.D_dimer, operator: ">", value: 5000}
+        - {field: lab_results.PT_prolonged, operator: ">", value: 3}
+        - {field: lab_results.FIB, operator: "<", value: 1.0}
+    result:
+      diagnosis: 显性 DIC（ISTH ≥ 5 分）
+      severity: 危重
+      recommendation: 积极治疗原发病、血小板输注（PLT < 50）、新鲜冰冻血浆
+      scoring: PLT 减少 2 分 + D-二聚体升高 3 分 + PT 延长 1 分 + FIB 降低 1 分
+
+  - id: he-dic-score-risk
+    description: DIC 评分 3-4 → 非显性 DIC
+    condition:
+      and:
+        - {field: lab_results.D_dimer, operator: ">", value: 2000}
+        - {field: lab_results.PLT, operator: "<", value: 100}
+    result:
+      diagnosis: 非显性 DIC（ISTH 3-4 分）
+      severity: 高危
+      recommendation: 动态监测 PLT、PT、FIB、D-二聚体（每 6-12h）、纠正可逆病因
+
+  - id: he-fib-critical
+    description: FIB < 1.0 → 严重低纤维蛋白原血症
+    condition:
+      field: lab_results.FIB
+      operator: "<"
+      value: 1.0
+    result:
+      diagnosis: 严重低纤维蛋白原血症
+      severity: 危重
+      recommendation: 输注冷沉淀/纤维蛋白原浓缩剂、FIB 目标 > 1.5g/L
+
+---
+# 输血指征规则
+rule_type: transfusion
+department: 血液内科
+capability: cap-l3-hematology-treatment
+business_process: bp-hematology-treatment
+data_entities:
+  consumes: [de-patient, de-lab-hematology, de-lab-coagulation]
+  produces: [de-transfusion-order]
+guideline: 中华血液学杂志 血液成分输注临床指南 (2022)
+stakeholder: 基于限制性输血策略的规范输血指征
+version: "1.0.0"
+
+rules:
+  - id: he-rbc-transfusion-hb70
+    description: Hb < 70 → 输注红细胞（非心血管病）
+    condition:
+      field: lab_results.Hb
+      operator: "<"
+      value: 70
+    result:
+      transfusion: 红细胞悬液 1-2U
+      target: Hb 70-90 g/L
+      exception: 急性出血、冠心病/脑缺血时 Hb < 80 触发
+
+  - id: he-plt20-transfusion
+    description: PLT < 20 → 预防性输注血小板
+    condition:
+      field: lab_results.PLT
+      operator: "<"
+      value: 20
+    result:
+      transfusion: 血小板 1 治疗量
+      target: PLT > 20 ×10⁹/L
+      exception: 手术/有创操作前 PLT > 50、神经外科 PLT > 100
+
+  - id: he-ffp-inr
+    description: INR > 1.8 → 输注新鲜冰冻血浆
+    condition:
+      field: lab_results.INR
+      operator: ">"
+      value: 1.8
+    result:
+      transfusion: 新鲜冰冻血浆（FFP）10-15mL/kg
+      target: INR < 1.5
+      exception: 活动性出血或术前紧急纠正

@@ -1,0 +1,28 @@
+# xhaip v1.0 — Platform Configuration
+
+server:
+  host: "0.0.0.0"
+  port: 8769
+  reload: false
+  workers: 1
+
+agents:
+  definitions_dir: "packages/haip-hospital/agents/definitions"
+  auto_load: true
+  validate_on_load: true  # Run TOGAF validation at startup
+
+knowledge:
+  rules_dir: "packages/haip-hospital/knowledge/rules"
+  guidelines_dir: "packages/haip-hospital/knowledge/guidelines"
+  patients_file: "packages/haip-hospital/data/patients.json"
+
+togaf:
+  organization: true
+  validation:
+    enabled: true
+    checks: [CHK-001, CHK-002, CHK-003, CHK-004, CHK-005, CHK-006]
+  governance:
+    bp_validation: true
+    guideline_check: true
+  dashboard:
+    enabled: true

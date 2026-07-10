@@ -1,0 +1,49 @@
+# ============================================================
+# Guideline Asset: 中国妇产科学临床指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-obgyn-2022"
+name: "中国妇产科学临床指南（2022）"
+abbr: "妇产科指南2022"
+version: "2022"
+publisher: "中华医学会妇产科学分会"
+journal: "中华妇产科杂志 2022;57(1):1-168"
+doi: "10.3760/cma.j.cn112141-20220101-00001"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中华医学会妇产科学分会发布的2022版中国妇产科学临床指南。
+  涵盖妊娠期管理、分娩管理、妇科肿瘤筛查、产后随访全流程。
+  适用于各级医疗机构妇产科临床医师。
+
+key_sections:
+  - id: "§1"
+    title: "妊娠期管理"
+    stage_ids: [S1, S2]
+    rule_ids: [obg-pregnancy-risk, obg-gdm-screen, obg-htn-pregnancy, obg-thyroid-pregnancy]
+
+  - id: "§2"
+    title: "分娩管理"
+    stage_ids: [S3, S4]
+    rule_ids: [obg-labor-monitor, obg-labor-dystocia, obg-pph-prevent, obg-cs-indication]
+
+  - id: "§3"
+    title: "妇科肿瘤筛查"
+    stage_ids: [S2, S3]
+    rule_ids: [obg-cervical-screen, obg-hpv-triage, obg-endometrial-biopsy, obg-ovarian-screen]
+
+  - id: "§4"
+    title: "产后随访"
+    stage_ids: [S5, S6]
+    rule_ids: [obg-postpartum-42d, obg-postpartum-depression, obg-lactation, obg-contraception]
+
+rule_sets_covered:
+  - obgyn_diagnosis
+  - obgyn_risk_assessment
+  - obgyn_treatment
+  - obgyn_followup
+
+derived_rule_count: 10
+last_updated: 2026-07-10

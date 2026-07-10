@@ -1,132 +1,174 @@
-# 肾内科临床规则 — CKD 分期 + 肾病综合征 + 电解质危象
+# 肾内科临床规则 — CKD诊断 + 延缓进展 + 并发症管理
 rule_type: diagnosis
 department: 肾内科
-capability: cap-l3-nephrology-diagnosis
+capability: cap-l3-nephro-ckd-diagnosis
 business_process: bp-nephrology-diagnosis
 data_entities:
-  consumes: [de-patient, de-lab-biochemistry, de-lab-urinalysis, de-imaging]
-  produces: [de-diagnosis-result]
-guideline: 中华肾脏病杂志 慢性肾脏病筛查诊断及防治指南 (2023)
-stakeholder: 肾内科医师需快速判定 CKD 分期与透析时机
+  consumes:
+  - de-lab-renal
+  - de-lab-urine
+  - de-patient
+  produces:
+  - de-diagnosis-result
+guideline: KDIGO CKD 2024
+stakeholder: CKD诊断与CGA分期
 version: "1.0.0"
 
 rules:
-  - id: ne-egfr-dialysis
-    description: eGFR < 15 → 准备透析
+  - id: ckd-diagnose
+    description: eGFR < 60 或 肾损伤标志 ≥3月 → CKD
     condition:
-      field: lab_results.eGFR
-      operator: "<"
-      value: 15
+      or:
+        - field: lab_results.eGFR; operator: "<"; value: 60
+        - and:
+          - field: lab_results.UACR; operator: ">="; value: 30
+          - field: lab_results.duration; operator: ">="; value: 3
     result:
-      diagnosis: 慢性肾脏病 CKD 5 期
-      severity: 危重
-      recommendation: 动静脉内瘘成形、准备肾脏替代治疗
+      diagnosis: 慢性肾脏病
+      staging: CGA分期（病因-GFR-白蛋白尿）
 
-  - id: ne-proteinuria-nephrotic
-    description: 尿蛋白 > 3.5g → 肾病综合征
+  - id: ckd-gfr-stage
+    description: CKD GFR分期
     condition:
-      field: lab_results.urine_protein_24h
-      operator: ">"
-      value: 3.5
+      field: diagnosis; operator: contains; value: CKD
     result:
-      diagnosis: 肾病综合征
-      severity: 中危
-      recommendation: 肾穿刺活检明确病理类型
+      staging:
+        - stage: G1; criteria: "eGFR ≥90 + 肾损伤证据"
+        - stage: G2; criteria: "eGFR 60-89 + 肾损伤证据"
+        - stage: G3a; criteria: "eGFR 45-59"
+        - stage: G3b; criteria: "eGFR 30-44"
+        - stage: G4; criteria: "eGFR 15-29"
+        - stage: G5; criteria: "eGFR <15 或 透析"
 
-  - id: ne-hyperkalemia-emergency
-    description: K+ > 6.0 → 紧急降钾
+  - id: ckd-albuminuria
+    description: CKD白蛋白尿分期
     condition:
-      field: lab_results.K
-      operator: ">"
-      value: 6.0
+      field: diagnosis; operator: contains; value: CKD
     result:
-      diagnosis: 高钾血症（危急值）
-      severity: 危重
-      recommendation: 立即降钾治疗（葡萄糖酸钙+胰岛素+利尿剂）
-
----
-rule_type: risk_score
-department: 肾内科
-capability: cap-l3-nephrology-risk
-business_process: bp-nephrology-assessment
-data_entities:
-  consumes: [de-patient, de-lab-biochemistry, de-lab-urinalysis]
-  produces: [de-risk-assessment]
-guideline: 中华肾脏病杂志 CKD 进展风险评估与管理指南 (2022)
-stakeholder: 评估 CKD 进展风险与心血管并发症
-version: "1.0.0"
-
-rules:
-  - id: ne-ckd4-high-risk
-    description: eGFR < 30 → CKD 4 期高危
-    condition:
-      field: lab_results.eGFR
-      operator: "<"
-      value: 30
-    result:
-      risk: 高危
-      severity: CKD 4 期肾功能严重受损
-      recommendation: 肾内科专科管理、控制进展因素
-
-  - id: ne-proteinuria-progression
-    description: 蛋白尿 > 1g → 进展风险
-    condition:
-      field: lab_results.urine_protein_24h
-      operator: ">"
-      value: 1.0
-    result:
-      risk: CKD 进展高风险
-      severity: 蛋白尿提示肾小球损伤
-      recommendation: 强化 RAS 阻断、控制血压 < 130/80
+      staging:
+        - stage: A1; criteria: "UACR <30 mg/g"
+        - stage: A2; criteria: "UACR 30-300 mg/g"
+        - stage: A3; criteria: "UACR >300 mg/g"
 
 ---
 rule_type: treatment
 department: 肾内科
-capability: cap-l3-nephrology-treatment
+capability: cap-l3-nephro-treatment
 business_process: bp-nephrology-treatment
 data_entities:
-  consumes: [de-diagnosis-result, de-risk-assessment, de-lab-biochemistry]
-  produces: [de-treatment-plan]
-guideline: 中华肾脏病杂志 肾性贫血诊断与治疗中国专家共识 (2023)
-stakeholder: 根据 CKD 并发症制定综合治疗方案
+  consumes:
+  - de-diagnosis-result
+  produces:
+  - de-treatment-plan
+guideline: KDIGO CKD 2024
+stakeholder: 延缓肾功能进展
 version: "1.0.0"
 
 rules:
-  - id: ne-acei-proteinuria
-    description: ACEI/ARB → 降蛋白
+  - id: ckd-raasi
+    description: RAAS抑制剂用于蛋白尿性CKD
     condition:
-      field: diagnosis
-      operator: contains
-      value: CKD
+      and:
+        - field: diagnosis; operator: contains; value: CKD
+        - field: lab_results.UACR; operator: ">="; value: 30
     result:
-      treatment: ACEI/ARB 降蛋白治疗
+      treatment: ACEI/ARB
       medications:
-        - 培哚普利/缬沙坦
-        - 目标蛋白尿减少 > 50%
-      monitoring: 血钾 + eGFR 每 2 周
+        - ACEI (培哚普利/贝那普利)
+        - ARB (缬沙坦/厄贝沙坦)
+      target: "UACR降低 ≥30%"
 
-  - id: ne-epo-anemia
-    description: 肾性贫血 → EPO + 铁剂
+  - id: ckd-sglt2i
+    description: SGLT2i用于CKD
     condition:
-      field: diagnosis
-      operator: contains
-      value: 肾性贫血
+      and:
+        - field: diagnosis; operator: contains; value: CKD
+        - field: lab_results.eGFR; operator: ">="; value: 20
     result:
-      treatment: 促红细胞生成素（EPO）+ 铁剂
+      treatment: SGLT2i
       medications:
-        - EPO 100-150 IU/kg/wk
-        - 蔗糖铁 100mg iv qw
-      target: Hb 110-120 g/L
+        - 达格列净 10mg qd
+        - 恩格列净 10mg qd
+      benefit: 延缓eGFR下降 + 降低心血管事件
 
-  - id: ne-phosphate-binder
-    description: 高磷血症 → 磷结合剂
+  - id: ckd-bp-target
+    description: CKD降压目标
     condition:
-      field: lab_results.P
-      operator: ">"
-      value: 1.78
+      field: diagnosis; operator: contains; value: CKD
     result:
-      treatment: 磷结合剂
-      medications:
-        - 碳酸钙 0.5-1g tid（餐中嚼服）
-        - 司维拉姆 800mg tid
-      monitoring: 血磷、血钙每月复查
+      target_bp: "<120 mmHg (SBP, 标准化测量)"
+      medications_first_line:
+        - ACEI/ARB 首选（蛋白尿者）
+        - CCB
+        - 利尿剂（容量负荷者）
+
+  - id: ckd-anemia
+    description: 肾性贫血管理
+    condition:
+      and:
+        - field: diagnosis; operator: contains; value: CKD
+        - field: lab_results.Hb; operator: "<"; value: 110
+    result:
+      target_hb: "100-115 g/L (ESA治疗); 110-120 g/L (HIF-PHI)"
+      treatment:
+        - 铁剂 (转铁蛋白饱和度<30% 或 铁蛋白<500)
+        - ESA (促红细胞生成素)
+        - HIF-PHI (罗沙司他)
+
+  - id: ckd-mbd
+    description: CKD矿物质骨异常
+    condition:
+      and:
+        - field: diagnosis; operator: contains; value: CKD
+        - field: lab_results.eGFR; operator: "<"; value: 45
+    result:
+      monitoring:
+        - "血钙/磷/PTH: G3a起每6-12月; G4起每3-6月; G5每1-3月"
+      treatment:
+        - 限制磷摄入 (<800-1000mg/天)
+        - 磷结合剂 (血磷升高时)
+        - 活性维生素D (PTH升高时)
+
+---
+rule_type: followup
+department: 肾内科
+capability: cap-l3-nephro-followup
+business_process: bp-nephrology-followup
+data_entities:
+  consumes:
+  - de-treatment-plan
+  produces:
+  - de-followup-plan
+guideline: KDIGO CKD 2024
+stakeholder: CKD长期随访与RRT准备
+version: "1.0.0"
+
+rules:
+  - id: ckd-followup
+    description: CKD分层随访
+    condition:
+      field: diagnosis; operator: contains; value: CKD
+    result:
+      followup_schedule:
+        - stage: G1-G2; frequency: 每年; items: "eGFR/UACR/BP"
+        - stage: G3a-G3b; frequency: 每6月; items: "eGFR/UACR/BP/Ca/P/K"
+        - stage: G4; frequency: 每3月; items: "eGFR/UACR/BP/Ca/P/K/Hb/HCO3"
+        - stage: G5; frequency: 每1-2月; items: "全面评估 + RRT教育"
+      red_flags:
+        - eGFR下降>5 mL/min/年
+        - 血钾>5.5 mmol/L
+        - HCO3<18 mmol/L
+
+  - id: ckd-rrt-referral
+    description: 肾脏替代治疗转诊指征
+    condition:
+      and:
+        - field: diagnosis; operator: contains; value: CKD
+        - field: lab_results.eGFR; operator: "<"; value: 20
+    result:
+      recommendation: "转诊肾科评估RRT方案"
+      timing: "eGFR 15-20 开始准备（造瘘/PD导管）；eGFR<10 启动透析"
+      options:
+        - 血液透析 (AVF优先)
+        - 腹膜透析
+        - 肾移植 (抢先移植优先)

@@ -11,6 +11,7 @@ from collections import Counter
 from haip.togaf.organization import list_orgs, list_roles
 from haip.togaf.templates_dept import get_dept_template, get_guideline_info
 from haip.togaf.validator import validate_agent, _ROLE_ID_TO_LEVEL
+import logging
 
 
 @dataclass
@@ -90,7 +91,7 @@ def analyze_all_v2() -> list[DepartmentAnalysisV2]:
             load_from_dir("")
         registry = _agent_registry
     except Exception:
-        pass
+            logging.debug("silenced", exc_info=True)
 
     all_orgs = list_orgs()
     # Build parent lookup

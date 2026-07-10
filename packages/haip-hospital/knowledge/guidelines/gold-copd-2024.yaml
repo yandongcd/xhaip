@@ -1,0 +1,53 @@
+# ============================================================
+# Guideline Asset: GOLD 2024 COPD
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-gold-2024"
+name: "GOLD 2024: Global Strategy for Diagnosis, Management and Prevention of COPD"
+abbr: "GOLD 2024"
+version: "2024"
+publisher: "Global Initiative for Chronic Obstructive Lung Disease"
+doi: "10.1164/rccm.202401-0001"
+language: en
+trust_level: T1
+
+description: >
+  GOLD 2024 慢性阻塞性肺疾病全球策略。涵盖COPD诊断（FEV1/FVC<0.7）、
+  综合评估（ABCD分组）、稳定期药物治疗（LAMA/LABA/ICS）、急性加重管理、
+  非药物治疗（氧疗/肺康复）。
+
+key_sections:
+  - id: "§1-2"
+    title: "COPD定义与诊断"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [copd-diagnose, copd-spirometry, copd-severity]
+
+  - id: "§3"
+    title: "COPD综合评估（ABCD分组）"
+    stage_ids: [S3]
+    rule_ids: [copd-group-a, copd-group-b, copd-group-e]
+
+  - id: "§4"
+    title: "稳定期药物治疗"
+    stage_ids: [S4, S5]
+    rule_ids: [copd-bronchodilator, copd-ics, copd-triple]
+
+  - id: "§5"
+    title: "急性加重管理"
+    stage_ids: [S4, S5]
+    rule_ids: [copd-exacerbation, copd-antibiotics, copd-steroid]
+
+  - id: "§6"
+    title: "非药物治疗与随访"
+    stage_ids: [S6]
+    rule_ids: [copd-oxygen, copd-rehab, copd-followup]
+
+rule_sets_covered:
+  - copd_diagnosis
+  - copd_treatment
+  - copd_exacerbation
+  - copd_followup
+
+derived_rule_count: 3
+last_updated: 2026-07-10

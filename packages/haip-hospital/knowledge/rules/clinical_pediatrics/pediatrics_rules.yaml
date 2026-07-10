@@ -1,0 +1,186 @@
+# 儿科临床规则 — 生长发育 + 免疫接种 + 常见感染 + 哮喘管理
+rule_type: diagnosis
+department: 儿科
+capability: cap-l3-pediatrics-diagnosis
+business_process: bp-pediatrics
+data_entities:
+  consumes:
+    - de-patient
+    - de-lab-ped
+    - de-vital-ped
+  produces:
+    - de-diagnosis-result
+guideline: 中国儿科临床诊疗指南（2022）
+stakeholder: 儿科医师进行生长发育评估与常见疾病诊断
+version: "1.0.0"
+
+rules:
+  - id: ped-growth-percentile
+    description: 生长发育百分位评估
+    condition:
+      and:
+        - field: patient.age_months
+          operator: "<="
+          value: 216
+    result:
+      assessment:
+        - metric: "身高/身长百分位"
+        - metric: "体重百分位"
+        - metric: "BMI 百分位"
+      criteria:
+        - range: "< P3"; label: 生长迟缓/营养不良; action: "详细评估 + 营养干预"
+        - range: "P3-P10"; label: 下等; action: "生长监测 + 营养指导"
+        - range: "P10-P90"; label: 正常; action: "常规保健随访"
+        - range: "> P97"; label: 超重/肥胖; action: "生活方式干预 + 代谢筛查"
+
+  - id: ped-fever-mgmt
+    description: 小儿发热分级与管理
+    condition:
+      field: vital.temperature
+      operator: ">="
+      value: 37.3
+    result:
+      diagnosis: 发热
+      grading:
+        - grade: "低热 (37.3-38.0)"; action: "物理降温 + 观察"
+        - grade: "中度发热 (38.1-39.0)"; action: "布洛芬/对乙酰氨基酚 + 病因排查"
+        - grade: "高热 (39.1-41.0)"; action: "药物退热 + 血常规+CRP + 必要时住院"
+        - grade: "超高热 (>41.0)"; action: "急诊处理 + 物理+药物联合降温"
+      red_flags:
+        - "年龄 < 3 月 + 体温 ≥ 38 → 立即住院"
+        - "发热 > 72h 不退 → 住院排查"
+        - "精神萎靡 / 惊厥 → 急诊处理"
+
+  - id: ped-pneumonia
+    description: 儿童肺炎诊断标准
+    condition:
+      and:
+        - field: symptoms
+          operator: contains_any
+          value: [咳嗽, 发热, 呼吸困难]
+        - field: vitals.respiratory_rate
+          operator: ">"
+          value: 40
+    result:
+      diagnosis: 疑似肺炎
+      classification:
+        - type: 轻度社区获得性肺炎; criteria: "RR<50 + 无胸壁凹陷 + 可进食"; action: "口服抗生素 + 居家"
+        - type: 重度肺炎; criteria: "RR≥50 (2-11月) / RR≥40 (1-5岁) + 胸壁凹陷 + 拒食"; action: "住院 + 静脉抗生素 + 氧疗"
+      severity_signs:
+        - "SpO2 < 92%"
+        - "烦躁/嗜睡"
+        - "呻吟/鼻扇/三凹征"
+
+  - id: ped-diarrhea-dehydration
+    description: 小儿腹泻脱水程度评估
+    condition:
+      and:
+        - field: symptoms
+          operator: contains
+          value: 腹泻
+        - field: diarrhea.duration
+          operator: ">="
+          value: 24
+    result:
+      diagnosis: 急性腹泻
+      dehydration_assessment:
+        - grade: 无脱水; criteria: "精神状态好 + 眼窝正常 + 口渴正常 + 皮肤弹性好"; plan: "预防脱水 + 继续喂养"
+        - grade: 轻度脱水; criteria: "烦躁 + 眼窝凹陷 + 口渴 + 皮肤弹性↓"; plan: "ORS 50-100mL/kg + 继续喂养"
+        - grade: 重度脱水; criteria: "嗜睡/昏迷 + 眼窝深陷 + 不能饮水 + 皮肤弹性极差"; plan: "静脉补液 (RL/NS 100mL/kg) + 住院"
+
+---
+rule_type: treatment
+department: 儿科
+capability: cap-l3-pediatrics-treatment
+business_process: bp-pediatrics
+data_entities:
+  consumes:
+    - de-diagnosis-result
+    - de-patient
+  produces:
+    - de-treatment-plan
+guideline: 中国儿科临床诊疗指南（2022）
+stakeholder: 根据年龄与体重制定个体化治疗方案
+version: "1.0.0"
+
+rules:
+  - id: ped-vaccination-schedule
+    description: 国家免疫规划疫苗接种程序
+    condition:
+      field: patient.age_months
+      operator: "<="
+      value: 72
+    result:
+      schedule:
+        - age: 出生; vaccines: "乙肝疫苗第1剂 + 卡介苗"
+        - age: 1 月; vaccines: "乙肝疫苗第2剂"
+        - age: 2 月; vaccines: "脊灰灭活疫苗第1剂"
+        - age: 3 月; vaccines: "脊灰灭活疫苗第2剂 + 百白破第1剂"
+        - age: 4 月; vaccines: "脊灰灭活疫苗第3剂 + 百白破第2剂"
+        - age: 5 月; vaccines: "百白破第3剂"
+        - age: 6 月; vaccines: "乙肝疫苗第3剂 + A群流脑第1剂"
+        - age: 8 月; vaccines: "麻腮风疫苗 + 乙脑减毒活疫苗"
+        - age: 9 月; vaccines: "A群流脑第2剂"
+        - age: 18 月; vaccines: "百白破第4剂 + 麻腮风第2剂 + 甲肝减毒活疫苗"
+        - age: 2 岁; vaccines: "乙脑减毒活疫苗第2剂"
+        - age: 3 岁; vaccines: "A+C群流脑第1剂"
+        - age: 6 岁; vaccines: "A+C群流脑第2剂 + 白破"
+
+  - id: ped-asthma-step-therapy
+    description: 儿童哮喘阶梯治疗
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 哮喘
+    result:
+      treatment: 阶梯治疗方案
+      steps:
+        - step: Step 1 (间歇); med: "按需吸入 SABA"
+        - step: Step 2 (轻度持续); med: "低剂量 ICS 每日"
+        - step: Step 3 (中度持续); med: "低剂量 ICS/LABA 或 中剂量 ICS"
+        - step: Step 4 (重度持续); med: "中剂量 ICS/LABA + LTRA 或短程口服激素"
+        - step: Step 5 (危重); med: "高剂量 ICS/LABA + 口服激素 + 抗 IgE (奥马珠单抗)"
+
+  - id: ped-antibiotic-pneumonia
+    description: 儿童肺炎抗生素选择
+    condition:
+      field: diagnosis
+      operator: equals
+      value: 肺炎
+    result:
+      treatment:
+        - age_group: "新生儿-3月"; agent: "氨苄西林 + 头孢噻肟 (覆盖 GBS/大肠)" ; route: IV
+        - age_group: "3月-5岁 (轻症)"; agent: "阿莫西林 80-90mg/kg/d" ; route: PO
+        - age_group: "3月-5岁 (重症)"; agent: "头孢曲松 或 头孢噻肟" ; route: IV
+        - age_group: ">5岁"; agent: "阿莫西林 或 阿奇霉素 (支原体)" ; route: PO/IV
+      duration: 7-10 天 (支原体 10-14 天)
+
+---
+rule_type: followup
+department: 儿科
+capability: cap-l3-pediatrics-followup
+business_process: bp-pediatrics
+data_entities:
+  consumes:
+    - de-treatment-plan
+    - de-patient
+  produces:
+    - de-followup-plan
+guideline: 中国儿科临床诊疗指南（2022）
+stakeholder: 儿童生长发育监测与慢性病长期随访
+version: "1.0.0"
+
+rules:
+  - id: ped-growth-followup
+    description: 生长发育定期随访计划
+    condition:
+      field: patient.age_months
+      operator: "<="
+      value: 216
+    result:
+      followup_schedule:
+        - time: "0-6 月"; interval: "每月 1 次"; items: "体重/身长/头围 + 喂养指导 + 发育里程碑"
+        - time: "6-12 月"; interval: "每 2 月 1 次"; items: "体重/身长 + 辅食添加 + 大运动发育"
+        - time: "1-3 岁"; interval: "每 3-6 月 1 次"; items: "体重/身高 + 语言发育 + 行为评估"
+        - time: "3-6 岁"; interval: "每 6-12 月 1 次"; items: "身高/体重/BMI + 入园体检 + 视力听力"
+        - time: "6-18 岁"; interval: "每年 1 次"; items: "身高/体重/BMI + 青春期发育 + 心理评估"

@@ -131,3 +131,231 @@ rules:
         - ALK-TKI（克唑替尼/阿来替尼）
         - ROS1-TKI（克唑替尼）
       first_line: 靶向药物优于化疗
+
+---
+# 肿瘤筛查规则
+rule_type: screening
+department: 肿瘤科
+capability: cap-l3-oncology-screening
+business_process: bp-oncology-reception
+data_entities:
+  consumes: [de-patient, de-lab-tumor-marker, de-imaging]
+  produces: [de-screening-result]
+guideline: CSCO常见恶性肿瘤诊疗指南（2024）
+stakeholder: 高危人群肿瘤早筛，降低晚期诊断率
+version: "1.0.0"
+
+rules:
+  - id: on-screen-lung
+    description: 肺癌高危人群年度 LDCT 筛查
+    condition:
+      and:
+        - {field: patient.age, operator: ">=", value: 50}
+        - {field: patient.smoking_history, operator: ">=", value: 30}
+        - {field: patient.pack_years, operator: ">=", value: 20}
+    result:
+      screening: 低剂量螺旋 CT（LDCT）
+      frequency: 每年 1 次
+      high_risk_group: 50-74 岁、吸烟≥30 包年
+
+  - id: on-screen-liver
+    description: 肝癌高危人群超声 + AFP 筛查
+    condition:
+      and:
+        - {field: lab_results.HBsAg, operator: "==", value: positive}
+        - {field: patient.age, operator: ">=", value: 40}
+    result:
+      screening: 腹部超声 + AFP
+      frequency: 每 6 个月 1 次
+      high_risk_group: 乙肝/肝硬化患者、40 岁以上
+
+  - id: on-screen-colorectal
+    description: 结直肠癌高危人群肠镜筛查
+    condition:
+      and:
+        - {field: patient.age, operator: ">=", value: 45}
+        - {field: patient.family_history, operator: contains, value: 结直肠癌}
+    result:
+      screening: 肠镜
+      frequency: 每 5-10 年 1 次
+      high_risk_group: 45 岁以上或有家族史
+
+---
+# 化疗毒性管理规则
+rule_type: chemo_toxicity
+department: 肿瘤科
+capability: cap-l3-oncology-toxicity
+business_process: bp-oncology-treatment
+data_entities:
+  consumes: [de-patient, de-lab-hematology, de-vital-signs]
+  produces: [de-toxicity-alert]
+guideline: CSCO常见恶性肿瘤诊疗指南（2024）
+stakeholder: 化疗骨髓抑制与发热性粒缺的早期预警与干预
+version: "1.0.0"
+
+rules:
+  - id: on-neutropenia-gcsf
+    description: ANC < 1.0 → G-CSF 预防性升白
+    condition:
+      field: lab_results.ANC
+      operator: "<"
+      value: 1.0
+    result:
+      toxicity: 化疗后中性粒细胞减少（Grade 3）
+      severity: 高危
+      recommendation: G-CSF 5μg/kg qd、监测体温、避免感染
+      alert: 粒细胞减少需预防性抗生素
+
+  - id: on-fn-risk
+    description: ANC < 0.5 + T > 38.3°C → 发热性粒缺
+    condition:
+      and:
+        - {field: lab_results.ANC, operator: "<", value: 0.5}
+        - {field: vital_signs.temperature, operator: ">=", value: 38.3}
+    result:
+      toxicity: 发热性粒细胞缺乏症
+      severity: 危重
+      recommendation: 立即住院、广谱抗生素（哌拉西林/他唑巴坦）、血培养、G-CSF
+      alert: 粒缺发热是肿瘤急症，需在 1 小时内启动抗生素
+
+  - id: on-plt-chemo-delay
+    description: PLT < 50 → 推迟化疗/减量
+    condition:
+      field: lab_results.PLT
+      operator: "<"
+      value: 50
+    result:
+      toxicity: 化疗后血小板减少（Grade 3）
+      severity: 高危
+      recommendation: 推迟化疗至 PLT > 75、rhTPO 或 IL-11 支持
+
+---
+# 免疫治疗 irAE 管理规则
+rule_type: immunotherapy
+department: 肿瘤科
+capability: cap-l3-oncology-immunotherapy
+business_process: bp-oncology-treatment
+data_entities:
+  consumes: [de-patient, de-lab-biochemistry, de-imaging, de-vital-signs]
+  produces: [de-irae-alert]
+guideline: CSCO常见恶性肿瘤诊疗指南（2024）
+stakeholder: 免疫检查点抑制剂相关不良反应（irAE）的早期识别与分级管理
+version: "1.0.0"
+
+rules:
+  - id: on-irae-pneumonitis
+    description: 干咳 + 呼吸困难 + ICIs 用药史 → 免疫性肺炎
+    condition:
+      and:
+        - {field: symptoms, operator: contains, value: 干咳}
+        - {field: symptoms, operator: contains, value: 呼吸困难}
+        - {field: treatment_history, operator: contains, value: ICIs}
+    result:
+      irAE: 免疫相关性肺炎
+      severity: 高危
+      recommendation: 暂停 ICIs、甲泼尼龙 1-2mg/kg/d、胸部 HRCT
+      grade: G2 及以上需永久停用 ICIs
+
+  - id: on-irae-colitis
+    description: 腹泻 > 4 次/天 + ICIs → 免疫性结肠炎
+    condition:
+      and:
+        - {field: symptoms.diarrhea_freq, operator: ">=", value: 4}
+        - {field: treatment_history, operator: contains, value: ICIs}
+    result:
+      irAE: 免疫相关性结肠炎
+      severity: 中危
+      recommendation: 口服泼尼松 1mg/kg/d、补液、粪便培养排除感染
+      grade: G3 需静脉甲泼尼龙 + 英夫利西单抗
+
+  - id: on-irae-hepatitis
+    description: ALT > 5×ULN + ICIs → 免疫性肝炎
+    condition:
+      and:
+        - {field: lab_results.ALT, operator: ">", value: 200}
+        - {field: treatment_history, operator: contains, value: ICIs}
+    result:
+      irAE: 免疫相关性肝炎
+      severity: 高危
+      recommendation: 暂停 ICIs、甲泼尼龙 1-2mg/kg/d、排除病毒性肝炎
+
+  - id: on-irae-skin
+    description: 皮疹 + ICIs → 免疫性皮炎
+    condition:
+      and:
+        - {field: physical_exam, operator: contains, value: 皮疹}
+        - {field: treatment_history, operator: contains, value: ICIs}
+    result:
+      irAE: 免疫相关性皮炎
+      severity: 低危
+      recommendation: 外用糖皮质激素、口服抗组胺药、继续 ICIs 监测
+
+---
+# 癌痛三阶梯管理规则
+rule_type: pain
+department: 肿瘤科
+capability: cap-l3-oncology-pain
+business_process: bp-oncology-treatment
+data_entities:
+  consumes: [de-patient, de-pain-assessment]
+  produces: [de-pain-plan]
+guideline: CSCO常见恶性肿瘤诊疗指南（2024）
+stakeholder: 癌痛规范化管理，遵循 WHO 三阶梯止痛原则
+version: "1.0.0"
+
+rules:
+  - id: on-pain-step1
+    description: NRS 1-3 → 第一阶梯（非阿片类）
+    condition:
+      field: pain_assessment.NRS
+      operator: "<="
+      value: 3
+    result:
+      step: 第一阶梯
+      treatment: 非甾体抗炎药（NSAIDs）
+      medications:
+        - 布洛芬 400mg q6h
+        - 对乙酰氨基酚 500mg q6h
+      monitoring: 每 24h 评估疼痛
+
+  - id: on-pain-step2
+    description: NRS 4-6 → 第二阶梯（弱阿片类）
+    condition:
+      and:
+        - {field: pain_assessment.NRS, operator: ">=", value: 4}
+        - {field: pain_assessment.NRS, operator: "<=", value: 6}
+    result:
+      step: 第二阶梯
+      treatment: 弱阿片类药物 ± NSAIDs
+      medications:
+        - 曲马多 50-100mg q6h
+        - 可待因 30mg q6h
+      monitoring: 每 12h 评估、记录不良反应
+
+  - id: on-pain-step3
+    description: NRS 7-10 → 第三阶梯（强阿片类）
+    condition:
+      field: pain_assessment.NRS
+      operator: ">="
+      value: 7
+    result:
+      step: 第三阶梯
+      treatment: 强阿片类药物
+      medications:
+        - 吗啡即释片 10mg q4h（滴定）
+        - 吗啡缓释片 30mg q12h（维持）
+        - 芬太尼透皮贴剂 25μg/h q72h
+      monitoring: 每 4h 评估、阿片耐受与便秘管理
+
+  - id: on-breakthrough-pain
+    description: 爆发痛 → 即释阿片解救
+    condition:
+      field: pain_assessment.breakthrough
+      operator: "=="
+      value: true
+    result:
+      step: 爆发痛处理
+      treatment: 即释吗啡解救剂量
+      dosage: 24h 总剂量 × 10-15% 即释吗啡
+      frequency: 每 1-2h 可重复给药
+      alert: 24h 解救 > 3 次需上调背景剂量

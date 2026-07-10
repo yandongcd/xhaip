@@ -1,48 +1,61 @@
-# 重症医学科临床规则 — 器官衰竭评估 + 危重度评分 + ICU 核心治疗
+# 重症医学科临床规则 — 脓毒症 qSOFA/SOFA + 1-Hour Bundle + ARDS 通气 + 镇静 + CRRT
 rule_type: diagnosis
 department: 重症医学科
 capability: cap-l3-icu-diagnosis
 business_process: bp-icu-diagnosis
 data_entities:
-  consumes: [de-patient, de-lab-critical, de-vital-icu, de-monitor]
+  consumes: [de-patient, de-vitals, de-lab-critical, de-monitor]
   produces: [de-diagnosis-result]
-guideline: Surviving Sepsis Campaign 国际严重感染与感染性休克治疗指南 (2021)
-stakeholder: ICU 医师需动态追踪器官功能变化以判定病情进展
+guideline: SCCM Surviving Sepsis Campaign Guidelines (2021)
+stakeholder: ICU 医师需利用 qSOFA/SOFA 快速筛查并诊断脓毒症与脓毒性休克
 version: "1.0.0"
 
 rules:
-  - id: icu-sofa-progression
-    description: SOFA 评分升高 ≥ 2 分 → 器官衰竭进展
+  - id: icu-qsofa-positive
+    description: qSOFA ≥ 2 → 脓毒症筛查阳性
     condition:
-      field: assessment.SOFA_delta
+      field: assessment.qSOFA
       operator: ">="
       value: 2
     result:
-      diagnosis: 器官功能衰竭进展
+      diagnosis: 脓毒症筛查阳性
       severity: 高危
-      recommendation: 重新评估感染源 + 强化器官支持
+      recommendation: 立即检测乳酸 + 血培养 + 启动抗生素
 
-  - id: icu-lactic-acidosis
-    description: 乳酸 > 4 mmol/L → 液体复苏
+  - id: icu-sofa-sepsis
+    description: ΔSOFA ≥ 2 + 感染 → 脓毒症
     condition:
-      field: lab.lactate
-      operator: ">"
-      value: 4
+      and:
+        - {field: assessment.SOFA_delta, operator: ">=", value: 2}
+        - {field: lab_results.infection_marker, operator: "==", value: positive}
     result:
-      diagnosis: 组织低灌注 / 休克
-      severity: 危急
-      recommendation: 30mL/kg 晶体液复苏 + 乳酸 q2h 复查
+      diagnosis: 脓毒症（SOFA 上升 ≥ 2）
+      severity: 高危
+      recommendation: 启动 1-Hour Bundle + ICU 收治
 
-  - id: icu-refractory-shock
-    description: 去甲肾上腺素 > 0.5 μg/kg/min → 难治性休克
+  - id: icu-septic-shock
+    description: 脓毒症 + 乳酸 > 2 + 需血管活性药 → 脓毒性休克
     condition:
-      field: treatment.norepinephrine_dose
-      operator: ">"
-      value: 0.5
+      and:
+        - {field: diagnosis, operator: contains, value: 脓毒症}
+        - {field: lab_results.lactate, operator: ">", value: 2}
+        - {field: treatment.vasopressor_required, operator: "==", value: true}
     result:
-      diagnosis: 难治性分布性休克
+      diagnosis: 脓毒性休克
       severity: 危急
-      recommendation: 加用血管加压素 + 氢化可的松
+      recommendation: MAP ≥ 65mmHg、晶体液 30mL/kg、去甲肾上腺素首选
+
+  - id: icu-ards-diagnosis
+    description: P/F ratio ≤ 300 + 双肺浸润 → ARDS
+    condition:
+      and:
+        - {field: lab_results.PaO2_FiO2, operator: "<=", value: 300}
+        - {field: imaging.bilateral_infiltrates, operator: "==", value: true}
+        - {field: diagnosis, operator: not_contains, value: 心源性肺水肿}
+    result:
+      diagnosis: 急性呼吸窘迫综合征（ARDS）
+      severity: 高危
+      recommendation: 肺保护性通气 → Vt 6mL/kg PBW + Pplat ≤ 30cmH₂O
 
 ---
 rule_type: risk_score
@@ -50,34 +63,67 @@ department: 重症医学科
 capability: cap-l3-icu-risk
 business_process: bp-icu-risk-assessment
 data_entities:
-  consumes: [de-patient, de-lab-critical, de-assessment-critical]
+  consumes: [de-patient, de-lab-critical, de-assessment-critical, de-treatment-plan]
   produces: [de-risk-assessment]
-guideline: 中国重症医学诊疗规范 (2022)
-stakeholder: 利用危重度评分预测死亡风险与气道保护需求
+guideline: SCCM Surviving Sepsis Campaign Guidelines (2021)
+stakeholder: 评估脓毒症 1-Hour Bundle 达标率及器官衰竭进展风险
 version: "1.0.0"
 
 rules:
-  - id: icu-apache-high-mortality
-    description: APACHE II > 25 → 高死亡风险
+  - id: icu-bundle-lactate
+    description: 乳酸未测 → 1h 集束化不达标
     condition:
-      field: assessment.APACHE_II
-      operator: ">"
-      value: 25
+      field: lab_results.lactate
+      operator: "=="
+      value: null
     result:
-      risk: 高死亡风险
-      severity: 极高危
-      recommendation: 与家属沟通预后 + 制定治疗目标
+      risk: 1h 集束化不达标（乳酸未测）
+      severity: 高危
+      recommendation: 1h 内完成乳酸检测、若乳酸 > 2 复查
 
-  - id: icu-gcs-airway
-    description: GCS < 8 → 气道保护需求
+  - id: icu-bundle-culture
+    description: 抗生素前未送血培养 → 不达标
     condition:
-      field: assessment.GCS
-      operator: "<"
-      value: 8
+      and:
+        - {field: lab_results.blood_culture, operator: "==", value: pending}
+        - {field: treatment.antibiotics_started, operator: "==", value: true}
     result:
-      risk: 气道保护能力丧失
-      severity: 危急
-      recommendation: 气管插管 + 机械通气
+      risk: 血培养采集不达标
+      severity: 中高危
+      recommendation: 确保抗生素给药前完成血培养采集
+
+  - id: icu-bundle-antibiotics-delay
+    description: 抗生素启动延迟 > 1h → 高风险
+    condition:
+      field: treatment.antibiotics_delay_min
+      operator: ">"
+      value: 60
+    result:
+      risk: 抗生素延迟——每小时增加 7-8% 死亡风险
+      severity: 极高危
+      recommendation: 立即使用广谱抗生素（覆盖所有可能病原体）
+
+  - id: icu-bundle-fluid-deficit
+    description: 晶体液 < 30mL/kg → 复苏不充分
+    condition:
+      field: treatment.crystalloid_total_mL_kg
+      operator: "<"
+      value: 30
+    result:
+      risk: 液体复苏不充分——低血容量未纠正
+      severity: 高危
+      recommendation: 追加晶体液至 30mL/kg、动态评估容量反应性
+
+  - id: icu-ards-severity
+    description: P/F < 100 → 重度 ARDS
+    condition:
+      field: lab_results.PaO2_FiO2
+      operator: "<"
+      value: 100
+    result:
+      risk: 重度 ARDS——死亡率 > 45%
+      severity: 极高危
+      recommendation: 考虑俯卧位通气 + 神经肌肉阻滞剂 + ECMO 评估
 
 ---
 rule_type: treatment
@@ -85,42 +131,95 @@ department: 重症医学科
 capability: cap-l3-icu-treatment
 business_process: bp-icu-treatment
 data_entities:
-  consumes: [de-diagnosis-result, de-risk-assessment, de-lab-critical]
+  consumes: [de-diagnosis-result, de-risk-assessment, de-lab-critical, de-monitor]
   produces: [de-treatment-plan]
-guideline: 中华重症医学电子杂志 ARDS 与 AKI 管理指南 (2023)
-stakeholder: 根据器官支持需求实施肺通气、营养与肾脏替代治疗
+guideline: SCCM Surviving Sepsis Campaign Guidelines (2021) + 中国重症医学临床诊疗指南 (2022)
+stakeholder: 实施肺保护性通气、镇静镇痛 RASS 目标、CRRT 等 ICU 核心治疗
 version: "1.0.0"
 
 rules:
-  - id: icu-lung-protective-ards
-    description: ARDS → 肺保护性通气
+  - id: icu-lung-protective-vt
+    description: ARDS 肺保护性通气 — Vt 6mL/kg PBW
     condition:
       field: diagnosis.ARDS
       operator: "=="
       value: true
     result:
-      treatment: 肺保护性通气（TV 6mL/kg + 平台压 < 30cmH2O）
-      indication: ARDS
-      monitoring: 血气 + 氧合指数 q6h
+      treatment: 肺保护性通气策略
+      tidal_volume: 6 mL/kg（预测体重 PBW）
+      plateau_pressure_goal: ≤ 30 cmH₂O
+      driving_pressure_goal: ≤ 15 cmH₂O
+      monitoring: 血气分析 q4-6h + 氧合指数
 
-  - id: icu-enteral-nutrition-early
-    description: 入 ICU 后血流稳定 → 早期肠内营养
+  - id: icu-pplat-monitor
+    description: 平台压 > 30 → 调整通气参数
     condition:
-      field: assessment.tolerate_enteral_feeding
+      field: vent.plateau_pressure
+      operator: ">"
+      value: 30
+    result:
+      treatment: 降低潮气量/调整 PEEP
+      pp_limit: < 30 cmH₂O
+      recommendation: 降低 Vt 至 4-6mL/kg + 评估 PEEP 优化
+      precaution: 允许性高碳酸血症（pH > 7.15）
+
+  - id: icu-sedation-rass
+    description: RASS 镇静目标
+    condition:
+      field: treatment.mechanical_ventilation
       operator: "=="
       value: true
     result:
-      treatment: 早期肠内营养（24-48h 内启动）
-      indication: ICU 重症患者
-      precaution: 监测胃残余量 + 预防误吸
+      treatment: 浅镇静策略
+      rass_target: -2 至 0（浅镇静）
+      rass_protocol: 每日镇静中断（SAT）+ 自主呼吸试验（SBT）
+      analgesics_first: 镇痛优先（芬太尼/瑞芬太尼）→ 镇静（右美托咪定/丙泊酚）
 
-  - id: icu-crrt-aki
-    description: 急性肾损伤 → CRRT
+  - id: icu-delirium-prevention
+    description: CAM-ICU 阳性 → 谵妄干预
     condition:
-      field: diagnosis.AKI_stage_3
+      field: assessment.CAM_ICU
       operator: "=="
-      value: true
+      value: positive
+    result:
+      treatment: 谵妄非药物 + 药物干预
+      non_pharmacologic: 早期活动、睡眠促进、定向沟通、家属参与
+      pharmacologic: 右美托咪定（首选）或氟哌啶醇（低剂量）
+      avoidance: 避免苯二氮䓬类（非酒精戒断/惊厥）
+
+  - id: icu-crrt-aki-stage3
+    description: AKI 3 期 → CRRT 启动
+    condition:
+      or:
+        - {field: diagnosis.AKI_stage_3, operator: "==", value: true}
+        - {field: lab_results.sCr, operator: ">=", value: 354}
+        - {field: assessment.urine_output_24h, operator: "<", value: 100}
     result:
       treatment: 持续性肾脏替代治疗（CRRT）
-      indication: 重症 AKI / 液体过负荷 / 严重电解质紊乱
-      monitoring: 超滤量 + 电解质 q4h
+      indication: AKI 3 期 / 液体过负荷 / 严重电解质紊乱 / 尿毒症
+      crrt_dose: 20-25 mL/kg/h（流出液量）
+      monitoring: 电解质 q4h + 血气 q6h + 抗凝监测
+
+  - id: icu-crrt-fluid-overload
+    description: 液体过负荷 > 10% → CRRT
+    condition:
+      field: assessment.fluid_overload_percent
+      operator: ">="
+      value: 10
+    result:
+      treatment: CRRT 脱水
+      indication: 液体过负荷伴利尿剂无反应
+      net_removal: 个体化净脱水速率（1-2 mL/kg/h）
+      precaution: 监测血流动力学 + 避免过度脱水致低血压
+
+  - id: icu-vasopressor-norepinephrine
+    description: 脓毒性休克 → 去甲肾上腺素
+    condition:
+      field: diagnosis.septic_shock
+      operator: "=="
+      value: true
+    result:
+      treatment: 去甲肾上腺素
+      dosage: 起始 0.05-0.1 μg/kg/min，滴定至 MAP ≥ 65mmHg
+      second_line: 血管加压素 0.03 U/min（减少儿茶酚胺剂量）
+      monitoring: MAP q15min + 乳酸 q2h + 末梢灌注

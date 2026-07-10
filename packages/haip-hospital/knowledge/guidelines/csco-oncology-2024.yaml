@@ -1,0 +1,55 @@
+# ============================================================
+# Guideline Asset: CSCO常见恶性肿瘤诊疗指南（2024）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-csco-oncology-2024"
+name: "CSCO常见恶性肿瘤诊疗指南（2024）"
+abbr: "CSCO 2024"
+version: "2024"
+publisher: "中国临床肿瘤学会"
+journal: "CSCO 指南系列 2024"
+doi: ""
+language: zh-CN
+trust_level: T1
+
+description: >
+  CSCO 2024 常见恶性肿瘤诊疗指南，涵盖肺癌、肝癌、结直肠癌等
+  高发癌种的筛查、TNM 分期、化疗方案、靶向/免疫治疗及癌痛规范化管理。
+  遵循多学科综合治疗（MDT）理念，强调精准分型基础上的个体化治疗。
+
+key_sections:
+  - id: "§1"
+    title: "肿瘤筛查"
+    stage_ids: [S1, S2]
+    rule_ids: [on-screen-lung, on-screen-liver, on-screen-colorectal]
+
+  - id: "§2"
+    title: "TNM分期"
+    stage_ids: [S2, S3]
+    rule_ids: [on-tnm-adjuvant, on-node-positive]
+
+  - id: "§3"
+    title: "化疗方案"
+    stage_ids: [S4, S5]
+    rule_ids: [on-platinum-doublet-nsclc, on-folfox-crc, on-wbc-delay-chemo, on-neutropenia-gcsf, on-fn-risk]
+
+  - id: "§4"
+    title: "靶向/免疫治疗"
+    stage_ids: [S4, S5]
+    rule_ids: [on-targeted-driver, on-irae-pneumonitis, on-irae-colitis, on-irae-hepatitis, on-irae-skin]
+
+  - id: "§5"
+    title: "疼痛管理"
+    stage_ids: [S4, S5, S6]
+    rule_ids: [on-pain-step1, on-pain-step2, on-pain-step3, on-breakthrough-pain]
+
+rule_sets_covered:
+  - oncology_screening
+  - oncology_staging
+  - oncology_chemotherapy
+  - oncology_immunotherapy
+  - oncology_pain
+
+derived_rule_count: 15
+last_updated: 2026-07-10

@@ -1,0 +1,49 @@
+# ============================================================
+# Guideline Asset: 中国儿科临床诊疗指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-pediatrics-2022"
+name: "中国儿科临床诊疗指南（2022）"
+abbr: "儿科指南2022"
+version: "2022"
+publisher: "中华医学会儿科学分会"
+journal: "中华儿科杂志 2022;60(1):1-180"
+doi: "10.3760/cma.j.cn112140-20220101-00001"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中华医学会儿科学分会发布的2022版中国儿科临床诊疗指南。
+  涵盖生长发育评估、常见感染性疾病、免疫接种、儿童哮喘等核心领域。
+  适用于各级医疗机构儿科临床医师。
+
+key_sections:
+  - id: "§1"
+    title: "生长发育评估"
+    stage_ids: [S1, S2]
+    rule_ids: [ped-growth-percentile, ped-bmi-zscore, ped-development-milestone]
+
+  - id: "§2"
+    title: "常见感染性疾病"
+    stage_ids: [S2, S3, S4]
+    rule_ids: [ped-fever-mgmt, ped-pneumonia, ped-diarrhea-dehydration, ped-uri]
+
+  - id: "§3"
+    title: "免疫接种"
+    stage_ids: [S1, S6]
+    rule_ids: [ped-vaccine-schedule, ped-vaccine-contraindication, ped-vaccine-delay]
+
+  - id: "§4"
+    title: "儿童哮喘"
+    stage_ids: [S3, S4, S5]
+    rule_ids: [ped-asthma-diagnose, ped-asthma-step, ped-asthma-exacerbation]
+
+rule_sets_covered:
+  - pediatrics_growth
+  - pediatrics_infection
+  - pediatrics_vaccination
+  - pediatrics_asthma
+
+derived_rule_count: 9
+last_updated: 2026-07-10

@@ -1,0 +1,47 @@
+# ============================================================
+# Guideline Asset: GINA 2024 Asthma
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-gina-2024"
+name: "GINA 2024: Global Strategy for Asthma Management and Prevention"
+abbr: "GINA 2024"
+version: "2024"
+publisher: "Global Initiative for Asthma"
+doi: "10.1183/13993003.2024"
+language: en
+trust_level: T1
+
+description: >
+  GINA 2024 哮喘全球防治策略。涵盖哮喘诊断（症状+肺功能）、
+  阶梯治疗（Step 1-5）、急性发作管理、ICS-福莫特罗按需治疗（SMART策略）。
+
+key_sections:
+  - id: "§1-2"
+    title: "哮喘诊断与评估"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [asthma-diagnose, asthma-spirometry, asthma-severity]
+
+  - id: "§3"
+    title: "哮喘阶梯治疗（Step 1-5）"
+    stage_ids: [S4, S5]
+    rule_ids: [asthma-step1, asthma-step2, asthma-step3, asthma-step4, asthma-step5]
+
+  - id: "§4"
+    title: "急性哮喘发作管理"
+    stage_ids: [S4, S5]
+    rule_ids: [asthma-exacerbation, asthma-emergency]
+
+  - id: "§5"
+    title: "随访与长期管理"
+    stage_ids: [S6]
+    rule_ids: [asthma-followup, asthma-action-plan]
+
+rule_sets_covered:
+  - asthma_diagnosis
+  - asthma_treatment
+  - asthma_exacerbation
+  - asthma_followup
+
+derived_rule_count: 2
+last_updated: 2026-07-10

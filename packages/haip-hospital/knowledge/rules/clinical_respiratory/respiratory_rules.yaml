@@ -1,196 +1,178 @@
+# 呼吸内科临床规则 — COPD + 哮喘 诊断治疗随访
 rule_type: diagnosis
 department: 呼吸内科
-guideline: GOLD 2024 慢性阻塞性肺疾病全球倡议
-version: 1.0.0
-rules:
-- id: copd-gold-4
-  description: COPD GOLD 4级（极重度）
-  condition:
-    and:
-    - field: diagnosis
-      operator: contains
-      value: COPD
-    - or:
-      - field: lab_results.FEV1
-        operator: <=
-        value: 30
-      - field: lab_results.PaO2
-        operator: <=
-        value: 55
-  result:
-    diagnosis: COPD GOLD 4级（极重度）
-    severity: 极重度
-    recommendation: LAMA加LABA加ICS三联吸入，长期氧疗
-- id: copd-gold-3
-  description: COPD GOLD 3级（重度）
-  condition:
-    and:
-    - field: diagnosis
-      operator: contains
-      value: COPD
-    - field: lab_results.FEV1
-      operator: <=
-      value: 50
-  result:
-    diagnosis: COPD GOLD 3级（重度）
-    severity: 重度
-    recommendation: LAMA加LABA联合吸入，肺康复训练
-- id: copd-gold-2
-  description: COPD GOLD 2级（中度）
-  condition:
-    and:
-    - field: diagnosis
-      operator: contains
-      value: COPD
-    - field: lab_results.FEV1
-      operator: <=
-      value: 80
-  result:
-    diagnosis: COPD GOLD 2级（中度）
-    severity: 中度
-    recommendation: LABA或LAMA单药维持
-- id: asthma-severe
-  description: 重度哮喘
-  condition:
-    and:
-    - field: diagnosis
-      operator: contains
-      value: 哮喘
-    - or:
-      - field: lab_results.WBC
-        operator: '>='
-        value: 15
-      - field: lab_results.CRP
-        operator: '>='
-        value: 20
-  result:
-    diagnosis: 支气管哮喘急性发作（重度）
-    severity: 重度
-    recommendation: 雾化SABA加SAMA，全身糖皮质激素
-- id: cap-severe
-  description: 重症肺炎
-  condition:
-    and:
-    - field: diagnosis
-      operator: contains
-      value: 肺炎
-    - or:
-      - field: lab_results.WBC
-        operator: '>='
-        value: 15
-      - field: lab_results.CRP
-        operator: '>='
-        value: 100
-      - field: lab_results.PaO2
-        operator: <=
-        value: 60
-  result:
-    diagnosis: 重症社区获得性肺炎
-    severity: 重症
-    recommendation: 联合抗生素，必要时ICU
-- id: cap-moderate
-  description: 中度肺炎
-  condition:
-    field: diagnosis
-    operator: contains
-    value: 肺炎
-  result:
-    diagnosis: 社区获得性肺炎（中度）
-    severity: 中度
-    recommendation: 阿莫西林克拉霉素口服
-capability: cap-l3-resp-copd-classification
+capability: cap-l3-resp-copd-asthma-diagnosis
 business_process: bp-respiratory-diagnosis
-stakeholder: 判定COPD严重度分级决定治疗强度
 data_entities:
   consumes:
-  - de-lab-pulmonary
-  - de-lab-infection
-  - de-lab-hematology
+  - de-lab-blood-gas
+  - de-pulmonary-function
   - de-patient
   produces:
   - de-diagnosis-result
-  - de-treatment-plan
+guideline: GOLD 2024 / GINA 2024
+stakeholder: COPD与哮喘的鉴别诊断
+version: "1.0.0"
+
+rules:
+  - id: copd-diagnose
+    description: FEV1/FVC < 0.7 → COPD诊断
+    condition:
+      field: lab_results.FEV1_FVC_ratio; operator: "<"; value: 0.7
+    result:
+      diagnosis: 慢性阻塞性肺疾病
+      severity: "GOLD分级需结合FEV1%预测值"
+
+  - id: copd-gold-stage
+    description: COPD GOLD严重度分级
+    condition:
+      field: diagnosis; operator: contains; value: COPD
+    result:
+      staging:
+        - grade: GOLD 1 (轻度); criteria: "FEV1 ≥80% 预计值"
+        - grade: GOLD 2 (中度); criteria: "FEV1 50-79% 预计值"
+        - grade: GOLD 3 (重度); criteria: "FEV1 30-49% 预计值"
+        - grade: GOLD 4 (极重度); criteria: "FEV1 <30% 预计值"
+
+  - id: copd-abcd-group
+    description: COPD ABCD综合评估
+    condition:
+      field: diagnosis; operator: contains; value: COPD
+    result:
+      grouping:
+        - group: A; criteria: "mMRC 0-1, CAT<10, 0-1次中重度急性加重/年"
+        - group: B; criteria: "mMRC≥2, CAT≥10, 0-1次急性加重/年"
+        - group: E; criteria: "≥2次中重度急性加重或≥1次住院"
+
+  - id: asthma-diagnose
+    description: 支气管哮喘诊断标准
+    condition:
+      or:
+        - and:
+          - field: lab_results.FEV1_variability; operator: ">="; value: 12
+          - field: lab_results.FEV1_variability_ml; operator: ">="; value: 200
+        - field: symptoms; operator: contains; value: 喘息
+    result:
+      diagnosis: 支气管哮喘
+      confirm: "支气管舒张试验阳性 或 PEF变异率>10%"
+
 ---
 rule_type: treatment
 department: 呼吸内科
-rules:
-- id: copd-maintenance
-  description: COPD 维持治疗
-  condition:
-    field: diagnosis
-    operator: contains
-    value: COPD
-  result:
-    treatment: 分级维持治疗
-    medications:
-    - LABA或LAMA联合吸入
-    - 按需SABA缓解
-    - ICS用于反复急性加重
-    non_pharm: 肺康复加戒烟加疫苗
-- id: asthma-step-up
-  description: 哮喘阶梯治疗
-  condition:
-    field: diagnosis
-    operator: contains
-    value: 哮喘
-  result:
-    treatment: 阶梯治疗
-    steps:
-    - 按需低剂量ICS-formoterol
-    - 每日低剂量ICS
-    - 低剂量ICS加LABA
-    - 中剂量ICS加LABA
 capability: cap-l3-resp-treatment
 business_process: bp-respiratory-treatment
-stakeholder: 根据分级选择维持治疗方案
-version: 1.0.0
 data_entities:
   consumes:
-  - de-lab-pulmonary
-  - de-lab-infection
-  - de-lab-hematology
-  - de-patient
-  produces:
   - de-diagnosis-result
+  produces:
   - de-treatment-plan
-guideline: GOLD 2024 慢性阻塞性肺疾病全球倡议
----
-rule_type: alert
-department: 呼吸内科
+guideline: GOLD 2024 / GINA 2024
+stakeholder: 稳定期药物选择
+version: "1.0.0"
+
 rules:
-- id: severe-hypoxemia
-  description: 重度低氧血症
-  condition:
-    field: lab_results.PaO2
-    operator: <=
-    value: 50
-  result:
-    alert_level: 紧急
-    message: PaO2低重度低氧血症
-- id: severe-infection
-  description: 重症感染预警
-  condition:
-    and:
-    - field: diagnosis
-      operator: contains
-      value: COPD
-    - field: lab_results.CRP
-      operator: '>='
-      value: 150
-  result:
-    alert_level: 紧急
-    message: 重度COPD合并感染，警惕呼衰
-capability: cap-l3-resp-alert
-business_process: bp-respiratory-monitor
-stakeholder: 监测低氧血症和感染风险
-version: 1.0.0
+  - id: copd-group-a-tx
+    description: COPD A组治疗
+    condition:
+      and:
+        - field: diagnosis; operator: contains; value: COPD
+        - field: copd_group; operator: equals; value: A
+    result:
+      treatment: 短效支气管舒张剂
+      medications:
+        - SABA (沙丁胺醇) 按需
+        - SAMA (异丙托溴铵) 按需
+
+  - id: copd-group-b-tx
+    description: COPD B组治疗
+    condition:
+      and:
+        - field: diagnosis; operator: contains; value: COPD
+        - field: copd_group; operator: equals; value: B
+    result:
+      treatment: LABA或LAMA单药
+      medications:
+        - LABA (茚达特罗/奥达特罗)
+        - LAMA (噻托溴铵)
+
+  - id: copd-group-e-tx
+    description: COPD E组治疗
+    condition:
+      and:
+        - field: diagnosis; operator: contains; value: COPD
+        - field: copd_group; operator: equals; value: E
+    result:
+      treatment: LABA+LAMA起始，考虑ICS
+      medications:
+        - LABA/LAMA 双联 (茚达特罗/格隆溴铵)
+        - ICS/LABA/LAMA 三联 (血EOS≥300时)
+
+  - id: asthma-step-therapy
+    description: 哮喘阶梯治疗
+    condition:
+      field: diagnosis; operator: contains; value: 哮喘
+    result:
+      treatment: 按阶梯升级/降级
+      steps:
+        - step: Step 1; med: "按需低剂量ICS-福莫特罗"
+        - step: Step 2; med: "每日低剂量ICS 或 按需低剂量ICS-福莫特罗"
+        - step: Step 3; med: "低剂量ICS-LABA维持 + 按需SABA 或 低剂量ICS-福莫特罗维持+缓解"
+        - step: Step 4; med: "中剂量ICS-LABA"
+        - step: Step 5; med: "高剂量ICS-LABA + LAMA + 表型评估(生物制剂)"
+
+  - id: copd-exacerbation
+    description: COPD急性加重处理
+    condition:
+      and:
+        - field: diagnosis; operator: contains; value: COPD
+        - field: symptoms_worsening; operator: equals; value: true
+    result:
+      treatment: 急性加重方案
+      medications:
+        - SABA/SAMA 雾化 (增加频率)
+        - 口服糖皮质激素 (泼尼松 40mg/天 ×5天)
+        - 抗生素 (脓痰/CRP升高时)
+      severity_triggers:
+        - "SpO2<90% → 住院"
+        - "意识改变 → ICU"
+
+---
+rule_type: followup
+department: 呼吸内科
+capability: cap-l3-resp-followup
+business_process: bp-respiratory-followup
 data_entities:
   consumes:
-  - de-lab-pulmonary
-  - de-lab-infection
-  - de-lab-hematology
-  - de-patient
-  produces:
-  - de-diagnosis-result
   - de-treatment-plan
-guideline: GOLD 2024 慢性阻塞性肺疾病全球倡议
+  produces:
+  - de-followup-plan
+guideline: GOLD 2024 / GINA 2024
+stakeholder: 慢病随访管理
+version: "1.0.0"
+
+rules:
+  - id: copd-followup
+    description: COPD随访计划
+    condition:
+      field: diagnosis; operator: contains; value: COPD
+    result:
+      followup_schedule:
+        - time: 稳定期每3-6月; items: "症状/CAT/mMRC/肺功能/吸烟状态/吸入技术"
+        - time: 每年1次; items: "肺功能/胸部CT(高危)/α1-AT"
+      red_flags:
+        - 每年≥2次中重度急性加重
+        - FEV1下降>50mL/年
+        - 新发肺心病征象
+
+  - id: asthma-followup
+    description: 哮喘随访与行动计划
+    condition:
+      field: diagnosis; operator: contains; value: 哮喘
+    result:
+      followup_schedule:
+        - time: 初诊后1-3月; items: "症状控制/ACT评分/肺功能/吸入技术"
+        - time: 稳定后每3-6月; items: "调整阶梯/评估触发因素"
+      action_plan:
+        - green_zone: "PEF>80%最佳值 → 维持治疗"
+        - yellow_zone: "PEF 50-80% → 增加缓解药"
+        - red_zone: "PEF<50% → 立即就医"

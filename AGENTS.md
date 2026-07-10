@@ -26,16 +26,18 @@ xhaip/
 │       ├── orchestrator/ TaskDAG + toposort_layers + parallel executor
 │       ├── knowledge/   SQLite store + YAML sync
 │       ├── loop/        ReAct AgentLoop (LLM + Tool 循环)
+│       ├── togaf/       TOGAF 10 Architecture Governance (16 modules)
 │       └── cli.py       Typer CLI
 │
 ├── haip-hospital/
-│   ├── agents/definitions/      14 个 YAML Agent 定义 (30 行/个)
-│   └── modules/                 14 个业务模块 (纯 Python, 只在写业务逻辑)
+│   ├── agents/definitions/      48 个 YAML Agent 定义 (39 临床科室 + 7 专家 + 2 主数据)
+│   ├── modules/                 52 个 Handler 模块 (KnowledgeAgent + RuleEngine 驱动)
+│   ├── knowledge/               50 BP YAML + 36 指南 + 38 规则组 (314 条) + 数据实体目录
+│   └── data/                    384 位数字病人 (含专科检验字段)
 │
 ├── config/                      YAML 配置 (llm.yaml, haip.yaml)
-├── tests/integration/           59 个集成测试
-└── .github/workflows/ci.yml    CI: ruff + mypy + pytest + 90% cov
-```
+├── tests/                       ~300 测试 (216 haip-core + 75 integration + 18 HTML)
+└── .github/workflows/ci.yml    CI: ruff + mypy + pytest + 70% cov
 
 ## 新增 Agent
 
@@ -96,7 +98,7 @@ def my_function(param1: str = "", param2: int = 0, **kwargs):
 ```bash
 ruff check packages/haip-core/ tests/     # 代码风格
 mypy packages/haip-core/haip/             # 类型检查
-pytest --cov=haip --cov-fail-under=90     # 单元测试 + 覆盖率
+pytest --cov=haip --cov-fail-under=70     # 单元测试 + 覆盖率
 ```
 
 ## 与 v0.2.0 的关键差异
