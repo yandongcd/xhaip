@@ -15,18 +15,18 @@ prompt:
 tools:
   - name: assess_acute
     description: 急性疼痛综合评估 (NRS/VAS + 神经病理检测)
-    handler: acute_pain.assess
-    input: {patient_id: str, vas_score: int, description: str}
+    handler: acute_pain.assess_acute
+    input: {patient_id: str}
 
   - name: manage_pca
-    description: PCA镇痛方案 (剂量/年龄/肾功能调整)
-    handler: acute_pain.pca
-    input: {patient_id: str, age: int, weight_kg: float, renal_ok: bool}
+    description: PCA 镇痛方案 (剂量/年龄/肾功能调整)
+    handler: acute_pain.manage_pca
+    input: {patient_id: str}
 
   - name: detect_crisis
     description: 疼痛危象检测 (骨筋膜室/动脉栓塞)
-    handler: acute_pain.crisis
-    input: {patient_id: str, symptoms: list}
+    handler: acute_pain.detect_crisis
+    input: {patient_id: str}
 
 guard:
   triggers: [药物交互]

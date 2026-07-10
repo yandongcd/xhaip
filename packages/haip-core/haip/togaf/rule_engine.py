@@ -223,9 +223,36 @@ class RuleEngine:
         except (ValueError, TypeError):
             return False, f"type error: {field_path}={actual}"
 
+    # Field alias mapping: rule path → patient data path fallbacks
+    # When _navigate() can't find a value at the rule path, it tries these aliases.
+    # Format: "rule_path_prefix" → [alternative_path, ...]
+    _FIELD_ALIASES: dict[str, list[str]] = {
+        # ECG → lab_results cardiac markers
+        "ecg.ST_elevation_mm": ["lab_results.Troponin"],
+        "ecg.Q_wave": ["lab_results.CK-MB"],
+        # Vitals → lab_results or flat fields
+        "vitals.pulse": ["lab_results.HR"],
+        "vitals.respiration": ["lab_results.RR"],
+        "vitals.temperature": ["lab_results.Temp"],
+        "vitals.sbp": ["lab_results.SBP"],
+        "vitals.dbp": ["lab_results.DBP"],
+        "vitals.spo2": ["lab_results.SpO2"],
+        # Neuro assessment → diagnosis or lab_results
+        "neuro.face_droop": ["lab_results.FAST"],
+        "neuro.gcs": ["lab_results.GCS_E"],
+        # Assessment scores → lab_results
+        "assessment.SOFA": ["lab_results.SOFA"],
+        "assessment.MEWS": ["lab_results.MEWS"],
+        "assessment.APACHE": ["lab_results.APACHE"],
+        "assessment.ESI": ["lab_results.ESI"],
+        # ECG findings → diagnosis
+        "ecg.ST_elevation_lead": ["lab_results.ECG_lead", "diagnosis"],
+        "ecg.rhythm": ["lab_results.ECG_rhythm", "diagnosis"],
+    }
+
     @staticmethod
     def _navigate(data: dict, path: str) -> Any:
-        """Navigate nested dict by dot-separated path (e.g., 'lab_results.Hb')."""
+        """Navigate nested dict by dot-separated path, with field alias fallback."""
         if not path:
             return None
         parts = path.split(".")
@@ -237,7 +264,23 @@ class RuleEngine:
                 return None
             if current is None:
                 return None
-        return current
+        # Return found value, or try alias fallback
+        if current is not None:
+            return current
+        # Alias fallback: try alternative paths
+        aliases = cls._FIELD_ALIASES.get(path, [])
+        for alt_path in aliases:
+            alt_parts = alt_path.split(".")
+            alt_current: Any = data
+            for part in alt_parts:
+                if isinstance(alt_current, dict):
+                    alt_current = alt_current.get(part)
+                else:
+                    alt_current = None
+                    break
+            if alt_current is not None:
+                return alt_current
+        return None
 
 
 # ── TOGAF ABB Validation ──

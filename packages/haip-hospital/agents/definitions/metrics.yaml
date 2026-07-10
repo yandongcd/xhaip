@@ -15,15 +15,15 @@ prompt:
 tools:
   - name: get_department_metrics
     description: 获取科室运营指标
-    handler: metrics.department
+    handler: metrics.get_department_metrics
     input: {department: str, month: str}
 
   - name: get_quality_metrics
     description: 获取质量安全指标 (感染率/死亡率/再入院率)
-    handler: metrics.quality
+    handler: metrics.get_quality_metrics
     input: {department: str, year: int}
 
   - name: get_efficiency_metrics
     description: 获取效率指标 (平均住院日/床位使用率)
-    handler: metrics.efficiency
+    handler: metrics.get_efficiency_metrics
     input: {department: str, month: str}

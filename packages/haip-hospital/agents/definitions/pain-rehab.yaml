@@ -14,15 +14,15 @@ prompt:
 tools:
   - name: exercise_rx
     description: 康复运动处方 (部位/强度/频率)
-    handler: pain_rehab.exercise
-    input: {patient_id: str, pain_location: str, odi_score: int}
+    handler: pain_rehab.exercise_rx
+    input: {patient_id: str}
 
   - name: assess_progress
     description: 功能恢复进展评估
-    handler: pain_rehab.progress
-    input: {patient_id: str, baseline_odi: int, current_odi: int, compliance_pct: int}
+    handler: pain_rehab.assess_progress
+    input: {patient_id: str}
 
   - name: comorbidity
     description: 合并症评估 (抑郁/焦虑/自杀风险)
-    handler: pain_rehab.comorbid
-    input: {patient_id: str, phq9_score: int, gad7_score: int}
+    handler: pain_rehab.comorbidity
+    input: {patient_id: str}

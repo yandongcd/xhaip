@@ -14,18 +14,18 @@ prompt:
 tools:
   - name: assess_indications
     description: 介入治疗适应症评估
-    handler: interventional_pain.indicate
-    input: {patient_id: str, pain_type: str, failed_conservative: bool}
+    handler: interventional_pain.assess_indications
+    input: {patient_id: str}
 
   - name: imaging_gate
-    description: 影像学门控检查 (MRI/CT完成度)
-    handler: interventional_pain.gate
-    input: {patient_id: str, has_mri: bool, has_ct: bool}
+    description: 影像学门控检查 (MRI/CT 完成度)
+    handler: interventional_pain.imaging_gate
+    input: {patient_id: str}
 
   - name: postop_safety
     description: 术后安全评估 (感染/神经/出血)
-    handler: interventional_pain.postop
-    input: {patient_id: str, procedure: str, signs: dict}
+    handler: interventional_pain.postop_safety
+    input: {patient_id: str}
 
 guard:
   triggers: [手术决策]
