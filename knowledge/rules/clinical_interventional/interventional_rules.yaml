@@ -1,0 +1,186 @@
+# 介入治疗科临床规则 — PCI指征 + TACE筛选 + 对比剂肾病 + 围介入期管理
+rule_type: diagnosis
+department: 介入治疗科
+capability: cap-l3-interventional-diagnosis
+business_process: bp-interventional-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-cardiac, de-imaging-angio, de-ecg]
+  produces: [de-diagnosis-result]
+guideline: 中国介入治疗临床指南（2022）
+stakeholder: 介入科医师需评估血管/肿瘤/非血管病变的介入治疗指征
+version: "1.0.0"
+
+rules:
+  - id: ivr-pci-stemi-indication
+    description: 急性ST段抬高心梗 → 急诊PCI（发病12h内）
+    condition:
+      and:
+        - {field: ecg.st_elevation, operator: "==", value: true}
+        - {field: exam.onset_hours, operator: "<=", value: 12}
+        - {field: lab.troponin_elevated, operator: "==", value: true}
+    result:
+      diagnosis: STEMI
+      severity: 急症
+      recommendation: 急诊PCI（门球时间<90min）
+      priority: 1
+
+  - id: ivr-pci-nstemi-indication
+    description: NSTEMI高危（GRACE > 140） → 早期侵入治疗（24h内）
+    condition:
+      and:
+        - {field: ecg.st_elevation, operator: "==", value: false}
+        - {field: lab.troponin_elevated, operator: "==", value: true}
+        - {field: exam.grace_score, operator: ">", value: 140}
+    result:
+      diagnosis: NSTEMI（高危）
+      severity: 高危
+      recommendation: 早期侵入治疗（24h内PCI）
+      priority: 2
+
+  - id: ivr-tace-bclc-b
+    description: HCC BCLC B期 → TACE适应证
+    condition:
+      and:
+        - {field: diagnosis.hcc, operator: "==", value: true}
+        - {field: exam.bclc_stage, operator: "==", value: B}
+        - {field: exam.child_pugh, operator: "in", value: ["A", "B"]}
+        - {field: exam.portal_invasion, operator: "==", value: false}
+    result:
+      diagnosis: HCC BCLC B期
+      recommendation: TACE治疗（cTACE或DEB-TACE）
+      expected_benefit: 总生存期延长（中位OS 20-30m）
+
+  - id: ivr-ptcd-indication
+    description: 梗阻性黄疸（TBil > 171μmol/L） → PTCD引流指征
+    condition:
+      and:
+        - {field: lab.total_bilirubin, operator: ">", value: 171}
+        - {field: imaging.bile_duct_dilation, operator: "==", value: true}
+        - {field: exam.cholangitis, operator: "==", value: false}
+    result:
+      diagnosis: 梗阻性黄疸（重度）
+      severity: 高危
+      recommendation: PTCD外引流或内引流（择期1-3d）
+      target: TBil下降≥30% 1周内
+
+---
+rule_type: risk_score
+department: 介入治疗科
+capability: cap-l3-interventional-risk
+business_process: bp-interventional-risk
+data_entities:
+  consumes: [de-patient, de-lab-renal, de-lab-coagulation, de-imaging-angio]
+  produces: [de-risk-assessment]
+guideline: 中国介入治疗临床指南（2022）
+stakeholder: 评估对比剂肾病风险、出血风险与术后并发症风险
+version: "1.0.0"
+
+rules:
+  - id: ivr-contrast-nephropathy-high
+    description: eGFR < 30 mL/min/1.73m² → 对比剂肾病高危
+    condition:
+      field: lab.egfr
+      operator: "<"
+      value: 30
+    result:
+      risk: 对比剂肾病（高危）
+      severity: 高危
+      recommendation: 术前水化（NS 1mL/kg/h 12h）+ 最小对比剂剂量
+      prophylaxis: 乙酰半胱氨酸 600mg bid
+      monitoring: 术后48h Scr q12h
+
+  - id: ivr-contrast-nephropathy-moderate
+    description: eGFR 30-45 mL/min/1.73m² → 对比剂肾病中危
+    condition:
+      field: lab.egfr
+      operator: "between"
+      value: [30, 45]
+    result:
+      risk: 对比剂肾病（中危）
+      severity: 中危
+      recommendation: 术前水化 + 等渗对比剂（碘克沙醇）
+      monitoring: 术后48h Scr
+
+  - id: ivr-bleeding-risk
+    description: INR > 1.5 或 PLT < 50×10⁹/L → 出血高危
+    condition:
+      or:
+        - {field: lab.inr, operator: ">", value: 1.5}
+        - {field: lab.plt, operator: "<", value: 50}
+    result:
+      risk: 出血高危
+      severity: 高危
+      recommendation: 暂停手术 → 输注FFP/血小板后复查凝血
+      contraindication: 非急诊介入暂缓
+
+  - id: ivr-post-observation
+    description: 介入术后观察要求
+    condition:
+      field: procedure.type
+      operator: "in"
+      value: ["PCI", "TACE", "PTA", "embolization"]
+    result:
+      risk: 术后监测
+      observation_period: 24h（PCI）/ 48-72h（TACE）
+      monitoring: 穿刺点q1h×6h + 生命体征q4h + 远端脉搏
+      complication_watch: 出血/血肿/假性动脉瘤/造影剂肾病
+
+---
+rule_type: treatment
+department: 介入治疗科
+capability: cap-l3-interventional-treatment
+business_process: bp-interventional-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-imaging-angio]
+  produces: [de-treatment-plan]
+guideline: 中国介入治疗临床指南（2022）
+stakeholder: 制定介入治疗方案，包括血管开通、肿瘤控制与并发症管理
+version: "1.0.0"
+
+rules:
+  - id: ivr-pta-indication
+    description: 下肢动脉狭窄 > 70%（Rutherford 3级以上） → PTA/支架
+    condition:
+      and:
+        - {field: imaging.arterial_stenosis, operator: ">", value: 70}
+        - {field: exam.rutherford_grade, operator: ">=", value: 3}
+    result:
+      treatment: PTA ± 支架植入
+      device: 药物涂层球囊（DCB）或裸支架
+      followup: 双抗（阿司匹林+氯吡格雷）≥1m + 多普勒超声 q3m
+
+  - id: ivr-ablation-size
+    description: 肝肿瘤 ≤ 3cm/3结节 → 射频/微波消融
+    condition:
+      and:
+        - {field: imaging.tumor_size_cm, operator: "<=", value: 3}
+        - {field: imaging.tumor_count, operator: "<=", value: 3}
+        - {field: diagnosis.hcc, operator: "==", value: true}
+    result:
+      treatment: 射频消融（RFA）或微波消融（MWA）
+      indication: 小肝癌（≤3cm）无法手术或等待移植
+      complete_ablation_rate: ">90% (≤2cm)"
+
+  - id: ivr-particle-implant
+    description: 实体瘤≥5cm或术后残留 → ¹²⁵I粒子植入
+    condition:
+      or:
+        - {field: imaging.tumor_size_cm, operator: ">=", value: 5}
+        - {field: exam.residual_tumor, operator: "==", value: true}
+    result:
+      treatment: ¹²⁵I放射性粒子植入
+      dose: TPS计划 120-160Gy
+      radiation_safety: 铅围裙+距离防护
+      followup: CT复查 q3m评估粒子分布
+
+  - id: ivr-tace-contraindication
+    description: Child-Pugh C级或门脉主干癌栓 → TACE禁忌
+    condition:
+      or:
+        - {field: exam.child_pugh, operator: "==", value: C}
+        - {field: imaging.main_portal_invasion, operator: "==", value: true}
+        - {field: lab.total_bilirubin, operator: ">", value: 51}
+    result:
+      treatment: TACE禁忌
+      alternative: 靶向治疗（索拉非尼/仑伐替尼）或支持治疗
+      risk: TACE后肝功能衰竭

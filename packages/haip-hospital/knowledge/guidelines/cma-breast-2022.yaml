@@ -1,0 +1,45 @@
+# ============================================================
+# Guideline Asset: 中国乳腺癌诊疗指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-breast-2022"
+name: "中国乳腺癌诊疗指南（2022）"
+abbr: "乳腺癌诊疗指南2022"
+version: "2022"
+publisher: "中国抗癌协会乳腺癌专业委员会"
+journal: "中国癌症杂志 2022;32(10):897-968"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国抗癌协会乳腺癌专业委员会发布的乳腺癌诊疗指南（2022版），
+  涵盖筛查体系（钼靶/超声/MRI）、分子分型（Luminal/HER2/TNBC）、
+  外科治疗（保乳手术/全切/重建）、以及辅助系统治疗（内分泌/化疗/靶向）。
+
+key_sections:
+  - id: "§1"
+    title: "筛查 — 钼靶/超声/MRI"
+    stage_ids: [S1]
+    rule_ids: [breast-birads-classification, breast-screening-schedule]
+
+  - id: "§2"
+    title: "分子分型 — Luminal / HER2 / TNBC"
+    stage_ids: [S1, S2]
+    rule_ids: [breast-molecular-subtype, breast-er-pr-her2-ki67, breast-genetic-testing]
+
+  - id: "§3"
+    title: "手术 — 保乳/全切/重建"
+    stage_ids: [S2, S3]
+    rule_ids: [breast-bcs-criteria, breast-slnb-alnd, breast-reconstruction]
+
+  - id: "§4"
+    title: "辅助治疗 — 内分泌/化疗/靶向"
+    stage_ids: [S3, S4]
+    rule_ids: [breast-endocrine-therapy, breast-anti-her2, breast-neoadjuvant]
+
+rule_sets_covered:
+  - clinical_breast
+
+derived_rule_count: 14
+last_updated: 2026-07-10

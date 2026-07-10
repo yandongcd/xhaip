@@ -1,0 +1,51 @@
+# ============================================================
+# Guideline Asset: 中国肾移植临床诊疗指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-transplant-2022"
+name: "中国肾移植临床诊疗指南（2022）"
+abbr: "中华移植 2022"
+version: "2022"
+publisher: "中华医学会器官移植学分会"
+journal: "中华器官移植杂志 2022"
+doi: ""
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国肾移植临床诊疗指南（2022），覆盖供体评估与选择（活体/DBD/DCD）、
+  免疫抑制方案（CNI/MMF/激素）、排斥反应诊断与治疗（细胞性/抗体介导型）、
+  感染预防（CMV/BKV/PCP）、长期随访管理等核心诊疗环节。
+
+key_sections:
+  - id: "§1"
+    title: "供体评估（活体/DBD/DCD）"
+    stage_ids: [S1, S2]
+    rule_ids: [tx-hla-matching, tx-pra-screening, tx-donor-selection, tx-dcd-criteria]
+
+  - id: "§2"
+    title: "免疫抑制方案（CNI/MMF/激素）"
+    stage_ids: [S3, S4]
+    rule_ids: [tx-tacrolimus-trough, tx-mmf-dosing, tx-steroid-taper]
+
+  - id: "§3"
+    title: "排斥反应（细胞性/抗体介导）"
+    stage_ids: [S4, S5]
+    rule_ids: [tx-banff-classification, tx-cellular-rejection, tx-antibody-rejection]
+
+  - id: "§4"
+    title: "感染预防（CMV/BKV/PCP）"
+    stage_ids: [S4, S5]
+    rule_ids: [tx-cmv-prophylaxis, tx-bkv-surveillance, tx-pcp-prophylaxis]
+
+  - id: "§5"
+    title: "长期随访管理"
+    stage_ids: [S6, S7]
+    rule_ids: [tx-graft-surveillance, tx-immunosuppression-monitor, tx-complication-screening]
+
+rule_sets_covered:
+  - clinical_transplant
+
+derived_rule_count: 15
+last_updated: 2026-07-10

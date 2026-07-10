@@ -1,0 +1,193 @@
+# 肾移植科临床规则 — HLA配型 + 免疫抑制 + Banff排斥分级 + 感染预防
+rule_type: diagnosis
+department: 肾移植科
+capability: cap-l3-transplant-diagnosis
+business_process: bp-transplant-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-immunology, de-lab-biochemistry, de-pathology]
+  produces: [de-diagnosis-result]
+guideline: KDIGO Guideline on Kidney Transplant (2020) / 中华器官移植杂志 (2022)
+stakeholder: 移植科医师需评估免疫风险与排斥反应
+version: "1.0.0"
+
+rules:
+  - id: tx-hla-matching
+    description: HLA配型评估
+    condition:
+      field: transplant.donor_type
+      operator: "in"
+      value: [living, DBD, DCD]
+    result:
+      evaluation:
+        HLA_A_B_DR_0_mismatch: 最佳（0MM）
+        HLA_1_3_mismatch: 良好
+        HLA_4_6_mismatch: 可接受
+      recommendation: 优先0MM，但权衡等待时间与预后的获益
+
+  - id: tx-donor-evaluation
+    description: 供体评估标准
+    condition:
+      field: transplant.evaluation
+      operator: "=="
+      value: donor
+    result:
+      criteria:
+        living_donor: ABO相容 / 交叉配型阴性 / 自愿 / 健康（eGFR>80）
+        DBD: 脑死亡判定 + 血流动力学稳定 + 无活动性感染/恶性肿瘤
+        DCD: Maastricht III型（撤除支持后循环死亡）为最常见
+      recommendation: KDPI评分 < 85% 为标准供体
+
+  - id: tx-rejection-diagnosis
+    description: Banff 排斥反应分级
+    condition:
+      field: lab_results.Cr
+      operator: ">"
+      value: 177
+    result:
+      diagnosis: 疑似急性排斥反应
+      severity: 需穿刺活检明确
+      banff_categories:
+        category_1: 正常或非特异性改变
+        category_2: 抗体介导排斥反应（ABMR）
+        category_3: 临界改变（可疑TCMR）
+        category_4: T细胞介导排斥反应（TCMR）
+        category_5: 间质纤维化/肾小管萎缩（IFTA）
+      recommendation: 立即行移植肾穿刺活检 + DSA检测
+
+  - id: tx-pra-dsa-screening
+    description: PRA/DSA 筛查
+    condition:
+      field: transplant.waitlist
+      operator: "=="
+      value: active
+    result:
+      screening:
+        PRA_class_I_II: HLA抗体筛查（每3-6月）
+        DSA: 供体特异性抗体（移植后每3-6月 ×1年，然后每年）
+      recommendation: DSA阳性 → 评估ABMR风险 + 调整免疫抑制
+
+---
+rule_type: treatment
+department: 肾移植科
+capability: cap-l3-transplant-treatment
+business_process: bp-transplant-treatment
+data_entities:
+  consumes: [de-patient, de-lab-immunology, de-lab-biochemistry]
+  produces: [de-treatment-plan]
+guideline: KDIGO Guideline on Kidney Transplant (2020) / 中华器官移植杂志 (2022)
+stakeholder: 移植科医师需制定免疫抑制和抗感染方案
+version: "1.0.0"
+
+rules:
+  - id: tx-immunosuppression-regimen
+    description: 免疫抑制方案（诱导+维持）
+    condition:
+      field: transplant.kidney
+      operator: "=="
+      value: true
+    result:
+      induction:
+        low_risk: Basiliximab (IL-2R拮抗剂)
+        high_risk: ATG (抗胸腺细胞球蛋白)
+      maintenance:
+        CNI: 他克莫司（首选）或环孢素
+        antimetabolite: MMF 或 霉酚酸钠
+        steroid: 泼尼松（逐渐减量）
+      recommendation: 术后早期他克莫司谷浓度 8-12 ng/mL
+
+  - id: tx-tacrolimus-level
+    description: 他克莫司血药浓度监测
+    condition:
+      field: lab_results.tacrolimus_trough
+      operator: "<"
+      value: 8
+    result:
+      alert: 他克莫司谷浓度偏低
+      recommendation: 增加剂量，目标 8-12 ng/mL（术后< 3月），6-10 ng/mL（3-12月），5-8 ng/mL（> 1年）
+
+  - id: tx-rejection-treatment
+    description: 排斥反应治疗方案
+    condition:
+      field: pathology.banff_category
+      operator: "in"
+      value: ["2", "4"]
+    result:
+      treatment:
+        TCMR_Banff_I: 甲泼尼龙冲击（500mg iv × 3天）
+        TCMR_Banff_II_III: 甲泼尼龙冲击 + ATG
+        ABMR_acitve: 血浆置换 + IVIG + Rituximab
+      recommendation: 治疗后2-4周复查活检评估疗效
+
+  - id: tx-cmv-prophylaxis
+    description: CMV 预防（D+/R- 高风险）
+    condition:
+      field: serology.CMV_D_plus_R_minus
+      operator: "=="
+      value: true
+    result:
+      treatment: 缬更昔洛韦 900mg qd × 3-6月
+      monitoring: CMV-PCR 每周 × 12周
+      recommendation: D-/R- 者使用阿昔洛韦或伐昔洛韦
+
+  - id: tx-bkv-prophylaxis
+    description: BKV 监测
+    condition:
+      field: transplant.kidney
+      operator: "=="
+      value: true
+    result:
+      screening: BKV-PCR 每月 × 6月，然后每3月 × 1年
+      management: BKV > 10000 copies/mL → 减量免疫抑制剂
+      recommendation: 及时发现可避免BKV肾病导致移植物丢失
+
+  - id: tx-pcp-prophylaxis
+    description: PCP 预防
+    condition:
+      field: transplant.kidney
+      operator: "=="
+      value: true
+    result:
+      treatment: SMZ-TMP 每日1片 × 6-12月
+      recommendation: 磺胺过敏者改用雾化喷他脒或阿托伐醌
+
+---
+rule_type: followup
+department: 肾移植科
+capability: cap-l3-transplant-followup
+business_process: bp-transplant-followup
+data_entities:
+  consumes: [de-patient, de-lab-biochemistry, de-lab-immunology]
+  produces: [de-followup-plan]
+guideline: KDIGO Guideline on Kidney Transplant (2020) / 中华器官移植杂志 (2022)
+stakeholder: 移植科医师需进行长期移植肾功能监测
+version: "1.0.0"
+
+rules:
+  - id: tx-graft-monitoring
+    description: 移植肾功能监测计划
+    condition:
+      field: transplant.status
+      operator: "=="
+      value: functioning
+    result:
+      monitoring:
+        month_1_3: 每周血常规+生化+他克莫司浓度+尿常规
+        month_3_6: 每2周
+        month_6_12: 每月
+        year_2_plus: 每2-3月
+      recommendation: eGFR下降 > 20% → 移植肾超声 + 活检
+
+  - id: tx-cancer-screening
+    description: 移植后肿瘤筛查
+    condition:
+      field: transplant.duration
+      operator: ">="
+      value: 1
+    result:
+      screening:
+        skin: 每年皮肤科检查（鳞癌/基底细胞癌风险升高）
+        cervical: 女性每年巴氏涂片
+        colorectal: 50岁起结肠镜
+        breast: 女性40岁起钼靶
+        PTLD: 高危者（EBV D+/R-）监测EBV-PCR
+      recommendation: 免疫抑制增加恶性肿瘤风险，必须规律筛查

@@ -1,0 +1,46 @@
+# ============================================================
+# Guideline Asset: 中国介入治疗临床指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T2
+# ============================================================
+id: "guideline-cma-interventional-2022"
+name: "中国介入治疗临床指南（2022）"
+abbr: "中华介入 2022"
+version: "2022"
+publisher: "中华医学会放射学分会介入学组"
+journal: "中华介入放射学杂志 2022"
+doi: ""
+language: zh-CN
+trust_level: T2
+
+description: >
+  中国介入治疗临床指南（2022），覆盖血管介入（PCI/PTA/栓塞）、
+  肿瘤介入（TACE/消融/粒子植入）、非血管介入（PTCD/支架）、
+  围介入期管理等核心诊疗环节，提供循证介入治疗规范。
+
+key_sections:
+  - id: "§1"
+    title: "血管介入（PCI/PTA/栓塞）"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [ivr-pci-stemi, ivr-pci-nstemi, ivr-pta-indication, ivr-embolization]
+
+  - id: "§2"
+    title: "肿瘤介入（TACE/消融/粒子）"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [ivr-tace-bclc, ivr-tace-contraindication, ivr-ablation-size, ivr-particle-implant]
+
+  - id: "§3"
+    title: "非血管介入（PTCD/支架）"
+    stage_ids: [S2, S3]
+    rule_ids: [ivr-ptcd-indication, ivr-stent-selection, ivr-enteral-nutrition-tube]
+
+  - id: "§4"
+    title: "围介入期管理"
+    stage_ids: [S3, S4, S5]
+    rule_ids: [ivr-contrast-nephropathy, ivr-post-observation, ivr-anticoagulation, ivr-consent]
+
+rule_sets_covered:
+  - clinical_interventional
+
+derived_rule_count: 12
+last_updated: 2026-07-10

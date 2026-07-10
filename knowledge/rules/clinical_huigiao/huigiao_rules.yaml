@@ -1,0 +1,220 @@
+# 惠侨医疗中心临床规则 — JCI IPSG + 跨文化沟通 + VIP隐私 + 国际保险
+rule_type: compliance
+department: 惠侨医疗中心
+capability: cap-l3-huigiao-compliance
+business_process: bp-huigiao-compliance
+data_entities:
+  consumes: [de-patient, de-admission, de-procedure]
+  produces: [de-compliance-check]
+guideline: 惠侨医疗中心临床指南（2022）
+stakeholder: 确保国际医疗服务符合JCI六大安全目标与跨文化标准
+version: "1.0.0"
+
+rules:
+  - id: hq-jci-ipsg1-patient-id
+    description: JCI IPSG-1 正确识别患者身份（双标识）
+    condition:
+      field: admission.patient_id_verified
+      operator: "=="
+      value: false
+    result:
+      compliance: JCI IPSG-1 未达标
+      severity: 高危（不良事件风险）
+      requirement: 至少两种方式确认患者身份（姓名+出生日期/病历号）
+      scope: 给药/输血/采血/手术前强制核对
+
+  - id: hq-jci-ipsg2-communication
+    description: JCI IPSG-2 有效沟通（危急值闭环）
+    condition:
+      field: lab.critical_value_reported
+      operator: "=="
+      value: false
+    result:
+      compliance: JCI IPSG-2 未达标
+      severity: 高危
+      requirement: 危急值30min内通知+复述确认+记录
+      protocol: 通知人→复述确认→接收人签名→处置记录
+
+  - id: hq-jci-ipsg3-high-alert
+    description: JCI IPSG-3 高警讯药品管理
+    condition:
+      field: medication.is_high_alert
+      operator: "=="
+      value: true
+    result:
+      compliance: JCI IPSG-3 触发
+      requirement: 双人核对 + 独立储存 + 浓度标准化
+      high_alert_list: "胰岛素/肝素/华法林/化疗药/浓电解质"
+
+  - id: hq-jci-ipsg4-surgery
+    description: JCI IPSG-4 确保正确手术
+    condition:
+      field: procedure.requires_timeout
+      operator: "=="
+      value: true
+    result:
+      compliance: JCI IPSG-4 触发
+      requirement: 术前Timeout核对（术式/部位/患者/同意书/影像）
+      checklist: 主刀+麻醉+巡回护士三方确认
+
+  - id: hq-jci-ipsg5-infection
+    description: JCI IPSG-5 手卫生依从性监测
+    condition:
+      field: exam.hand_hygiene_compliance
+      operator: "<"
+      value: 90
+    result:
+      compliance: JCI IPSG-5 未达标
+      severity: 中危
+      target: 手卫生依从性 ≥ 90%
+      monitoring: WHO五个手卫生时刻 + 直接观察法
+      intervention: 培训 + 反馈 + 温馨提示
+
+  - id: hq-jci-ipsg6-fall
+    description: JCI IPSG-6 跌倒风险评估
+    condition:
+      and:
+        - {field: exam.morse_fall_score, operator: ">=", value: 45}
+        - {field: exam.fall_prevention_plan, operator: "==", value: false}
+    result:
+      compliance: JCI IPSG-6 触发
+      severity: 高危
+      requirement: Morse评分≥45 → 跌倒预防计划 + 床头标识 + 高危药物审查
+      monitoring: 每班评估
+
+---
+rule_type: risk_score
+department: 惠侨医疗中心
+capability: cap-l3-huigiao-risk
+business_process: bp-huigiao-risk
+data_entities:
+  consumes: [de-patient, de-admission, de-procedure]
+  produces: [de-risk-assessment]
+guideline: 惠侨医疗中心临床指南（2022）
+stakeholder: 评估跨文化沟通障碍、VIP隐私风险与海外患者特殊需求
+version: "1.0.0"
+
+rules:
+  - id: hq-language-barrier
+    description: 患者首选语言 ≠ 中文 → 需语言翻译服务
+    condition:
+      field: patient.preferred_language
+      operator: "!="
+      value: zh-CN
+    result:
+      risk: 语言沟通障碍
+      severity: 中危
+      recommendation: 院内专职医学翻译或电话口译服务
+      protocol: 知情同意/术前谈话/出院指导必须使用母语or专业口译
+      documentation: 口译员ID + 形式 + 日期记录在病历中
+
+  - id: hq-cultural-assessment
+    description: 跨文化需求评估（饮食/宗教/临终关怀）
+    condition:
+      field: patient.requires_cultural_assessment
+      operator: "=="
+      value: true
+    result:
+      risk: 文化冲突风险
+      severity: 中危
+      assessment_areas: "饮食禁忌（清真/素食等）/ 宗教仪式 / 性别偏好（医患）/ 临终文化偏好"
+      recommendation: 入院24h内完成文化评估并记录
+
+  - id: hq-vip-privacy-breach
+    description: VIP患者 → 隐私保护强化
+    condition:
+      field: patient.vip_level
+      operator: "in"
+      value: ["VIP", "VVIP", "celebrity", "diplomat"]
+    result:
+      risk: 隐私泄露风险
+      severity: 高危
+      measures:
+        - 独立就诊通道/专用电梯
+        - 病历访问权限最小化（仅直接照护团队）
+        - 禁止社交媒体发布
+        - 外宣审批/媒体管理
+      audit: EHR访问日志审计 q1w
+
+  - id: hq-international-insurance-check
+    description: 国际保险 → 预授权确认
+    condition:
+      field: admission.insurance_type
+      operator: "=="
+      value: international
+    result:
+      risk: 自费风险（预授权未完成）
+      severity: 高危
+      recommendation: 入院前完成保险预授权 + 第三方支付担保函（LOG）
+      verification: 保险范围/起付线/共付比例/治疗上限
+      escalation: 保险拒付 → 患者签署自费同意书
+
+---
+rule_type: workflow
+department: 惠侨医疗中心
+capability: cap-l3-huigiao-workflow
+business_process: bp-huigiao-workflow
+data_entities:
+  consumes: [de-patient, de-admission, de-procedure]
+  produces: [de-workflow-plan]
+guideline: 惠侨医疗中心临床指南（2022）
+stakeholder: 协调国际转诊、VIP专属服务与跨文化医疗流程
+version: "1.0.0"
+
+rules:
+  - id: hq-overseas-referral-intake
+    description: 海外转诊患者入院流程
+    condition:
+      field: admission.referral_source
+      operator: "=="
+      value: overseas
+    result:
+      workflow: 海外转诊标准流程
+      step_1: 接收转诊摘要（英文/原语言+翻译）+ 影像DICOM
+      step_2: 多学科会诊（MDT）48h内出具治疗建议
+      step_3: 费用估算 + 保险预授权
+      step_4: 签证协助 + 行程安排 + 接机
+      step_5: 接诊 + 病历翻译 + 本土化诊疗计划
+      coordinator: 国际医疗协调员（case manager）
+
+  - id: hq-concierge-service
+    description: 特需医疗服务礼宾流程
+    condition:
+      field: patient.service_level
+      operator: "=="
+      value: concierge
+    result:
+      workflow: 礼宾服务标准
+      services:
+        - 24h中英双语专属客服
+        - 绿色通道（检查/取药/住院）
+        - 私人病房 + 家属陪护 + 膳食定制
+        - 离院后随访 + 病历翻译 + 国际快递
+      coordinator: 客户关系经理（CRM）
+
+  - id: hq-medical-evacuation
+    description: 国际医疗转运协调
+    condition:
+      field: admission.requires_medevac
+      operator: "=="
+      value: true
+    result:
+      workflow: 国际医疗转运
+      assessment: 航空医学评估（是否适航/所需设备）
+      equipment: 固定翼医疗专机（ICU配置）/商业航班担架位
+      escort: 空中急救医师+护士
+      documentation: 目的地医院接收确认 + 海关医疗设备清单
+      insurance: 转运费用预授权（可达$50k-$150k+）
+
+  - id: hq-informed-consent-i18n
+    description: 多语种知情同意管理
+    condition:
+      field: patient.preferred_language
+      operator: "!="
+      value: zh-CN
+    result:
+      workflow: 多语种知情同意
+      requirement: 知情同意书 → 翻译为患者首选语言版本
+      interpretation: 口译员在场 + 视频同传（备选）
+      documentation: 签署母语版 + 中文版双份存档
+      competency: 口译员需通过医学口译认证（如CCHI/NBCMI）

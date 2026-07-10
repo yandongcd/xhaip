@@ -1,0 +1,193 @@
+# 肾移植科临床规则 — HLA配型 + 免疫抑制 + 排斥反应Banff + 感染预防
+rule_type: diagnosis
+department: 肾移植科
+capability: cap-l3-transplant-diagnosis
+business_process: bp-transplant-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-hla, de-lab-pra, de-lab-renal]
+  produces: [de-diagnosis-result]
+guideline: 中国肾移植临床诊疗指南（2022）
+stakeholder: 移植科医师需评估供受者匹配度与排斥反应类型
+version: "1.0.0"
+
+rules:
+  - id: tx-hla-matching
+    description: HLA-A/B/DR 匹配 ≥ 3/6 → 良好匹配，预后更佳
+    condition:
+      field: lab.hla_match_score
+      operator: ">="
+      value: 3
+    result:
+      diagnosis: HLA良好匹配
+      loci: "A, B, DR（6个抗原位点）"
+      prognosis: 1年存活率 > 95%
+      recommendation: 标准免疫抑制方案
+
+  - id: tx-pra-elevated
+    description: PRA > 20% → 高致敏，需脱敏治疗
+    condition:
+      field: lab.pra_percent
+      operator: ">"
+      value: 20
+    result:
+      diagnosis: 高致敏受者
+      severity: 高危
+      recommendation: 脱敏治疗（IVIG/血浆置换/利妥昔单抗）
+      crossmatch: 补体依赖细胞毒试验+流式交叉配型
+
+  - id: tx-banff-cellular
+    description: 肾活检Banff分型 → 细胞性排斥（≥IA）
+    condition:
+      field: pathology.banff_type
+      operator: "in"
+      value: ["IA", "IB", "IIA", "IIB", "III"]
+    result:
+      diagnosis: 急性细胞性排斥反应
+      severity: 按分型递增
+      recommendation: 甲泼尼龙冲击 500mg/d ×3d
+      refractory: 抗胸腺细胞球蛋白（ATG）
+
+  - id: tx-banff-antibody
+    description: 肾活检Banff分型 + DSA阳性 → 抗体介导排斥
+    condition:
+      and:
+        - {field: pathology.c4d, operator: "==", value: true}
+        - {field: lab.dsa_positive, operator: "==", value: true}
+        - {field: lab.creatinine_rise, operator: ">", value: 30}
+    result:
+      diagnosis: 急性抗体介导排斥反应（AMR）
+      severity: 高危
+      recommendation: 血浆置换 + IVIG + 利妥昔单抗
+      monitoring: DSA MFI + 肾功能 q48h
+
+---
+rule_type: risk_score
+department: 肾移植科
+capability: cap-l3-transplant-risk
+business_process: bp-transplant-risk
+data_entities:
+  consumes: [de-patient, de-lab-renal, de-lab-tdm, de-lab-virus]
+  produces: [de-risk-assessment]
+guideline: KDIGO Clinical Practice Guideline on Kidney Transplant (2020)
+stakeholder: 评估免疫抑制水平、排斥风险与感染风险
+version: "1.0.0"
+
+rules:
+  - id: tx-tacrolimus-trough-range
+    description: 他克莫司血药谷浓度范围评估
+    condition:
+      field: lab.tacrolimus_trough
+      operator: "between"
+      value: [8, 12]
+    result:
+      risk: 治疗窗内（低危）
+      target_range: "术后0-3m: 8-12 ng/mL"
+      adjustment: 维持当前剂量
+      monitoring: 血药浓度 q1-2w
+
+  - id: tx-tacrolimus-trough-low
+    description: 他克莫司谷浓度 < 8 ng/mL → 排斥风险增高
+    condition:
+      field: lab.tacrolimus_trough
+      operator: "<"
+      value: 8
+    result:
+      risk: 免疫抑制不足
+      severity: 中危
+      recommendation: 增加他克莫司剂量并复查
+      target_range: "8-12 ng/mL（术后早期）"
+
+  - id: tx-tacrolimus-trough-high
+    description: 他克莫司谷浓度 > 15 ng/mL → 肾毒性风险
+    condition:
+      field: lab.tacrolimus_trough
+      operator: ">"
+      value: 15
+    result:
+      risk: CNI肾毒性
+      severity: 中危
+      recommendation: 减量25-30% + 监测Scr
+      target_range: "术后>3m: 5-8 ng/mL"
+
+  - id: tx-cmv-risk-high
+    description: CMV D+/R- 血清学 → CMV感染高危
+    condition:
+      and:
+        - {field: lab.cmv_donor_igg, operator: "==", value: true}
+        - {field: lab.cmv_recipient_igg, operator: "==", value: false}
+    result:
+      risk: CMV感染高危
+      severity: 高危
+      prophylaxis: 缬更昔洛韦 900mg qd ×3-6m
+      monitoring: CMV-PCR q1-2w ×12w
+
+  - id: tx-bkv-surveillance
+    description: BKV病毒筛查方案（术后1年内）
+    condition:
+      field: exam.months_post_transplant
+      operator: "<="
+      value: 12
+    result:
+      risk: BKV肾病监测
+      severity: 中危
+      monitoring: 尿液BKV-DNA q1m + 血浆复核
+      threshold: 尿液>10⁷copies/mL → 血浆检测 + 免疫减量
+
+---
+rule_type: treatment
+department: 肾移植科
+capability: cap-l3-transplant-treatment
+business_process: bp-transplant-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-lab-tdm]
+  produces: [de-treatment-plan]
+guideline: 中国肾移植临床诊疗指南（2022）
+stakeholder: 制定免疫抑制方案、排斥治疗与感染预防策略
+version: "1.0.0"
+
+rules:
+  - id: tx-induction-standard
+    description: 标准风险受者 → 巴利昔单抗诱导
+    condition:
+      and:
+        - {field: lab.pra_percent, operator: "<=", value: 20}
+        - {field: exam.retransplant, operator: "==", value: false}
+    result:
+      treatment: 巴利昔单抗 20mg D0+D4 诱导
+      maintenance: "他克莫司 + MMF + 激素（三联方案）"
+      tacrolimus_start: 0.1-0.15 mg/kg/d（分2次）
+      steroid_taper: 甲泼尼龙 500mg D0 → 泼尼松 20mg/d 递减至5mg/d
+
+  - id: tx-induction-high-risk
+    description: 高危受者（PRA>20%或再次移植） → ATG诱导
+    condition:
+      or:
+        - {field: lab.pra_percent, operator: ">", value: 20}
+        - {field: exam.retransplant, operator: "==", value: true}
+    result:
+      treatment: "ATG 1.5 mg/kg/d ×3-5d 诱导"
+      maintenance: "他克莫司 + MMF + 激素（标准强度）"
+      monitoring: 淋巴细胞亚群CD3+计数（目标<50 cells/μL）
+
+  - id: tx-pcp-prophylaxis
+    description: 移植后PCP预防（磺胺 6-12m）
+    condition:
+      field: exam.months_post_transplant
+      operator: "<="
+      value: 6
+    result:
+      treatment: "SMZ-TMP 400/80mg qd ×6m"
+      alternative: 喷他脒雾化（磺胺过敏）
+      indication: UTI发生率显著降低
+
+  - id: tx-steroid-resistant-rejection
+    description: 激素抵抗性排斥 → ATG或血浆置换
+    condition:
+      and:
+        - {field: pathology.rejection_type, operator: "==", value: cellular}
+        - {field: exam.steroid_response, operator: "==", value: false}
+    result:
+      treatment: "ATG 1.5 mg/kg/d ×7-14d"
+      monitoring: 肾功能 + 排斥病理复查 q7d
+      alternative: 血浆置换（如AMR）
+      prognosis: 挽救率约60-80%

@@ -1,0 +1,45 @@
+# ============================================================
+# Guideline Asset: 中国口腔科临床诊疗指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-stomatology-2022"
+name: "中国口腔科临床诊疗指南（2022）"
+abbr: "口腔科指南2022"
+version: "2022"
+publisher: "中华口腔医学会"
+journal: "中华口腔医学杂志 2022;57(1):1-87"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国口腔科临床诊疗指南（2022版），涵盖龋病与牙髓病的分级诊疗、
+  牙周病的系统评估与治疗、口腔颌面外科的手术规范、以及种植牙的适应证
+  与围种植期管理。
+
+key_sections:
+  - id: "§1"
+    title: "龋病/牙髓病 — 分级诊疗"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [sto-caries-pulp]
+
+  - id: "§2"
+    title: "牙周病 — 系统评估与治疗"
+    stage_ids: [S1, S2, S3, S4]
+    rule_ids: [sto-periodontitis]
+
+  - id: "§3"
+    title: "口腔颌面外科 — 手术规范"
+    stage_ids: [S2, S3, S4]
+    rule_ids: [sto-maxillofacial-surgery]
+
+  - id: "§4"
+    title: "种植牙 — 适应证与围种植期管理"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [sto-dental-implant]
+
+rule_sets_covered:
+  - clinical_stomatology
+
+derived_rule_count: 10
+last_updated: 2026-07-10

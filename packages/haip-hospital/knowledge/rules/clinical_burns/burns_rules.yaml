@@ -1,0 +1,206 @@
+# 烧伤整形科临床规则 — 烧伤深度评估 + 液体复苏 + 创面处理 + 瘢痕管理
+rule_type: diagnosis
+department: 烧伤整形科
+capability: cap-l3-burns-diagnosis
+business_process: bp-burns-diagnosis
+data_entities:
+  consumes: [de-patient, de-exam-skin, de-lab-chemistry]
+  produces: [de-diagnosis-result]
+guideline: 中华烧伤杂志 烧伤整形临床诊疗指南 (2021)
+stakeholder: 烧伤科医师需根据烧伤深度和面积制定治疗计划
+version: "1.0.0"
+
+rules:
+  - id: burns-depth-1st
+    description: 表皮烧伤（红斑/干燥/疼痛）→ I度
+    condition:
+      and:
+        - {field: burn.erythema, operator: "==", value: true}
+        - {field: burn.blister, operator: "==", value: false}
+        - {field: burn.sensation, operator: "==", value: painful}
+    result:
+      diagnosis: I度烧伤（表皮层）
+      severity: 轻度
+      recommendation: 冷敷 + 保湿，5-7天愈合
+
+  - id: burns-depth-2nd-superficial
+    description: 水疱/基底红润/剧痛 → 浅II度
+    condition:
+      and:
+        - {field: burn.blister, operator: "==", value: true}
+        - {field: burn.base_color, operator: "==", value: red}
+        - {field: burn.sensation, operator: "==", value: extremely_painful}
+    result:
+      diagnosis: 浅II度烧伤（真皮乳头层）
+      severity: 中度
+      recommendation: 清创 + 抗菌敷料，10-14天愈合
+
+  - id: burns-depth-2nd-deep
+    description: 水疱/基底苍白/痛觉减退 → 深II度
+    condition:
+      and:
+        - {field: burn.blister, operator: "==", value: true}
+        - {field: burn.base_color, operator: "==", value: pale}
+        - {field: burn.sensation, operator: "in", value: [diminished, absent]}
+    result:
+      diagnosis: 深II度烧伤（真皮网状层）
+      severity: 重度
+      recommendation: 削痂+植皮，3-4周愈合，需瘢痕管理
+
+  - id: burns-depth-3rd
+    description: 焦痂/蜡白/无痛 → III度
+    condition:
+      and:
+        - {field: burn.eschar, operator: "==", value: true}
+        - {field: burn.sensation, operator: "==", value: absent}
+    result:
+      diagnosis: III度烧伤（全层皮肤）
+      severity: 极重度
+      recommendation: 早期切痂+植皮，必须手术
+
+  - id: burns-depth-4th
+    description: 焦痂达肌肉/骨骼 → IV度
+    condition:
+      and:
+        - {field: burn.eschar, operator: "==", value: true}
+        - {field: burn.tissue_exposure, operator: "in", value: [muscle, bone, tendon]}
+    result:
+      diagnosis: IV度烧伤（皮下组织）
+      severity: 危重
+      recommendation: 截肢/皮瓣修复，ICU监护
+
+  - id: burns-tbsa-rule9
+    description: 烧伤面积 > 15%TBSA (成人) 或 > 10%TBSA (儿童/老年) → 重度烧伤
+    condition:
+      field: exam.TBSA
+      operator: ">"
+      value: 15
+    result:
+      diagnosis: 重度烧伤（大面积）
+      severity: 高危
+      recommendation: 启动液体复苏 + 转运烧伤中心
+
+  - id: burns-inhalation-injury
+    description: 密闭空间烧伤/面部烧伤/声嘶/碳痰 → 吸入性损伤
+    condition:
+      or:
+        - {field: injury.scene, operator: "==", value: enclosed_space}
+        - {field: injury.facial_burn, operator: "==", value: true}
+        - {field: symptom.hoarseness, operator: "==", value: true}
+        - {field: symptom.carbonaceous_sputum, operator: "==", value: true}
+    result:
+      diagnosis: 吸入性损伤
+      severity: 危重
+      recommendation: 早期气管插管 + 支气管镜评估
+
+---
+rule_type: treatment
+department: 烧伤整形科
+capability: cap-l3-burns-treatment
+business_process: bp-burns-treatment
+data_entities:
+  consumes: [de-patient, de-exam-skin, de-lab-chemistry]
+  produces: [de-treatment-plan]
+guideline: 中华烧伤杂志 烧伤复苏指南 (2020)
+stakeholder: 烧伤科医师需执行液体复苏和创面处理
+version: "1.0.0"
+
+rules:
+  - id: burns-parkland-formula
+    description: Parkland公式 — 烧伤后24h补液量 = 4mL × kg × %TBSA
+    condition:
+      field: exam.TBSA
+      operator: ">="
+      value: 20
+    result:
+      treatment: 晶体液复苏
+      formula: "4mL × 体重(kg) × TBSA(%)"
+      administration: 前8h输注总量的1/2，后16h输注剩余的1/2
+      fluid_type: 乳酸林格液
+      recommendation: 严密监测尿量 (0.5-1.0 mL/kg/h)
+
+  - id: burns-fluid-monitoring
+    description: 尿量 < 0.5 mL/kg/h → 液体复苏不足
+    condition:
+      field: monitoring.urine_output
+      operator: "<"
+      value: 0.5
+    result:
+      alert: 液体复苏不足
+      severity: 高危
+      recommendation: 增加补液速率，排除急性肾损伤
+
+  - id: burns-escharotomy
+    description: 环形III度烧伤 + 肢端缺血 → 焦痂切开
+    condition:
+      and:
+        - {field: burn.depth, operator: "==", value: "3rd"}
+        - {field: burn.circumferential, operator: "==", value: true}
+        - {field: exam.distal_perfusion, operator: "==", value: compromised}
+    result:
+      treatment: 急诊焦痂切开减压术
+      urgency: 紧急（6小时内）
+
+  - id: burns-wound-care
+    description: 深度烧伤 → 创面处理策略
+    condition:
+      field: burn.depth
+      operator: "in"
+      value: ["2nd_deep", "3rd", "4th"]
+    result:
+      treatment: 手术清创 + 植皮
+      timing: 伤后72h内
+      recommendation: 选用自体皮片或生物敷料覆盖
+
+  - id: burns-skin-grafting
+    description: 深II度/III度 → 植皮手术
+    condition:
+      field: burn.depth
+      operator: "in"
+      value: ["2nd_deep", "3rd"]
+    result:
+      treatment: 自体刃厚皮片移植
+      timing: 创面床准备后
+      recommendation: 术后5-7天首次换药评估皮片存活
+
+---
+rule_type: followup
+department: 烧伤整形科
+capability: cap-l3-burns-followup
+business_process: bp-burns-followup
+data_entities:
+  consumes: [de-patient, de-exam-skin]
+  produces: [de-followup-plan]
+guideline: 中华烧伤杂志 瘢痕管理指南 (2020)
+stakeholder: 烧伤科医师需评估瘢痕并指导康复
+version: "1.0.0"
+
+rules:
+  - id: burns-vancouver-scale
+    description: VSS评分 > 8 → 需积极干预
+    condition:
+      field: scar.VSS
+      operator: ">"
+      value: 8
+    result:
+      diagnosis: 增生性瘢痕（重度）
+      severity: 功能影响
+      recommendation: 压力治疗 + 硅酮凝胶 + 激光治疗
+
+  - id: burns-contracture-prevention
+    description: 关节部位烧伤 → 瘢痕挛缩预防
+    condition:
+      field: burn.joint_involved
+      operator: "=="
+      value: true
+    result:
+      recommendation: 体位固定 + 主动/被动关节运动 + 压力衣
+
+  - id: burns-rehabilitation
+    description: 大面积烧伤 → 长期康复计划
+    condition:
+      field: burn.TBSA
+      operator: ">="
+      value: 20
+    result:
+      recommendation: 康复科转诊 + 心理评估 + 职业康复

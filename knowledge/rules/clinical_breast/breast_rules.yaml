@@ -1,0 +1,167 @@
+# 乳腺中心临床规则 — BI-RADS分级 + 分子分型 + 新辅助化疗 + 前哨淋巴结
+rule_type: diagnosis
+department: 乳腺中心
+capability: cap-l3-breast-diagnosis
+business_process: bp-breast-diagnosis
+data_entities:
+  consumes: [de-patient, de-imaging, de-pathology, de-lab-tumor]
+  produces: [de-diagnosis-result]
+guideline: "NCCN Guidelines: Breast Cancer (2023)"
+stakeholder: 乳腺外科医师需根据影像BI-RADS与病理分子分型制定诊疗方案
+version: "1.0.0"
+
+rules:
+  - id: breast-birads-4c-biopsy
+    description: BI-RADS 4C/5 → 空心针穿刺活检
+    condition:
+      or:
+        - {field: imaging.birads, operator: "==", value: "4C"}
+        - {field: imaging.birads, operator: "==", value: "5"}
+    result:
+      diagnosis: 高度可疑恶性
+      severity: 高危
+      recommendation: 空心针穿刺活检（CNB）
+
+  - id: breast-birads-3-followup
+    description: BI-RADS 3 → 短期随访
+    condition:
+      field: imaging.birads
+      operator: "=="
+      value: "3"
+    result:
+      diagnosis: 可能良性
+      severity: 低危
+      recommendation: 6个月后复查钼靶/超声
+
+  - id: breast-luminal-a
+    description: ER+ PR+ HER2- Ki67 < 20% → Luminal A
+    condition:
+      and:
+        - {field: pathology.ER, operator: "==", value: positive}
+        - {field: pathology.PR, operator: "==", value: positive}
+        - {field: pathology.HER2, operator: "==", value: negative}
+        - {field: pathology.Ki67, operator: "<", value: 20}
+    result:
+      diagnosis: Luminal A型乳腺癌
+      molecular_subtype: Luminal A
+      recommendation: 内分泌治疗为主
+
+  - id: breast-tnbc
+    description: ER- PR- HER2- → 三阴性乳腺癌
+    condition:
+      and:
+        - {field: pathology.ER, operator: "==", value: negative}
+        - {field: pathology.PR, operator: "==", value: negative}
+        - {field: pathology.HER2, operator: "==", value: negative}
+    result:
+      diagnosis: 三阴性乳腺癌（TNBC）
+      molecular_subtype: TNBC
+      recommendation: 化疗±免疫治疗
+
+---
+rule_type: risk_score
+department: 乳腺中心
+capability: cap-l3-breast-risk
+business_process: bp-breast-risk
+data_entities:
+  consumes: [de-patient, de-pathology, de-imaging]
+  produces: [de-risk-assessment]
+guideline: 中国乳腺癌诊疗指南（2022）
+stakeholder: 评估新辅助化疗指征与前哨淋巴结活检适用性
+version: "1.0.0"
+
+rules:
+  - id: breast-neoadjuvant-chemo
+    description: HER2+ 或 TNBC + 肿瘤 > 2cm → 新辅助化疗
+    condition:
+      and:
+        - or:
+            - {field: pathology.HER2, operator: "==", value: positive}
+            - and:
+                - {field: pathology.ER, operator: "==", value: negative}
+                - {field: pathology.HER2, operator: "==", value: negative}
+        - {field: imaging.tumor_size_cm, operator: ">", value: 2}
+    result:
+      risk: 需新辅助化疗
+      severity: 中高危
+      recommendation: 新辅助化疗+靶向治疗（HER2+）或化疗±免疫（TNBC）
+      regimen: 根据分子分型选择（AC-THP / TCbP / 铂类）
+
+  - id: breast-neoadjuvant-luminal
+    description: Luminal B (Ki67 ≥ 20%) + 淋巴结阳性 → 新辅助化疗
+    condition:
+      and:
+        - {field: pathology.ER, operator: "==", value: positive}
+        - {field: pathology.Ki67, operator: ">=", value: 20}
+        - {field: exam.axillary_nodes_clinical, operator: "==", value: positive}
+    result:
+      risk: 新辅助化疗获益
+      severity: 中高危
+      recommendation: 新辅助化疗 → 手术 → 辅助内分泌治疗
+
+  - id: breast-slnb-indication
+    description: cN0乳腺癌 → 前哨淋巴结活检
+    condition:
+      and:
+        - {field: exam.axillary_nodes_clinical, operator: "==", value: negative}
+        - {field: imaging.tumor_size_cm, operator: "<=", value: 5}
+    result:
+      risk: 低危（cN0）
+      recommendation: 前哨淋巴结活检（SLNB）
+      exception: cT4d（炎性乳癌）禁忌SLNB
+
+  - id: breast-ki67-high-risk
+    description: Ki67 > 30% → 高危复发
+    condition:
+      field: pathology.Ki67
+      operator: ">"
+      value: 30
+    result:
+      risk: 高危复发
+      severity: 高增殖活性
+      recommendation: 辅助化疗+内分泌治疗
+
+---
+rule_type: treatment
+department: 乳腺中心
+capability: cap-l3-breast-treatment
+business_process: bp-breast-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-imaging]
+  produces: [de-treatment-plan]
+guideline: 中国乳腺癌诊疗指南（2022）
+stakeholder: 根据分期与分子分型选择保乳、全切或重建方案
+version: "1.0.0"
+
+rules:
+  - id: breast-bcs-small-tumor
+    description: 肿瘤 ≤ 3cm + 单发 → 保乳手术
+    condition:
+      and:
+        - {field: imaging.tumor_size_cm, operator: "<=", value: 3}
+        - {field: imaging.multicentric, operator: "==", value: false}
+    result:
+      treatment: 保乳手术 + 前哨淋巴结活检 + 术后放疗
+      surgical_approach: 肿瘤扩大切除（切缘阴性）
+      adjuvant: 全乳放疗
+
+  - id: breast-mastectomy-large
+    description: 肿瘤 > 5cm 或多中心 → 全乳切除
+    condition:
+      or:
+        - {field: imaging.tumor_size_cm, operator: ">", value: 5}
+        - {field: imaging.multicentric, operator: "==", value: true}
+    result:
+      treatment: 全乳切除术 ± 乳房重建
+      surgical_approach: 保留皮肤/乳头全切或改良根治术
+      reconstruction: 一期或二期重建（假体/自体）
+
+  - id: breast-alnd-slnb-positive
+    description: 前哨阳性（宏转移）→ 腋清扫
+    condition:
+      field: pathology.sentinel_node
+      operator: "=="
+      value: macrometastasis
+    result:
+      treatment: 腋窝淋巴结清扫术（ALND）
+      exception: 符合ACOSOG Z0011标准（cT1-2 cN0 + 保乳+放疗 + ≤2枚SLN+）可免ALND

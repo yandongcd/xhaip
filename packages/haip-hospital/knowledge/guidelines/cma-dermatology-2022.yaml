@@ -1,0 +1,45 @@
+# ============================================================
+# Guideline Asset: 中国皮肤科临床诊疗指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-dermatology-2022"
+name: "中国皮肤科临床诊疗指南（2022）"
+abbr: "皮肤科指南2022"
+version: "2022"
+publisher: "中华医学会皮肤性病学分会"
+journal: "中华皮肤科杂志 2022;55(1):1-94"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国皮肤科临床诊疗指南（2022版），涵盖湿疹/特应性皮炎的分级治疗、
+  银屑病的系统管理与生物制剂应用、荨麻疹的急慢性分类处理、
+  以及皮肤感染与肿瘤的筛查管理。
+
+key_sections:
+  - id: "§1"
+    title: "湿疹/特应性皮炎 — 分级治疗"
+    stage_ids: [S1, S2, S3, S4]
+    rule_ids: [derm-eczema, derm-atopic-dermatitis]
+
+  - id: "§2"
+    title: "银屑病 — 系统管理与生物制剂"
+    stage_ids: [S1, S2, S3, S4]
+    rule_ids: [derm-psoriasis]
+
+  - id: "§3"
+    title: "荨麻疹 — 急慢性分类处理"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [derm-urticaria]
+
+  - id: "§4"
+    title: "皮肤感染/肿瘤 — 筛查管理"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [derm-infection, derm-tumor-screening]
+
+rule_sets_covered:
+  - clinical_dermatology
+
+derived_rule_count: 12
+last_updated: 2026-07-10

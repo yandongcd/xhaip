@@ -1,0 +1,202 @@
+# 健康管理科临床规则 — 体检项目 + 慢病筛查 + 肿瘤早筛 + 风险评估
+rule_type: diagnosis
+department: 健康管理科
+capability: cap-l3-health-mgmt-diagnosis
+business_process: bp-health-mgmt-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-routine, de-lab-lipid, de-lab-glucose, de-imaging-us]
+  produces: [de-diagnosis-result]
+guideline: 中国健康管理临床指南（2022）
+stakeholder: 健康管理医师需根据年龄和风险因素制定个体化体检筛查方案
+version: "1.0.0"
+
+rules:
+  - id: hm-age-18-30
+    description: 18-30岁 → 基础体检 + 传染病筛查
+    condition:
+      field: patient.age
+      operator: "between"
+      value: [18, 30]
+    result:
+      screening: 基础体格检查 + 血常规 + 尿常规 + 肝功能 + 乙肝/丙肝/HIV
+      frequency: 每2年1次
+      additional: 有性生活女性 + 宫颈TCT q3y
+
+  - id: hm-age-30-50
+    description: 30-50岁 → 三高筛查 + 肿瘤早筛启动
+    condition:
+      field: patient.age
+      operator: "between"
+      value: [30, 50]
+    result:
+      screening: "基础套餐 + 血脂四项 + 空腹血糖 + HbA1c + 糖耐量试验（高危）"
+      cancer_screening: 女性乳腺超声 q1y + 宫颈TCT+HPV q3-5y
+      frequency: 每年1次
+
+  - id: hm-age-50-plus
+    description: ≥50岁 → 全面筛查（三高+心脑血管+肿瘤+骨密度）
+    condition:
+      field: patient.age
+      operator: ">="
+      value: 50
+    result:
+      screening: "全套生化 + 肿瘤标志物 + 胸部CT + 腹部超声 + 颈动脉超声 + 骨密度"
+      cancer_screening: 肺癌(LDCT) q1y + 结直肠癌(肠镜) q5-10y + 肝癌(AFP+超声) q6m（高危）
+      frequency: 每年1次
+
+  - id: hm-hypertension-screen
+    description: 血压 ≥ 140/90 mmHg → 高血压筛查阳性
+    condition:
+      or:
+        - {field: exam.sbp, operator: ">=", value: 140}
+        - {field: exam.dbp, operator: ">=", value: 90}
+    result:
+      diagnosis: 疑似高血压
+      recommendation: 非同日2次复测 + 动态血压监测
+      target: "血压 < 140/90 mmHg（一般人群）/ < 130/80 mmHg（高危）"
+
+  - id: hm-diabetes-screen
+    description: 空腹血糖 ≥ 7.0 mmol/L 或 HbA1c ≥ 6.5% → 糖尿病
+    condition:
+      or:
+        - {field: lab.fasting_glucose, operator: ">=", value: 7.0}
+        - {field: lab.hba1c, operator: ">=", value: 6.5}
+    result:
+      diagnosis: 糖尿病（新诊断或控制不佳）
+      recommendation: 内分泌科转诊
+      complication_screening: 眼底 + 尿微量白蛋白 + 神经传导
+
+---
+rule_type: risk_score
+department: 健康管理科
+capability: cap-l3-health-mgmt-risk
+business_process: bp-health-mgmt-risk
+data_entities:
+  consumes: [de-patient, de-lab-lipid, de-lab-glucose, de-exam-vitals]
+  produces: [de-risk-assessment]
+guideline: 中国健康管理临床指南（2022）
+stakeholder: 评估CVD风险（Framingham/China-PAR）、糖尿病风险与肿瘤风险分层
+version: "1.0.0"
+
+rules:
+  - id: hm-cvd-high-framingham
+    description: Framingham评分 > 20% → 10年CVD高危
+    condition:
+      field: exam.framingham_risk_10yr
+      operator: ">"
+      value: 20
+    result:
+      risk: 10年心血管事件高危
+      severity: 高危
+      recommendation: 他汀起始 + 血压严格管理 + 阿司匹林预防
+      target: "LDL-C < 1.8 mmol/L"
+
+  - id: hm-cvd-moderate-china-par
+    description: China-PAR 10年风险 10-20% → CVD中危
+    condition:
+      field: exam.china_par_risk_10yr
+      operator: "between"
+      value: [10, 20]
+    result:
+      risk: 10年心血管事件中危
+      severity: 中危
+      recommendation: 生活方式干预 + 血脂监测 q6-12m
+      target: "LDL-C < 2.6 mmol/L"
+
+  - id: hm-diabetes-risk-score
+    description: 糖尿病风险评分 ≥ 25 → 糖尿病高危
+    condition:
+      field: exam.diabetes_risk_score
+      operator: ">="
+      value: 25
+    result:
+      risk: 糖尿病高危
+      severity: 中危
+      recommendation: OGTT 75g + HbA1c + 生活方式干预
+      monitoring: 空腹血糖 q6m
+
+  - id: hm-metabolic-syndrome
+    description: 代谢综合征（≥3项满足ATP III标准）
+    condition:
+      and:
+        - {field: exam.waist_cm, operator: ">=", value: 90}
+        - {field: lab.triglycerides, operator: ">=", value: 1.7}
+        - {field: lab.hdl_c, operator: "<", value: 1.03}
+        - {field: exam.sbp, operator: ">=", value: 130}
+        - {field: lab.fasting_glucose, operator: ">=", value: 5.6}
+    result:
+      risk: 代谢综合征
+      severity: 高危
+      recommendation: 减重（目标5-7%）+ 运动 ≥ 150min/w + 药物干预
+
+---
+rule_type: treatment
+department: 健康管理科
+capability: cap-l3-health-mgmt-treatment
+business_process: bp-health-mgmt-treatment
+data_entities:
+  consumes: [de-risk-assessment, de-diagnosis-result, de-patient]
+  produces: [de-treatment-plan]
+guideline: 中国健康管理临床指南（2022）
+stakeholder: 制定肿瘤筛查计划、生活方式干预方案与健康促进策略
+version: "1.0.0"
+
+rules:
+  - id: hm-cancer-lung-ldct
+    description: 肺癌高危人群（吸烟≥30包年 + 55-74岁） → LDCT筛查
+    condition:
+      and:
+        - {field: patient.age, operator: "between", value: [55, 74]}
+        - {field: exam.smoking_pack_years, operator: ">=", value: 30}
+        - {field: exam.current_smoker_or_quit, operator: "<=", value: 15}
+    result:
+      screening: 低剂量胸部CT（LDCT）q1y
+      indication: "肺癌高危（吸烟≥30包年，55-74岁）"
+      target_population: 符合NLST标准
+      cessation: 同步提供戒烟干预
+
+  - id: hm-cancer-colorectal-scope
+    description: 50-75岁 → 结直肠癌筛查（肠镜 q10y）
+    condition:
+      field: patient.age
+      operator: "between"
+      value: [50, 75]
+    result:
+      screening: 结肠镜 q10y（首选）
+      alternative: 粪便FIT q1y + 乙状结肠镜 q5y
+      positive_result: 结肠镜下息肉切除 + 病理 + 随访间隔缩短
+
+  - id: hm-cancer-breast-mammo
+    description: 女性 40-74岁 → 乳腺X线筛查
+    condition:
+      and:
+        - {field: patient.gender, operator: "==", value: female}
+        - {field: patient.age, operator: "between", value: [40, 74]}
+    result:
+      screening: 乳腺X线摄影（钼靶） q1-2y
+      high_density: 补充乳腺超声
+      high_risk: BRCA突变者 → MRI q1y（自25岁起）
+
+  - id: hm-cancer-cervical
+    description: 女性 25-65岁 → 宫颈癌筛查
+    condition:
+      and:
+        - {field: patient.gender, operator: "==", value: female}
+        - {field: patient.age, operator: "between", value: [25, 65]}
+    result:
+      screening: "TCT q3y 或 TCT+HPV co-test q5y（首选）"
+      vaccination: HPV疫苗 9-45岁（非替代筛查）
+      stop_age: 65岁且既往筛查阴性可停止
+
+  - id: hm-lifestyle-intervention
+    description: 超重/肥胖（BMI ≥ 24） → 生活方式干预
+    condition:
+      field: exam.bmi
+      operator: ">="
+      value: 24
+    result:
+      intervention: 综合生活方式干预
+      diet: DASH饮食或地中海饮食模式
+      exercise: 有氧 150-300 min/w 中等强度
+      weight_loss_target: 初始体重减少 5-10%（6m内）
+      followup: 营养科 + 运动处方 q1-3m

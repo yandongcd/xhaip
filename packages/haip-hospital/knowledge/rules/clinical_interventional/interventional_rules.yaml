@@ -1,0 +1,148 @@
+# 介入治疗科临床规则 — PCI/TACE/PTCD + 并发症预防 + 围介入期管理
+rule_type: diagnosis
+department: 介入治疗科
+capability: cap-l3-interventional-diagnosis
+business_process: bp-interventional-diagnosis
+data_entities:
+  consumes: [de-patient, de-imaging, de-lab-biochemistry, de-lab-tumor, de-ecg]
+  produces: [de-diagnosis-result]
+guideline: 中华介入放射学杂志 介入治疗临床指南 (2022)
+stakeholder: 介入科医师需评估介入适应证与手术风险
+version: "1.0.0"
+
+rules:
+  - id: interv-pci-indication
+    description: PCI 适应证评估（STEMI/NSTEMI）
+    condition:
+      or:
+        - {field: diagnosis.acs_type, operator: "==", value: "STEMI"}
+        - {field: diagnosis.acs_type, operator: "==", value: "NSTEMI"}
+    result:
+      urgency:
+        STEMI: 急诊PCI（门球时间 < 90min）
+        NSTEMI_high_risk: 早期PCI（< 24h）
+        NSTEMI_low_risk: 择期PCI
+      recommendation: STEMI首选直接PCI，如无法及时实施则先溶栓
+
+  - id: interv-tace-selection
+    description: TACE 患者选择（BCLC分期）
+    condition:
+      and:
+        - {field: diagnosis.hcc, operator: "==", value: true}
+        - {field: staging.bclc, operator: "==", value: "B"}
+        - {field: liver_function.child_pugh, operator: "in", value: ["A", "B7"]}
+    result:
+      treatment: TACE适应证
+      recommendation: 肝功能Child-Pugh C 或门静脉主干癌栓为禁忌
+
+  - id: interv-dsa-evaluation
+    description: DSA 血管造影评估
+    condition:
+      field: imaging.dsa_indicated
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 需血管造影明确病变
+      recommendation: 术前评估肾功（造影剂肾病风险）
+
+---
+rule_type: treatment
+department: 介入治疗科
+capability: cap-l3-interventional-treatment
+business_process: bp-interventional-treatment
+data_entities:
+  consumes: [de-patient, de-lab-biochemistry, de-imaging]
+  produces: [de-treatment-plan]
+guideline: 中华介入放射学杂志 介入手术操作规范 (2023)
+stakeholder: 介入科医师需执行安全有效的介入操作
+version: "1.0.0"
+
+rules:
+  - id: interv-contrast-nephropathy
+    description: 造影剂肾病（CIN）预防
+    condition:
+      field: lab_results.Cr
+      operator: ">"
+      value: 132
+    result:
+      risk: 造影剂肾病高风险
+      prevention:
+        - 术前12h → 术后24h：等渗盐水水化（1 mL/kg/h）
+        - 口服NAC 1200mg bid（术前1天至术后2天）
+        - 暂停二甲双胍（术前48h至术后48h）
+        - 减少造影剂用量（< 100mL）
+      recommendation: 术后48-72h复查Cr
+
+  - id: interv-post-pci-dapt
+    description: PCI术后双联抗血小板治疗（DAPT）
+    condition:
+      field: procedure.pci_stent
+      operator: "=="
+      value: implanted
+    result:
+      treatment:
+        stable_cad: 阿司匹林 + 氯吡格雷 × 6月
+        acs: 阿司匹林 + 替格瑞洛/氯吡格雷 × 12月
+        high_bleeding_risk: 可缩短至1-3月
+      recommendation: 根据DAPT评分个体化调整
+
+  - id: interv-rfa-mwa
+    description: 射频消融/微波消融适应证
+    condition:
+      and:
+        - {field: tumor.size, operator: "<=", value: 3}
+        - {field: tumor.count, operator: "<=", value: 3}
+        - {field: tumor.extrahepatic, operator: "==", value: false}
+    result:
+      treatment: RFA/MWA消融治疗
+      recommendation: 单发 < 3cm 肝肿瘤首选消融，可达到根治效果
+
+  - id: interv-ptcd
+    description: PTCD 适应证
+    condition:
+      field: lab_results.TBil
+      operator: ">"
+      value: 50
+    result:
+      treatment: PTCD 经皮肝穿刺胆道引流
+      indication: 梗阻性黄疸（恶性/良性）
+      recommendation: ERCP失败或禁忌时选择PTCD
+
+---
+rule_type: followup
+department: 介入治疗科
+capability: cap-l3-interventional-followup
+business_process: bp-interventional-followup
+data_entities:
+  consumes: [de-patient, de-imaging, de-lab-biochemistry]
+  produces: [de-followup-plan]
+guideline: 中华介入放射学杂志 介入术后随访指南 (2022)
+stakeholder: 介入科医师需监测术后并发症和远期疗效
+version: "1.0.0"
+
+rules:
+  - id: interv-post-procedure-observation
+    description: 介入术后即刻观察
+    condition:
+      field: procedure.interventional
+      operator: "=="
+      value: completed
+    result:
+      monitoring:
+        - 穿刺点压迫止血（10-15min）+ 加压包扎
+        - 制动：股动脉穿刺6-8h，桡动脉穿刺2-4h
+        - 生命体征 q1h × 4 然后 q4h × 24h
+        - 远端脉搏/皮温/颜色监测
+      recommendation: 发现血肿/假性动脉瘤→ 超声评估
+
+  - id: interv-stent-restenosis
+    description: 支架再狭窄监测
+    condition:
+      field: procedure.coronary_stent
+      operator: "=="
+      value: implanted
+    result:
+      monitoring:
+        - 术后6-12月冠脉CTA或造影复查
+        - 症状复发（心绞痛）→ 立即检查
+      recommendation: DES再狭窄率 < 5-10%，规律DAPT可降低风险

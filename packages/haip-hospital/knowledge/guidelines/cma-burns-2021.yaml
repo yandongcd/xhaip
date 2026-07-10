@@ -1,0 +1,45 @@
+# ============================================================
+# Guideline Asset: 中国烧伤整形临床诊疗指南（2021）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-burns-2021"
+name: "中国烧伤整形临床诊疗指南（2021）"
+abbr: "烧伤整形指南2021"
+version: "2021"
+publisher: "中华医学会烧伤外科学分会"
+journal: "中华烧伤杂志 2021;37(1):1-88"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国烧伤整形临床诊疗指南（2021版），涵盖烧伤深度评估的三度四分法体系、
+  液体复苏的Parkland公式（4mL×kg×%TBSA）、创面处理与感染防控策略、
+  以及瘢痕管理与功能康复方案。
+
+key_sections:
+  - id: "§1"
+    title: "烧伤深度评估 — 三度四分法"
+    stage_ids: [S1, S2]
+    rule_ids: [burns-depth-assessment, burns-tbsa-rule9, burns-inhalation-injury]
+
+  - id: "§2"
+    title: "液体复苏 — Parkland公式与监测"
+    stage_ids: [S2, S3]
+    rule_ids: [burns-parkland-formula, burns-fluid-monitoring, burns-escharotomy]
+
+  - id: "§3"
+    title: "创面处理 — 清创/植皮/负压"
+    stage_ids: [S3, S4]
+    rule_ids: [burns-wound-care, burns-skin-grafting]
+
+  - id: "§4"
+    title: "瘢痕管理 — 评估与干预"
+    stage_ids: [S4, S5]
+    rule_ids: [burns-vancouver-scale, burns-contracture-prevention, burns-rehabilitation]
+
+rule_sets_covered:
+  - clinical_burns
+
+derived_rule_count: 15
+last_updated: 2026-07-10

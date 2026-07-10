@@ -1,0 +1,45 @@
+# ============================================================
+# Guideline Asset: 中国耳鼻喉科临床诊疗指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-ent-2022"
+name: "中国耳鼻喉科临床诊疗指南（2022）"
+abbr: "耳鼻喉科指南2022"
+version: "2022"
+publisher: "中华医学会耳鼻咽喉头颈外科学分会"
+journal: "中华耳鼻咽喉头颈外科杂志 2022;57(1):1-92"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国耳鼻喉科临床诊疗指南（2022版），涵盖听力障碍的筛查与中耳炎分级治疗、
+  鼻炎与鼻窦炎的综合管理（药物/手术/免疫）、扁桃体与腺样体手术指征、
+  以及头颈肿瘤的早期筛查与多学科治疗。
+
+key_sections:
+  - id: "§1"
+    title: "听力障碍/中耳炎 — 筛查与分级治疗"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [ent-hearing-loss, ent-otitis-media]
+
+  - id: "§2"
+    title: "鼻炎/鼻窦炎 — 药物/手术/免疫"
+    stage_ids: [S1, S2, S3, S4]
+    rule_ids: [ent-rhinitis, ent-sinusitis]
+
+  - id: "§3"
+    title: "扁桃体/腺样体 — 手术指征"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [ent-tonsil-adenoid]
+
+  - id: "§4"
+    title: "头颈肿瘤 — 早期筛查与多学科治疗"
+    stage_ids: [S1, S2, S3, S4]
+    rule_ids: [ent-head-neck-tumor]
+
+rule_sets_covered:
+  - clinical_ent
+
+derived_rule_count: 11
+last_updated: 2026-07-10

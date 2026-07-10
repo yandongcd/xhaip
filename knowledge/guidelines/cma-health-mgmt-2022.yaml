@@ -1,0 +1,46 @@
+# ============================================================
+# Guideline Asset: 中国健康管理临床指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T2
+# ============================================================
+id: "guideline-cma-health-mgmt-2022"
+name: "中国健康管理临床指南（2022）"
+abbr: "中华健康管理 2022"
+version: "2022"
+publisher: "中华医学会健康管理学分会"
+journal: "中华健康管理学杂志 2022"
+doi: ""
+language: zh-CN
+trust_level: T2
+
+description: >
+  中国健康管理临床指南（2022），覆盖健康体检基本项目设定、
+  慢性病筛查（四高+肿瘤早筛）、心血管与代谢风险评估、
+  生活方式干预与健康促进等核心环节，提供标准化健康管理路径。
+
+key_sections:
+  - id: "§1"
+    title: "健康体检基本项目"
+    stage_ids: [S1, S2]
+    rule_ids: [hm-age-screening, hm-basic-lab-panel, hm-imaging-screening]
+
+  - id: "§2"
+    title: "慢病筛查（四高+肿瘤）"
+    stage_ids: [S2, S3]
+    rule_ids: [hm-cvd-risk-framingham, hm-cvd-risk-china-par, hm-diabetes-risk, hm-hypertension-screen, hm-dyslipidemia-screen]
+
+  - id: "§3"
+    title: "风险评估"
+    stage_ids: [S3, S4]
+    rule_ids: [hm-cancer-lung, hm-cancer-liver, hm-cancer-colorectal, hm-cancer-breast, hm-cancer-cervical]
+
+  - id: "§4"
+    title: "生活方式干预"
+    stage_ids: [S4, S5]
+    rule_ids: [hm-lifestyle-intervention, hm-nutrition-guidance, hm-exercise-prescription]
+
+rule_sets_covered:
+  - clinical_health_mgmt
+
+derived_rule_count: 16
+last_updated: 2026-07-10

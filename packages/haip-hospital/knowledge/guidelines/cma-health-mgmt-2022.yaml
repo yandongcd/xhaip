@@ -1,0 +1,45 @@
+# ============================================================
+# Guideline Asset: 中国健康管理临床指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-health-mgmt-2022"
+name: "中国健康管理临床指南（2022）"
+abbr: "健康管理指南2022"
+version: "2022"
+publisher: "中华医学会健康管理学分会"
+journal: "中华健康管理学杂志 2022;16(1):1-72"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国健康管理临床指南（2022版），涵盖健康体检基本项目的制定标准、
+  慢性病筛查（四高+肿瘤早筛）、健康风险评估模型（CVD/糖尿病/癌症）、
+  以及生活方式干预（饮食/运动/戒烟）与疫苗接种推荐。
+
+key_sections:
+  - id: "§1"
+    title: "健康体检基本项目 — 年龄分层检查"
+    stage_ids: [S1]
+    rule_ids: [hm-checkup-items, hm-bmi-waist-classification, hm-metabolic-syndrome]
+
+  - id: "§2"
+    title: "慢病筛查 — 四高+肿瘤早筛"
+    stage_ids: [S1, S2]
+    rule_ids: [hm-cvd-risk, hm-diabetes-risk, hm-cancer-screening]
+
+  - id: "§3"
+    title: "风险评估 — CVD/糖尿病/癌症"
+    stage_ids: [S2, S3]
+    rule_ids: [hm-cvd-risk, hm-diabetes-risk]
+
+  - id: "§4"
+    title: "生活方式干预 — 饮食/运动/戒烟"
+    stage_ids: [S3, S4]
+    rule_ids: [hm-lifestyle-intervention, hm-vaccination-schedule]
+
+rule_sets_covered:
+  - clinical_health_mgmt
+
+derived_rule_count: 16
+last_updated: 2026-07-10

@@ -1,48 +1,427 @@
-# 康复医学科临床规则 — 功能评估 + 风险筛查 + 多模态康复治疗
+# 康复医学科临床规则 — Brunnstrom 分期 + Barthel ADL + FIM + 早期活动 + DVT 预防
 rule_type: diagnosis
 department: 康复医学科
 capability: cap-l3-rehabilitation-diagnosis
 business_process: bp-rehabilitation-diagnosis
 data_entities:
-  consumes: [de-patient, de-assessment-rehab, de-assessment-swallow]
-  produces: [de-diagnosis-result]
-guideline: 中国康复医学指南 (2022)
-stakeholder: 康复医师需评估功能缺损程度并制定康复计划
+  consumes:
+    - de-patient
+    - de-assessment-rehab
+    - de-assessment-swallow
+    - de-assessment-speech
+    - de-vitals
+  produces:
+    - de-diagnosis-result
+guideline: 中国康复医学临床诊疗指南（2022）
+stakeholder: 康复医师评估功能缺损程度与恢复阶段，制定康复处方
 version: "1.0.0"
 
 rules:
-  - id: rehab-barthel-intervention
-    description: Barthel 指数 < 40 → 康复介入
+  - id: rehab-brunnstrom-stage
+    description: Brunnstrom 偏瘫六阶段评估
     condition:
-      field: assessment.Barthel_index
+      field: diagnosis
+      operator: contains
+      value: 脑卒中
+    result:
+      assessment: Brunnstrom 偏瘫恢复分期
+      stages:
+        - stage: Ⅰ; name: 弛缓期; feature: 无随意运动; upper: 软瘫; hand: 软瘫; lower: 软瘫
+        - stage: Ⅱ; name: 痉挛期; feature: 出现联合反应/轻度痉挛; upper: 联合反应; hand: 轻微屈指; lower: 轻微联合反应
+        - stage: Ⅲ; name: 共同运动期; feature: 痉挛显著; upper: 屈肌/伸肌共同运动; hand: 集团屈曲; lower: 伸肌共同运动
+        - stage: Ⅳ; name: 部分分离运动; feature: 痉挛减弱; upper: 手可触腰; hand: 侧捏/小范围伸展; lower: 可屈膝 > 90°坐位
+        - stage: Ⅴ; name: 分离运动期; feature: 痉挛轻微; upper: 肩外展/前屈; hand: 对指/圆柱状抓握; lower: 立位伸髋伴屈膝
+        - stage: Ⅵ; name: 近正常; feature: 各关节独立活动; upper: 接近正常; hand: 精细活动; lower: 正常
+
+  - id: rehab-stroke-early-mobilization
+    description: 卒中后早期活动启动标准
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 脑卒中
+    result:
+      treatment: 早期活动方案
+      criteria:
+        - 生命体征稳定（BP < 180/100mmHg, HR < 120）
+        - 无神经功能恶化 > 24h
+        - 无活动性出血
+      protocol:
+        - 48h 内: 床上被动关节活动度训练 + 良肢位摆放
+        - 48-72h: 床上主动辅助运动 + 桥式运动
+        - 72h+: 坐位平衡训练 + 床椅转移
+        - 1 周内: 立位训练 + 步行前准备
+      contraindications:
+        - 颅内压增高
+        - 活动性溶栓后（24h 内严格卧床）
+        - 不稳定心血管状态
+
+  - id: rehab-stroke-spasticity
+    description: 卒中后痉挛评估与管理
+    condition:
+      field: brunnstrom_stage
+      operator: in
+      value: [Ⅱ, Ⅲ]
+    result:
+      assessment: MAS 改良 Ashworth 痉挛评定
+      grading:
+        - grade: 0; description: 无肌张力增加
+        - grade: 1; description: 轻度增加—卡住释放时轻微阻力
+        - grade: 1+; description: 轻度增加—ROM 后半部分轻微阻力
+        - grade: 2; description: 中度增加—大部分 ROM 有阻力
+        - grade: 3; description: 显著增加—被动活动困难
+        - grade: 4; description: 僵直—不能活动
+      management:
+        - 良肢位摆放 + 持续牵伸
+        - 肉毒毒素注射（MAS ≥ 2）
+        - 口服巴氯芬/替扎尼定（全身痉挛时）
+
+  - id: rehab-sci-asia
+    description: ASIA 脊髓损伤神经学分类
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 脊髓损伤
+    result:
+      assessment: ASIA 残损分级
+      grades:
+        - grade: A; description: 完全性损伤—骶段 S4-S5 无任何感觉或运动功能保留
+        - grade: B; description: 不完全性—神经平面以下包括骶段有感觉但无运动功能
+        - grade: C; description: 不完全性—神经平面以下有运动功能，且平面以下一半以上关键肌肌力 < 3 级
+        - grade: D; description: 不完全性—神经平面以下有运动功能，且平面以下至少一半关键肌肌力 ≥ 3 级
+        - grade: E; description: 正常—所有节段感觉和运动功能正常
+
+  - id: rehab-sci-level
+    description: 脊髓损伤神经平面确定
+    condition:
+      field: asia_grade
+      operator: not_null
+      value: true
+    result:
+      assessment:
+        - 运动平面：双侧关键肌肌力 ≥ 3 级的最低节段（上一节段肌力 = 5 级）
+        - 感觉平面：双侧针刺觉与轻触觉正常的最低皮节
+        - 神经损伤平面（NLI）：运动与感觉平面中最低的正常节段
+        - 完全与不完全分类：基于 S4-S5 感觉与肛门收缩
+
+  - id: rehab-sci-complete
+    description: ASIA A 完全性损伤康复目标
+    condition:
+      field: asia_grade
+      operator: equals
+      value: A
+    result:
+      treatment: 完全性 SCI 康复方案
+      goals:
+        - C1-C4: 呼吸机依赖管理 + 电动轮椅 + 环境控制系统
+        - C5: 辅助下进食/洗漱 + 电动轮椅 + 手动操作
+        - C6: 独立驱动轮椅 + 辅助转移 + 部分 ADL 独立
+        - C7-C8: 独立转移 + 大部分 ADL 独立 + 手动轮椅
+        - T1-T9: 独立轮椅生活 + 全部 ADL 独立
+        - T10-L2: 治疗性站立 + 支具辅助步行（室内）
+        - L3-S5: 社区功能性步行 + 矫形器 + 拐杖
+
+  - id: rehab-barthel-scoring
+    description: Barthel ADL 指数评定
+    condition:
+      field: assessment_type
+      operator: equals
+      value: ADL
+    result:
+      assessment: Barthel 指数（100 分制）
+      items:
+        - item: 进食; scores: "10(独立)/5(部分帮助)/0(依赖)"
+        - item: 洗澡; scores: "5(独立)/0(依赖)"
+        - item: 修饰; scores: "5(独立)/0(依赖)"
+        - item: 穿衣; scores: "10(独立)/5(部分帮助)/0(依赖)"
+        - item: 大便控制; scores: "10(自控)/5(偶尔失禁)/0(失禁)"
+        - item: 小便控制; scores: "10(自控)/5(偶尔失禁)/0(失禁)"
+        - item: 如厕; scores: "10(独立)/5(部分帮助)/0(依赖)"
+        - item: 床椅转移; scores: "15(独立)/10(少量帮助)/5(大量帮助)/0(依赖)"
+        - item: 平地行走; scores: "15(独立)/10(少量帮助)/5(轮椅独立)/0(不能)"
+        - item: 上下楼梯; scores: "10(独立)/5(部分帮助)/0(不能)"
+      grading:
+        - range: "0-20"; label: 极严重功能缺陷
+        - range: "21-40"; label: 严重功能缺陷
+        - range: "41-60"; label: 中度功能缺陷
+        - range: "61-99"; label: 轻度功能缺陷
+        - range: "100"; label: 完全独立
+
+  - id: rehab-barthel-intervention
+    description: Barthel < 40 分 → 住院康复
+    condition:
+      field: barthel_score
       operator: "<"
       value: 40
     result:
-      diagnosis: 重度日常生活活动依赖
-      severity: 需康复干预
-      recommendation: 住院康复 + 多学科团队评估
+      diagnosis: 重度 ADL 依赖
+      severity: 严重功能缺陷
+      recommendation: 住院康复 + 多学科团队评估 + 强化康复治疗
 
-  - id: rehab-muscle-strength-passive
-    description: 徒手肌力 ≤ 3 级 → 被动训练
+  - id: rehab-fim-scoring
+    description: FIM 功能独立性评定量表
     condition:
-      field: assessment.MMT_grade
-      operator: "<="
-      value: 3
+      field: assessment_type
+      operator: equals
+      value: FIM
     result:
-      diagnosis: 肌力减退
-      severity: 需辅助训练
-      recommendation: 被动关节活动度训练 + 神经肌肉电刺激
+      assessment: FIM 功能独立性评定（18 项 / 126 分）
+      domains:
+        - domain: 运动功能（13 项，91 分）; items:
+          - 自我照料（6 项）：进食/梳洗/洗澡/穿上衣/穿裤/如厕
+          - 括约肌控制（2 项）：膀胱管理/直肠管理
+          - 转移（3 项）：床椅/如厕/浴盆淋浴
+          - 行走（2 项）：步行轮椅/上下楼梯
+        - domain: 认知功能（5 项，35 分）; items:
+          - 交流（2 项）：理解/表达
+          - 社会认知（3 项）：社会交往/问题解决/记忆
+      scoring_per_item: "7(完全独立)-6(改良独立)-5(监促)-4(少量帮助)-3(中度帮助)-2(最大帮助)-1(完全依赖)"
+      grading:
+        - range: "18-36"; label: 完全依赖
+        - range: "37-72"; label: 重度依赖
+        - range: "73-90"; label: 中度依赖
+        - range: "91-107"; label: 轻度依赖
+        - range: "108-125"; label: 基本独立
+        - range: "126"; label: 完全独立
 
-  - id: rehab-dysphagia-ng
-    description: 吞咽障碍 → 鼻饲
+  - id: rehab-adl-intervention
+    description: 康复介入阈值 — ADL 功能水平
     condition:
-      field: assessment.dysphagia
-      operator: "=="
+      field: fim_score
+      operator: "<"
+      value: 73
+    result:
+      diagnosis: 重度功能依赖
+      recommendation: 住院康复（IRF）+ 每日 ≥ 3 小时康复治疗 + 多学科团队
+      team:
+        - 康复医师
+        - 物理治疗师
+        - 作业治疗师
+        - 言语治疗师
+        - 康复护士
+        - 社工/心理咨询师
+
+  - id: rehab-arthroplasty-protocol
+    description: 关节置换术后康复方案
+    condition:
+      and:
+        - field: surgery_type
+          operator: in
+          value: [髋关节置换, 膝关节置换]
+        - field: postop_day
+          operator: "<="
+          value: 1
+    result:
+      treatment: 关节置换术后康复路径
+      phases:
+        - phase: 术后第 1 天; day: 1; goal: 床上踝泵 + 股四头肌等长收缩 + CPM 起始 0-40°; 禁忌深蹲/盘腿
+        - phase: 术后第 2-3 天; day: 3; goal: 坐位 + 床旁立位 + 步行器短距行走（30m）; 髋:外展 10°/后伸 10° 起始
+        - phase: 术后 1 周; day: 7; goal: 独立步行器行走 100m + 上下 2 级台阶 + ADL 部分独立; 髋 ROM: 屈 90°/外展 25°
+        - phase: 术后 2-4 周; day: 28; goal: 弃步行器改手杖 + 社区步行 500m + ADL 独立; 髋: 屈 110° 达目标
+        - phase: 术后 6 周; day: 42; goal: 回归日常生活 + 低强度运动（骑固定自行车/游泳）
+      precautions_hip:
+        - 髋关节后方入路：屈髋 < 90°、内收不超中线、内旋 < 20°（后脱位预防）
+        - 髋关节前入路：避免过伸 + 外旋 + 内收（前脱位预防）
+
+  - id: rehab-fracture-rehab
+    description: 骨折后康复方案
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 骨折
+    result:
+      treatment: 骨折康复分期方案
+      phases:
+        - phase: 固定期; goal: 制动关节上下的等长肌力训练 + 未伤肢体活动; weeks: "按骨折类型"
+        - phase: 愈合期; goal: 主动 ROM 渐进训练 + 协助下负重; criteria: 影像学骨痂形成
+        - phase: 恢复期; goal: 抗阻训练 + 全面负重 + 本体感觉训练; criteria: 临床愈合
+
+  - id: rehab-weight-bearing
+    description: 骨折后负重分级
+    condition:
+      field: weight_bearing_order
+      operator: not_null
       value: true
     result:
-      diagnosis: 吞咽功能障碍
-      severity: 高危
-      recommendation: 鼻饲管营养 + 言语治疗师吞咽训练
+      treatment: 负重分级
+      levels:
+        - grade: NWB（Non-Weight-Bearing）; description: 完全不承重; force: 0% 体重
+        - grade: TTWB（Toe-Touch Weight-Bearing）; description: 足尖触地; force: 10% 体重
+        - grade: PWB（Partial Weight-Bearing）; description: 部分负重; force: 25-50% 体重
+        - grade: WBAT（Weight-Bearing As Tolerated）; description: 耐受性负重; force: 50-100% 体重
+        - grade: FWB（Full Weight-Bearing）; description: 完全负重; force: 100% 体重
+
+  - id: rehab-cardiac-phase
+    description: 心脏康复分期方案
+    condition:
+      and:
+        - field: diagnosis
+          operator: contains
+          value: 心梗
+        - field: diagnosis
+          operator: not_contains
+          value: 休克
+    result:
+      treatment: 心脏康复分期
+      phases:
+        - phase: Ⅰ 期（住院期）; duration: 住院期间; activities: 床上被动活动 → 坐位 → 室内步行; bp_hr_limit: HR < 静息+20; RPE ≤ 13
+        - phase: Ⅱ 期（早期恢复）; duration: 出院后 3-6 月; activities: 监护下有氧运动 30-60min/次 3-5 次/周; intensity: 40-80% HRR
+        - phase: Ⅲ 期（长期维持）; duration: 持续; activities: 社区/居家自主运动 + 危险因素控制
+
+  - id: rehab-pulmonary-rehab
+    description: 肺康复方案
+    condition:
+      and:
+        - field: diagnosis
+          operator: in
+          value: [COPD, 慢阻肺]
+        - field: fev1_percent
+          operator: "<"
+          value: 80
+    result:
+      treatment: 肺康复综合方案
+      components:
+        - 运动训练：有氧（步行/踏车）+ 抗阻（上下肢）; frequency: 3-5 次/周; duration: 8-12 周
+        - 呼吸训练：腹式呼吸 + 缩唇呼吸
+        - 呼吸肌训练：吸气肌训练 30% MIP
+        - 健康教育：药物使用/氧疗/急性加重识别
+        - 营养支持：BMI < 21 时补充
+        - 心理支持：焦虑/抑郁筛查
+
+  - id: rehab-exercise-prescription
+    description: FITT 运动处方原则
+    condition:
+      field: prescription_type
+      operator: equals
+      value: exercise
+    result:
+      treatment: 运动处方（FITT-VP）
+      parameters:
+        - F（Frequency）频率: 有氧 3-5 次/周；抗阻 2-3 次/周；柔韧 2-3 次/周
+        - I（Intensity）强度: 有氧 40-80% HRR/RPE 11-16；抗阻 40-80% 1RM
+        - T（Time）时间: 有氧 20-60min/次；抗阻 8-12RM × 2-4 组
+        - T（Type）类型: 有氧（步行/骑车/游泳）；抗阻（弹力带/器械）；柔韧（牵伸/Yoga）
+        - V（Volume）总量: ≥ 500-1000 MET-min/周
+        - P（Progression）进阶: 每 4-6 周调整
+
+  - id: rehab-dysphagia-vfss
+    description: VFSS 电视荧光吞咽造影评估
+    condition:
+      field: dysphagia
+      operator: equals
+      value: true
+    result:
+      assessment: VFSS 吞咽障碍评估
+      phases:
+        - 口腔期：唇闭合/咀嚼/食团形成/舌推动
+        - 咽期：吞咽启动时间/喉上抬/会厌反转/咽缩肌收缩
+        - 食管期：食管上括约肌开放/蠕动
+      aspiration_penetration_scale:
+        - score: 1; description: 造影剂未进入气道
+        - score: 2-3; description: 造影剂进入气道—声带以上（穿透）
+        - score: 4-5; description: 造影剂进入气道—声带或声带以下（渗透/误吸）
+        - score: 6-7; description: 造影剂进入气道—无咳嗽/无清除（静默性误吸）
+        - score: 8; description: 造影剂进入气道—无声门下残留
+
+  - id: rehab-aphasia-assessment
+    description: 失语症评估与分类
+    condition:
+      field: aphasia
+      operator: equals
+      value: true
+    result:
+      assessment: 失语症分类
+      types:
+        - type: Broca 失语（表达性）; fluency: 非流利; comprehension: 相对保留; repetition: 受损; naming: 受损
+        - type: Wernicke 失语（感觉性）; fluency: 流利; comprehension: 严重受损; repetition: 受损; naming: 受损
+        - type: 完全性失语; fluency: 非流利; comprehension: 严重受损; repetition: 严重受损; naming: 严重受损
+        - type: 传导性失语; fluency: 流利; comprehension: 相对保留; repetition: 严重受损; naming: 受损
+        - type: 命名性失语; fluency: 流利; comprehension: 保留; repetition: 保留; naming: 严重受损
+      assessment_tools: WAB（西方失语成套测验） / BDAE（波士顿诊断性失语检查）
+
+  - id: rehab-speech-therapy
+    description: 言语治疗 — 吞咽功能训练
+    condition:
+      field: dysphagia_severity
+      operator: in
+      value: [moderate, severe]
+    result:
+      treatment: 吞咽功能康复训练
+      techniques:
+        - 口腔运动训练：唇/舌/下颌运动 + 口腔感觉刺激（冰刺激）
+        - 吞咽手法：用力吞咽 / Mendelsohn 手法 / 声门上吞咽
+        - 气道保护：转头吞咽（单侧咽麻痹）/ Chin-tuck（咽期延迟）
+        - 食物性状调整：
+          - 重度：鼻饲 + 禁经口
+          - 中度：糊状/蜂蜜状（IDDSI 3-4）
+          - 轻度：软食 + 细碎固体（IDDSI 5-6）
+      frequency: 每日 1 次，每次 30-45min
+      contraindications: 静默性误吸（PAS ≥ 7）— 禁止经口进食
+
+  - id: rehab-early-mobilization
+    description: 早期活动启动标准与方案
+    condition:
+      field: patient_type
+      operator: in
+      value: [stroke, post_surgery, icu]
+    result:
+      treatment: 早期活动标准化方案
+      readiness_criteria:
+        - 心血管稳定：MAP ≥ 60mmHg 且 ≤ 110mmHg
+        - 呼吸稳定：SpO₂ ≥ 90%（吸氧下）; RR ≤ 30
+        - 神经稳定：ICP < 20mmHg（如监测）; 无恶化
+        - 可唤醒：RASS ≥ -3（可睁眼/遵嘱）
+      progression:
+        - level_1: 床头抬高 ≥ 30° + 被动 ROM
+        - level_2: 坐于床沿（需要支持）+ 主动 ROM
+        - level_3: 床椅转移 + 坐位 30min+
+        - level_4: 立位 1-3min + 床旁踏步
+        - level_5: 辅助步行 ≥ 10m
+      stop_criteria:
+        - HR 急剧变化 > 30bpm
+        - SpO₂ < 88%
+        - SBP > 180 或 < 90
+        - 患者诉胸闷/严重不适
+
+  - id: rehab-dvt-prevention
+    description: 康复期 DVT 预防
+    condition:
+      field: immobility_days
+      operator: ">="
+      value: 3
+    result:
+      treatment: DVT 预防策略
+      risk_assessment: Caprini 风险评估模型
+      prophylaxis:
+        - 基础预防：早期活动、踝泵（q1h，每次 20-30 次）、充足水化
+        - 机械预防：IPC 间歇充气加压（每日 ≥ 18h）、GCS 梯度压力弹力袜
+        - 药物预防：LMWH 依诺肝素 40mg qd / 磺达肝癸钠 2.5mg qd（无禁忌）
+        - 持续时间：制动期全程 + 活动恢复后 7-10 天（骨科大手术延长至 35 天）
+      contraindications_to_anticoagulation:
+        - 活动性出血
+        - 血小板 < 50×10⁹/L
+        - 严重未控高血压（SBP > 200 / DBP > 120）
+
+  - id: rehab-dvt-mechanical
+    description: 机械性 DVT 预防 — 药物禁忌时
+    condition:
+      and:
+        - field: immobility_days
+          operator: ">="
+          value: 3
+        - field: anticoagulation_contraindicated
+          operator: equals
+          value: true
+    result:
+      treatment: 机械性血栓预防
+      devices:
+        - IPC 间歇充气加压装置（大腿-小腿套）
+        - GCS 梯度压力弹力袜（15-30mmHg 膝上型）
+        - VFP 足底静脉泵
+      protocol:
+        - IPC 每日 ≥ 18-22h
+        - GCS 每日取下评估皮肤 q8h
+        - 持续至可独立行走
+      monitoring: 每日评估下肢周径 + DVT 临床体征（Homans 征/肿胀/皮温增高）
 
 ---
 rule_type: risk_score
@@ -50,77 +429,94 @@ department: 康复医学科
 capability: cap-l3-rehabilitation-risk
 business_process: bp-rehabilitation-risk-assessment
 data_entities:
-  consumes: [de-patient, de-assessment-rehab]
-  produces: [de-risk-assessment]
-guideline: 中国康复医学指南 压疮与跌倒预防 (2022)
-stakeholder: 评估跌倒与压疮风险，制定预防措施
+  consumes:
+    - de-patient
+    - de-assessment-rehab
+    - de-functional-assessment
+  produces:
+    - de-risk-assessment
+guideline: 中国康复医学临床诊疗指南（2022）
+stakeholder: 评估康复期跌倒、压疮、DVT 等安全风险
 version: "1.0.0"
 
 rules:
   - id: rehab-fall-high-risk
-    description: 跌倒风险评分为高 → 防护
+    description: Morse 跌倒评估量表
     condition:
-      field: assessment.fall_risk
-      operator: "=="
-      value: high
+      field: morse_score
+      operator: ">="
+      value: 0
     result:
-      risk: 跌倒高风险
-      severity: 高危
-      recommendation: 床栏 + 防滑鞋 + 陪护
+      assessment: Morse 跌倒风险评估
+      items:
+        - item: 跌倒史; score: "0(无) / 25(有)"
+        - item: 第二诊断; score: "0(无) / 15(有)"
+        - item: 行走辅助; score: "0/15/30(家具/拐杖/扶墙)"
+        - item: 静脉输液/肝素锁; score: "0(无) / 20(有)"
+        - item: 步态; score: "0/10/20(正常/虚弱/受损)"
+        - item: 精神状态; score: "0(认知自己能力) / 15(高估/忘记限制)"
+      grading:
+        - range: "0-24"; label: 低风险; action: 基础预防
+        - range: "25-44"; label: 中风险; action: 标准防跌倒措施
+        - range: "> 45"; label: 高风险; action: 高危防跌倒方案 + 标识
 
   - id: rehab-pressure-ulcer-risk
-    description: Braden 评分 ≤ 12 → 压疮高危
+    description: Braden 压疮风险评估
     condition:
-      field: assessment.Braden_score
+      field: braden_score
       operator: "<="
-      value: 12
+      value: 23
     result:
-      risk: 压疮高风险
-      severity: 高危
-      recommendation: 气垫床 + q2h 翻身 + 皮肤护理
+      assessment: Braden 压疮风险
+      items:
+        - item: 感觉知觉; score: "1(完全受损)-4(无受损)"
+        - item: 潮湿程度; score: "1(持续潮湿)-4(很少潮湿)"
+        - item: 活动能力; score: "1(卧床)-4(经常行走)"
+        - item: 移动能力; score: "1(完全不能)-4(无限制)"
+        - item: 营养; score: "1(极差)-4(良好)"
+        - item: 摩擦/剪切力; score: "1(有问题)-3(无问题)"
+      grading:
+        - range: "≤ 9"; label: 极高风险; action: 气垫床 + q2h 翻身 + 敷料保护
+        - range: "10-12"; label: 高风险; action: 减压床垫 + q2h 翻身 + 皮肤护理
+        - range: "13-14"; label: 中风险; action: 泡沫床垫 + q3h 翻身
+        - range: "15-18"; label: 低风险; action: 定期翻身 + 皮肤评估
 
----
-rule_type: treatment
-department: 康复医学科
-capability: cap-l3-rehabilitation-treatment
-business_process: bp-rehabilitation-treatment
-data_entities:
-  consumes: [de-diagnosis-result, de-risk-assessment]
-  produces: [de-treatment-plan]
-guideline: 中国康复医学指南 物理与作业治疗规范 (2022)
-stakeholder: 根据功能缺损类型选择物理、作业或言语治疗
-version: "1.0.0"
-
-rules:
-  - id: rehab-physiotherapy-motor
-    description: 运动功能障碍 → 物理治疗
+  - id: rehab-dvt-caprini
+    description: Caprini DVT 风险评估
     condition:
-      field: diagnosis.motor_impairment
-      operator: "=="
-      value: true
+      field: assessment_type
+      operator: equals
+      value: DVT_risk
     result:
-      treatment: 物理治疗（运动疗法 + 理疗）
-      indication: 脑卒中/脊髓损伤/骨折后运动障碍
-      frequency: 每日 1 次，每次 45min
-
-  - id: rehab-occupational-therapy-adl
-    description: ADL 受限 → 作业治疗
-    condition:
-      field: diagnosis.ADL_limitation
-      operator: "=="
-      value: true
-    result:
-      treatment: 作业治疗（日常生活活动训练）
-      indication: 自理能力下降
-      goal: 重返家庭与社会参与
-
-  - id: rehab-speech-therapy-swallow
-    description: 吞咽障碍 → 言语治疗
-    condition:
-      field: diagnosis.dysphagia
-      operator: "=="
-      value: true
-    result:
-      treatment: 言语治疗（吞咽功能训练）
-      indication: 卒中后吞咽障碍
-      techniques: 口腔运动训练 + 吞咽手法 + 食物性状调整
+      assessment: Caprini 评分
+      score_1_points:
+        - 年龄 41-60
+        - 小手术
+        - BMI > 25
+        - 下肢肿胀
+        - 静脉曲张
+        - 妊娠/产后
+        - 口服避孕药/激素替代治疗
+        - 急性内科疾病 < 1 月
+      score_2_points:
+        - 年龄 61-74
+        - 关节镜手术
+        - 开放大手术（> 45min）
+        - 卧床 > 72h
+        - 石膏固定
+        - 中心静脉导管
+      score_3_points:
+        - 年龄 ≥ 75
+        - DVT/PE 史
+        - 血栓家族史
+        - 凝血因子异常
+      score_5_points:
+        - 髋/膝关节置换术
+        - 髋部骨折手术
+        - 严重创伤
+        - 脊髓损伤
+      grading:
+        - range: "0-1"; label: 极低风险; prophylaxis: 早期活动
+        - range: "2"; label: 低风险; prophylaxis: IPC/GCS
+        - range: "3-4"; label: 中风险; prophylaxis: LMWH 或 IPC
+        - range: "≥ 5"; label: 高风险; prophylaxis: LMWH + IPC 联合

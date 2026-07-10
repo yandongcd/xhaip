@@ -1,0 +1,188 @@
+# 皮肤科临床规则 — SCORAD + PASI/BSA + UAS7 + 外用激素阶梯 + ABCDE
+rule_type: diagnosis
+department: 皮肤科
+capability: cap-l3-dermatology-diagnosis
+business_process: bp-dermatology-diagnosis
+data_entities:
+  consumes: [de-patient, de-exam-dermatology, de-lab-allergy]
+  produces: [de-diagnosis-result]
+guideline: 中国皮肤科临床诊疗指南（2022）
+stakeholder: 皮肤科医师需评估皮炎严重度、银屑病范围与皮肤肿瘤风险
+version: "1.0.0"
+
+rules:
+  - id: derm-scorad-moderate
+    description: SCORAD 25-50 → 中度特应性皮炎
+    condition:
+      and:
+        - {field: exam.scorad, operator: ">=", value: 25}
+        - {field: exam.scorad, operator: "<=", value: 50}
+    result:
+      diagnosis: 中度特应性皮炎
+      severity: 中度
+      recommendation: 外用激素（中效）+ 保湿剂 + 避免诱因
+
+  - id: derm-scorad-severe
+    description: SCORAD > 50 → 重度特应性皮炎
+    condition:
+      field: exam.scorad
+      operator: ">"
+      value: 50
+    result:
+      diagnosis: 重度特应性皮炎
+      severity: 重度
+      recommendation: 系统治疗（环孢素/度普利尤单抗/JAK抑制剂）+ 湿包疗法
+
+  - id: derm-melanoma-abcde
+    description: ABCDE 标准 ≥ 3项阳性 → 皮肤镜+活检
+    condition:
+      field: exam.abcde_criteria_positive_count
+      operator: ">="
+      value: 3
+    result:
+      diagnosis: 疑似黑色素瘤
+      severity: 高危（需排除恶性黑色素瘤）
+      recommendation: 皮肤镜检查 + 全层切除活检
+      abcde: Asymmetry / Border / Color / Diameter >6mm / Evolution
+
+  - id: derm-bcc-suspicion
+    description: 珍珠样结节 + 毛细血管扩张 → 疑似基底细胞癌
+    condition:
+      and:
+        - {field: exam.pearly_nodule, operator: "==", value: true}
+        - {field: exam.telangiectasia, operator: "==", value: true}
+    result:
+      diagnosis: 疑似基底细胞癌（BCC）
+      severity: 局部侵袭性
+      recommendation: 皮肤镜 + 手术切除（Mohs或扩大切除）
+
+---
+rule_type: risk_score
+department: 皮肤科
+capability: cap-l3-dermatology-risk
+business_process: bp-dermatology-risk
+data_entities:
+  consumes: [de-patient, de-exam-dermatology, de-lab-allergy]
+  produces: [de-risk-assessment]
+guideline: 中国皮肤科临床诊疗指南（2022）
+stakeholder: 评估银屑病严重度、荨麻疹活动性与外用激素安全使用
+version: "1.0.0"
+
+rules:
+  - id: derm-pasi-severe
+    description: PASI ≥ 10 或 BSA ≥ 10% → 中重度银屑病
+    condition:
+      or:
+        - {field: exam.pasi, operator: ">=", value: 10}
+        - {field: exam.bsa_percent, operator: ">=", value: 10}
+    result:
+      risk: 中重度银屑病
+      severity: 需系统治疗
+      recommendation: 光疗或系统药物（甲氨蝶呤/阿维A/生物制剂）
+
+  - id: derm-uas7-severe
+    description: UAS7 ≥ 28 → 重度荨麻疹
+    condition:
+      field: exam.uas7
+      operator: ">="
+      value: 28
+    result:
+      risk: 重度慢性荨麻疹
+      severity: 严重影响生活质量
+      recommendation: 奥马珠单抗（抗IgE）+ 高剂量抗组胺药
+
+  - id: derm-uas7-moderate
+    description: UAS7 16-27 → 中度荨麻疹
+    condition:
+      and:
+        - {field: exam.uas7, operator: ">=", value: 16}
+        - {field: exam.uas7, operator: "<=", value: 27}
+    result:
+      risk: 中度慢性荨麻疹
+      severity: 需升级治疗
+      recommendation: 二代抗组胺药加量至2-4倍标准剂量
+
+  - id: derm-topical-steroid-side-effects
+    description: 强效激素面部使用 > 2周 → 激素依赖性皮炎风险
+    condition:
+      and:
+        - {field: treatment.steroid_potency, operator: in, value: [potent, very_potent]}
+        - {field: treatment.site, operator: "==", value: face}
+        - {field: treatment.duration_days, operator: ">", value: 14}
+    result:
+      risk: 激素依赖性皮炎 + 皮肤萎缩
+      severity: 高危
+      recommendation: 立即停用强效激素 + 钙调神经磷酸酶抑制剂替代
+
+---
+rule_type: treatment
+department: 皮肤科
+capability: cap-l3-dermatology-treatment
+business_process: bp-dermatology-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment]
+  produces: [de-treatment-plan]
+guideline: 中国皮肤科临床诊疗指南（2022）
+stakeholder: 根据皮炎、银屑病与荨麻疹严重度选择外用或系统治疗方案
+version: "1.0.0"
+
+rules:
+  - id: derm-ad-mild-treatment
+    description: SCORAD < 25 → 弱-中效外用激素
+    condition:
+      field: exam.scorad
+      operator: "<"
+      value: 25
+    result:
+      treatment: 弱效或中效外用糖皮质激素 + 保湿剂
+      potency: mild_to_moderate
+      indication: 轻度特应性皮炎
+      duration: 每日1-2次 × 1-2周
+
+  - id: derm-psoriasis-topical-mild
+    description: BSA < 3% → 外用治疗
+    condition:
+      field: exam.bsa_percent
+      operator: "<"
+      value: 3
+    result:
+      treatment: 外用糖皮质激素 + 维生素D3衍生物（卡泊三醇）
+      indication: 轻度银屑病
+      followup: q3m 评估PASI
+
+  - id: derm-psoriasis-phototherapy
+    description: BSA 3-10% → NB-UVB光疗
+    condition:
+      and:
+        - {field: exam.bsa_percent, operator: ">=", value: 3}
+        - {field: exam.bsa_percent, operator: "<=", value: 10}
+    result:
+      treatment: NB-UVB光疗（每周2-3次）
+      indication: 中度银屑病
+      contraindication: 光敏性疾病/皮肤癌病史
+
+  - id: derm-psoriasis-biologic
+    description: PASI ≥ 10 + 传统治疗失败 → 生物制剂
+    condition:
+      and:
+        - {field: exam.pasi, operator: ">=", value: 10}
+        - {field: treatment.traditional_therapy_failure, operator: "==", value: true}
+    result:
+      treatment: 生物制剂（IL-17/IL-23/TNF-α抑制剂）
+      indication: 中重度斑块型银屑病
+      screening: TB/乙肝/HIV筛查后启用
+
+  - id: derm-topical-steroid-ladder
+    description: 外用激素强度分级（弱→中→强→超强）
+    condition:
+      field: diagnosis.site_and_severity
+      operator: "=="
+      value: requires_topical_steroid
+    result:
+      treatment: 外用糖皮质激素阶梯治疗
+      ladder:
+        mild: 氢化可的松1%-2.5%（面部/间擦部位）
+        moderate: 糠酸莫米松/丁酸氢化可的松（躯干/四肢）
+        potent: 糠酸莫米松/氟替卡松（手掌/足跖/肥厚皮损）
+        very_potent: 氯倍他索（短期用于顽固斑块）
+      monitoring: 避免长期大面积使用强效激素

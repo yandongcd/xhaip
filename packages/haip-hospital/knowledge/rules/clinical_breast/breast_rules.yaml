@@ -1,0 +1,207 @@
+# 乳腺中心临床规则 — BI-RADS分级 + 分子分型 + 保乳/重建 + 辅助治疗
+rule_type: diagnosis
+department: 乳腺中心
+capability: cap-l3-breast-diagnosis
+business_process: bp-breast-diagnosis
+data_entities:
+  consumes: [de-patient, de-imaging, de-pathology, de-lab-tumor]
+  produces: [de-diagnosis-result]
+guideline: NCCN Guidelines: Breast Cancer (2023) / 中国乳腺癌诊疗指南 (2022)
+stakeholder: 乳腺外科医师需根据影像与病理制定个体化治疗方案
+version: "1.0.0"
+
+rules:
+  - id: breast-birads-classification
+    description: BI-RADS 0-6 分类评估
+    condition:
+      field: imaging.birads
+      operator: ">="
+      value: "4A"
+    result:
+      risk_levels:
+        BI-RADS_0: 需补充检查
+        BI-RADS_1: 阴性，常规随访
+        BI-RADS_2: 良性，常规随访
+        BI-RADS_3: 可能良性，6月复查
+        BI-RADS_4A: 低度可疑 → 活检
+        BI-RADS_4B: 中度可疑 → 活检
+        BI-RADS_4C: 高度可疑 → 活检
+        BI-RADS_5: 几乎肯定恶性 → 活检
+        BI-RADS_6: 已证实恶性
+      recommendation: BI-RADS ≥ 4A → 空心针穿刺活检（CNB）
+
+  - id: breast-screening-schedule
+    description: 乳腺癌筛查频率推荐
+    condition:
+      field: patient.age
+      operator: ">="
+      value: 40
+    result:
+      recommendation_avg_risk:
+        age_40_44: 可选每1-2年钼靶
+        age_45_54: 每年钼靶
+        age_55_plus: 每1-2年钼靶
+      recommendation_high_risk: 每年钼靶+MRI（BRCA突变者25岁起）
+
+  - id: breast-molecular-subtype
+    description: 乳腺癌分子分型（ER/PR/HER2/Ki67）
+    condition:
+      field: pathology.ER
+      operator: "=="
+      value: positive
+    result:
+      subtypes:
+        Luminal_A: "ER+ PR+ HER2- Ki67<20%"
+        Luminal_B_HER2_neg: "ER+ HER2- Ki67≥20% 或 PR-"
+        Luminal_B_HER2_pos: "ER+ HER2+ 任何Ki67"
+        HER2_enriched: "ER- PR- HER2+"
+        TNBC: "ER- PR- HER2-"
+      recommendation: 根据分型制定系统治疗方案
+
+  - id: breast-genetic-testing
+    description: BRCA1/2 基因检测指征
+    condition:
+      or:
+        - {field: family.breast_cancer, operator: "<=", value: 50}
+        - {field: family.ovarian_cancer, operator: "==", value: true}
+        - {field: family.male_breast_cancer, operator: "==", value: true}
+        - {field: pathology.subtype, operator: "==", value: "TNBC"}
+        - {field: patient.age_at_diagnosis, operator: "<=", value: 45}
+    result:
+      recommendation: 遗传咨询 + BRCA1/2 基因检测
+
+---
+rule_type: treatment
+department: 乳腺中心
+capability: cap-l3-breast-treatment
+business_process: bp-breast-treatment
+data_entities:
+  consumes: [de-patient, de-pathology, de-imaging]
+  produces: [de-treatment-plan]
+guideline: NCCN Guidelines: Breast Cancer (2023) / 中国乳腺癌诊疗指南 (2022)
+stakeholder: 乳腺外科医师制定手术及系统治疗方案
+version: "1.0.0"
+
+rules:
+  - id: breast-bcs-criteria
+    description: 保乳手术适应证
+    condition:
+      and:
+        - {field: tumor.size, operator: "<=", value: 3}
+        - {field: tumor.multicentric, operator: "==", value: false}
+        - {field: patient.desires_bcs, operator: "==", value: true}
+    result:
+      treatment: 保乳手术（BCS）+ 术后放疗
+      contraindications: 弥漫性恶性钙化 / 炎性乳癌 / 无法接受放疗
+
+  - id: breast-slnb-alnd
+    description: 前哨淋巴结活检 vs 腋窝清扫
+    condition:
+      field: exam.axillary_nodes
+      operator: "=="
+      value: clinically_negative
+    result:
+      treatment: 前哨淋巴结活检（SLNB）
+      recommendation: SLN 阴性 → 免ALND；SLN阳性（1-2个）保乳+放疗 → 可免ALND
+
+  - id: breast-reconstruction
+    description: 乳房重建时机选择
+    condition:
+      field: surgery.mastectomy
+      operator: "=="
+      value: true
+    result:
+      options:
+        immediate: 即刻重建（适合非放疗患者）
+        delayed: 延期重建（适合需放疗患者）
+      techniques: 假体植入 / 自体皮瓣（DIEP/LD）
+      recommendation: 多学科讨论确定重建方案
+
+  - id: breast-endocrine-therapy
+    description: 辅助内分泌治疗选择
+    condition:
+      field: pathology.ER
+      operator: "=="
+      value: positive
+    result:
+      treatment:
+        premenopausal: 他莫昔芬 20mg qd × 5-10年 或 OFS+AI
+        postmenopausal: AI（来曲唑/阿那曲唑）qd × 5-10年
+      recommendation: 高危患者可延长至10年
+
+  - id: breast-neoadjuvant
+    description: 新辅助化疗指征
+    condition:
+      or:
+        - {field: tumor.size, operator: ">", value: 2}
+        - {field: exam.axillary_nodes, operator: "==", value: positive}
+        - {field: pathology.subtype, operator: "==", value: "TNBC"}
+        - {field: pathology.subtype, operator: "==", value: "HER2_enriched"}
+    result:
+      treatment: 新辅助化疗 ± 抗HER2靶向
+      regimen: 蒽环类+紫杉类 ± 卡铂（TNBC）/ 曲妥珠+帕妥珠（HER2+）
+      goal: 降期保乳 / 体内药敏
+
+  - id: breast-anti-her2
+    description: 抗HER2靶向治疗
+    condition:
+      field: pathology.HER2
+      operator: "=="
+      value: positive
+    result:
+      treatment: 曲妥珠单抗 + 帕妥珠单抗 × 1年
+      recommendation: T-DM1（新辅后non-pCR salvage）
+
+---
+rule_type: followup
+department: 乳腺中心
+capability: cap-l3-breast-followup
+business_process: bp-breast-followup
+data_entities:
+  consumes: [de-patient, de-imaging, de-lab-tumor]
+  produces: [de-followup-plan]
+guideline: NCCN Guidelines: Breast Cancer Survivorship (2023)
+stakeholder: 乳腺外科医师需制定长期随访计划
+version: "1.0.0"
+
+rules:
+  - id: breast-surveillance-schedule
+    description: 术后随访监控计划
+    condition:
+      field: treatment.surgery_date
+      operator: "exists"
+      value: true
+    result:
+      schedule:
+        year_1_3: 每3-6月问诊+体检
+        year_4_5: 每6-12月
+        year_5_plus: 每年
+      imaging: 每年钼靶（保乳者治疗侧6月后首次）
+      recommendation: 不常规检查血肿瘤标志物/CT/PET
+
+  - id: breast-endocrine-adherence
+    description: 内分泌治疗依从性监测
+    condition:
+      field: treatment.endocrine_therapy
+      operator: "=="
+      value: active
+    result:
+      monitoring: 每年评估依从性和副作用
+      side_effects:
+        tamoxifen: 潮热/阴道出血/子宫内膜增厚/血栓
+        AI: 关节痛/骨质疏松
+      recommendation: 关节痛 → 运动+镇痛；骨质疏松 → 双膦酸盐
+
+  - id: breast-lymphedema-prevention
+    description: 上肢淋巴水肿预防
+    condition:
+      field: surgery.ALND
+      operator: "=="
+      value: true
+    result:
+      prevention:
+        - 避免患侧血压测量/静脉穿刺
+        - 皮肤护理（保湿/防晒/防感染）
+        - 渐进性上肢功能锻炼
+        - 控制体重
+      recommendation: 出现肿胀→淋巴水肿治疗师评估

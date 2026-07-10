@@ -15,13 +15,15 @@ python -m pytest packages/haip-core/tests/ tests/integration/ -v
 xhaip/
 ├── packages/
 │   ├── haip-core/              # 核心引擎 (pip installable)
-│   │   ├── haip/               # agent/ a2a/ llm/ tools/ guard/ orchestrator/ knowledge/
-│   │   └── tests/              # 71 单元测试
-│   └── haip-hospital/          # 14 个 Agent (5 business + 7 specialist + 2 master_data)
-│       ├── agents/definitions/ # YAML Agent 定义 (30 行/个)
-│       └── modules/            # 纯业务逻辑模块
-├── tests/integration/          # 59 集成测试
-├── config/                     # YAML 配置
+│   │   ├── haip/               # agent/a2a/llm/tools/guard/orchestrator/knowledge/togaf/
+│   │   └── tests/              # 216 单元测试
+│   └── haip-hospital/          # 48 个 Agent (39 clinical + 7 specialist + 1 architecture + 1 master_data)
+│       ├── agents/definitions/ # YAML Agent 定义
+│       ├── modules/            # 52 Handler 模块 (KnowledgeAgent + RuleEngine)
+│       ├── knowledge/          # 50 BP + 36 指南 + 38 科室规则组 (314 条)
+│       └── data/               # 384 位数字病人
+├── tests/                      # 75 集成测试 + 25 TOGAF 测试 + 18 HTML 测试
+├── config/                     # llm.yaml + haip.yaml
 └── .github/workflows/ci.yml    # CI: ruff + mypy + pytest + 70% cov
 ```
 
@@ -38,10 +40,11 @@ xhaip/
 
 | 指标 | 数值 |
 |------|------|
-| 测试 | 130 |
-| 覆盖率 | 81% |
+| 测试 | 320+ |
+| 覆盖率 (core) | 70% |
 | ruff | 0 errors |
 | mypy | 0 errors |
+| TOGAF ABB 追溯 | 100% (111/111) |
 
 ## 与 v0.2.0 对比
 
@@ -52,5 +55,5 @@ xhaip/
 | 引擎位置 | 业务包内 | 独立 pip 包 |
 | LLM 调用 | urllib 直连 | Provider 抽象 + retry + Mock |
 | 编排 | 顺序 for | toposort 分层并行 |
-| 测试 | ~5% | 130 tests, 81% core coverage |
+| 测试 | ~5% | 320+ tests, 70% core coverage |
 | CI | 无 | ruff + mypy + pytest + 70% gate |

@@ -1,0 +1,160 @@
+# 眼科临床规则 — 白内障手术指征 + 青光眼IOP靶值 + DR分期 + AMD分类
+rule_type: diagnosis
+department: 眼科
+capability: cap-l3-ophthalmology-diagnosis
+business_process: bp-ophthalmology-diagnosis
+data_entities:
+  consumes: [de-patient, de-exam-ophthalmology, de-imaging-oct]
+  produces: [de-diagnosis-result]
+guideline: 中国眼科临床诊疗指南（2022）
+stakeholder: 眼科医师需评估白内障程度、青光眼视野损害与视网膜病变分期
+version: "1.0.0"
+
+rules:
+  - id: oph-cataract-surgery-bcva
+    description: BCVA ≤ 0.3 → 白内障手术指征
+    condition:
+      field: exam.bcva_logmar
+      operator: ">="
+      value: 0.5
+    result:
+      diagnosis: 白内障手术指征
+      severity: 影响日常生活
+      recommendation: 超声乳化白内障吸除 + IOL植入
+
+  - id: oph-cataract-mature
+    description: 晶状体核硬度 LOCS III ≥ NC4 → 建议手术
+    condition:
+      and:
+        - {field: exam.lens_opacity_locs3_no, operator: ">=", value: 4}
+        - {field: exam.lens_opacity_locs3_nc, operator: ">=", value: 4}
+    result:
+      diagnosis: 成熟期白内障
+      severity: 中重度
+      recommendation: 白内障手术 ± 飞秒激光辅助
+
+  - id: oph-dr-npdr-moderate
+    description: 中度NPDR → 眼底激光/抗VEGF
+    condition:
+      and:
+        - {field: exam.dr_hemorrhage, operator: "==", value: moderate}
+        - {field: exam.dr_cotton_wool, operator: "==", value: true}
+    result:
+      diagnosis: 中度非增殖性糖尿病视网膜病变（NPDR）
+      severity: 需干预
+      recommendation: 全视网膜光凝（PRP）或抗VEGF玻璃体腔注射
+
+  - id: oph-dr-pdr
+    description: 视网膜新生血管 → PDR
+    condition:
+      field: exam.retinal_neovascularization
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 增殖性糖尿病视网膜病变（PDR）
+      severity: 高危（视力威胁）
+      recommendation: PRP + 抗VEGF ± 玻璃体切除
+
+---
+rule_type: risk_score
+department: 眼科
+capability: cap-l3-ophthalmology-risk
+business_process: bp-ophthalmology-risk
+data_entities:
+  consumes: [de-patient, de-exam-ophthalmology, de-imaging-oct, de-vf-test]
+  produces: [de-risk-assessment]
+guideline: 中国眼科临床诊疗指南（2022）
+stakeholder: 评估青光眼进展风险、DR筛查间隔与AMD转化风险
+version: "1.0.0"
+
+rules:
+  - id: oph-glaucoma-iop-target
+    description: 青光眼IOP > 21mmHg → 降压治疗
+    condition:
+      field: exam.iop_mmhg
+      operator: ">"
+      value: 21
+    result:
+      risk: 青光眼进展
+      target_iop: 早期18mmHg / 中期15mmHg / 晚期12mmHg
+      recommendation: 前列腺素类滴眼液（一线）+ 激光SLT
+
+  - id: oph-glaucoma-vf-severe
+    description: 视野缺损 MD < -12dB → 晚期青光眼
+    condition:
+      field: exam.vf_mean_deviation_db
+      operator: "<"
+      value: -12
+    result:
+      risk: 晚期青光眼
+      severity: 视野严重缺损
+      recommendation: 强化降眼压 + 手术评估（小梁切除/引流阀）
+
+  - id: oph-dr-screening-no-dr
+    description: 无DR → 每年筛查
+    condition:
+      and:
+        - {field: patient.diabetes_mellitus, operator: "==", value: true}
+        - {field: exam.dr_hemorrhage, operator: "==", value: none}
+    result:
+      risk: 低危
+      screening_interval: 每年1次散瞳眼底检查
+      recommendation: 血糖 + HbA1c控制
+
+  - id: oph-dr-screening-mild-npdr
+    description: 轻度NPDR → 每6-12月筛查
+    condition:
+      field: exam.dr_hemorrhage
+      operator: "=="
+      value: mild
+    result:
+      risk: 中危
+      screening_interval: 每6-12月
+      recommendation: 优化血糖/血压控制 + 眼底照相
+
+---
+rule_type: treatment
+department: 眼科
+capability: cap-l3-ophthalmology-treatment
+business_process: bp-ophthalmology-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-exam-ophthalmology]
+  produces: [de-treatment-plan]
+guideline: 中国眼科临床诊疗指南（2022）
+stakeholder: 根据白内障、青光眼与AMD类型制定手术或药物治疗方案
+version: "1.0.0"
+
+rules:
+  - id: oph-amd-dry
+    description: 干性AMD（drusen + RPE改变）→ 观察+营养支持
+    condition:
+      and:
+        - {field: exam.amd_drusen, operator: "==", value: true}
+        - {field: exam.amd_cnv, operator: "==", value: false}
+    result:
+      treatment: AREDS2配方（叶黄素+玉米黄质+维生素C/E+锌）
+      classification: 干性AMD
+      followup: Amsler表自测 + q6-12m OCT复查
+
+  - id: oph-amd-wet
+    description: 湿性AMD（CNV）→ 抗VEGF玻璃体腔注射
+    condition:
+      field: exam.amd_cnv
+      operator: "=="
+      value: true
+    result:
+      treatment: 抗VEGF玻璃体腔注射（雷珠单抗/阿柏西普/康柏西普）
+      classification: 湿性AMD
+      schedule: 每月注射 × 3 → T&E方案（治疗并延长）
+      monitoring: OCT q1-2m
+
+  - id: oph-refractive-myopia-high
+    description: 高度近视（> -6.00D）→ 定期眼底检查
+    condition:
+      field: exam.spherical_equivalent_d
+      operator: "<"
+      value: -6
+    result:
+      treatment: 屈光矫正（框架/隐形/ICL/屈光手术）
+      classification: 高度近视
+      recommendation: 每年散瞳眼底检查 + 眼压监测

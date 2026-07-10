@@ -1,0 +1,47 @@
+# ============================================================
+# Guideline Asset: KDIGO Guideline on Kidney Transplant (2020)
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-kdigo-transplant-2020"
+name: "KDIGO Guideline on Kidney Transplant (2020)"
+abbr: "KDIGO Transplant 2020"
+version: "2020"
+publisher: "KDIGO"
+journal: "Kidney International Supplements 2020;10(2):e1-e156"
+doi: "10.1016/j.kisu.2019.11.001"
+language: en
+trust_level: T1
+
+description: >
+  KDIGO Clinical Practice Guideline on the Evaluation and Management of
+  Candidates for Kidney Transplantation (2020), covering donor evaluation
+  (living/DBD/DCD), immunosuppression protocols (CNI/MMF/steroids),
+  rejection diagnosis and treatment, and infection prophylaxis.
+
+key_sections:
+  - id: "§1"
+    title: "Donor Evaluation — Living / DBD / DCD"
+    stage_ids: [S1, S2]
+    rule_ids: [tx-hla-matching, tx-donor-evaluation]
+
+  - id: "§2"
+    title: "Immunosuppression — CNI / MMF / Steroids"
+    stage_ids: [S2, S3, S4]
+    rule_ids: [tx-immunosuppression-regimen, tx-tacrolimus-level]
+
+  - id: "§3"
+    title: "Rejection — Banff Classification"
+    stage_ids: [S3, S4]
+    rule_ids: [tx-rejection-diagnosis, tx-rejection-treatment]
+
+  - id: "§4"
+    title: "Infection Prophylaxis"
+    stage_ids: [S3, S4]
+    rule_ids: [tx-cmv-prophylaxis, tx-bkv-prophylaxis, tx-pcp-prophylaxis]
+
+rule_sets_covered:
+  - clinical_transplant
+
+derived_rule_count: 16
+last_updated: 2026-07-10

@@ -1,0 +1,184 @@
+# 健康管理科临床规则 — 体检项目 + 慢病筛查 + 风险评估 + 生活方式干预
+rule_type: diagnosis
+department: 健康管理科
+capability: cap-l3-health-mgmt-diagnosis
+business_process: bp-health-mgmt-diagnosis
+data_entities:
+  consumes: [de-patient, de-exam-physical, de-lab-biochemistry, de-lab-lipid]
+  produces: [de-diagnosis-result]
+guideline: 中华健康管理学杂志 健康管理临床指南 (2022)
+stakeholder: 健康管理医师需根据年龄/性别分层制定体检方案
+version: "1.0.0"
+
+rules:
+  - id: hm-checkup-items
+    description: 年龄分层健康体检基本项目
+    condition:
+      field: patient.age
+      operator: ">="
+      value: 18
+    result:
+      basic_items:
+        all_ages: 身高/体重/BMI/血压/视力/血常规/尿常规/肝功能/肾功能/空腹血糖/血脂四项/心电图/胸片
+      age_specific:
+        age_30_plus: + 甲状腺超声
+        age_40_plus: + 肿瘤标志物（AFP/CEA/CA19-9）+ 胃肠镜
+        age_50_plus: + PSA（男性）/ 钼靶（女性）/ 低剂量CT（吸烟者）/ 骨密度
+      recommendation: 根据家族史/生活习惯/既往病史个性化调整
+
+  - id: hm-bmi-waist-classification
+    description: BMI / 腰围分类
+    condition:
+      field: exam.BMI
+      operator: ">="
+      value: 18.5
+    result:
+      classification:
+        underweight: "BMI < 18.5"
+        normal: "BMI 18.5-23.9"
+        overweight: "BMI 24.0-27.9"
+        obesity_class_1: "BMI 28.0-31.9"
+        obesity_class_2: "BMI 32.0-35.9"
+        obesity_class_3: "BMI ≥ 36.0"
+      waist_circumference:
+        male_central: "腰围 ≥ 90cm"
+        female_central: "腰围 ≥ 85cm"
+      recommendation: 超重/肥胖者评估代谢综合征并生活方式干预
+
+  - id: hm-metabolic-syndrome
+    description: 代谢综合征诊断（NCEP ATP-III 修正版，亚洲标准）
+    condition:
+      and:
+        - {field: exam.waist, operator: ">=", value: 90}
+        - {field: lab_results.TG, operator: ">=", value: 1.7}
+    result:
+      criteria:
+        - 中心性肥胖：腰围男≥90cm 女≥85cm
+        - 高TG：≥1.7 mmol/L
+        - 低HDL-C：男<1.04 女<1.30 mmol/L
+        - 高血压：BP ≥130/85 mmHg
+        - 高血糖：FPG ≥5.6 mmol/L
+      diagnosis: 符合3项及以上 → 代谢综合征
+      recommendation: 强化生活方式干预 + CVD风险评估
+
+---
+rule_type: risk_score
+department: 健康管理科
+capability: cap-l3-health-mgmt-risk
+business_process: bp-health-mgmt-risk
+data_entities:
+  consumes: [de-patient, de-exam-physical, de-lab-biochemistry]
+  produces: [de-risk-assessment]
+guideline: 中华心血管病杂志 CVD预防指南 (2023)
+stakeholder: 健康管理医师需评估慢病风险
+version: "1.0.0"
+
+rules:
+  - id: hm-cvd-risk
+    description: CVD 10年风险评估（China-PAR模型）
+    condition:
+      field: patient.age
+      operator: ">="
+      value: 40
+    result:
+      risk_stratification:
+        low_risk: "10年ASCVD风险 < 5%"
+        moderate_risk: "10年ASCVD风险 5-9.9%"
+        high_risk: "10年ASCVD风险 ≥ 10%"
+      risk_factors:
+        - 年龄/性别
+        - SBP + 是否治疗
+        - TC + HDL-C
+        - 吸烟
+        - 糖尿病
+      recommendation: 高危 → 启动他汀治疗 + 阿司匹林
+
+  - id: hm-diabetes-risk
+    description: 2型糖尿病风险评分
+    condition:
+      field: lab_results.FPG
+      operator: ">="
+      value: 5.6
+    result:
+      risk_score_factors:
+        - 年龄
+        - 糖尿病家族史
+        - BMI/腰围
+        - 高血压
+        - 空腹血糖
+      diagnosis:
+        IFG: "FPG 5.6-6.9 mmol/L"
+        IGT: "2h-PG 7.8-11.0 mmol/L"
+        DM: "FPG ≥ 7.0 mmol/L 或 2h-PG ≥ 11.1 mmol/L"
+      recommendation: 糖尿病前期 → 生活方式干预 + 每年OGTT
+
+  - id: hm-cancer-screening
+    description: 肿瘤筛查时间表（年龄/性别分层）
+    condition:
+      field: patient.age
+      operator: ">="
+      value: 40
+    result:
+      screening:
+        colorectal: "45岁起每5-10年结肠镜 或 每年FIT"
+        breast: "女性40岁起每1-2年钼靶"
+        cervical: "女性21岁起每3年巴氏涂片（30岁起每5年HPV+巴氏）"
+        lung: "50-80岁+≥20包年吸烟史→每年LDCT"
+        prostate: "男性50岁起讨论PSA筛查利弊"
+        liver: "乙肝/肝硬化者每6月超声+AFP"
+        gastric: "HP阳性或高风险人群 → 胃镜"
+      recommendation: 个体化筛查方案需考虑家族史和风险因素
+
+---
+rule_type: treatment
+department: 健康管理科
+capability: cap-l3-health-mgmt-treatment
+business_process: bp-health-mgmt-intervention
+data_entities:
+  consumes: [de-patient, de-risk-assessment]
+  produces: [de-intervention-plan]
+guideline: 中华健康管理学杂志 生活方式干预指南 (2022)
+stakeholder: 健康管理医师需制定个性化干预方案
+version: "1.0.0"
+
+rules:
+  - id: hm-lifestyle-intervention
+    description: 综合生活方式干预（饮食/运动/戒烟）
+    condition:
+      field: assessment.metabolic_risk
+      operator: "in"
+      value: [moderate, high]
+    result:
+      diet:
+        - 限盐 < 5g/天
+        - 控制总热量（减重目标5-10%）
+        - DASH或地中海饮食模式
+        - 限糖（游离糖 < 25g/天）
+      exercise:
+        - 有氧：中等强度 ≥ 150min/周 或 高强度 ≥ 75min/周
+        - 抗阻：≥ 2次/周
+        - 减少久坐（每30min起身活动）
+      smoking:
+        - 戒烟咨询 + 尼古丁替代/伐尼克兰
+        - 5A法：Ask/Advise/Assess/Assist/Arrange
+      recommendation: 3-6月后复查评估效果
+
+  - id: hm-vaccination-schedule
+    description: 成人疫苗接种推荐
+    condition:
+      field: patient.age
+      operator: ">="
+      value: 18
+    result:
+      schedule:
+        influenza: 每年（所有成人，优先≥65/慢性病/孕妇）
+        pneumococcal:
+          age_65_plus: PCV13 + PPSV23（间隔≥1年）
+          chronic_disease: PPSV23（< 65岁高危人群）
+        shingles: ≥50岁 RZV（重组带状疱疹疫苗）2剂（相隔2-6月）
+        hepatitis_b: 所有未接种成人（3剂：0/1/6月）
+        hepatitis_a: 高危人群（肝病/国际旅行/MSM）
+        hpv: ≤26岁（9价HPV，3剂），27-45岁个体化推荐
+        tdap: 每10年（含百日咳1剂）
+        covid: 根据当地流行病学情况补种
+      recommendation: 体检时核查疫苗接种史并补种

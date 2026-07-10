@@ -1,0 +1,158 @@
+# 整形美容科临床规则 — 美学评估 + 肉毒素/填充剂注射 + 并发症管理
+rule_type: diagnosis
+department: 整形美容科
+capability: cap-l3-cosmetic-diagnosis
+business_process: bp-cosmetic-diagnosis
+data_entities:
+  consumes: [de-patient, de-exam-skin, de-photo]
+  produces: [de-diagnosis-result]
+guideline: 中华整形外科杂志 整形美容临床诊疗指南 (2022)
+stakeholder: 整形美容医师需进行综合美学评估
+version: "1.0.0"
+
+rules:
+  - id: cosmetic-fitzpatrick-skin
+    description: Fitzpatrick 皮肤分型评估（I-VI型）
+    condition:
+      field: patient.fitzpatrick_type
+      operator: "in"
+      value: ["I", "II", "III", "IV", "V", "VI"]
+    result:
+      diagnosis: Fitzpatrick 皮肤类型已记录
+      recommendation: 根据皮肤类型调整激光/光电能量参数
+
+  - id: cosmetic-aging-classification
+    description: Glogau 光老化分级
+    condition:
+      field: exam.glogau_grade
+      operator: ">="
+      value: 3
+    result:
+      diagnosis: 重度光老化（深皱纹 + 色素沉着）
+      recommendation: 联合治疗（激光+肉毒素+填充剂）
+
+  - id: cosmetic-aesthetic-assessment
+    description: 面部美学综合评估
+    condition:
+      field: exam.facial_aesthetics
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 需面部年轻化方案
+      recommendation: 综合评估皱纹/松弛/凹陷/肤质
+
+---
+rule_type: treatment
+department: 整形美容科
+capability: cap-l3-cosmetic-treatment
+business_process: bp-cosmetic-treatment
+data_entities:
+  consumes: [de-patient, de-exam-skin]
+  produces: [de-treatment-plan]
+guideline: 中华整形外科杂志 注射美容安全指南 (2022)
+stakeholder: 整形美容医师需安全执行注射操作
+version: "1.0.0"
+
+rules:
+  - id: cosmetic-botox-dosing
+    description: 肉毒素注射标准剂量（单位）
+    condition:
+      field: treatment.botox_area
+      operator: "=="
+      value: true
+    result:
+      treatment: A型肉毒素注射
+      dosing:
+        forehead: "10-20U"
+        glabella: "20-30U"
+        crows_feet: "12-24U per side"
+      recommendation: 总剂量不超过100U/次，间隔≥3个月
+
+  - id: cosmetic-filler-safety
+    description: 填充剂注射安全区评估
+    condition:
+      field: treatment.filler_injection
+      operator: "=="
+      value: true
+    result:
+      treatment: 透明质酸填充剂注射
+      safety_zones:
+        nasolabial: 安全区
+        glabella: 危险区（滑车上动脉）
+        nose: 危险区（鼻背动脉）
+        temple: 中度风险区
+      recommendation: 术前超声/血管定位，使用钝针
+
+  - id: cosmetic-vascular-occlusion
+    description: 注射后剧痛+皮肤花斑/苍白 → 血管栓塞紧急处理
+    condition:
+      or:
+        - {field: symptom.sudden_pain, operator: "==", value: true}
+        - {field: exam.skin_mottling, operator: "==", value: true}
+        - {field: exam.capillary_refill, operator: ">", value: 4}
+    result:
+      diagnosis: 血管栓塞（填充剂并发症）
+      severity: 紧急
+      emergency_protocol:
+        - 立即停止注射
+        - 透明质酸酶溶解（300-500U 局部注射）
+        - 热敷+按摩+硝酸甘油贴
+        - 高压氧治疗
+        - 血管外科会诊
+
+  - id: cosmetic-infection-prevention
+    description: 术后感染预防措施
+    condition:
+      field: treatment.invasive
+      operator: "=="
+      value: true
+    result:
+      treatment: 围术期感染防控
+      recommendation:
+        - 术前面部清洁+消毒
+        - 无菌操作规范
+        - 术后48h内避免沾水
+        - 如有红肿热痛→口服抗生素
+
+---
+rule_type: followup
+department: 整形美容科
+capability: cap-l3-cosmetic-followup
+business_process: bp-cosmetic-followup
+data_entities:
+  consumes: [de-patient, de-exam-skin]
+  produces: [de-followup-plan]
+guideline: 中华整形外科杂志 术后康复指南 (2021)
+stakeholder: 整形美容医师需跟踪术后恢复
+version: "1.0.0"
+
+rules:
+  - id: cosmetic-wound-healing
+    description: 术后伤口愈合阶段评估
+    condition:
+      field: followup.days_post_op
+      operator: "<="
+      value: 7
+    result:
+      stage: 炎症期/增生早期
+      recommendation: 保持创面清洁干燥，7-10天拆线
+
+  - id: cosmetic-scar-management
+    description: 术后瘢痕预防管理
+    condition:
+      field: surgery.incision_length
+      operator: ">"
+      value: 2
+    result:
+      recommendation: 拆线后2周开始硅酮凝胶/硅胶片，持续3-6个月
+
+  - id: cosmetic-touch-up-timing
+    description: 肉毒素/填充剂补打时机
+    condition:
+      field: treatment.type
+      operator: "in"
+      value: [botox, filler]
+    result:
+      botox_interval: 3-6月
+      filler_interval: 6-12月
+      recommendation: 效果减退后再评估，避免频繁注射

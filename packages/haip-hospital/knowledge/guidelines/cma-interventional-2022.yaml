@@ -1,0 +1,45 @@
+# ============================================================
+# Guideline Asset: 中国介入治疗临床指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-cma-interventional-2022"
+name: "中国介入治疗临床指南（2022）"
+abbr: "介入治疗指南2022"
+version: "2022"
+publisher: "中华医学会放射学分会介入学组"
+journal: "中华介入放射学杂志 2022;30(1):1-112"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中国介入治疗临床指南（2022版），涵盖血管介入（PCI/PTA/栓塞治疗）、
+  肿瘤介入（TACE/消融技术）、非血管介入（PTCD/支架置入）、
+  以及围介入期患者管理与并发症预防。
+
+key_sections:
+  - id: "§1"
+    title: "血管介入 — PCI/PTA/栓塞治疗"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [interv-pci-indication, interv-dsa-evaluation, interv-post-pci-dapt]
+
+  - id: "§2"
+    title: "肿瘤介入 — TACE/消融技术"
+    stage_ids: [S1, S2, S3]
+    rule_ids: [interv-tace-selection, interv-rfa-mwa]
+
+  - id: "§3"
+    title: "非血管介入 — PTCD/支架"
+    stage_ids: [S2, S3]
+    rule_ids: [interv-ptcd]
+
+  - id: "§4"
+    title: "围介入期管理 — 并发症预防"
+    stage_ids: [S2, S3, S4]
+    rule_ids: [interv-contrast-nephropathy, interv-stent-restenosis]
+
+rule_sets_covered:
+  - clinical_interventional
+
+derived_rule_count: 14
+last_updated: 2026-07-10

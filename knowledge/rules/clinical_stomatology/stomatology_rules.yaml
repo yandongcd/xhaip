@@ -1,0 +1,165 @@
+# 口腔科临床规则 — 龋风险评估 + 牙周炎分期 + 抗生素预防 + 口腔癌筛查
+rule_type: diagnosis
+department: 口腔科
+capability: cap-l3-stomatology-diagnosis
+business_process: bp-stomatology-diagnosis
+data_entities:
+  consumes: [de-patient, de-exam-oral, de-imaging-dental, de-imaging-cbct]
+  produces: [de-diagnosis-result]
+guideline: 中国口腔科临床诊疗指南（2022）
+stakeholder: 口腔科医师需评估龋病风险、牙周状况、颌骨病变与黏膜异常
+version: "1.0.0"
+
+rules:
+  - id: sto-caries-high-risk
+    description: DMFT ≥ 4 或 活跃龋 ≥ 2面 → 高龋风险
+    condition:
+      or:
+        - {field: exam.dmft_index, operator: ">=", value: 4}
+        - {field: exam.active_caries_surfaces, operator: ">=", value: 2}
+    result:
+      diagnosis: 高龋风险
+      severity: 需预防干预
+      recommendation: 氟化物涂布 q3-6m + 窝沟封闭 + 饮食指导
+
+  - id: sto-periodontitis-stage-iii
+    description: 牙周炎分期III：CAL ≥ 5mm + 骨丧失至根中1/3 + 牙缺失 ≤ 4颗
+    condition:
+      and:
+        - {field: exam.cal_mm, operator: ">=", value: 5}
+        - {field: exam.rbl_percent, operator: ">=", value: 50}
+        - {field: exam.tooth_loss_due_to_perio, operator: "<=", value: 4}
+    result:
+      diagnosis: 牙周炎III期
+      severity: 中重度
+      recommendation: 龈下刮治+根面平整（SRP）+ 牙周维护
+
+  - id: sto-periodontitis-stage-iv
+    description: 牙周炎分期IV：CAL ≥ 5mm + 骨丧失至根中1/3 + 牙缺失 ≥ 5颗
+    condition:
+      and:
+        - {field: exam.cal_mm, operator: ">=", value: 5}
+        - {field: exam.rbl_percent, operator: ">=", value: 50}
+        - {field: exam.tooth_loss_due_to_perio, operator: ">=", value: 5}
+    result:
+      diagnosis: 牙周炎IV期
+      severity: 重度（需复杂康复）
+      recommendation: SRP + 牙周手术 + 咬合重建
+
+  - id: sto-oral-cancer-screening
+    description: 口腔黏膜红斑/白斑 + 持续 > 2周 → 活检
+    condition:
+      and:
+        - or:
+            - {field: exam.oral_erythroplakia, operator: "==", value: true}
+            - {field: exam.oral_leukoplakia, operator: "==", value: true}
+        - {field: exam.lesion_duration_weeks, operator: ">", value: 2}
+    result:
+      diagnosis: 口腔潜在恶性病变
+      severity: 需排除恶变
+      recommendation: 切取活检 + 病理检查
+
+---
+rule_type: risk_score
+department: 口腔科
+capability: cap-l3-stomatology-risk
+business_process: bp-stomatology-risk
+data_entities:
+  consumes: [de-patient, de-exam-oral, de-imaging-dental, de-lab-coagulation]
+  produces: [de-risk-assessment]
+guideline: 中国口腔科临床诊疗指南（2022）
+stakeholder: 评估拔牙风险、种植术前条件与抗生素预防指征
+version: "1.0.0"
+
+rules:
+  - id: sto-antibiotic-prophylaxis
+    description: 人工心脏瓣膜 → 拔牙前抗生素预防
+    condition:
+      field: patient.prosthetic_heart_valve
+      operator: "=="
+      value: true
+    result:
+      risk: 感染性心内膜炎风险
+      severity: 高危
+      recommendation: 拔牙前30-60min阿莫西林2g（或克林霉素600mg）
+
+  - id: sto-implant-insufficient-bone
+    description: 牙槽骨宽度 < 5mm 或高度 < 10mm → 植骨
+    condition:
+      or:
+        - {field: imaging.alveolar_bone_width_mm, operator: "<", value: 5}
+        - {field: imaging.alveolar_bone_height_mm, operator: "<", value: 10}
+    result:
+      risk: 骨量不足（无法一期种植）
+      severity: 需骨增量
+      recommendation: GBR（引导骨再生）或上颌窦提升后延期种植
+
+  - id: sto-anticoagulation-extraction
+    description: INR > 3.5 → 拔牙禁忌（需调整抗凝）
+    condition:
+      field: lab.inr
+      operator: ">"
+      value: 3.5
+    result:
+      risk: 拔牙后出血风险
+      severity: 高危
+      recommendation: 暂停抗凝或调整INR至2.5以下再拔牙
+
+  - id: sto-bisphosphonate-osteonecrosis
+    description: 双膦酸盐用药史 > 3年 → MRONJ风险
+    condition:
+      and:
+        - {field: patient.bisphosphonate_use, operator: "==", value: true}
+        - {field: patient.bisphosphonate_duration_years, operator: ">", value: 3}
+    result:
+      risk: 药物相关性颌骨坏死（MRONJ）
+      severity: 高危
+      recommendation: 避免拔牙/种植等有创操作 + 口腔卫生维护
+
+---
+rule_type: treatment
+department: 口腔科
+capability: cap-l3-stomatology-treatment
+business_process: bp-stomatology-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-imaging-cbct]
+  produces: [de-treatment-plan]
+guideline: 中国口腔科临床诊疗指南（2022）
+stakeholder: 根据龋坏程度、牙周分期与种植条件制定治疗方案
+version: "1.0.0"
+
+rules:
+  - id: sto-reversible-pulpitis
+    description: 可复性牙髓炎 → 间接盖髓+充填
+    condition:
+      field: diagnosis.reversible_pulpitis
+      operator: "=="
+      value: true
+    result:
+      treatment: 间接盖髓（氢氧化钙/MTA）+ 复合树脂充填
+      indication: 深龋未露髓
+      followup: 术后6-8周复查牙髓活力
+
+  - id: sto-irreversible-pulpitis
+    description: 不可复性牙髓炎 → 根管治疗
+    condition:
+      field: diagnosis.irreversible_pulpitis
+      operator: "=="
+      value: true
+    result:
+      treatment: 根管治疗 + 桩核冠修复
+      indication: 不可复性牙髓炎
+      steps: 开髓→根管预备→根管消毒→根管充填→全冠修复
+
+  - id: sto-implant-indication
+    description: 单颗牙缺失 + 骨量充足 → 种植体植入
+    condition:
+      and:
+        - {field: diagnosis.single_tooth_edentulous, operator: "==", value: true}
+        - {field: imaging.alveolar_bone_width_mm, operator: ">=", value: 6}
+        - {field: imaging.alveolar_bone_height_mm, operator: ">=", value: 12}
+    result:
+      treatment: 牙种植体植入（延期负重）
+      indication: 单颗牙缺失
+      requirement: CBCT评估骨量+骨密度 + 全身健康评估
+      timeline: 植入后3-6月骨结合 → 二期手术 → 冠修复

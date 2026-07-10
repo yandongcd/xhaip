@@ -1,0 +1,46 @@
+# ============================================================
+# Guideline Asset: 惠侨医疗中心临床指南（2022）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T2
+# ============================================================
+id: "guideline-cma-huigiao-2022"
+name: "惠侨医疗中心临床指南（2022）"
+abbr: "惠侨 2022"
+version: "2022"
+publisher: "南方医院惠侨医疗中心"
+journal: ""
+doi: ""
+language: zh-CN
+trust_level: T2
+
+description: >
+  惠侨医疗中心临床指南（2022），覆盖国际医疗标准（JCI认证要求）、
+  跨文化医疗沟通规范、特需医疗服务流程、
+  海外转诊协调管理等核心环节，为国际与特需医疗服务提供标准化管理框架。
+
+key_sections:
+  - id: "§1"
+    title: "国际医疗标准（JCI）"
+    stage_ids: [S1, S2]
+    rule_ids: [hq-jci-ipsg1, hq-jci-ipsg2, hq-jci-ipsg3, hq-jci-ipsg4, hq-jci-ipsg5, hq-jci-ipsg6]
+
+  - id: "§2"
+    title: "跨文化医疗沟通"
+    stage_ids: [S2, S3]
+    rule_ids: [hq-language-interpretation, hq-cultural-assessment, hq-informed-consent-i18n]
+
+  - id: "§3"
+    title: "特需医疗服务"
+    stage_ids: [S3, S4]
+    rule_ids: [hq-vip-privacy, hq-special-access, hq-concierge-service]
+
+  - id: "§4"
+    title: "海外转诊协调"
+    stage_ids: [S4, S5]
+    rule_ids: [hq-international-insurance, hq-overseas-referral, hq-medical-evacuation]
+
+rule_sets_covered:
+  - clinical_huigiao
+
+derived_rule_count: 15
+last_updated: 2026-07-10

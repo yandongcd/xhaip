@@ -1,0 +1,47 @@
+# ============================================================
+# Guideline Asset: NCCN Guidelines: Breast Cancer (2023)
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# ============================================================
+id: "guideline-nccn-breast-2023"
+name: "NCCN Guidelines: Breast Cancer (2023)"
+abbr: "NCCN Breast 2023"
+version: "2023"
+publisher: "NCCN"
+journal: "NCCN Clinical Practice Guidelines in Oncology: Breast Cancer, Version 4.2023"
+doi: "10.6004/jnccn.2023.0004"
+language: en
+trust_level: T1
+
+description: >
+  NCCN Clinical Practice Guidelines in Oncology for Breast Cancer (Version 4.2023),
+  covering screening protocols (mammogram/ultrasound/MRI), molecular subtype
+  classification (Luminal/HER2/TNBC), surgical management (BCS/mastectomy/
+  reconstruction), and adjuvant systemic therapy.
+
+key_sections:
+  - id: "§1"
+    title: "Screening — Mammogram / Ultrasound / MRI"
+    stage_ids: [S1]
+    rule_ids: [breast-birads-classification, breast-screening-schedule, breast-genetic-testing]
+
+  - id: "§2"
+    title: "Molecular Subtypes — Luminal / HER2 / TNBC"
+    stage_ids: [S1, S2]
+    rule_ids: [breast-molecular-subtype, breast-er-pr-her2-ki67]
+
+  - id: "§3"
+    title: "Surgery — BCS / Mastectomy / Reconstruction"
+    stage_ids: [S2, S3]
+    rule_ids: [breast-bcs-criteria, breast-slnb-alnd, breast-reconstruction]
+
+  - id: "§4"
+    title: "Adjuvant Therapy — Endocrine / Anti-HER2 / Chemo"
+    stage_ids: [S3, S4]
+    rule_ids: [breast-endocrine-therapy, breast-anti-her2, breast-neoadjuvant]
+
+rule_sets_covered:
+  - clinical_breast
+
+derived_rule_count: 16
+last_updated: 2026-07-10
