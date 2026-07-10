@@ -41,6 +41,9 @@ _KNOWN_DATA_ENTITIES: set[str] = {
     # English entity IDs (from old BP definitions)
     "de-followup", "de-rehab-record", "de-clinical-record",
     "de-medications", "de-mdt-decision", "de-followup-plan",
+    # Clinical step concepts (may appear as inputs/outputs in auto-generated BPs)
+    "病史采集", "病史采集与体格检查", "辅助检查", "辅助检查与判读",
+    "诊断确认", "方案制定", "执行监测", "随访评估", "康复管理", "质控审计",
 }
 
 
