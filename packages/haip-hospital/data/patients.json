@@ -2603,7 +2603,11 @@
       "lab_results": {
         "Hb": 108.4,
         "WBC": 13.2,
-        "Cr": 228.4
+        "Cr": 228.4,
+        "BI_RADS": 1.5,
+        "Ki67_pct": 42.7,
+        "ER_status": 0,
+        "Her2_status": 0
       },
       "compatible_agents": [
         "breast-center",
@@ -2624,7 +2628,11 @@
       "lab_results": {
         "Hb": 97.6,
         "WBC": 8.2,
-        "Cr": 244.4
+        "Cr": 244.4,
+        "BI_RADS": 4.6,
+        "Ki67_pct": 51.6,
+        "ER_status": 1,
+        "Her2_status": 1
       },
       "compatible_agents": [
         "breast-center",
@@ -2645,7 +2653,11 @@
       "lab_results": {
         "Hb": 96.9,
         "WBC": 17.2,
-        "Cr": 270.3
+        "Cr": 270.3,
+        "BI_RADS": 4.0,
+        "Ki67_pct": 49.0,
+        "ER_status": 0,
+        "Her2_status": 0
       },
       "compatible_agents": [
         "breast-center",
@@ -2666,7 +2678,11 @@
       "lab_results": {
         "Hb": 91.4,
         "WBC": 5.5,
-        "Cr": 238.8
+        "Cr": 238.8,
+        "BI_RADS": 3.5,
+        "Ki67_pct": 13.3,
+        "ER_status": 0,
+        "Her2_status": 1
       },
       "compatible_agents": [
         "breast-center",
@@ -2687,7 +2703,9 @@
       "lab_results": {
         "Hb": 120.8,
         "WBC": 4.8,
-        "Cr": 71.3
+        "Cr": 71.3,
+        "肿瘤大小_cm": 2.1,
+        "咯血量_ml": 450.9
       },
       "compatible_agents": [
         "interventional-therapy",
@@ -2708,7 +2726,9 @@
       "lab_results": {
         "Hb": 110.8,
         "WBC": 12.1,
-        "Cr": 172.3
+        "Cr": 172.3,
+        "肿瘤大小_cm": 4.9,
+        "咯血量_ml": 191.4
       },
       "compatible_agents": [
         "interventional-therapy",
@@ -2729,7 +2749,9 @@
       "lab_results": {
         "Hb": 141.5,
         "WBC": 8.4,
-        "Cr": 130.4
+        "Cr": 130.4,
+        "肿瘤大小_cm": 4.4,
+        "咯血量_ml": 206.4
       },
       "compatible_agents": [
         "interventional-therapy",
@@ -2750,7 +2772,9 @@
       "lab_results": {
         "Hb": 157.8,
         "WBC": 14.5,
-        "Cr": 181.8
+        "Cr": 181.8,
+        "肿瘤大小_cm": 8.0,
+        "咯血量_ml": 210.5
       },
       "compatible_agents": [
         "interventional-therapy",
@@ -2960,8 +2984,8 @@
       "scenario": "内分泌科诊疗",
       "lab_results": {
         "FPG": 14.7,
-        "HbA1c": 154.1,
-        "TSH": 16.99,
+        "HbA1c": 11.7,
+        "TSH": 7.6,
         "FT3": 17.5,
         "FT4": 49.1,
         "TG": 22.2,
@@ -2986,8 +3010,8 @@
       "scenario": "内分泌科诊疗",
       "lab_results": {
         "FPG": 7.1,
-        "HbA1c": 135.7,
-        "TSH": 14.64,
+        "HbA1c": 11.5,
+        "TSH": 12.8,
         "FT3": 78.6,
         "FT4": 66.5,
         "TG": 49.2,
@@ -3012,8 +3036,8 @@
       "scenario": "内分泌科诊疗",
       "lab_results": {
         "FPG": 14.1,
-        "HbA1c": 122.5,
-        "TSH": 1.23,
+        "HbA1c": 9.8,
+        "TSH": 1.8,
         "FT3": 51.3,
         "FT4": 85.3,
         "TG": 7.8,
@@ -3038,8 +3062,8 @@
       "scenario": "内分泌科诊疗",
       "lab_results": {
         "FPG": 8.6,
-        "HbA1c": 126.7,
-        "TSH": 10.5,
+        "HbA1c": 6.3,
+        "TSH": 5.8,
         "FT3": 93.5,
         "FT4": 21.2,
         "TG": 71.9,
@@ -3064,8 +3088,8 @@
       "scenario": "内分泌科诊疗",
       "lab_results": {
         "FPG": 9.0,
-        "HbA1c": 159.9,
-        "TSH": 19.92,
+        "HbA1c": 11.4,
+        "TSH": 12.9,
         "FT3": 8.3,
         "FT4": 22.1,
         "TG": 27.3,
@@ -3090,8 +3114,8 @@
       "scenario": "内分泌科诊疗",
       "lab_results": {
         "FPG": 10.7,
-        "HbA1c": 159.0,
-        "TSH": 13.11,
+        "HbA1c": 12.6,
+        "TSH": 6.2,
         "FT3": 1.8,
         "FT4": 81.9,
         "TG": 30.6,
@@ -3202,7 +3226,10 @@
       "lab_results": {
         "Hb": 142.4,
         "WBC": 16.3,
-        "Cr": 157.5
+        "Cr": 157.5,
+        "牙周袋_mm": 4.2,
+        "龋坏深度": 2.4,
+        "松动度": 0.3
       },
       "compatible_agents": [
         "stomatology",
@@ -3224,7 +3251,10 @@
       "lab_results": {
         "Hb": 82.0,
         "WBC": 14.2,
-        "Cr": 139.7
+        "Cr": 139.7,
+        "牙周袋_mm": 7.3,
+        "龋坏深度": 2.7,
+        "松动度": 2.6
       },
       "compatible_agents": [
         "stomatology",
@@ -3245,7 +3275,11 @@
       "lab_results": {
         "Hb": 149.8,
         "WBC": 15.9,
-        "Cr": 113.4
+        "Cr": 113.4,
+        "牙周袋_mm": 4.6,
+        "龋坏深度": 3.4,
+        "松动度": 2.6,
+        "VAS": 8
       },
       "compatible_agents": [
         "stomatology",
@@ -3267,7 +3301,10 @@
       "lab_results": {
         "Hb": 81.9,
         "WBC": 6.3,
-        "Cr": 138.8
+        "Cr": 138.8,
+        "牙周袋_mm": 4.4,
+        "龋坏深度": 2.6,
+        "松动度": 2.5
       },
       "compatible_agents": [
         "stomatology",
@@ -3288,7 +3325,10 @@
       "lab_results": {
         "Hb": 106.5,
         "WBC": 3.9,
-        "Cr": 270.5
+        "Cr": 270.5,
+        "牙周袋_mm": 5.4,
+        "龋坏深度": 3.9,
+        "松动度": 1.5
       },
       "compatible_agents": [
         "stomatology",
@@ -3462,7 +3502,10 @@
         "HPV": 98.8,
         "TCT": 59.9,
         "Hb": 156.0,
-        "超声": 89.3
+        "超声": 89.3,
+        "宫缩间隔_min": 24.5,
+        "宫口开大_cm": 6.2,
+        "蛋白尿": 0
       },
       "compatible_agents": [
         "obgyn",
@@ -3486,7 +3529,10 @@
         "HPV": 28.5,
         "TCT": 78.0,
         "Hb": 118.8,
-        "超声": 24.7
+        "超声": 24.7,
+        "宫缩间隔_min": 24.9,
+        "宫口开大_cm": 9.7,
+        "蛋白尿": 0
       },
       "compatible_agents": [
         "obgyn",
@@ -3510,7 +3556,10 @@
         "HPV": 38.9,
         "TCT": 16.1,
         "Hb": 97.1,
-        "超声": 42.1
+        "超声": 42.1,
+        "宫缩间隔_min": 22.1,
+        "宫口开大_cm": 4.9,
+        "蛋白尿": 0
       },
       "compatible_agents": [
         "obgyn",
@@ -3534,7 +3583,10 @@
         "HPV": 69.9,
         "TCT": 85.8,
         "Hb": 141.2,
-        "超声": 38.7
+        "超声": 38.7,
+        "宫缩间隔_min": 15.5,
+        "宫口开大_cm": 3.1,
+        "蛋白尿": 0
       },
       "compatible_agents": [
         "obgyn",
@@ -3558,7 +3610,10 @@
         "HPV": 80.2,
         "TCT": 89.9,
         "Hb": 119.1,
-        "超声": 28.0
+        "超声": 28.0,
+        "宫缩间隔_min": 19.5,
+        "宫口开大_cm": 5.1,
+        "蛋白尿": 1
       },
       "compatible_agents": [
         "obgyn",
@@ -3582,7 +3637,10 @@
         "HPV": 92.0,
         "TCT": 98.1,
         "Hb": 122.7,
-        "超声": 90.8
+        "超声": 90.8,
+        "宫缩间隔_min": 22.0,
+        "宫口开大_cm": 9.6,
+        "蛋白尿": 1
       },
       "compatible_agents": [
         "obgyn",
@@ -3603,7 +3661,10 @@
       "lab_results": {
         "Hb": 100.8,
         "WBC": 8.2,
-        "Cr": 169.1
+        "Cr": 169.1,
+        "Barthel": 60.4,
+        "肌力级": 3.3,
+        "Braden": 11.7
       },
       "compatible_agents": [
         "rehabilitation",
@@ -3624,7 +3685,10 @@
       "lab_results": {
         "Hb": 146.8,
         "WBC": 10.3,
-        "Cr": 239.8
+        "Cr": 239.8,
+        "Barthel": 82.0,
+        "肌力级": 2.5,
+        "Braden": 13.7
       },
       "compatible_agents": [
         "rehabilitation",
@@ -3645,7 +3709,10 @@
       "lab_results": {
         "Hb": 140.3,
         "WBC": 17.3,
-        "Cr": 107.8
+        "Cr": 107.8,
+        "Barthel": 89.6,
+        "肌力级": 2.2,
+        "Braden": 11.5
       },
       "compatible_agents": [
         "rehabilitation",
@@ -3666,7 +3733,10 @@
       "lab_results": {
         "Hb": 155.8,
         "WBC": 10.2,
-        "Cr": 121.5
+        "Cr": 121.5,
+        "Barthel": 34.2,
+        "肌力级": 0.2,
+        "Braden": 15.9
       },
       "compatible_agents": [
         "rehabilitation",
@@ -3687,7 +3757,10 @@
       "lab_results": {
         "Hb": 88.6,
         "WBC": 3.9,
-        "Cr": 134.9
+        "Cr": 134.9,
+        "Barthel": 63.8,
+        "肌力级": 2.3,
+        "Braden": 14.3
       },
       "compatible_agents": [
         "rehabilitation",
@@ -3999,7 +4072,11 @@
       "lab_results": {
         "Hb": 93.9,
         "WBC": 4.6,
-        "Cr": 60.6
+        "Cr": 60.6,
+        "CD4": 417.1,
+        "乙肝DNA": 9215105.1,
+        "丙肝RNA": 1,
+        "T_SPOT": 1
       },
       "compatible_agents": [
         "infectious-disease",
@@ -4020,7 +4097,11 @@
       "lab_results": {
         "Hb": 136.2,
         "WBC": 10.1,
-        "Cr": 225.0
+        "Cr": 225.0,
+        "CD4": 400.0,
+        "乙肝DNA": 7667056.8,
+        "丙肝RNA": 1,
+        "T_SPOT": 1
       },
       "compatible_agents": [
         "infectious-disease",
@@ -4041,7 +4122,11 @@
       "lab_results": {
         "Hb": 152.7,
         "WBC": 15.5,
-        "Cr": 77.1
+        "Cr": 77.1,
+        "CD4": 468.4,
+        "乙肝DNA": 9072671.5,
+        "丙肝RNA": 1,
+        "T_SPOT": 1
       },
       "compatible_agents": [
         "infectious-disease",
@@ -4062,7 +4147,11 @@
       "lab_results": {
         "Hb": 136.0,
         "WBC": 17.2,
-        "Cr": 180.1
+        "Cr": 180.1,
+        "CD4": 393.2,
+        "乙肝DNA": 8119031.8,
+        "丙肝RNA": 1,
+        "T_SPOT": 1
       },
       "compatible_agents": [
         "infectious-disease",
@@ -4083,7 +4172,12 @@
       "lab_results": {
         "Hb": 128.3,
         "WBC": 3.9,
-        "Cr": 114.9
+        "Cr": 114.9,
+        "CD4": 389.7,
+        "乙肝DNA": 9652685.5,
+        "丙肝RNA": 1,
+        "T_SPOT": 1,
+        "VAS": 2
       },
       "compatible_agents": [
         "infectious-disease",
@@ -4105,7 +4199,9 @@
       "lab_results": {
         "Hb": 132.1,
         "WBC": 16.8,
-        "Cr": 103.6
+        "Cr": 103.6,
+        "ASA": 2.3,
+        "BMI": 34.5
       },
       "compatible_agents": [
         "cosmetic-surgery",
@@ -4126,7 +4222,9 @@
       "lab_results": {
         "Hb": 133.6,
         "WBC": 15.9,
-        "Cr": 139.2
+        "Cr": 139.2,
+        "ASA": 1.7,
+        "BMI": 23.1
       },
       "compatible_agents": [
         "cosmetic-surgery",
@@ -4148,7 +4246,9 @@
       "lab_results": {
         "Hb": 87.0,
         "WBC": 7.2,
-        "Cr": 87.8
+        "Cr": 87.8,
+        "ASA": 2.7,
+        "BMI": 22.3
       },
       "compatible_agents": [
         "cosmetic-surgery",
@@ -4169,7 +4269,10 @@
       "lab_results": {
         "Hb": 84.3,
         "WBC": 11.0,
-        "Cr": 209.4
+        "Cr": 209.4,
+        "ASA": 2.8,
+        "BMI": 21.5,
+        "VAS": 8
       },
       "compatible_agents": [
         "cosmetic-surgery",
@@ -4191,7 +4294,10 @@
       "lab_results": {
         "Hb": 115.0,
         "WBC": 13.6,
-        "Cr": 89.1
+        "Cr": 89.1,
+        "孕周": 35.5,
+        "黄疸_mg": 19.0,
+        "Apgar": 3.6
       },
       "compatible_agents": [
         "neonatology",
@@ -4212,7 +4318,10 @@
       "lab_results": {
         "Hb": 98.0,
         "WBC": 15.7,
-        "Cr": 87.2
+        "Cr": 87.2,
+        "孕周": 38.3,
+        "黄疸_mg": 8.7,
+        "Apgar": 7.3
       },
       "compatible_agents": [
         "neonatology",
@@ -4233,7 +4342,10 @@
       "lab_results": {
         "Hb": 113.2,
         "WBC": 10.5,
-        "Cr": 173.3
+        "Cr": 173.3,
+        "孕周": 37.8,
+        "黄疸_mg": 19.3,
+        "Apgar": 7.7
       },
       "compatible_agents": [
         "neonatology",
@@ -4254,7 +4366,10 @@
       "lab_results": {
         "Hb": 149.1,
         "WBC": 7.5,
-        "Cr": 249.6
+        "Cr": 249.6,
+        "孕周": 36.3,
+        "黄疸_mg": 7.3,
+        "Apgar": 5.2
       },
       "compatible_agents": [
         "neonatology",
@@ -4275,7 +4390,10 @@
       "lab_results": {
         "Hb": 147.0,
         "WBC": 11.9,
-        "Cr": 218.4
+        "Cr": 218.4,
+        "孕周": 35.6,
+        "黄疸_mg": 16.5,
+        "Apgar": 9.6
       },
       "compatible_agents": [
         "neonatology",
@@ -4300,7 +4418,10 @@
         "PT": 98.1,
         "APTT": 24.6,
         "ALT": 88.9,
-        "Cr": 265.4
+        "Cr": 265.4,
+        "ASA": 2.5,
+        "Blatchford": 7.2,
+        "胆石大小_mm": 4.6
       },
       "compatible_agents": [
         "general-surgery",
@@ -4325,7 +4446,10 @@
         "PT": 98.1,
         "APTT": 50.0,
         "ALT": 26.7,
-        "Cr": 180.5
+        "Cr": 180.5,
+        "ASA": 1.7,
+        "Blatchford": 5.9,
+        "胆石大小_mm": 14.5
       },
       "compatible_agents": [
         "general-surgery",
@@ -4350,7 +4474,10 @@
         "PT": 16.3,
         "APTT": 47.5,
         "ALT": 194.5,
-        "Cr": 141.3
+        "Cr": 141.3,
+        "ASA": 3.6,
+        "Blatchford": 5.0,
+        "胆石大小_mm": 4.0
       },
       "compatible_agents": [
         "general-surgery",
@@ -4375,7 +4502,10 @@
         "PT": 49.3,
         "APTT": 54.6,
         "ALT": 131.1,
-        "Cr": 116.3
+        "Cr": 116.3,
+        "ASA": 3.0,
+        "Blatchford": 9.4,
+        "胆石大小_mm": 12.4
       },
       "compatible_agents": [
         "general-surgery",
@@ -4400,7 +4530,10 @@
         "PT": 5.6,
         "APTT": 79.8,
         "ALT": 72.8,
-        "Cr": 150.0
+        "Cr": 150.0,
+        "ASA": 3.7,
+        "Blatchford": 3.1,
+        "胆石大小_mm": 7.9
       },
       "compatible_agents": [
         "general-surgery",
@@ -4425,7 +4558,10 @@
         "PT": 68.6,
         "APTT": 50.3,
         "ALT": 125.0,
-        "Cr": 115.7
+        "Cr": 115.7,
+        "ASA": 3.4,
+        "Blatchford": 5.2,
+        "胆石大小_mm": 5.4
       },
       "compatible_agents": [
         "general-surgery",
@@ -4449,8 +4585,10 @@
         "TBIL": 16.6,
         "AMY": 44.7,
         "LPS": 35.2,
-        "HBsAg": 127.0,
-        "HP抗体": 64.3
+        "HBsAg": 0,
+        "HP抗体": 64.3,
+        "HBV_DNA": 958828.6,
+        "便血": 1
       },
       "compatible_agents": [
         "gastroenterology",
@@ -4474,8 +4612,10 @@
         "TBIL": 38.8,
         "AMY": 36.5,
         "LPS": 30.3,
-        "HBsAg": 135.9,
-        "HP抗体": 3.2
+        "HBsAg": 0,
+        "HP抗体": 3.2,
+        "HBV_DNA": 51470.2,
+        "便血": 1
       },
       "compatible_agents": [
         "gastroenterology",
@@ -4499,8 +4639,10 @@
         "TBIL": 83.5,
         "AMY": 90.4,
         "LPS": 77.8,
-        "HBsAg": 98.4,
-        "HP抗体": 80.4
+        "HBsAg": 1,
+        "HP抗体": 80.4,
+        "HBV_DNA": 934550.2,
+        "便血": 0
       },
       "compatible_agents": [
         "gastroenterology",
@@ -4524,8 +4666,10 @@
         "TBIL": 65.0,
         "AMY": 31.6,
         "LPS": 44.6,
-        "HBsAg": 126.4,
-        "HP抗体": 73.5
+        "HBsAg": 0,
+        "HP抗体": 73.5,
+        "HBV_DNA": 510436.8,
+        "便血": 1
       },
       "compatible_agents": [
         "gastroenterology",
@@ -4549,8 +4693,10 @@
         "TBIL": 37.2,
         "AMY": 50.7,
         "LPS": 28.0,
-        "HBsAg": 93.2,
-        "HP抗体": 91.5
+        "HBsAg": 1,
+        "HP抗体": 91.5,
+        "HBV_DNA": 450195.4,
+        "便血": 0
       },
       "compatible_agents": [
         "gastroenterology",
@@ -4574,8 +4720,11 @@
         "TBIL": 86.2,
         "AMY": 72.7,
         "LPS": 98.0,
-        "HBsAg": 157.4,
-        "HP抗体": 80.7
+        "HBsAg": 1,
+        "HP抗体": 80.7,
+        "HBV_DNA": 948787.3,
+        "便血": 0,
+        "VAS": 3
       },
       "compatible_agents": [
         "gastroenterology",
@@ -4597,7 +4746,10 @@
       "lab_results": {
         "Hb": 109.5,
         "WBC": 14.4,
-        "Cr": 122.9
+        "Cr": 122.9,
+        "烧伤面积_pct": 24.9,
+        "深度": 0,
+        "吸入性损伤": 1
       },
       "compatible_agents": [
         "burns-plastic",
@@ -4618,7 +4770,10 @@
       "lab_results": {
         "Hb": 106.2,
         "WBC": 12.3,
-        "Cr": 215.4
+        "Cr": 215.4,
+        "烧伤面积_pct": 26.1,
+        "深度": 1,
+        "吸入性损伤": 0
       },
       "compatible_agents": [
         "burns-plastic",
@@ -4639,7 +4794,10 @@
       "lab_results": {
         "Hb": 104.3,
         "WBC": 10.6,
-        "Cr": 83.3
+        "Cr": 83.3,
+        "烧伤面积_pct": 28.1,
+        "深度": 0,
+        "吸入性损伤": 1
       },
       "compatible_agents": [
         "burns-plastic",
@@ -4660,7 +4818,10 @@
       "lab_results": {
         "Hb": 113.5,
         "WBC": 14.3,
-        "Cr": 97.1
+        "Cr": 97.1,
+        "烧伤面积_pct": 4.3,
+        "深度": 0,
+        "吸入性损伤": 0
       },
       "compatible_agents": [
         "burns-plastic",
@@ -4681,7 +4842,9 @@
       "lab_results": {
         "Hb": 82.6,
         "WBC": 8.9,
-        "Cr": 166.4
+        "Cr": 166.4,
+        "皮疹面积_pct": 40.7,
+        "ABCDE": 0
       },
       "compatible_agents": [
         "dermatology",
@@ -4702,7 +4865,9 @@
       "lab_results": {
         "Hb": 84.8,
         "WBC": 7.5,
-        "Cr": 292.4
+        "Cr": 292.4,
+        "皮疹面积_pct": 29.9,
+        "ABCDE": 0
       },
       "compatible_agents": [
         "dermatology",
@@ -4724,7 +4889,9 @@
       "lab_results": {
         "Hb": 84.0,
         "WBC": 8.3,
-        "Cr": 297.3
+        "Cr": 297.3,
+        "皮疹面积_pct": 31.6,
+        "ABCDE": 0
       },
       "compatible_agents": [
         "dermatology",
@@ -4745,7 +4912,9 @@
       "lab_results": {
         "Hb": 106.3,
         "WBC": 5.6,
-        "Cr": 276.1
+        "Cr": 276.1,
+        "皮疹面积_pct": 12.1,
+        "ABCDE": 0
       },
       "compatible_agents": [
         "dermatology",
@@ -4766,7 +4935,10 @@
       "lab_results": {
         "Hb": 88.8,
         "WBC": 16.1,
-        "Cr": 91.6
+        "Cr": 91.6,
+        "皮疹面积_pct": 48.2,
+        "ABCDE": 0,
+        "VAS": 3
       },
       "compatible_agents": [
         "dermatology",
@@ -4788,7 +4960,10 @@
       "lab_results": {
         "Hb": 139.3,
         "WBC": 11.1,
-        "Cr": 239.0
+        "Cr": 239.0,
+        "眼压": 27.2,
+        "视力": 0,
+        "杯盘比": 0
       },
       "compatible_agents": [
         "ophthalmology",
@@ -4809,7 +4984,10 @@
       "lab_results": {
         "Hb": 97.7,
         "WBC": 12.4,
-        "Cr": 234.5
+        "Cr": 234.5,
+        "眼压": 18.3,
+        "视力": 1,
+        "杯盘比": 0
       },
       "compatible_agents": [
         "ophthalmology",
@@ -4830,7 +5008,11 @@
       "lab_results": {
         "Hb": 114.1,
         "WBC": 5.1,
-        "Cr": 231.0
+        "Cr": 231.0,
+        "眼压": 20.8,
+        "视力": 0,
+        "杯盘比": 0,
+        "VAS": 3
       },
       "compatible_agents": [
         "ophthalmology",
@@ -4852,7 +5034,11 @@
       "lab_results": {
         "Hb": 102.0,
         "WBC": 12.7,
-        "Cr": 191.6
+        "Cr": 191.6,
+        "眼压": 18.1,
+        "视力": 1,
+        "杯盘比": 0,
+        "VAS": 5
       },
       "compatible_agents": [
         "ophthalmology",
@@ -4875,7 +5061,10 @@
       "lab_results": {
         "Hb": 143.4,
         "WBC": 5.2,
-        "Cr": 217.1
+        "Cr": 217.1,
+        "眼压": 22.8,
+        "视力": 1,
+        "杯盘比": 0
       },
       "compatible_agents": [
         "ophthalmology",
@@ -4898,7 +5087,13 @@
         "MRI": 73.2,
         "GCS评分": 31.9,
         "ICP": 31.9,
-        "凝血功能": 26.2
+        "凝血功能": 26.2,
+        "GCS_E": 2.3,
+        "GCS_V": 3.1,
+        "GCS_M": 3.6,
+        "瞳孔不等大": 0,
+        "WFNS": 4.3,
+        "VAS": 4
       },
       "compatible_agents": [
         "neurosurgery",
@@ -4922,7 +5117,12 @@
         "MRI": 74.1,
         "GCS评分": 81.4,
         "ICP": 56.1,
-        "凝血功能": 59.1
+        "凝血功能": 59.1,
+        "GCS_E": 1.7,
+        "GCS_V": 4.8,
+        "GCS_M": 5.4,
+        "瞳孔不等大": 0,
+        "WFNS": 2.6
       },
       "compatible_agents": [
         "neurosurgery",
@@ -4945,7 +5145,12 @@
         "MRI": 72.4,
         "GCS评分": 96.9,
         "ICP": 60.4,
-        "凝血功能": 35.8
+        "凝血功能": 35.8,
+        "GCS_E": 3.3,
+        "GCS_V": 4.4,
+        "GCS_M": 4.4,
+        "瞳孔不等大": 0,
+        "WFNS": 2.4
       },
       "compatible_agents": [
         "neurosurgery",
@@ -4968,7 +5173,13 @@
         "MRI": 76.5,
         "GCS评分": 57.8,
         "ICP": 80.9,
-        "凝血功能": 84.7
+        "凝血功能": 84.7,
+        "GCS_E": 1.5,
+        "GCS_V": 3.2,
+        "GCS_M": 3.9,
+        "瞳孔不等大": 0,
+        "WFNS": 1.4,
+        "VAS": 5
       },
       "compatible_agents": [
         "neurosurgery",
@@ -4992,7 +5203,12 @@
         "MRI": 35.8,
         "GCS评分": 19.0,
         "ICP": 15.2,
-        "凝血功能": 66.1
+        "凝血功能": 66.1,
+        "GCS_E": 2.7,
+        "GCS_V": 3.3,
+        "GCS_M": 2.1,
+        "瞳孔不等大": 0,
+        "WFNS": 3.3
       },
       "compatible_agents": [
         "neurosurgery",
@@ -5013,7 +5229,10 @@
       "lab_results": {
         "Hb": 113.6,
         "WBC": 8.4,
-        "Cr": 148.8
+        "Cr": 148.8,
+        "PHQ9": 17.7,
+        "GAD7": 5.0,
+        "自杀意念": 1
       },
       "compatible_agents": [
         "psychiatry",
@@ -5034,7 +5253,10 @@
       "lab_results": {
         "Hb": 133.9,
         "WBC": 7.4,
-        "Cr": 218.9
+        "Cr": 218.9,
+        "PHQ9": 6.8,
+        "GAD7": 9.5,
+        "自杀意念": 0
       },
       "compatible_agents": [
         "psychiatry",
@@ -5055,7 +5277,10 @@
       "lab_results": {
         "Hb": 107.6,
         "WBC": 5.1,
-        "Cr": 222.8
+        "Cr": 222.8,
+        "PHQ9": 18.0,
+        "GAD7": 14.4,
+        "自杀意念": 0
       },
       "compatible_agents": [
         "psychiatry",
@@ -5076,7 +5301,10 @@
       "lab_results": {
         "Hb": 80.6,
         "WBC": 7.9,
-        "Cr": 110.7
+        "Cr": 110.7,
+        "PHQ9": 17.3,
+        "GAD7": 4.6,
+        "自杀意念": 1
       },
       "compatible_agents": [
         "psychiatry",
@@ -5098,7 +5326,10 @@
       "lab_results": {
         "Hb": 94.1,
         "WBC": 9.0,
-        "Cr": 228.9
+        "Cr": 228.9,
+        "PHQ9": 10.3,
+        "GAD7": 15.6,
+        "自杀意念": 1
       },
       "compatible_agents": [
         "psychiatry",
@@ -5119,7 +5350,11 @@
       "lab_results": {
         "Hb": 116.8,
         "WBC": 4.6,
-        "Cr": 135.1
+        "Cr": 135.1,
+        "MMSE": 28.6,
+        "药物种类": 4.5,
+        "跌倒史": 1,
+        "VAS": 2
       },
       "compatible_agents": [
         "geriatrics",
@@ -5141,7 +5376,10 @@
       "lab_results": {
         "Hb": 93.7,
         "WBC": 17.2,
-        "Cr": 170.4
+        "Cr": 170.4,
+        "MMSE": 10.3,
+        "药物种类": 10.8,
+        "跌倒史": 1
       },
       "compatible_agents": [
         "geriatrics",
@@ -5162,7 +5400,10 @@
       "lab_results": {
         "Hb": 112.0,
         "WBC": 4.6,
-        "Cr": 268.9
+        "Cr": 268.9,
+        "MMSE": 18.3,
+        "药物种类": 3.1,
+        "跌倒史": 0
       },
       "compatible_agents": [
         "geriatrics",
@@ -5184,7 +5425,10 @@
       "lab_results": {
         "Hb": 122.4,
         "WBC": 6.3,
-        "Cr": 246.3
+        "Cr": 246.3,
+        "MMSE": 14.7,
+        "药物种类": 5.8,
+        "跌倒史": 0
       },
       "compatible_agents": [
         "geriatrics",
@@ -5205,7 +5449,10 @@
       "lab_results": {
         "Hb": 128.2,
         "WBC": 14.5,
-        "Cr": 217.3
+        "Cr": 217.3,
+        "MMSE": 23.7,
+        "药物种类": 8.2,
+        "跌倒史": 1
       },
       "compatible_agents": [
         "geriatrics",
@@ -5226,7 +5473,9 @@
       "lab_results": {
         "Hb": 134.5,
         "WBC": 16.3,
-        "Cr": 214.3
+        "Cr": 214.3,
+        "听力_dB": 32.0,
+        "声嘶周数": 6.0
       },
       "compatible_agents": [
         "ent",
@@ -5247,7 +5496,9 @@
       "lab_results": {
         "Hb": 143.7,
         "WBC": 12.1,
-        "Cr": 144.5
+        "Cr": 144.5,
+        "听力_dB": 53.8,
+        "声嘶周数": 8.9
       },
       "compatible_agents": [
         "ent",
@@ -5268,7 +5519,9 @@
       "lab_results": {
         "Hb": 86.1,
         "WBC": 16.0,
-        "Cr": 265.3
+        "Cr": 265.3,
+        "听力_dB": 12.7,
+        "声嘶周数": 5.4
       },
       "compatible_agents": [
         "ent",
@@ -5289,7 +5542,9 @@
       "lab_results": {
         "Hb": 105.7,
         "WBC": 10.4,
-        "Cr": 96.2
+        "Cr": 96.2,
+        "听力_dB": 52.5,
+        "声嘶周数": 7.5
       },
       "compatible_agents": [
         "ent",
@@ -5311,7 +5566,9 @@
       "lab_results": {
         "Hb": 120.4,
         "WBC": 6.0,
-        "Cr": 119.5
+        "Cr": 119.5,
+        "听力_dB": 39.8,
+        "声嘶周数": 8.4
       },
       "compatible_agents": [
         "ent",
@@ -5332,7 +5589,11 @@
       "lab_results": {
         "Hb": 112.7,
         "WBC": 8.4,
-        "Cr": 203.5
+        "Cr": 203.5,
+        "Child-Pugh": 6.0,
+        "MELD": 15.0,
+        "肿瘤大小_cm": 6.0,
+        "胆红素": 195.1
       },
       "compatible_agents": [
         "hepatobiliary-surgery",
@@ -5353,7 +5614,11 @@
       "lab_results": {
         "Hb": 100.2,
         "WBC": 15.8,
-        "Cr": 291.5
+        "Cr": 291.5,
+        "Child-Pugh": 7.0,
+        "MELD": 13.0,
+        "肿瘤大小_cm": 8.5,
+        "胆红素": 20.9
       },
       "compatible_agents": [
         "hepatobiliary-surgery",
@@ -5374,7 +5639,11 @@
       "lab_results": {
         "Hb": 104.8,
         "WBC": 13.0,
-        "Cr": 218.9
+        "Cr": 218.9,
+        "Child-Pugh": 10.7,
+        "MELD": 27.1,
+        "肿瘤大小_cm": 4.3,
+        "胆红素": 72.8
       },
       "compatible_agents": [
         "hepatobiliary-surgery",
@@ -5395,7 +5664,11 @@
       "lab_results": {
         "Hb": 145.1,
         "WBC": 13.2,
-        "Cr": 259.0
+        "Cr": 259.0,
+        "Child-Pugh": 10.8,
+        "MELD": 24.5,
+        "肿瘤大小_cm": 9.3,
+        "胆红素": 66.4
       },
       "compatible_agents": [
         "hepatobiliary-surgery",
@@ -5416,7 +5689,11 @@
       "lab_results": {
         "Hb": 107.3,
         "WBC": 14.6,
-        "Cr": 106.1
+        "Cr": 106.1,
+        "Child-Pugh": 8.3,
+        "MELD": 20.1,
+        "肿瘤大小_cm": 2.2,
+        "胆红素": 191.8
       },
       "compatible_agents": [
         "hepatobiliary-surgery",
@@ -5437,11 +5714,13 @@
       "lab_results": {
         "BUN": 245.0,
         "Cr": 260.4,
-        "eGFR": 88.5,
+        "eGFR": 24.2,
         "尿蛋白": 4.7,
         "K+": 4.0,
         "P": 76.9,
-        "Ca2+": 14.0
+        "Ca2+": 14.0,
+        "尿蛋白_g": 0.4,
+        "VAS": 2
       },
       "compatible_agents": [
         "nephrology",
@@ -5463,11 +5742,12 @@
       "lab_results": {
         "BUN": 233.1,
         "Cr": 70.5,
-        "eGFR": 37.1,
+        "eGFR": 21.3,
         "尿蛋白": 72.2,
         "K+": 5.9,
         "P": 61.4,
-        "Ca2+": 75.5
+        "Ca2+": 75.5,
+        "尿蛋白_g": 0.8
       },
       "compatible_agents": [
         "nephrology",
@@ -5488,11 +5768,12 @@
       "lab_results": {
         "BUN": 277.0,
         "Cr": 106.6,
-        "eGFR": 68.2,
+        "eGFR": 11.1,
         "尿蛋白": 57.5,
         "K+": 4.3,
         "P": 77.2,
-        "Ca2+": 78.0
+        "Ca2+": 78.0,
+        "尿蛋白_g": 3.2
       },
       "compatible_agents": [
         "nephrology",
@@ -5513,11 +5794,12 @@
       "lab_results": {
         "BUN": 72.5,
         "Cr": 175.3,
-        "eGFR": 37.7,
+        "eGFR": 57.0,
         "尿蛋白": 93.5,
         "K+": 5.1,
         "P": 52.1,
-        "Ca2+": 13.3
+        "Ca2+": 13.3,
+        "尿蛋白_g": 5.8
       },
       "compatible_agents": [
         "nephrology",
@@ -5538,11 +5820,13 @@
       "lab_results": {
         "BUN": 82.0,
         "Cr": 278.5,
-        "eGFR": 81.9,
+        "eGFR": 32.8,
         "尿蛋白": 88.6,
         "K+": 5.8,
         "P": 42.1,
-        "Ca2+": 40.2
+        "Ca2+": 40.2,
+        "尿蛋白_g": 2.6,
+        "VAS": 3
       },
       "compatible_agents": [
         "nephrology",
@@ -5564,11 +5848,12 @@
       "lab_results": {
         "BUN": 136.5,
         "Cr": 83.8,
-        "eGFR": 71.8,
+        "eGFR": 37.2,
         "尿蛋白": 34.2,
         "K+": 3.4,
         "P": 4.8,
-        "Ca2+": 91.8
+        "Ca2+": 91.8,
+        "尿蛋白_g": 2.4
       },
       "compatible_agents": [
         "nephrology",
@@ -5589,7 +5874,11 @@
       "lab_results": {
         "Hb": 81.5,
         "WBC": 6.6,
-        "Cr": 95.9
+        "Cr": 95.9,
+        "交叉配型": 1,
+        "DSA": 6235.1,
+        "FK506_ng": 10.6,
+        "VAS": 3
       },
       "compatible_agents": [
         "renal-transplant",
@@ -5611,7 +5900,10 @@
       "lab_results": {
         "Hb": 113.6,
         "WBC": 15.0,
-        "Cr": 169.7
+        "Cr": 169.7,
+        "交叉配型": 1,
+        "DSA": 4389.1,
+        "FK506_ng": 10.6
       },
       "compatible_agents": [
         "renal-transplant",
@@ -5632,7 +5924,10 @@
       "lab_results": {
         "Hb": 103.3,
         "WBC": 3.5,
-        "Cr": 144.7
+        "Cr": 144.7,
+        "交叉配型": 1,
+        "DSA": 7124.3,
+        "FK506_ng": 12.2
       },
       "compatible_agents": [
         "renal-transplant",
@@ -5654,7 +5949,10 @@
       "lab_results": {
         "Hb": 123.5,
         "WBC": 14.9,
-        "Cr": 181.8
+        "Cr": 181.8,
+        "交叉配型": 1,
+        "DSA": 284.6,
+        "FK506_ng": 5.6
       },
       "compatible_agents": [
         "renal-transplant",
@@ -5675,7 +5973,10 @@
       "lab_results": {
         "Hb": 100.3,
         "WBC": 3.7,
-        "Cr": 249.2
+        "Cr": 249.2,
+        "TNM_stage": 1.9,
+        "ECOG": 1.1,
+        "淋巴结阳性": 1
       },
       "compatible_agents": [
         "oncology",
@@ -5696,7 +5997,10 @@
       "lab_results": {
         "Hb": 90.7,
         "WBC": 8.6,
-        "Cr": 141.3
+        "Cr": 141.3,
+        "TNM_stage": 0.6,
+        "ECOG": 2.5,
+        "淋巴结阳性": 0
       },
       "compatible_agents": [
         "oncology",
@@ -5717,7 +6021,10 @@
       "lab_results": {
         "Hb": 137.3,
         "WBC": 17.2,
-        "Cr": 68.9
+        "Cr": 68.9,
+        "TNM_stage": 3.4,
+        "ECOG": 2.2,
+        "淋巴结阳性": 1
       },
       "compatible_agents": [
         "oncology",
@@ -5738,7 +6045,10 @@
       "lab_results": {
         "Hb": 121.2,
         "WBC": 17.8,
-        "Cr": 190.3
+        "Cr": 190.3,
+        "TNM_stage": 1.4,
+        "ECOG": 2.1,
+        "淋巴结阳性": 1
       },
       "compatible_agents": [
         "oncology",
@@ -5759,7 +6069,10 @@
       "lab_results": {
         "Hb": 149.3,
         "WBC": 8.3,
-        "Cr": 89.9
+        "Cr": 89.9,
+        "TNM_stage": 0.2,
+        "ECOG": 3.4,
+        "淋巴结阳性": 0
       },
       "compatible_agents": [
         "oncology",
@@ -5780,7 +6093,11 @@
       "lab_results": {
         "Hb": 107.1,
         "WBC": 6.2,
-        "Cr": 226.1
+        "Cr": 226.1,
+        "TNM_stage": 1.9,
+        "ECOG": 3.9,
+        "淋巴结阳性": 0,
+        "VAS": 7
       },
       "compatible_agents": [
         "oncology",
@@ -5802,7 +6119,10 @@
       "lab_results": {
         "Hb": 114.4,
         "WBC": 17.9,
-        "Cr": 103.3
+        "Cr": 103.3,
+        "FEV1": 74.5,
+        "DLCO": 53.4,
+        "结节大小_mm": 16.4
       },
       "compatible_agents": [
         "thoracic-surgery",
@@ -5823,7 +6143,11 @@
       "lab_results": {
         "Hb": 115.7,
         "WBC": 13.9,
-        "Cr": 100.0
+        "Cr": 100.0,
+        "FEV1": 64.3,
+        "DLCO": 47.9,
+        "结节大小_mm": 17.6,
+        "VAS": 6
       },
       "compatible_agents": [
         "thoracic-surgery",
@@ -5845,7 +6169,10 @@
       "lab_results": {
         "Hb": 129.2,
         "WBC": 9.8,
-        "Cr": 213.5
+        "Cr": 213.5,
+        "FEV1": 50.1,
+        "DLCO": 71.4,
+        "结节大小_mm": 12.3
       },
       "compatible_agents": [
         "thoracic-surgery",
@@ -5866,7 +6193,10 @@
       "lab_results": {
         "Hb": 156.2,
         "WBC": 5.6,
-        "Cr": 205.8
+        "Cr": 205.8,
+        "FEV1": 58.2,
+        "DLCO": 81.3,
+        "结节大小_mm": 12.9
       },
       "compatible_agents": [
         "thoracic-surgery",
@@ -5888,7 +6218,10 @@
       "lab_results": {
         "Hb": 109.0,
         "WBC": 17.3,
-        "Cr": 67.8
+        "Cr": 67.8,
+        "FEV1": 38.2,
+        "DLCO": 70.8,
+        "结节大小_mm": 5.6
       },
       "compatible_agents": [
         "thoracic-surgery",
@@ -5997,7 +6330,9 @@
         "PT": 20.9,
         "APTT": 14.7,
         "铁蛋白": 79.2,
-        "叶酸": 3.6
+        "叶酸": 3.6,
+        "ANC": 4479.6,
+        "幼稚细胞_pct": 47.6
       },
       "compatible_agents": [
         "hematology",
@@ -6022,7 +6357,9 @@
         "PT": 41.7,
         "APTT": 41.5,
         "铁蛋白": 57.9,
-        "叶酸": 13.4
+        "叶酸": 13.4,
+        "ANC": 4087.4,
+        "幼稚细胞_pct": 41.9
       },
       "compatible_agents": [
         "hematology",
@@ -6047,7 +6384,9 @@
         "PT": 19.0,
         "APTT": 96.7,
         "铁蛋白": 43.8,
-        "叶酸": 91.2
+        "叶酸": 91.2,
+        "ANC": 3541.5,
+        "幼稚细胞_pct": 40.0
       },
       "compatible_agents": [
         "hematology",
@@ -6072,7 +6411,9 @@
         "PT": 84.7,
         "APTT": 25.8,
         "铁蛋白": 63.9,
-        "叶酸": 55.5
+        "叶酸": 55.5,
+        "ANC": 3231.7,
+        "幼稚细胞_pct": 5.1
       },
       "compatible_agents": [
         "hematology",
@@ -6097,7 +6438,9 @@
         "PT": 60.9,
         "APTT": 84.4,
         "铁蛋白": 56.8,
-        "叶酸": 82.7
+        "叶酸": 82.7,
+        "ANC": 1926.7,
+        "幼稚细胞_pct": 36.8
       },
       "compatible_agents": [
         "hematology",
@@ -6122,7 +6465,9 @@
         "PT": 64.3,
         "APTT": 50.3,
         "铁蛋白": 63.1,
-        "叶酸": 29.7
+        "叶酸": 29.7,
+        "ANC": 776.0,
+        "幼稚细胞_pct": 37.2
       },
       "compatible_agents": [
         "hematology",
@@ -6143,7 +6488,11 @@
       "lab_results": {
         "Hb": 116.3,
         "WBC": 13.5,
-        "Cr": 97.9
+        "Cr": 97.9,
+        "ABI": 0,
+        "动脉瘤大小_cm": 5.1,
+        "Rutherford": 5.1,
+        "颈动脉狭窄_pct": 75.2
       },
       "compatible_agents": [
         "vascular-surgery",
@@ -6164,7 +6513,11 @@
       "lab_results": {
         "Hb": 148.9,
         "WBC": 8.1,
-        "Cr": 297.1
+        "Cr": 297.1,
+        "ABI": 1,
+        "动脉瘤大小_cm": 5.3,
+        "Rutherford": 5.7,
+        "颈动脉狭窄_pct": 54.7
       },
       "compatible_agents": [
         "vascular-surgery",
@@ -6185,7 +6538,11 @@
       "lab_results": {
         "Hb": 105.5,
         "WBC": 10.3,
-        "Cr": 124.2
+        "Cr": 124.2,
+        "ABI": 0,
+        "动脉瘤大小_cm": 6.9,
+        "Rutherford": 0.6,
+        "颈动脉狭窄_pct": 39.2
       },
       "compatible_agents": [
         "vascular-surgery",
@@ -6206,7 +6563,12 @@
       "lab_results": {
         "Hb": 99.9,
         "WBC": 16.0,
-        "Cr": 98.3
+        "Cr": 98.3,
+        "ABI": 1,
+        "动脉瘤大小_cm": 4.3,
+        "Rutherford": 1.6,
+        "颈动脉狭窄_pct": 32.7,
+        "VAS": 10
       },
       "compatible_agents": [
         "vascular-surgery",
@@ -6228,7 +6590,11 @@
       "lab_results": {
         "Hb": 117.3,
         "WBC": 16.2,
-        "Cr": 179.4
+        "Cr": 179.4,
+        "ABI": 0,
+        "动脉瘤大小_cm": 3.6,
+        "Rutherford": 1.8,
+        "颈动脉狭窄_pct": 65.2
       },
       "compatible_agents": [
         "vascular-surgery",
@@ -6249,7 +6615,10 @@
       "lab_results": {
         "Hb": 83.9,
         "WBC": 7.6,
-        "Cr": 203.4
+        "Cr": 203.4,
+        "SOFA": 5.4,
+        "乳酸": 7.8,
+        "去甲肾剂量": 0
       },
       "compatible_agents": [
         "icu",
@@ -6270,7 +6639,11 @@
       "lab_results": {
         "Hb": 138.2,
         "WBC": 14.6,
-        "Cr": 147.8
+        "Cr": 147.8,
+        "SOFA": 14.6,
+        "乳酸": 5.4,
+        "去甲肾剂量": 1,
+        "VAS": 7
       },
       "compatible_agents": [
         "icu",
@@ -6292,7 +6665,10 @@
       "lab_results": {
         "Hb": 120.3,
         "WBC": 14.6,
-        "Cr": 127.1
+        "Cr": 127.1,
+        "SOFA": 5.3,
+        "乳酸": 6.4,
+        "去甲肾剂量": 0
       },
       "compatible_agents": [
         "icu",
@@ -6313,7 +6689,11 @@
       "lab_results": {
         "Hb": 124.6,
         "WBC": 8.8,
-        "Cr": 94.6
+        "Cr": 94.6,
+        "SOFA": 10.8,
+        "乳酸": 1.2,
+        "去甲肾剂量": 1,
+        "VAS": 9
       },
       "compatible_agents": [
         "icu",
@@ -6335,7 +6715,10 @@
       "lab_results": {
         "Hb": 144.3,
         "WBC": 11.0,
-        "Cr": 95.7
+        "Cr": 95.7,
+        "SOFA": 2.2,
+        "乳酸": 1.2,
+        "去甲肾剂量": 0
       },
       "compatible_agents": [
         "icu",
@@ -6356,7 +6739,11 @@
       "lab_results": {
         "Hb": 127.5,
         "WBC": 10.9,
-        "Cr": 182.3
+        "Cr": 182.3,
+        "ANA_titer": 659.7,
+        "DAS28": 6.3,
+        "dsDNA": 0,
+        "RF": 254.2
       },
       "compatible_agents": [
         "rheumatology",
@@ -6377,7 +6764,11 @@
       "lab_results": {
         "Hb": 158.4,
         "WBC": 12.0,
-        "Cr": 251.2
+        "Cr": 251.2,
+        "ANA_titer": 82.3,
+        "DAS28": 2.8,
+        "dsDNA": 0,
+        "RF": 183.9
       },
       "compatible_agents": [
         "rheumatology",
@@ -6398,7 +6789,11 @@
       "lab_results": {
         "Hb": 126.2,
         "WBC": 14.0,
-        "Cr": 200.0
+        "Cr": 200.0,
+        "ANA_titer": 318.4,
+        "DAS28": 1.6,
+        "dsDNA": 1,
+        "RF": 150.5
       },
       "compatible_agents": [
         "rheumatology",
@@ -6419,7 +6814,11 @@
       "lab_results": {
         "Hb": 125.8,
         "WBC": 13.7,
-        "Cr": 105.8
+        "Cr": 105.8,
+        "ANA_titer": 1118.8,
+        "DAS28": 5.4,
+        "dsDNA": 1,
+        "RF": 86.1
       },
       "compatible_agents": [
         "rheumatology",
@@ -6440,7 +6839,11 @@
       "lab_results": {
         "Hb": 120.1,
         "WBC": 12.4,
-        "Cr": 173.2
+        "Cr": 173.2,
+        "ANA_titer": 386.6,
+        "DAS28": 1.7,
+        "dsDNA": 1,
+        "RF": 273.8
       },
       "compatible_agents": [
         "rheumatology",
@@ -6521,7 +6924,10 @@
         "ALT": 95.9,
         "Cr": 130.4,
         "GLU": 8.4,
-        "K+": 4.3
+        "K+": 4.3,
+        "HBsAg": 0,
+        "HBV_DNA": 555637.4,
+        "便血": 0
       },
       "compatible_agents": [
         "gastroenterology",
@@ -6546,7 +6952,10 @@
         "ALT": 111.6,
         "Cr": 177.5,
         "GLU": 14.8,
-        "K+": 4.6
+        "K+": 4.6,
+        "HBsAg": 1,
+        "HBV_DNA": 683565.7,
+        "便血": 1
       },
       "compatible_agents": [
         "gastroenterology",
@@ -6573,9 +6982,10 @@
         "GLU": 13.3,
         "K+": 3.6,
         "BUN": 28.1,
-        "eGFR": 67.0,
+        "eGFR": 83.3,
         "HbA1c": 10.8,
-        "TSH": 17.27
+        "TSH": 17.27,
+        "尿蛋白_g": 2.1
       },
       "compatible_agents": [
         "nephrology",
@@ -6602,9 +7012,11 @@
         "GLU": 3.9,
         "K+": 5.0,
         "BUN": 24.7,
-        "eGFR": 48.0,
+        "eGFR": 13.7,
         "HbA1c": 9.3,
-        "TSH": 8.83
+        "TSH": 8.83,
+        "尿蛋白_g": 5.9,
+        "VAS": 8
       },
       "compatible_agents": [
         "nephrology",
@@ -6630,7 +7042,9 @@
         "ALT": 110.1,
         "Cr": 119.4,
         "GLU": 14.0,
-        "K+": 3.6
+        "K+": 3.6,
+        "ANC": 3912.0,
+        "幼稚细胞_pct": 14.0
       },
       "compatible_agents": [
         "hematology",
@@ -6655,7 +7069,9 @@
         "ALT": 23.4,
         "Cr": 220.7,
         "GLU": 8.2,
-        "K+": 4.5
+        "K+": 4.5,
+        "ANC": 3344.3,
+        "幼稚细胞_pct": 9.2
       },
       "compatible_agents": [
         "hematology",
@@ -6681,8 +7097,8 @@
         "Cr": 173.4,
         "GLU": 6.6,
         "K+": 5.3,
-        "HbA1c": 8.1,
-        "TSH": 0.12
+        "HbA1c": 10.1,
+        "TSH": 8.7
       },
       "compatible_agents": [
         "endocrinology",
@@ -6708,8 +7124,8 @@
         "Cr": 202.1,
         "GLU": 14.3,
         "K+": 5.3,
-        "HbA1c": 12.3,
-        "TSH": 5.53
+        "HbA1c": 13.1,
+        "TSH": 6.5
       },
       "compatible_agents": [
         "endocrinology",
@@ -6734,7 +7150,11 @@
         "ALT": 110.4,
         "Cr": 196.9,
         "GLU": 14.2,
-        "K+": 5.8
+        "K+": 5.8,
+        "ANA_titer": 841.4,
+        "DAS28": 4.0,
+        "dsDNA": 1,
+        "RF": 61.3
       },
       "compatible_agents": [
         "rheumatology",
@@ -6759,7 +7179,11 @@
         "ALT": 107.0,
         "Cr": 81.2,
         "GLU": 9.5,
-        "K+": 4.4
+        "K+": 4.4,
+        "ANA_titer": 1032.4,
+        "DAS28": 2.3,
+        "dsDNA": 1,
+        "RF": 230.1
       },
       "compatible_agents": [
         "rheumatology",
@@ -6784,7 +7208,11 @@
         "ALT": 88.5,
         "Cr": 263.8,
         "GLU": 4.1,
-        "K+": 5.6
+        "K+": 5.6,
+        "ANA_titer": 448.8,
+        "DAS28": 6.0,
+        "dsDNA": 1,
+        "RF": 71.7
       },
       "compatible_agents": [
         "rheumatology",
@@ -6809,7 +7237,12 @@
         "ALT": 90.0,
         "Cr": 88.7,
         "GLU": 6.6,
-        "K+": 4.7
+        "K+": 4.7,
+        "CD4": 381.3,
+        "乙肝DNA": 5665741.6,
+        "丙肝RNA": 0,
+        "T_SPOT": 1,
+        "VAS": 5
       },
       "compatible_agents": [
         "infectious-disease",
@@ -6835,7 +7268,11 @@
         "ALT": 32.9,
         "Cr": 167.0,
         "GLU": 8.6,
-        "K+": 4.7
+        "K+": 4.7,
+        "CD4": 296.7,
+        "乙肝DNA": 1178549.0,
+        "丙肝RNA": 1,
+        "T_SPOT": 1
       },
       "compatible_agents": [
         "infectious-disease",
@@ -6860,7 +7297,11 @@
         "ALT": 110.4,
         "Cr": 243.9,
         "GLU": 5.6,
-        "K+": 3.4
+        "K+": 3.4,
+        "CD4": 247.7,
+        "乙肝DNA": 5451214.8,
+        "丙肝RNA": 1,
+        "T_SPOT": 0
       },
       "compatible_agents": [
         "infectious-disease",
@@ -6885,7 +7326,10 @@
         "ALT": 78.4,
         "Cr": 202.5,
         "GLU": 5.0,
-        "K+": 5.3
+        "K+": 5.3,
+        "TNM_stage": 1.3,
+        "ECOG": 0.6,
+        "淋巴结阳性": 0
       },
       "compatible_agents": [
         "oncology",
@@ -6910,7 +7354,10 @@
         "ALT": 49.0,
         "Cr": 183.2,
         "GLU": 4.2,
-        "K+": 5.7
+        "K+": 5.7,
+        "TNM_stage": 1.1,
+        "ECOG": 2.3,
+        "淋巴结阳性": 1
       },
       "compatible_agents": [
         "oncology",
@@ -6985,7 +7432,10 @@
         "ALT": 45.2,
         "Cr": 122.7,
         "GLU": 11.9,
-        "K+": 5.3
+        "K+": 5.3,
+        "MMSE": 18.0,
+        "药物种类": 7.9,
+        "跌倒史": 1
       },
       "compatible_agents": [
         "geriatrics",
@@ -7010,7 +7460,10 @@
         "ALT": 129.7,
         "Cr": 83.1,
         "GLU": 4.9,
-        "K+": 3.4
+        "K+": 3.4,
+        "MMSE": 23.5,
+        "药物种类": 6.0,
+        "跌倒史": 1
       },
       "compatible_agents": [
         "geriatrics",
@@ -7035,7 +7488,10 @@
         "ALT": 90.2,
         "Cr": 227.1,
         "GLU": 5.6,
-        "K+": 3.4
+        "K+": 3.4,
+        "MMSE": 28.2,
+        "药物种类": 10.6,
+        "跌倒史": 0
       },
       "compatible_agents": [
         "geriatrics",
@@ -7060,7 +7516,10 @@
         "ALT": 123.4,
         "Cr": 184.5,
         "GLU": 13.2,
-        "K+": 4.7
+        "K+": 4.7,
+        "ASA": 2.3,
+        "Blatchford": 6.5,
+        "胆石大小_mm": 3.7
       },
       "compatible_agents": [
         "general-surgery",
@@ -7087,7 +7546,10 @@
         "ALT": 92.1,
         "Cr": 247.6,
         "GLU": 14.2,
-        "K+": 5.7
+        "K+": 5.7,
+        "ASA": 2.2,
+        "Blatchford": 1.7,
+        "胆石大小_mm": 6.2
       },
       "compatible_agents": [
         "general-surgery",
@@ -7114,7 +7576,11 @@
         "ALT": 76.8,
         "Cr": 156.4,
         "GLU": 12.6,
-        "K+": 4.8
+        "K+": 4.8,
+        "Child-Pugh": 10.6,
+        "MELD": 9.1,
+        "肿瘤大小_cm": 6.6,
+        "胆红素": 126.2
       },
       "compatible_agents": [
         "hepatobiliary-surgery",
@@ -7141,7 +7607,11 @@
         "ALT": 60.2,
         "Cr": 53.8,
         "GLU": 5.5,
-        "K+": 4.1
+        "K+": 4.1,
+        "Child-Pugh": 11.7,
+        "MELD": 25.3,
+        "肿瘤大小_cm": 8.8,
+        "胆红素": 101.8
       },
       "compatible_agents": [
         "hepatobiliary-surgery",
@@ -7168,7 +7638,11 @@
         "ALT": 58.4,
         "Cr": 171.7,
         "GLU": 14.7,
-        "K+": 5.4
+        "K+": 5.4,
+        "Child-Pugh": 5.1,
+        "MELD": 24.2,
+        "肿瘤大小_cm": 7.1,
+        "胆红素": 135.5
       },
       "compatible_agents": [
         "hepatobiliary-surgery",
@@ -7195,7 +7669,12 @@
         "ALT": 104.9,
         "Cr": 83.1,
         "GLU": 6.9,
-        "K+": 4.7
+        "K+": 4.7,
+        "GCS_E": 3.8,
+        "GCS_V": 2.3,
+        "GCS_M": 4.9,
+        "瞳孔不等大": 0,
+        "WFNS": 3.1
       },
       "compatible_agents": [
         "neurosurgery",
@@ -7222,7 +7701,12 @@
         "ALT": 54.0,
         "Cr": 226.5,
         "GLU": 12.4,
-        "K+": 5.6
+        "K+": 5.6,
+        "GCS_E": 2.9,
+        "GCS_V": 2.5,
+        "GCS_M": 3.8,
+        "瞳孔不等大": 0,
+        "WFNS": 3.2
       },
       "compatible_agents": [
         "neurosurgery",
@@ -7249,7 +7733,12 @@
         "ALT": 95.1,
         "Cr": 225.2,
         "GLU": 13.2,
-        "K+": 3.5
+        "K+": 3.5,
+        "GCS_E": 1.0,
+        "GCS_V": 1.4,
+        "GCS_M": 2.6,
+        "瞳孔不等大": 0,
+        "WFNS": 4.8
       },
       "compatible_agents": [
         "neurosurgery",
@@ -7276,7 +7765,10 @@
         "ALT": 97.7,
         "Cr": 134.6,
         "GLU": 10.6,
-        "K+": 5.0
+        "K+": 5.0,
+        "FEV1": 39.4,
+        "DLCO": 73.8,
+        "结节大小_mm": 15.0
       },
       "compatible_agents": [
         "thoracic-surgery",
@@ -7303,7 +7795,10 @@
         "ALT": 52.7,
         "Cr": 61.2,
         "GLU": 14.7,
-        "K+": 5.4
+        "K+": 5.4,
+        "FEV1": 30.9,
+        "DLCO": 57.1,
+        "结节大小_mm": 11.9
       },
       "compatible_agents": [
         "thoracic-surgery",
@@ -7330,7 +7825,10 @@
         "ALT": 113.2,
         "Cr": 139.7,
         "GLU": 5.5,
-        "K+": 5.4
+        "K+": 5.4,
+        "FEV1": 66.2,
+        "DLCO": 38.7,
+        "结节大小_mm": 3.5
       },
       "compatible_agents": [
         "thoracic-surgery",
@@ -7357,7 +7855,11 @@
         "ALT": 98.9,
         "Cr": 146.4,
         "GLU": 7.3,
-        "K+": 3.6
+        "K+": 3.6,
+        "ABI": 1,
+        "动脉瘤大小_cm": 3.2,
+        "Rutherford": 3.3,
+        "颈动脉狭窄_pct": 63.4
       },
       "compatible_agents": [
         "vascular-surgery",
@@ -7384,7 +7886,11 @@
         "ALT": 46.6,
         "Cr": 152.6,
         "GLU": 8.1,
-        "K+": 3.4
+        "K+": 3.4,
+        "ABI": 0,
+        "动脉瘤大小_cm": 7.0,
+        "Rutherford": 5.5,
+        "颈动脉狭窄_pct": 72.8
       },
       "compatible_agents": [
         "vascular-surgery",
@@ -7411,7 +7917,11 @@
         "ALT": 102.2,
         "Cr": 166.4,
         "GLU": 8.4,
-        "K+": 5.0
+        "K+": 5.0,
+        "ABI": 1,
+        "动脉瘤大小_cm": 4.4,
+        "Rutherford": 1.9,
+        "颈动脉狭窄_pct": 61.2
       },
       "compatible_agents": [
         "vascular-surgery",
@@ -7440,7 +7950,10 @@
         "GLU": 13.3,
         "K+": 4.6,
         "BUN": 5.4,
-        "eGFR": 74.0
+        "eGFR": 74.0,
+        "交叉配型": 1,
+        "DSA": 7077.8,
+        "FK506_ng": 12.9
       },
       "compatible_agents": [
         "renal-transplant",
@@ -7468,7 +7981,10 @@
         "GLU": 14.8,
         "K+": 3.7,
         "BUN": 37.1,
-        "eGFR": 90.0
+        "eGFR": 90.0,
+        "交叉配型": 1,
+        "DSA": 5184.4,
+        "FK506_ng": 3.7
       },
       "compatible_agents": [
         "renal-transplant",
@@ -7496,7 +8012,10 @@
         "GLU": 5.6,
         "K+": 5.2,
         "BUN": 37.6,
-        "eGFR": 94.0
+        "eGFR": 94.0,
+        "交叉配型": 1,
+        "DSA": 6490.7,
+        "FK506_ng": 5.3
       },
       "compatible_agents": [
         "renal-transplant",
@@ -7524,7 +8043,10 @@
         "GLU": 12.8,
         "K+": 4.0,
         "BUN": 29.9,
-        "eGFR": 25.0
+        "eGFR": 25.0,
+        "交叉配型": 1,
+        "DSA": 1670.0,
+        "FK506_ng": 5.6
       },
       "compatible_agents": [
         "renal-transplant",
@@ -7552,7 +8074,11 @@
         "GLU": 6.9,
         "K+": 4.6,
         "Troponin": 0.322,
-        "NT-proBNP": 3082.0
+        "NT-proBNP": 3082.0,
+        "BI_RADS": 4.4,
+        "Ki67_pct": 35.0,
+        "ER_status": 0,
+        "Her2_status": 0
       },
       "compatible_agents": [
         "breast-center",
@@ -7579,7 +8105,11 @@
         "GLU": 9.5,
         "K+": 4.3,
         "Troponin": 0.377,
-        "NT-proBNP": 3676.0
+        "NT-proBNP": 3676.0,
+        "BI_RADS": 4.3,
+        "Ki67_pct": 69.7,
+        "ER_status": 1,
+        "Her2_status": 1
       },
       "compatible_agents": [
         "breast-center",
@@ -7606,7 +8136,11 @@
         "GLU": 5.1,
         "K+": 5.1,
         "Troponin": 3.0,
-        "NT-proBNP": 2214.0
+        "NT-proBNP": 2214.0,
+        "BI_RADS": 3.5,
+        "Ki67_pct": 69.0,
+        "ER_status": 1,
+        "Her2_status": 1
       },
       "compatible_agents": [
         "breast-center",
@@ -7633,7 +8167,11 @@
         "GLU": 6.9,
         "K+": 5.4,
         "Troponin": 0.491,
-        "NT-proBNP": 5780.0
+        "NT-proBNP": 5780.0,
+        "BI_RADS": 2.3,
+        "Ki67_pct": 30.5,
+        "ER_status": 0,
+        "Her2_status": 0
       },
       "compatible_agents": [
         "breast-center",
@@ -7658,7 +8196,10 @@
         "ALT": 119.7,
         "Cr": 270.0,
         "GLU": 7.0,
-        "K+": 4.6
+        "K+": 4.6,
+        "烧伤面积_pct": 39.6,
+        "深度": 0,
+        "吸入性损伤": 1
       },
       "compatible_agents": [
         "burns-plastic",
@@ -7683,7 +8224,10 @@
         "ALT": 53.7,
         "Cr": 243.3,
         "GLU": 11.5,
-        "K+": 5.4
+        "K+": 5.4,
+        "烧伤面积_pct": 38.7,
+        "深度": 1,
+        "吸入性损伤": 0
       },
       "compatible_agents": [
         "burns-plastic",
@@ -7708,7 +8252,10 @@
         "ALT": 126.2,
         "Cr": 95.0,
         "GLU": 5.3,
-        "K+": 5.9
+        "K+": 5.9,
+        "烧伤面积_pct": 37.2,
+        "深度": 0,
+        "吸入性损伤": 0
       },
       "compatible_agents": [
         "burns-plastic",
@@ -7733,7 +8280,10 @@
         "ALT": 68.9,
         "Cr": 251.5,
         "GLU": 5.9,
-        "K+": 3.8
+        "K+": 3.8,
+        "烧伤面积_pct": 20.2,
+        "深度": 0,
+        "吸入性损伤": 1
       },
       "compatible_agents": [
         "burns-plastic",
@@ -7758,7 +8308,9 @@
         "ALT": 15.6,
         "Cr": 273.2,
         "GLU": 11.0,
-        "K+": 5.7
+        "K+": 5.7,
+        "肿瘤大小_cm": 5.0,
+        "咯血量_ml": 287.0
       },
       "compatible_agents": [
         "interventional-therapy",
@@ -7783,7 +8335,9 @@
         "ALT": 28.3,
         "Cr": 231.4,
         "GLU": 9.9,
-        "K+": 5.8
+        "K+": 5.8,
+        "肿瘤大小_cm": 5.1,
+        "咯血量_ml": 406.3
       },
       "compatible_agents": [
         "interventional-therapy",
@@ -7808,7 +8362,9 @@
         "ALT": 52.8,
         "Cr": 239.1,
         "GLU": 9.5,
-        "K+": 4.7
+        "K+": 4.7,
+        "肿瘤大小_cm": 3.6,
+        "咯血量_ml": 443.2
       },
       "compatible_agents": [
         "interventional-therapy",
@@ -7833,7 +8389,9 @@
         "ALT": 88.2,
         "Cr": 180.1,
         "GLU": 8.8,
-        "K+": 4.5
+        "K+": 4.5,
+        "肿瘤大小_cm": 4.9,
+        "咯血量_ml": 301.5
       },
       "compatible_agents": [
         "interventional-therapy",
@@ -7858,7 +8416,10 @@
         "ALT": 17.5,
         "Cr": 273.1,
         "GLU": 12.2,
-        "K+": 4.7
+        "K+": 4.7,
+        "宫缩间隔_min": 25.5,
+        "宫口开大_cm": 3.9,
+        "蛋白尿": 1
       },
       "compatible_agents": [
         "obgyn",
@@ -7883,7 +8444,10 @@
         "ALT": 113.6,
         "Cr": 118.5,
         "GLU": 4.0,
-        "K+": 3.9
+        "K+": 3.9,
+        "宫缩间隔_min": 16.9,
+        "宫口开大_cm": 7.5,
+        "蛋白尿": 0
       },
       "compatible_agents": [
         "obgyn",
@@ -7908,7 +8472,10 @@
         "ALT": 98.2,
         "Cr": 169.4,
         "GLU": 12.5,
-        "K+": 4.1
+        "K+": 4.1,
+        "孕周": 30.0,
+        "黄疸_mg": 13.3,
+        "Apgar": 9.9
       },
       "compatible_agents": [
         "neonatology",
@@ -7933,7 +8500,11 @@
         "ALT": 78.4,
         "Cr": 234.4,
         "GLU": 10.2,
-        "K+": 4.7
+        "K+": 4.7,
+        "孕周": 37.5,
+        "黄疸_mg": 7.0,
+        "Apgar": 8.7,
+        "VAS": 10
       },
       "compatible_agents": [
         "neonatology",
@@ -7959,7 +8530,10 @@
         "ALT": 100.7,
         "Cr": 84.7,
         "GLU": 6.6,
-        "K+": 4.3
+        "K+": 4.3,
+        "孕周": 28.8,
+        "黄疸_mg": 15.0,
+        "Apgar": 3.2
       },
       "compatible_agents": [
         "neonatology",
@@ -7984,7 +8558,10 @@
         "ALT": 90.7,
         "Cr": 128.6,
         "GLU": 13.7,
-        "K+": 5.8
+        "K+": 5.8,
+        "眼压": 30.2,
+        "视力": 0,
+        "杯盘比": 0
       },
       "compatible_agents": [
         "ophthalmology",
@@ -8009,7 +8586,10 @@
         "ALT": 44.9,
         "Cr": 46.7,
         "GLU": 10.6,
-        "K+": 3.4
+        "K+": 3.4,
+        "眼压": 18.2,
+        "视力": 1,
+        "杯盘比": 0
       },
       "compatible_agents": [
         "ophthalmology",
@@ -8034,7 +8614,10 @@
         "ALT": 38.9,
         "Cr": 137.4,
         "GLU": 4.5,
-        "K+": 3.4
+        "K+": 3.4,
+        "眼压": 22.5,
+        "视力": 0,
+        "杯盘比": 0
       },
       "compatible_agents": [
         "ophthalmology",
@@ -8059,7 +8642,9 @@
         "ALT": 51.8,
         "Cr": 110.5,
         "GLU": 10.9,
-        "K+": 3.7
+        "K+": 3.7,
+        "听力_dB": 62.6,
+        "声嘶周数": 8.5
       },
       "compatible_agents": [
         "ent",
@@ -8085,7 +8670,9 @@
         "ALT": 108.5,
         "Cr": 249.6,
         "GLU": 5.2,
-        "K+": 5.4
+        "K+": 5.4,
+        "听力_dB": 39.0,
+        "声嘶周数": 7.9
       },
       "compatible_agents": [
         "ent",
@@ -8110,7 +8697,9 @@
         "ALT": 78.9,
         "Cr": 165.4,
         "GLU": 7.6,
-        "K+": 5.2
+        "K+": 5.2,
+        "听力_dB": 73.9,
+        "声嘶周数": 11.5
       },
       "compatible_agents": [
         "ent",
@@ -8135,7 +8724,10 @@
         "ALT": 33.2,
         "Cr": 220.4,
         "GLU": 3.6,
-        "K+": 3.4
+        "K+": 3.4,
+        "牙周袋_mm": 3.8,
+        "龋坏深度": 2.5,
+        "松动度": 2.7
       },
       "compatible_agents": [
         "stomatology",
@@ -8160,7 +8752,10 @@
         "ALT": 68.4,
         "Cr": 60.9,
         "GLU": 3.5,
-        "K+": 4.7
+        "K+": 4.7,
+        "牙周袋_mm": 2.6,
+        "龋坏深度": 3.0,
+        "松动度": 1.2
       },
       "compatible_agents": [
         "stomatology",
@@ -8185,7 +8780,10 @@
         "ALT": 81.3,
         "Cr": 67.6,
         "GLU": 13.1,
-        "K+": 4.5
+        "K+": 4.5,
+        "牙周袋_mm": 7.4,
+        "龋坏深度": 1.4,
+        "松动度": 1.5
       },
       "compatible_agents": [
         "stomatology",
@@ -8288,7 +8886,10 @@
         "ALT": 48.2,
         "Cr": 53.5,
         "GLU": 10.4,
-        "K+": 4.2
+        "K+": 4.2,
+        "SOFA": 7.1,
+        "乳酸": 1.4,
+        "去甲肾剂量": 1
       },
       "compatible_agents": [
         "icu",
@@ -8314,7 +8915,10 @@
         "ALT": 74.0,
         "Cr": 48.2,
         "GLU": 9.5,
-        "K+": 4.3
+        "K+": 4.3,
+        "SOFA": 8.8,
+        "乳酸": 5.9,
+        "去甲肾剂量": 1
       },
       "compatible_agents": [
         "icu",
@@ -8340,7 +8944,10 @@
         "ALT": 84.9,
         "Cr": 156.1,
         "GLU": 12.9,
-        "K+": 4.4
+        "K+": 4.4,
+        "SOFA": 4.9,
+        "乳酸": 1.2,
+        "去甲肾剂量": 0
       },
       "compatible_agents": [
         "icu",
@@ -8366,7 +8973,9 @@
         "ALT": 116.0,
         "Cr": 68.1,
         "GLU": 6.2,
-        "K+": 4.1
+        "K+": 4.1,
+        "皮疹面积_pct": 52.8,
+        "ABCDE": 0
       },
       "compatible_agents": [
         "dermatology",
@@ -8391,7 +9000,9 @@
         "ALT": 108.6,
         "Cr": 250.4,
         "GLU": 9.9,
-        "K+": 4.6
+        "K+": 4.6,
+        "皮疹面积_pct": 28.3,
+        "ABCDE": 1
       },
       "compatible_agents": [
         "dermatology",
@@ -8416,7 +9027,10 @@
         "ALT": 105.9,
         "Cr": 144.5,
         "GLU": 14.4,
-        "K+": 3.5
+        "K+": 3.5,
+        "皮疹面积_pct": 16.0,
+        "ABCDE": 0,
+        "VAS": 4
       },
       "compatible_agents": [
         "dermatology",
@@ -8445,7 +9059,10 @@
         "GLU": 6.4,
         "K+": 4.7,
         "Troponin": 0.872,
-        "NT-proBNP": 698.0
+        "NT-proBNP": 698.0,
+        "PHQ9": 9.3,
+        "GAD7": 17.5,
+        "自杀意念": 0
       },
       "compatible_agents": [
         "psychiatry",
@@ -8472,7 +9089,11 @@
         "GLU": 4.4,
         "K+": 5.6,
         "Troponin": 0.294,
-        "NT-proBNP": 4621.0
+        "NT-proBNP": 4621.0,
+        "PHQ9": 12.1,
+        "GAD7": 11.0,
+        "自杀意念": 1,
+        "VAS": 7
       },
       "compatible_agents": [
         "psychiatry",
@@ -8500,7 +9121,10 @@
         "GLU": 6.8,
         "K+": 5.2,
         "Troponin": 3.043,
-        "NT-proBNP": 1287.0
+        "NT-proBNP": 1287.0,
+        "PHQ9": 13.7,
+        "GAD7": 8.4,
+        "自杀意念": 0
       },
       "compatible_agents": [
         "psychiatry",
@@ -8525,7 +9149,10 @@
         "ALT": 51.8,
         "Cr": 119.8,
         "GLU": 14.1,
-        "K+": 5.0
+        "K+": 5.0,
+        "Barthel": 97.2,
+        "肌力级": 3.1,
+        "Braden": 13.3
       },
       "compatible_agents": [
         "rehabilitation",
@@ -8550,7 +9177,10 @@
         "ALT": 62.8,
         "Cr": 204.8,
         "GLU": 10.2,
-        "K+": 4.8
+        "K+": 4.8,
+        "Barthel": 95.3,
+        "肌力级": 3.0,
+        "Braden": 9.1
       },
       "compatible_agents": [
         "rehabilitation",
@@ -8575,7 +9205,10 @@
         "ALT": 17.2,
         "Cr": 50.4,
         "GLU": 11.7,
-        "K+": 4.7
+        "K+": 4.7,
+        "Barthel": 90.7,
+        "肌力级": 3.7,
+        "Braden": 9.4
       },
       "compatible_agents": [
         "rehabilitation",
@@ -8783,7 +9416,9 @@
         "ALT": 58.3,
         "Cr": 230.6,
         "GLU": 14.7,
-        "K+": 3.6
+        "K+": 3.6,
+        "ASA": 1.2,
+        "BMI": 31.4
       },
       "compatible_agents": [
         "cosmetic-surgery",
@@ -8808,7 +9443,9 @@
         "ALT": 17.6,
         "Cr": 61.0,
         "GLU": 12.2,
-        "K+": 3.5
+        "K+": 3.5,
+        "ASA": 2.2,
+        "BMI": 22.5
       },
       "compatible_agents": [
         "cosmetic-surgery",
@@ -8833,7 +9470,9 @@
         "ALT": 127.5,
         "Cr": 242.0,
         "GLU": 11.4,
-        "K+": 4.7
+        "K+": 4.7,
+        "ASA": 1.3,
+        "BMI": 30.3
       },
       "compatible_agents": [
         "cosmetic-surgery",
@@ -8858,7 +9497,9 @@
         "ALT": 75.9,
         "Cr": 104.7,
         "GLU": 10.8,
-        "K+": 4.2
+        "K+": 4.2,
+        "ASA": 1.4,
+        "BMI": 35.2
       },
       "compatible_agents": [
         "cosmetic-surgery",

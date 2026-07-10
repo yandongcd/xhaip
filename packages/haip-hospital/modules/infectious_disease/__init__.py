@@ -1,126 +1,58 @@
-"""感染内科智能体 ? KnowledgeAgent-powered clinical reasoning.
-
-Agent: infectious-disease | Department: 感染内科
-Guidelines: '中华感染杂志 感染性疾病诊疗规范 (2022)'
-"""
+"""感染内科 — RuleEngine-driven clinical reasoning."""
 
 from __future__ import annotations
 
 from haip.togaf.knowledge_agent import KnowledgeAgent
 
 _agent = KnowledgeAgent(agent_name="infectious-disease", department="感染内科")
-_guidelines = ['中华感染杂志 感染性疾病诊疗规范 (2022)']
+_agent.rule_engine.load_all()
+
 
 def bp_reception(**kwargs) -> dict:
-    """Bp Reception"""
     pid = kwargs.get("patient_id", "")
     patient = _agent.get_patient(pid)
     if not patient:
         return {"status": "error", "error": f"Patient {pid} not found"}
-
-    dx = patient.get("diagnosis", "")
-    guides = _agent.search_guidelines(dx) or _guidelines
-    vitals = _agent.assess_vitals(patient)
-    alerts = vitals.get("alerts", [])
-
-    return _agent.clinical_result(
-        summary=f"感染内科智能体 ? Bp Reception??",
-        patient=patient,
-        guidelines=guides[:3],
-        alerts=alerts,
-    )
+    pipeline = _agent.run_clinical_pipeline(patient)
+    return _agent.clinical_result_from_pipeline(patient, pipeline)
 
 def bp_exam(**kwargs) -> dict:
-    """Bp Exam"""
     pid = kwargs.get("patient_id", "")
     patient = _agent.get_patient(pid)
     if not patient:
         return {"status": "error", "error": f"Patient {pid} not found"}
-
-    dx = patient.get("diagnosis", "")
-    guides = _agent.search_guidelines(dx) or _guidelines
-    vitals = _agent.assess_vitals(patient)
-    alerts = vitals.get("alerts", [])
-
-    return _agent.clinical_result(
-        summary=f"感染内科智能体 ? Bp Exam??",
-        patient=patient,
-        guidelines=guides[:3],
-        alerts=alerts,
-    )
+    pipeline = _agent.run_clinical_pipeline(patient)
+    return _agent.clinical_result_from_pipeline(patient, pipeline)
 
 def bp_diagnosis(**kwargs) -> dict:
-    """Bp Diagnosis"""
     pid = kwargs.get("patient_id", "")
     patient = _agent.get_patient(pid)
     if not patient:
         return {"status": "error", "error": f"Patient {pid} not found"}
-
-    dx = patient.get("diagnosis", "")
-    guides = _agent.search_guidelines(dx) or _guidelines
-    vitals = _agent.assess_vitals(patient)
-    alerts = vitals.get("alerts", [])
-
-    return _agent.clinical_result(
-        summary=f"感染内科智能体 ? Bp Diagnosis??",
-        patient=patient,
-        guidelines=guides[:3],
-        alerts=alerts,
-    )
+    pipeline = _agent.run_clinical_pipeline(patient)
+    return _agent.clinical_result_from_pipeline(patient, pipeline)
 
 def bp_plan(**kwargs) -> dict:
-    """Bp Plan"""
     pid = kwargs.get("patient_id", "")
     patient = _agent.get_patient(pid)
     if not patient:
         return {"status": "error", "error": f"Patient {pid} not found"}
-
-    dx = patient.get("diagnosis", "")
-    guides = _agent.search_guidelines(dx) or _guidelines
-    vitals = _agent.assess_vitals(patient)
-    alerts = vitals.get("alerts", [])
-
-    return _agent.clinical_result(
-        summary=f"感染内科智能体 ? Bp Plan??",
-        patient=patient,
-        guidelines=guides[:3],
-        alerts=alerts,
-    )
+    pipeline = _agent.run_clinical_pipeline(patient)
+    return _agent.clinical_result_from_pipeline(patient, pipeline)
 
 def bp_treatment(**kwargs) -> dict:
-    """Bp Treatment"""
     pid = kwargs.get("patient_id", "")
     patient = _agent.get_patient(pid)
     if not patient:
         return {"status": "error", "error": f"Patient {pid} not found"}
-
-    dx = patient.get("diagnosis", "")
-    guides = _agent.search_guidelines(dx) or _guidelines
-    vitals = _agent.assess_vitals(patient)
-    alerts = vitals.get("alerts", [])
-
-    return _agent.clinical_result(
-        summary=f"感染内科智能体 ? Bp Treatment??",
-        patient=patient,
-        guidelines=guides[:3],
-        alerts=alerts,
-    )
+    pipeline = _agent.run_clinical_pipeline(patient)
+    return _agent.clinical_result_from_pipeline(patient, pipeline)
 
 def bp_followup(**kwargs) -> dict:
-    """Bp Followup"""
     pid = kwargs.get("patient_id", "")
     patient = _agent.get_patient(pid)
     if not patient:
         return {"status": "error", "error": f"Patient {pid} not found"}
+    pipeline = _agent.run_clinical_pipeline(patient)
+    return _agent.clinical_result_from_pipeline(patient, pipeline)
 
-    dx = patient.get("diagnosis", "")
-    guides = _agent.search_guidelines(dx) or _guidelines
-    vitals = _agent.assess_vitals(patient)
-    alerts = vitals.get("alerts", [])
-
-    return _agent.clinical_result(
-        summary=f"感染内科智能体 ? Bp Followup??",
-        patient=patient,
-        guidelines=guides[:3],
-        alerts=alerts,
-    )
