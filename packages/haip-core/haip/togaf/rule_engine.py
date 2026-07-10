@@ -201,6 +201,16 @@ class RuleEngine:
             except re.error:
                 return False, f"invalid regex: {expected}"
 
+        # String equality (for == and != operators with non-numeric values)
+        if op_str in ("==", "!="):
+            try:
+                float(actual)
+                float(expected)
+            except (ValueError, TypeError):
+                # String comparison
+                ok = (str(actual) == str(expected)) if op_str == "==" else (str(actual) != str(expected))
+                return ok, f"{field_path}='{actual}' {op_str} '{expected}'"
+
         # Numeric comparison
         op_func = self._OPS.get(op_str)
         if op_func is None:
