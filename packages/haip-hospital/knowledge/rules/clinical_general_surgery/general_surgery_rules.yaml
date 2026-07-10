@@ -1,0 +1,136 @@
+# 普通外科临床规则 — 急腹症鉴别 + 手术风险评估 + 常见手术方案
+rule_type: diagnosis
+department: 普通外科
+capability: cap-l3-general-surgery-diagnosis
+business_process: bp-general-surgery-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-hematology, de-lab-infection, de-imaging]
+  produces: [de-diagnosis-result]
+guideline: 中华普通外科杂志 急腹症诊治指南 (2023)
+stakeholder: 普外科医师需快速鉴别急腹症病因并决定手术时机
+version: "1.0.0"
+
+rules:
+  - id: gs-acute-abdomen
+    description: WBC > 15 + CRP > 100 → 急腹症
+    condition:
+      and:
+        - {field: lab_results.WBC, operator: ">", value: 15}
+        - {field: lab_results.CRP, operator: ">", value: 100}
+    result:
+      diagnosis: 急腹症
+      severity: 高危
+      recommendation: 急诊腹部CT+外科会诊
+
+  - id: gs-ileus-surgery
+    description: 肠梗阻 > 48h → 手术探查
+    condition:
+      and:
+        - {field: diagnosis, operator: contains, value: 肠梗阻}
+        - {field: duration_hours, operator: ">=", value: 48}
+    result:
+      diagnosis: 机械性肠梗阻
+      severity: 高危
+      recommendation: 急诊手术探查
+
+  - id: gs-stone-ercp
+    description: 胆总管结石 > 8mm → ERCP
+    condition:
+      field: ct.cbd_stone_size
+      operator: ">"
+      value: 8
+    result:
+      diagnosis: 胆总管结石
+      severity: 中危
+      recommendation: ERCP取石
+
+---
+rule_type: risk_score
+department: 普通外科
+capability: cap-l3-general-surgery-risk
+business_process: bp-general-surgery-assessment
+data_entities:
+  consumes: [de-patient, de-lab-biochemistry, de-lab-hematology]
+  produces: [de-risk-assessment]
+guideline: 中华普通外科杂志 围术期风险评估指南 (2022)
+stakeholder: 评估普外科手术麻醉风险与急诊内镜时机
+version: "1.0.0"
+
+rules:
+  - id: gs-asa-high-risk
+    description: ASA ≥ 3 → 高危麻醉风险
+    condition:
+      field: asa
+      operator: ">="
+      value: 3
+    result:
+      risk: 高危
+      severity: 麻醉风险显著增加
+      recommendation: 麻醉科术前评估、优化合并症
+
+  - id: gs-blatchford-endoscopy
+    description: Blatchford > 6 → 急诊内镜
+    condition:
+      field: blatchford_score
+      operator: ">"
+      value: 6
+    result:
+      risk: 高危上消化道出血
+      severity: 需急诊干预
+      recommendation: 24小时内急诊胃镜
+
+  - id: gs-peritonitis-risk
+    description: 腹膜炎体征 → 急诊手术
+    condition:
+      field: peritoneal_signs
+      operator: "=="
+      value: true
+    result:
+      risk: 高危
+      severity: 弥漫性腹膜炎
+      recommendation: 急诊剖腹探查
+
+---
+rule_type: treatment
+department: 普通外科
+capability: cap-l3-general-surgery-treatment
+business_process: bp-general-surgery-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-imaging]
+  produces: [de-treatment-plan]
+guideline: 中华普通外科杂志 腹腔镜手术指南 (2023)
+stakeholder: 根据普外科常见疾病选择微创或开放手术方案
+version: "1.0.0"
+
+rules:
+  - id: gs-appendicitis-lap
+    description: 阑尾炎 → 腹腔镜阑尾切除
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 阑尾炎
+    result:
+      treatment: 腹腔镜阑尾切除术
+      surgical_approach: 三孔法LA
+
+  - id: gs-hernia-repair
+    description: 疝 → 择期无张力修补
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 疝
+    result:
+      treatment: 择期无张力疝修补术
+      options:
+        - Lichtenstein（开放）
+        - TEP/TAPP（腹腔镜）
+
+  - id: gs-cholecystectomy
+    description: 胆囊结石 → LC
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 胆囊结石
+    result:
+      treatment: 腹腔镜胆囊切除术（LC）
+      surgical_approach: 四孔法LC

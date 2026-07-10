@@ -1,0 +1,155 @@
+# 神经外科临床规则 — GCS评分 + WFNS分级 + SAH/ICH治疗
+rule_type: diagnosis
+department: 神经外科
+capability: cap-l3-neurosurgery-diagnosis
+business_process: bp-neurosurgery-diagnosis
+data_entities:
+  consumes: [de-patient, de-vitals, de-imaging, de-lab-biochemistry]
+  produces: [de-diagnosis-result]
+guideline: 中华神经外科杂志 重型颅脑损伤诊治指南 (2022)
+stakeholder: 神经外科医师需快速判定颅脑损伤严重度与手术时机
+version: "1.0.0"
+
+rules:
+  - id: ns-gcs-intubation
+    description: GCS ≤ 8 → 气管插管
+    condition:
+      field: gcs
+      operator: "<="
+      value: 8
+    result:
+      diagnosis: 重度颅脑损伤
+      severity: 危重
+      recommendation: 立即气管插管、呼吸机支持
+
+  - id: ns-hunt-hess-delay
+    description: Hunt-Hess ≥ 3 → 延迟手术
+    condition:
+      field: hunt_hess
+      operator: ">="
+      value: 3
+    result:
+      diagnosis: 动脉瘤性蛛网膜下腔出血（高级别）
+      severity: 高危
+      recommendation: 延迟手术、先行保守治疗稳定病情
+
+  - id: ns-unequal-pupils
+    description: 瞳孔不等大 → 紧急减压
+    condition:
+      field: pupils
+      operator: "=="
+      value: unequal
+    result:
+      diagnosis: 脑疝
+      severity: 危重
+      recommendation: 立即去骨瓣减压术
+
+  - id: ns-midline-shift
+    description: 中线移位>5mm → 手术指征
+    condition:
+      field: ct.midline_shift
+      operator: ">"
+      value: 5
+    result:
+      diagnosis: 颅内占位效应
+      severity: 高危
+      recommendation: 急诊开颅手术
+
+---
+rule_type: risk_score
+department: 神经外科
+capability: cap-l3-neurosurgery-risk
+business_process: bp-neurosurgery-assessment
+data_entities:
+  consumes: [de-patient, de-imaging, de-diagnosis-result]
+  produces: [de-risk-assessment]
+guideline: 中华神经外科杂志 动脉瘤性蛛网膜下腔出血诊治指南 (2021)
+stakeholder: 评估SAH/ICH患者的预后与并发症风险
+version: "1.0.0"
+
+rules:
+  - id: ns-wfns-high-risk
+    description: WFNS ≥ 4 → 高危预后不良
+    condition:
+      field: wfns
+      operator: ">="
+      value: 4
+    result:
+      risk: 高危
+      score: WFNS IV-V
+      recommendation: ICU监护、颅内压监测
+
+  - id: ns-fisher-vasospasm
+    description: Fisher ≥ 3 → 脑血管痉挛高风险
+    condition:
+      field: fisher
+      operator: ">="
+      value: 3
+    result:
+      risk: 脑血管痉挛高风险
+      score: Fisher III-IV
+      recommendation: 尼莫地平预防、TCD监测
+
+  - id: ns-ich-volume-risk
+    description: 脑出血>30ml → 手术指征
+    condition:
+      field: ct.hematoma_volume
+      operator: ">"
+      value: 30
+    result:
+      risk: 高危
+      severity: 占位效应显著
+      recommendation: 评估开颅血肿清除术
+
+---
+rule_type: treatment
+department: 神经外科
+capability: cap-l3-neurosurgery-treatment
+business_process: bp-neurosurgery-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment]
+  produces: [de-treatment-plan]
+guideline: 中华神经外科杂志 自发性脑出血诊治指南 (2023)
+stakeholder: 根据SAH/ICH类型制定个体化治疗方案
+version: "1.0.0"
+
+rules:
+  - id: ns-sah-nimodipine
+    description: SAH → 尼莫地平 + GCS 管理
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 蛛网膜下腔出血
+    result:
+      treatment: 尼莫地平联合GCS管理
+      medications:
+        - 尼莫地平 60mg q4h
+        - 3H疗法（高血压、高血容量、血液稀释）
+      monitoring:
+        - GCS q1h
+        - TCD监测脑血管痉挛
+
+  - id: ns-ich-decompression
+    description: ICH 占位 → 去骨瓣减压指征
+    condition:
+      or:
+        - {field: ct.hematoma_volume, operator: ">", value: 30}
+        - {field: gcs, operator: "<=", value: 8}
+      and:
+        - {field: diagnosis, operator: contains, value: 脑出血}
+    result:
+      treatment: 去骨瓣减压术
+      indications: 血肿>30ml或GCS≤8伴占位效应
+      surgical_approach: 标准大骨瓣开颅
+
+  - id: ns-aneurysm-clipping
+    description: 动脉瘤 → 介入或夹闭
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 动脉瘤
+    result:
+      treatment: 动脉瘤夹闭或介入栓塞
+      options:
+        - 开颅夹闭术（宽颈、大脑中动脉）
+        - 血管内介入栓塞（后循环、高龄）

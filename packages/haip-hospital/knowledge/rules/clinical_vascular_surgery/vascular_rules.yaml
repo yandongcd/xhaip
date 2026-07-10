@@ -1,0 +1,140 @@
+# 血管外科临床规则 — ABI评估 + 动脉瘤管理 + DVT诊断 + 血运重建
+rule_type: diagnosis
+department: 血管外科
+capability: cap-l3-vascular-diagnosis
+business_process: bp-vascular-surgery-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-coagulation, de-vascular-ultrasound, de-imaging]
+  produces: [de-diagnosis-result]
+guideline: 中华血管外科杂志 外周动脉疾病诊治指南 (2023)
+stakeholder: 血管外科医师需快速判定肢体缺血程度与动脉瘤手术指征
+version: "1.0.0"
+
+rules:
+  - id: vs-cli-diagnosis
+    description: ABI < 0.4 → 重症肢体缺血
+    condition:
+      field: abi
+      operator: "<"
+      value: 0.4
+    result:
+      diagnosis: 重症肢体缺血（CLI）
+      severity: 危重
+      recommendation: 急诊血管造影+血运重建
+
+  - id: vs-aneurysm-elective
+    description: 动脉瘤 > 5.5cm → 择期手术
+    condition:
+      field: ct.aneurysm_diameter
+      operator: ">"
+      value: 5.5
+    result:
+      diagnosis: 大动脉瘤
+      severity: 高危
+      recommendation: 择期手术预防破裂
+
+  - id: vs-dvt-diagnosis
+    description: D-Dimer > 3 + 单侧下肢肿胀 → DVT
+    condition:
+      and:
+        - {field: lab_results.D_Dimer, operator: ">", value: 3}
+        - {field: unilateral_swelling, operator: "==", value: true}
+    result:
+      diagnosis: 深静脉血栓（DVT）
+      severity: 中危
+      recommendation: 血管超声确诊+抗凝治疗
+
+---
+rule_type: risk_score
+department: 血管外科
+capability: cap-l3-vascular-risk
+business_process: bp-vascular-surgery-assessment
+data_entities:
+  consumes: [de-patient, de-vascular-ultrasound, de-imaging]
+  produces: [de-risk-assessment]
+guideline: 中华血管外科杂志 颈动脉狭窄诊治指南 (2022)
+stakeholder: 评估肢体缺血分级与卒中/截肢风险
+version: "1.0.0"
+
+rules:
+  - id: vs-rutherford-amputation
+    description: Rutherford ≥ 4 → 截肢风险
+    condition:
+      field: rutherford
+      operator: ">="
+      value: 4
+    result:
+      risk: 高危
+      severity: 组织缺损、有截肢风险
+      recommendation: 紧急血运重建挽救肢体
+
+  - id: vs-carotid-stroke
+    description: 颈动脉狭窄 > 70% → 卒中风险
+    condition:
+      field: carotid_stenosis_percent
+      operator: ">"
+      value: 70
+    result:
+      risk: 高危卒中
+      severity: 症状性高度狭窄
+      recommendation: CEA或CAS干预
+
+  - id: vs-rupture-risk
+    description: 动脉瘤快速增长 → 破裂高风险
+    condition:
+      field: aneurysm_growth_rate
+      operator: ">"
+      value: 10
+    result:
+      risk: 高危
+      severity: 年增长>10mm 破裂风险显著
+      recommendation: 尽早手术干预
+
+---
+rule_type: treatment
+department: 血管外科
+capability: cap-l3-vascular-treatment
+business_process: bp-vascular-surgery-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-imaging]
+  produces: [de-treatment-plan]
+guideline: 中华血管外科杂志 主动脉疾病腔内治疗指南 (2023)
+stakeholder: 根据病变类型选择腔内或开放血运重建方案
+version: "1.0.0"
+
+rules:
+  - id: vs-pad-revascularization
+    description: 动脉闭塞 → 腔内/旁路
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 动脉闭塞
+    result:
+      treatment: 血运重建
+      options:
+        - 腔内治疗（PTA+支架）首选
+        - 旁路移植术（长段闭塞）
+
+  - id: vs-aneurysm-evar
+    description: 动脉瘤 → EVAR 或开放
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 动脉瘤
+    result:
+      treatment: 动脉瘤修复
+      options:
+        - EVAR（腔内）适用于解剖合适者
+        - 开放手术适用于复杂解剖
+
+  - id: vs-dvt-treatment
+    description: DVT → 抗凝+滤器评估
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 深静脉血栓
+    result:
+      treatment: 抗凝治疗
+      medications:
+        - 低分子肝素桥接华法林或DOAC
+      considerations: 如抗凝禁忌评估下腔静脉滤器

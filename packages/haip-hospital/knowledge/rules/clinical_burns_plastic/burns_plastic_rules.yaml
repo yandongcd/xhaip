@@ -1,0 +1,142 @@
+# 烧伤整形科临床规则 — 烧伤面积评估 + 液体复苏 + 创面处理 + 瘢痕防治
+rule_type: diagnosis
+department: 烧伤整形科
+capability: cap-l3-burns-plastic-diagnosis
+business_process: bp-burns-plastic-diagnosis
+data_entities:
+  consumes: [de-patient, de-vitals, de-lab-biochemistry, de-imaging]
+  produces: [de-diagnosis-result]
+guideline: 中华烧伤杂志 烧伤休克期液体复苏指南 (2022)
+stakeholder: 烧伤科医师需快速评估烧伤面积与深度并启动液体复苏
+version: "1.0.0"
+
+rules:
+  - id: bp-fluid-resuscitation
+    description: 烧伤面积 > 15% → 液体复苏
+    condition:
+      field: tbsa_percent
+      operator: ">"
+      value: 15
+    result:
+      diagnosis: 大面积烧伤
+      severity: 危重
+      recommendation: 立即液体复苏、Parkland公式计算补液量
+
+  - id: bp-early-escharotomy
+    description: 深度烧伤 → 早期切痂
+    condition:
+      field: burn_depth
+      operator: "=="
+      value: full_thickness
+    result:
+      diagnosis: Ⅲ度烧伤
+      severity: 高危
+      recommendation: 早期切痂植皮（伤后3-5天）
+
+  - id: bp-inhalation-intubation
+    description: 吸入性损伤 → 气管插管
+    condition:
+      field: inhalation_injury
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 吸入性损伤
+      severity: 危重
+      recommendation: 预防性气管插管+纤支镜检查
+
+---
+rule_type: risk_score
+department: 烧伤整形科
+capability: cap-l3-burns-plastic-risk
+business_process: bp-burns-plastic-assessment
+data_entities:
+  consumes: [de-patient, de-lab-biochemistry, de-vitals]
+  produces: [de-risk-assessment]
+guideline: 中华烧伤杂志 烧伤严重度分级与预后评估指南 (2022)
+stakeholder: 评估烧伤严重度与死亡风险
+version: "1.0.0"
+
+rules:
+  - id: bp-tbsa-high-risk
+    description: 烧伤面积 > 30% → 高危
+    condition:
+      field: tbsa_percent
+      operator: ">"
+      value: 30
+    result:
+      risk: 高危
+      severity: 大面积烧伤
+      recommendation: ICU治疗、多学科协作
+
+  - id: bp-age-risk-upgrade
+    description: 儿童/老年 → 风险升级
+    condition:
+      or:
+        - {field: age, operator: "<", value: 12}
+        - {field: age, operator: ">", value: 65}
+    result:
+      risk: 高危（年龄因素）
+      severity: 生理储备差
+      recommendation: 风险等级上调一级
+
+  - id: bp-sepsis-risk
+    description: 烧伤面积>20%+发热 → 脓毒症风险
+    condition:
+      and:
+        - {field: tbsa_percent, operator: ">", value: 20}
+        - {field: lab_results.PCT, operator: ">", value: 2}
+    result:
+      risk: 烧伤脓毒症高风险
+      severity: 感染性休克风险
+      recommendation: 血培养+经验性抗生素
+
+---
+rule_type: treatment
+department: 烧伤整形科
+capability: cap-l3-burns-plastic-treatment
+business_process: bp-burns-plastic-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment]
+  produces: [de-treatment-plan]
+guideline: 中华烧伤杂志 创面处理与瘢痕防治指南 (2023)
+stakeholder: 根据烧伤创面类型选择处理方案与瘢痕防治策略
+version: "1.0.0"
+
+rules:
+  - id: bp-wound-dressing
+    description: 烧伤创面 → 磺胺嘧啶银
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 烧伤
+    result:
+      treatment: 创面处理
+      topical: 磺胺嘧啶银乳膏
+      dressing: 生物敷料或异体皮覆盖
+
+  - id: bp-infection-escalation
+    description: 创面感染 → 抗生素升级
+    condition:
+      field: wound_infection
+      operator: "=="
+      value: true
+    result:
+      treatment: 抗生素升级
+      strategy:
+        - 根据药敏调整
+        - 覆盖铜绿假单胞菌+金葡菌
+      surgical: 感染创面清创+植皮
+
+  - id: bp-scar-management
+    description: 愈合后 → 瘢痕压力治疗
+    condition:
+      field: wound_healed
+      operator: "=="
+      value: true
+    result:
+      treatment: 瘢痕综合防治
+      methods:
+        - 压力治疗（弹力衣/压力套）
+        - 硅酮凝胶
+        - 功能锻炼
+      duration: 至少6-12个月

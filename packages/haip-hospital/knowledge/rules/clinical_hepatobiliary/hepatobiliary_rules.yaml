@@ -1,0 +1,136 @@
+# 肝胆外科临床规则 — Child-Pugh分级 + MELD评分 + 肝癌/胆管癌治疗
+rule_type: diagnosis
+department: 肝胆外科
+capability: cap-l3-hepatobiliary-diagnosis
+business_process: bp-hepatobiliary-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-biochemistry, de-imaging, de-lab-tumor]
+  produces: [de-diagnosis-result]
+guideline: 中华肝胆外科杂志 原发性肝癌诊疗指南 (2024)
+stakeholder: 肝胆外科医师需判定肝硬化程度与肝癌可切除性
+version: "1.0.0"
+
+rules:
+  - id: hb-child-c
+    description: Child-Pugh C → 不可切除
+    condition:
+      field: child_pugh
+      operator: "=="
+      value: C
+    result:
+      diagnosis: 失代偿期肝硬化
+      operability: 不可切除
+      recommendation: 肝移植评估或最佳支持治疗
+
+  - id: hb-meld-transplant
+    description: MELD > 15 → 优先肝移植
+    condition:
+      field: meld
+      operator: ">"
+      value: 15
+    result:
+      diagnosis: 终末期肝病
+      severity: 危重
+      recommendation: 优先列入肝移植等待名单
+
+  - id: hb-large-hcc-tace
+    description: 肿瘤 > 5cm + 血管侵犯 → TACE 先行
+    condition:
+      and:
+        - {field: ct.tumor_size, operator: ">", value: 5}
+        - {field: ct.vascular_invasion, operator: "==", value: true}
+    result:
+      diagnosis: 巨块型肝癌伴血管侵犯
+      operability: 不可一期切除
+      recommendation: TACE降期后评估手术
+
+---
+rule_type: risk_score
+department: 肝胆外科
+capability: cap-l3-hepatobiliary-risk
+business_process: bp-hepatobiliary-assessment
+data_entities:
+  consumes: [de-patient, de-lab-biochemistry, de-imaging]
+  produces: [de-risk-assessment]
+guideline: 中华肝胆外科杂志 肝切除围术期管理指南 (2022)
+stakeholder: 评估肝切除术后肝功能衰竭与出血风险
+version: "1.0.0"
+
+rules:
+  - id: hb-child-b-risk
+    description: Child-Pugh B → 中危
+    condition:
+      field: child_pugh
+      operator: "=="
+      value: B
+    result:
+      risk: 中危
+      severity: 肝切除术后肝功能不全风险
+      recommendation: 严格评估残肝体积、ICG-R15试验
+
+  - id: hb-bilirubin-drainage
+    description: 胆红素 > 50 → 需减黄
+    condition:
+      field: lab_results.TBil
+      operator: ">"
+      value: 50
+    result:
+      risk: 高危
+      severity: 梗阻性黄疸
+      recommendation: PTCD或ENBD减黄后再手术
+
+  - id: hb-residual-liver
+    description: 残肝体积<30% → 不可切除
+    condition:
+      field: ct.future_liver_remnant
+      operator: "<"
+      value: 30
+    result:
+      risk: 高危
+      severity: 术后肝功能衰竭风险
+      recommendation: 门静脉栓塞（PVE）促进残肝增生
+
+---
+rule_type: treatment
+department: 肝胆外科
+capability: cap-l3-hepatobiliary-treatment
+business_process: bp-hepatobiliary-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-imaging]
+  produces: [de-treatment-plan]
+guideline: 中华肝胆外科杂志 肝细胞癌外科治疗指南 (2024)
+stakeholder: 根据肝癌/胆管癌分期选择根治性手术方案
+version: "1.0.0"
+
+rules:
+  - id: hb-anatomic-resection
+    description: 肝细胞癌 → 解剖性肝切除
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 肝细胞癌
+    result:
+      treatment: 解剖性肝切除术
+      surgical_approach: 肝段或肝叶切除
+      margin: 切缘≥1cm
+
+  - id: hb-whipple
+    description: 胆管癌 → Whipple 术
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 胆管癌
+    result:
+      treatment: 胰十二指肠切除术（Whipple）
+      surgical_approach: 开放手术
+      reconstruction: 胰腺空肠+胆管空肠+胃肠吻合
+
+  - id: hb-gallbladder-ca
+    description: 胆囊癌 T2+ → 胆囊癌根治
+    condition:
+      and:
+        - {field: diagnosis, operator: contains, value: 胆囊癌}
+        - {field: t_stage, operator: ">=", value: T2}
+    result:
+      treatment: 胆囊癌根治术
+      extent: 胆囊+肝楔形切除+区域淋巴结清扫

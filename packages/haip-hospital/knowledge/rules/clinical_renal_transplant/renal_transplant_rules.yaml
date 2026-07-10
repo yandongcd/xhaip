@@ -1,0 +1,146 @@
+# 肾移植科临床规则 — 免疫配型 + 排斥诊断 + 免疫抑制管理
+rule_type: diagnosis
+department: 肾移植科
+capability: cap-l3-renal-transplant-diagnosis
+business_process: bp-renal-transplant-diagnosis
+data_entities:
+  consumes: [de-patient, de-lab-biochemistry, de-lab-immunology, de-imaging]
+  produces: [de-diagnosis-result]
+guideline: 中华器官移植杂志 肾移植排斥反应诊治指南 (2023)
+stakeholder: 移植科医师需快速判定排斥反应与免疫抑制方案调整
+version: "1.0.0"
+
+rules:
+  - id: rt-crossmatch-positive
+    description: 交叉配型阳性 → 不可移植
+    condition:
+      field: crossmatch
+      operator: "=="
+      value: positive
+    result:
+      diagnosis: 供受体不匹配
+      operability: 不可移植
+      recommendation: 寻找替代供体或脱敏治疗
+
+  - id: rt-acute-rejection
+    description: Cr 翻倍 + 尿少 → 急性排斥
+    condition:
+      and:
+        - {field: lab_results.Cr_change, operator: ">=", value: 2.0}
+        - {field: urine_output, operator: "<", value: 500}
+    result:
+      diagnosis: 急性排斥反应
+      severity: 高危
+      recommendation: 移植肾穿刺活检+激素冲击
+
+  - id: rt-fk506-low
+    description: FK506 血药浓度 < 5 → 剂量不足
+    condition:
+      field: lab_results.FK506_trough
+      operator: "<"
+      value: 5
+    result:
+      diagnosis: 免疫抑制不足
+      severity: 中危
+      recommendation: 增加FK506剂量+监测浓度
+
+---
+rule_type: risk_score
+department: 肾移植科
+capability: cap-l3-renal-transplant-risk
+business_process: bp-renal-transplant-assessment
+data_entities:
+  consumes: [de-patient, de-lab-immunology, de-lab-biochemistry]
+  produces: [de-risk-assessment]
+guideline: 中华器官移植杂志 肾移植术后随访管理指南 (2022)
+stakeholder: 评估免疫风险与慢性排斥进展
+version: "1.0.0"
+
+rules:
+  - id: rt-dsa-high-risk
+    description: DSA > 5000 → 高免疫风险
+    condition:
+      field: dsa_mfi
+      operator: ">"
+      value: 5000
+    result:
+      risk: 高免疫风险
+      severity: 抗体介导排斥（AMR）
+      recommendation: 强化免疫抑制+血浆置换
+
+  - id: rt-egfr-decline
+    description: eGFR 下降 > 30% → 慢排可能
+    condition:
+      field: egfr_decline_percent
+      operator: ">"
+      value: 30
+    result:
+      risk: 慢性排斥
+      severity: 移植肾功能减退
+      recommendation: 活检+调整免疫抑制方案
+
+  - id: rt-infection-risk
+    description: BK 病毒 > 10000 → 感染风险
+    condition:
+      field: lab_results.BKV_load
+      operator: ">"
+      value: 10000
+    result:
+      risk: BK病毒肾病
+      severity: 移植肾损伤风险
+      recommendation: 减少免疫抑制剂
+
+---
+rule_type: treatment
+department: 肾移植科
+capability: cap-l3-renal-transplant-treatment
+business_process: bp-renal-transplant-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment]
+  produces: [de-treatment-plan]
+guideline: 中华器官移植杂志 肾移植免疫抑制方案指南 (2023)
+stakeholder: 根据排斥类型与感染状态调整免疫抑制方案
+version: "1.0.0"
+
+rules:
+  - id: rt-rejection-pulse
+    description: 排斥 → 激素冲击 + ATG
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 排斥
+    result:
+      treatment: 抗排斥治疗
+      medications:
+        - 甲泼尼龙 500mg iv qd × 3d
+        - ATG（如激素抵抗）
+      monitoring:
+        - Cr每日监测
+        - FK506血药浓度
+
+  - id: rt-infection-adjust
+    description: 感染 → 调整免疫抑制
+    condition:
+      field: infection
+      operator: "=="
+      value: true
+    result:
+      treatment: 感染状态下免疫抑制调整
+      strategy:
+        - 暂停MMF
+        - FK506减量（目标浓度 3-5 ng/mL）
+        - 激素维持
+      antimicrobial: 根据病原体选择
+
+  - id: rt-maintenance
+    description: 稳定期 → 标准三联方案
+    condition:
+      and:
+        - {field: rejection, operator: "==", value: false}
+        - {field: infection, operator: "==", value: false}
+    result:
+      treatment: 标准免疫抑制维持
+      medications:
+        - FK506（目标浓度 5-8 ng/mL）
+        - 霉酚酸酯（MMF）
+        - 泼尼松

@@ -1,0 +1,137 @@
+# 乳腺中心临床规则 — BI-RADS分级 + 分子分型 + 乳腺癌手术方案
+rule_type: diagnosis
+department: 乳腺中心
+capability: cap-l3-breast-diagnosis
+business_process: bp-breast-center-diagnosis
+data_entities:
+  consumes: [de-patient, de-imaging, de-pathology, de-lab-tumor]
+  produces: [de-diagnosis-result]
+guideline: 中华乳腺病杂志 乳腺癌诊疗指南 (2024)
+stakeholder: 乳腺外科医师需根据影像与病理制定手术及系统治疗方案
+version: "1.0.0"
+
+rules:
+  - id: bc-birads-biopsy
+    description: BI-RADS 4C/5 → 穿刺活检
+    condition:
+      or:
+        - {field: birads, operator: "==", value: "4C"}
+        - {field: birads, operator: "==", value: "5"}
+    result:
+      diagnosis: 高度可疑恶性
+      severity: 高危
+      recommendation: 空心针穿刺活检（CNB）
+
+  - id: bc-er-pr-endocrine
+    description: ER+ PR+ → 内分泌治疗
+    condition:
+      and:
+        - {field: pathology.ER, operator: "==", value: positive}
+        - {field: pathology.PR, operator: "==", value: positive}
+    result:
+      diagnosis: Luminal型乳腺癌
+      molecular_subtype: Luminal A/B
+      recommendation: 内分泌治疗±化疗
+
+  - id: bc-her2-targeted
+    description: Her2+ → 靶向治疗
+    condition:
+      field: pathology.HER2
+      operator: "=="
+      value: positive
+    result:
+      diagnosis: HER2阳性乳腺癌
+      molecular_subtype: HER2过表达型
+      recommendation: 抗HER2靶向治疗+化疗
+
+---
+rule_type: risk_score
+department: 乳腺中心
+capability: cap-l3-breast-risk
+business_process: bp-breast-center-assessment
+data_entities:
+  consumes: [de-patient, de-pathology, de-imaging]
+  produces: [de-risk-assessment]
+guideline: 中华乳腺病杂志 乳腺癌预后评估指南 (2023)
+stakeholder: 评估复发风险与辅助治疗指征
+version: "1.0.0"
+
+rules:
+  - id: bc-node-positive
+    description: 腋窝淋巴结阳性 → 辅助化疗
+    condition:
+      field: pathology.axillary_nodes
+      operator: contains
+      value: positive
+    result:
+      risk: 中高危
+      severity: 淋巴结转移
+      recommendation: 辅助化疗+放疗
+
+  - id: bc-ki67-high
+    description: Ki67 > 30% → 高危
+    condition:
+      field: pathology.Ki67
+      operator: ">"
+      value: 30
+    result:
+      risk: 高危
+      severity: 高增殖活性
+      recommendation: 辅助化疗+内分泌治疗
+
+  - id: bc-tnbc-risk
+    description: 三阴性 → 高危
+    condition:
+      and:
+        - {field: pathology.ER, operator: "==", value: negative}
+        - {field: pathology.PR, operator: "==", value: negative}
+        - {field: pathology.HER2, operator: "==", value: negative}
+    result:
+      risk: 高危
+      subtype: 三阴性乳腺癌（TNBC）
+      recommendation: 辅助化疗±免疫治疗
+
+---
+rule_type: treatment
+department: 乳腺中心
+capability: cap-l3-breast-treatment
+business_process: bp-breast-center-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-imaging]
+  produces: [de-treatment-plan]
+guideline: 中华乳腺病杂志 乳腺癌外科治疗指南 (2024)
+stakeholder: 根据肿瘤大小与分子分型选择保乳或全切方案
+version: "1.0.0"
+
+rules:
+  - id: bc-breast-conserving
+    description: 肿瘤 ≤ 3cm → 保乳手术
+    condition:
+      field: tumor_size
+      operator: "<="
+      value: 3
+    result:
+      treatment: 保乳手术+前哨淋巴结活检
+      surgical_approach: 肿瘤扩大切除
+      adjuvant: 术后放疗
+
+  - id: bc-mastectomy
+    description: 肿瘤 > 5cm 或多中心 → 全切
+    condition:
+      or:
+        - {field: tumor_size, operator: ">", value: 5}
+        - {field: multicentric, operator: "==", value: true}
+    result:
+      treatment: 全乳切除术±乳房重建
+      surgical_approach: 改良根治术或保留皮肤全切
+
+  - id: bc-slnb-to-alnd
+    description: 前哨阳性 → 腋清扫
+    condition:
+      field: sentinel_node
+      operator: "=="
+      value: positive
+    result:
+      treatment: 腋窝淋巴结清扫术（ALND）
+      indications: 前哨淋巴结宏转移
+      exception: 符合ACOSOG Z0011标准可免ALND

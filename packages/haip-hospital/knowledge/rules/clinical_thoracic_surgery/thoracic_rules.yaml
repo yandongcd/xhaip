@@ -1,0 +1,139 @@
+# 胸外科临床规则 — 肺功能评估 + 肺结节管理 + NSCLC 治疗
+rule_type: diagnosis
+department: 胸外科
+capability: cap-l3-thoracic-diagnosis
+business_process: bp-thoracic-surgery-diagnosis
+data_entities:
+  consumes: [de-patient, de-imaging, de-pulmonary-function, de-lab-tumor]
+  produces: [de-diagnosis-result]
+guideline: 中华胸心血管外科杂志 肺癌诊疗指南 (2023)
+stakeholder: 胸外科医师需判定肺结节性质与手术可行性
+version: "1.0.0"
+
+rules:
+  - id: ts-fev1-inoperable
+    description: FEV1 < 30% → 不可手术
+    condition:
+      field: pft.FEV1_percent
+      operator: "<"
+      value: 30
+    result:
+      diagnosis: 重度肺功能不全
+      operability: 不可手术
+      recommendation: 考虑放疗或消融替代
+
+  - id: ts-nodule-biopsy
+    description: 结节 > 8mm + 毛刺征 → 活检
+    condition:
+      and:
+        - {field: ct.nodule_size, operator: ">", value: 8}
+        - {field: ct.spiculation, operator: "==", value: true}
+    result:
+      diagnosis: 高危肺结节
+      severity: 可疑恶性
+      recommendation: 穿刺活检或PET-CT评估
+
+  - id: ts-mediastinal-differential
+    description: 纵隔占位 → 鉴别诊断
+    condition:
+      field: ct.mediastinal_mass
+      operator: "=="
+      value: true
+    result:
+      diagnosis: 纵隔占位
+      severity: 待鉴别
+      recommendation: 增强CT+肿瘤标志物+纵隔镜活检
+
+---
+rule_type: risk_score
+department: 胸外科
+capability: cap-l3-thoracic-risk
+business_process: bp-thoracic-surgery-risk
+data_entities:
+  consumes: [de-patient, de-pulmonary-function, de-imaging]
+  produces: [de-risk-assessment]
+guideline: 中华胸心血管外科杂志 肺切除手术围术期评估指南 (2022)
+stakeholder: 评估肺切除手术风险与术后并发症
+version: "1.0.0"
+
+rules:
+  - id: ts-dlco-high-risk
+    description: DLCO < 40% → 高危
+    condition:
+      field: pft.DLCO_percent
+      operator: "<"
+      value: 40
+    result:
+      risk: 高危
+      severity: 术后呼吸衰竭风险
+      recommendation: 心肺运动试验进一步评估
+
+  - id: ts-effusion-staging
+    description: 胸水 → 分期升级
+    condition:
+      field: ct.pleural_effusion
+      operator: "=="
+      value: true
+    result:
+      risk: 胸膜转移可能
+      stage: M1a（如细胞学阳性）
+      recommendation: 胸腔穿刺细胞学检查
+
+  - id: ts-comorbidity-risk
+    description: 合并心肺疾病 → 中危
+    condition:
+      or:
+        - {field: comorbidity, operator: contains, value: 冠心病}
+        - {field: comorbidity, operator: contains, value: COPD}
+    result:
+      risk: 中危
+      severity: 围术期心肺事件风险
+      recommendation: 多学科MDT评估
+
+---
+rule_type: treatment
+department: 胸外科
+capability: cap-l3-thoracic-treatment
+business_process: bp-thoracic-surgery-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-imaging]
+  produces: [de-treatment-plan]
+guideline: 中华胸心血管外科杂志 NSCLC 外科治疗指南 (2023)
+stakeholder: 根据NSCLC分期选择手术或综合治疗方案
+version: "1.0.0"
+
+rules:
+  - id: ts-early-vats
+    description: 早期 NSCLC → VATS 肺叶切除
+    condition:
+      and:
+        - {field: diagnosis, operator: contains, value: NSCLC}
+        - {field: stage, operator: in, value: [I, II]}
+    result:
+      treatment: VATS肺叶切除+纵隔淋巴结清扫
+      surgical_approach: 胸腔镜微创
+
+  - id: ts-locally-advanced
+    description: 局部晚期 → 新辅助化疗+手术
+    condition:
+      and:
+        - {field: diagnosis, operator: contains, value: NSCLC}
+        - {field: stage, operator: in, value: [IIIA, IIIB]}
+    result:
+      treatment: 新辅助化疗+免疫治疗后手术
+      medications:
+        - 含铂双药化疗 2-4 周期
+        - 联合免疫检查点抑制剂
+      reassessment: 新辅助后影像学再分期
+
+  - id: ts-pneumonectomy
+    description: 中心型肺癌 → 全肺切除评估
+    condition:
+      field: ct.central_tumor
+      operator: "=="
+      value: true
+    result:
+      treatment: 全肺切除或袖状切除
+      preoperative:
+        - 肺功能严格评估
+        - 心脏功能评估

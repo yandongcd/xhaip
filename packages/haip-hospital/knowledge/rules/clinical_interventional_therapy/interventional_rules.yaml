@@ -1,0 +1,143 @@
+# 介入治疗科临床规则 — TACE + PTCD + BAE + 综合介入方案
+rule_type: diagnosis
+department: 介入治疗科
+capability: cap-l3-interventional-diagnosis
+business_process: bp-interventional-diagnosis
+data_entities:
+  consumes: [de-patient, de-imaging, de-lab-biochemistry, de-lab-tumor]
+  produces: [de-diagnosis-result]
+guideline: 中华介入放射学杂志 肝癌介入治疗指南 (2023)
+stakeholder: 介入科医师需判定介入治疗适应证与时机
+version: "1.0.0"
+
+rules:
+  - id: it-tace-indication
+    description: 肝脏肿瘤 > 3cm → TACE
+    condition:
+      field: ct.tumor_size
+      operator: ">"
+      value: 3
+    result:
+      diagnosis: 中晚期肝癌
+      severity: 不可切除
+      recommendation: TACE局部控制
+
+  - id: it-ptcd-indication
+    description: 胆红素 > 50 → PTCD 引流
+    condition:
+      field: lab_results.TBil
+      operator: ">"
+      value: 50
+    result:
+      diagnosis: 梗阻性黄疸
+      severity: 高危
+      recommendation: PTCD经皮肝穿刺胆道引流
+
+  - id: it-bae-indication
+    description: 咯血 > 300ml/24h → BAE
+    condition:
+      field: hemoptysis_volume
+      operator: ">"
+      value: 300
+    result:
+      diagnosis: 大咯血
+      severity: 危重
+      recommendation: 急诊支气管动脉栓塞术（BAE）
+
+---
+rule_type: risk_score
+department: 介入治疗科
+capability: cap-l3-interventional-risk
+business_process: bp-interventional-assessment
+data_entities:
+  consumes: [de-patient, de-imaging, de-lab-biochemistry]
+  produces: [de-risk-assessment]
+guideline: 中华介入放射学杂志 介入手术风险评估指南 (2022)
+stakeholder: 评估TACE禁忌与介入手术耐受性
+version: "1.0.0"
+
+rules:
+  - id: it-pvtt-high-risk
+    description: 门脉癌栓 → 高危 TACE
+    condition:
+      field: ct.portal_vein_tumor_thrombus
+      operator: "=="
+      value: true
+    result:
+      risk: 高危
+      severity: TACE后肝功能衰竭风险
+      recommendation: 超选择TACE、减量给药
+
+  - id: it-poor-lung-risk
+    description: 肺功能差 → DSA 评估
+    condition:
+      or:
+        - {field: pft.FEV1_percent, operator: "<", value: 50}
+        - {field: spo2, operator: "<", value: 92}
+    result:
+      risk: 中高危
+      severity: 介入术中呼吸风险
+      recommendation: DSA评估、减少镇静
+
+  - id: it-renal-risk
+    description: Cr > 133 → 对比剂肾病风险
+    condition:
+      field: lab_results.Cr
+      operator: ">"
+      value: 133
+    result:
+      risk: 对比剂肾病风险
+      severity: 中危
+      recommendation: 水化预防、减少对比剂用量
+
+---
+rule_type: treatment
+department: 介入治疗科
+capability: cap-l3-interventional-treatment
+business_process: bp-interventional-treatment
+data_entities:
+  consumes: [de-diagnosis-result, de-risk-assessment, de-imaging]
+  produces: [de-treatment-plan]
+guideline: 中华介入放射学杂志 综合介入治疗指南 (2023)
+stakeholder: 根据病变类型选择血管内或非血管介入方案
+version: "1.0.0"
+
+rules:
+  - id: it-hcc-tace-rfa
+    description: HCC → TACE + 消融
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 肝癌
+    result:
+      treatment: TACE联合消融
+      options:
+        - cTACE或DEB-TACE
+        - 序贯射频消融或微波消融
+      schedule: TACE后4-6周评估消融时机
+
+  - id: it-biliary-stent
+    description: 胆道梗阻 → 支架植入
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 胆道梗阻
+    result:
+      treatment: 胆道支架植入
+      options:
+        - PTCD后置入金属支架
+        - ERCP途径（低位梗阻）
+      type: 自膨式金属支架
+
+  - id: it-embolization
+    description: 咯血 → 血管栓塞
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 咯血
+    result:
+      treatment: 支气管动脉栓塞术
+      embolic_agents:
+        - PVA颗粒
+        - 明胶海绵
+      target: 责任血管超选择栓塞
