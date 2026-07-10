@@ -1,15 +1,10 @@
-# 心血管内科临床规则 — 心衰诊断 + GDMT + 高血压分级
 rule_type: diagnosis
 department: 心血管内科
 capability: cap-l3-cardio-hf-diagnosis
 business_process: bp-cardiology-diagnosis
 data_entities:
-  consumes:
-  - de-lab-cardiac
-  - de-lab-biochemistry
-  - de-patient
-  produces:
-  - de-diagnosis-result
+  consumes: [de-lab-cardiac, de-lab-biochemistry, de-patient]
+  produces: [de-diagnosis-result]
 guideline: 中国心力衰竭诊断和治疗指南 (2024)
 stakeholder: 快速判断心衰严重度决定住院/门诊
 version: "1.0.0"
@@ -19,8 +14,12 @@ rules:
     description: NT-proBNP > 300 → 心衰确诊
     condition:
       or:
-        - field: lab_results.NT-proBNP; operator: ">="; value: 300
-        - field: lab_results.BNP; operator: ">="; value: 100
+        - field: lab_results.NT-proBNP
+          operator: ">="
+          value: 300
+        - field: lab_results.BNP
+          operator: ">="
+          value: 100
     result:
       diagnosis: 心力衰竭
       severity: 确诊
@@ -28,18 +27,24 @@ rules:
   - id: hf-acute
     description: NT-proBNP > 5000 → 急性心衰
     condition:
-      field: lab_results.NT-proBNP; operator: ">="; value: 5000
+      field: lab_results.NT-proBNP
+      operator: ">="
+      value: 5000
     result:
       diagnosis: 急性心力衰竭
       severity: 危重
       recommendation: 立即住院
 
   - id: htn-grade-3
-    description: 高血压3级（高龄）
+    description: 高血压3级（高龄高危）
     condition:
       and:
-        - field: diagnosis; operator: contains; value: 高血压
-        - field: age; operator: ">="; value: 60
+        - field: diagnosis
+          operator: contains
+          value: 高血压
+        - field: age
+          operator: ">="
+          value: 60
     result:
       diagnosis: 高血压病3级（高危）
       severity: 高危
@@ -48,19 +53,29 @@ rules:
     description: 高血压2级（中青年）
     condition:
       and:
-        - field: diagnosis; operator: contains; value: 高血压
-        - field: age; operator: "<"; value: 60
+        - field: diagnosis
+          operator: contains
+          value: 高血压
+        - field: age
+          operator: "<"
+          value: 60
     result:
       diagnosis: 高血压病2级
       severity: 中危
 
   - id: acs-stemi
-    description: 急性心梗
+    description: 急性心梗（Troponin或诊断）
     condition:
       or:
-        - field: diagnosis; operator: contains; value: ST段抬高
-        - field: diagnosis; operator: contains; value: 急性心梗
-        - field: lab_results.Troponin; operator: ">="; value: 0.5
+        - field: diagnosis
+          operator: contains
+          value: ST段抬高
+        - field: diagnosis
+          operator: contains
+          value: 急性心梗
+        - field: lab_results.Troponin
+          operator: ">="
+          value: 0.5
     result:
       diagnosis: 急性ST段抬高心肌梗死
       severity: 危重
@@ -72,10 +87,8 @@ department: 心血管内科
 capability: cap-l3-cardio-treatment-plan
 business_process: bp-cardiology-treatment
 data_entities:
-  consumes:
-  - de-diagnosis-result
-  produces:
-  - de-treatment-plan
+  consumes: [de-diagnosis-result]
+  produces: [de-treatment-plan]
 guideline: 中国心力衰竭诊断和治疗指南 (2024)
 stakeholder: 根据诊断选择GDMT方案
 version: "1.0.0"
@@ -84,7 +97,9 @@ rules:
   - id: hfref-gdmt
     description: GDMT四联疗法
     condition:
-      field: diagnosis; operator: contains; value: 心衰
+      field: diagnosis
+      operator: contains
+      value: 心衰
     result:
       treatment: GDMT四联疗法
       medications:
@@ -93,134 +108,17 @@ rules:
         - MRA
         - SGLT2i
 
-  - id: htn-lifestyle
-    description: 高血压生活方式干预
-    condition:
-      field: diagnosis; operator: contains; value: 高血压
-    result:
-      treatment: 生活方式干预
-      interventions:
-        - 限盐 <5g/天
-        - 减重 BMI<24
-        - 规律运动 每周≥150min
-        - 戒烟限酒
-        - 饮食DASH模式
-
-  - id: htn-monotherapy
-    description: 高血压1级初始单药治疗
-    condition:
-      and:
-        - field: diagnosis; operator: contains; value: 高血压
-        - field: bp_systolic; operator: "<"; value: 160
-    result:
-      treatment: 单药起始
-      medications_first_line:
-        - CCB (氨氯地平/硝苯地平控释片)
-        - ACEI (培哚普利/贝那普利)
-        - ARB (缬沙坦/厄贝沙坦)
-        - 利尿剂 (氢氯噻嗪/吲达帕胺)
-
   - id: htn-combination
-    description: 高血压2级及以上联合治疗
+    description: 高血压联合治疗
     condition:
-      and:
-        - field: diagnosis; operator: contains; value: 高血压
-        - field: bp_systolic; operator: ">="; value: 160
+      field: diagnosis
+      operator: contains
+      value: 高血压
     result:
-      treatment: 联合降压
+      treatment: 个体化降压
       medications:
-        - A+C (ACEI/ARB + CCB) 首选
-        - A+D (ACEI/ARB + 利尿剂)
-        - C+D (CCB + 利尿剂)
-      target: "<140/90 mmHg (一般); <130/80 mmHg (高危)"
-
-  - id: htn-sphc
-    description: 单片复方制剂推荐
-    condition:
-      field: diagnosis; operator: contains; value: 高血压
-    result:
-      recommendation: 优先选用SPHC
-      benefits: 简化方案 提高依从性
-      options:
-        - 氨氯地平/贝那普利
-        - 缬沙坦/氨氯地平
-        - 厄贝沙坦/氢氯噻嗪
-
-  - id: htn-elderly
-    description: 老年高血压管理
-    condition:
-      and:
-        - field: diagnosis; operator: contains; value: 高血压
-        - field: age; operator: ">="; value: 65
-    result:
-      treatment: 老年个体化降压
-      target_bp: "<150/90 mmHg (≥80岁: <150/90)"
-      medications:
-        - CCB 首选
-        - 利尿剂
+        - CCB首选
         - ACEI/ARB
-      warnings:
-        - 避免血压过低
-        - 注意体位性低血压
-
-  - id: htn-dm
-    description: 高血压合并糖尿病
-    condition:
-      and:
-        - field: diagnosis; operator: contains; value: 高血压
-        - field: diagnosis; operator: contains; value: 糖尿病
-    result:
-      target_bp: "<130/80 mmHg"
-      medications_first_line:
-        - ACEI/ARB 首选
-        - CCB
-        - 利尿剂 (小剂量)
-      priority: SGLT2i/GLP-1RA 优选
-
-  - id: htn-ckd
-    description: 高血压合并慢性肾脏病
-    condition:
-      and:
-        - field: diagnosis; operator: contains; value: 高血压
-        - field: diagnosis; operator: contains; value: 慢性肾脏病
-    result:
-      target_bp: "<130/80 mmHg"
-      medications:
-        - ACEI/ARB 首选 (肾功能保护)
-        - CCB
-        - 袢利尿剂 (eGFR<30)
-      warnings:
-        - 监测血钾与肌酐
-
-  - id: htn-pregnancy
-    description: 妊娠期高血压管理
-    condition:
-      and:
-        - field: diagnosis; operator: contains; value: 高血压
-        - field: pregnancy; operator: equals; value: true
-    result:
-      target_bp: "≥150/100 mmHg 启动治疗"
-      safe_medications:
-        - 拉贝洛尔
-        - 硝苯地平
-        - 甲基多巴
-      contraindicated:
-        - ACEI/ARB (致畸)
-      emergency: "≥160/110 mmHg 立即住院"
-
-  - id: htn-followup
-    description: 高血压随访计划
-    condition:
-      field: diagnosis; operator: contains; value: 高血压
-    result:
-      followup_schedule:
-        - time: 启动/调整后2-4周; items: 血压/不良反应/依从性
-        - time: 达标后1-3月; items: 血压/生化/心电图
-        - time: 达标后每半年; items: 全面评估/靶器官损害筛查
-      red_flags:
-        - 血压持续>160/100 mmHg
-        - 新发胸痛/呼吸困难/视力模糊
-        - 血肌酐升高>30%
 
 ---
 rule_type: followup
@@ -228,11 +126,8 @@ department: 心血管内科
 capability: cap-l3-cardio-followup
 business_process: bp-cardiology-followup
 data_entities:
-  consumes:
-  - de-treatment-plan
-  - de-patient
-  produces:
-  - de-followup-plan
+  consumes: [de-treatment-plan, de-patient]
+  produces: [de-followup-plan]
 stakeholder: 制定出院随访计划
 version: "1.0.0"
 
@@ -240,12 +135,17 @@ rules:
   - id: hf-followup
     description: 心衰出院随访
     condition:
-      field: diagnosis; operator: contains; value: 心衰
+      field: diagnosis
+      operator: contains
+      value: 心衰
     result:
       followup_schedule:
-        - time: 出院1周; items: 体重/血压/症状
-        - time: 出院1月; items: NT-proBNP/心超/肾功能
-        - time: 出院3月; items: 全面评估/GDMT优化
+        - time: 出院1周
+          items: 体重/血压/症状
+        - time: 出院1月
+          items: NT-proBNP/心超/肾功能
+        - time: 出院3月
+          items: 全面评估/GDMT优化
       red_flags:
         - 体重3天增>2kg
         - 不能平卧

@@ -210,6 +210,36 @@ class TestKnowledgeAgent:
         s = pipeline.summary()
         assert s is not None
 
+    def test_get_patients_by_dept(self):
+        from haip.togaf.knowledge_agent import KnowledgeAgent
+        agent = KnowledgeAgent('test', '呼吸内科')
+        patients = agent.get_patients_by_dept()
+        assert isinstance(patients, list)
+
+    def test_clinical_result_rich(self):
+        from haip.togaf.knowledge_agent import KnowledgeAgent
+        agent = KnowledgeAgent('test')
+        patient = {'patient_id': 'X001', 'name': '测试', 'diagnosis': 'Test'}
+        guidelines = ['GUIDE-1', 'GUIDE-2']
+        alerts = ['Hb偏低', 'WBC偏高']
+        result = agent.clinical_result('Summary', patient=patient, guidelines=guidelines, alerts=alerts)
+        assert result['status'] == 'ok'
+        assert 'guideline_refs' in result
+        assert result['guideline_refs'] == guidelines
+        assert result['alerts'] == alerts
+
+    def test_search_guidelines(self):
+        from haip.togaf.knowledge_agent import KnowledgeAgent
+        agent = KnowledgeAgent('test')
+        results = agent.search_guidelines('COPD')
+        assert isinstance(results, list)
+
+    def test_search_rules(self):
+        from haip.togaf.knowledge_agent import KnowledgeAgent
+        agent = KnowledgeAgent('test')
+        results = agent.search_rules('COPD')
+        assert isinstance(results, list)
+
 
 # ── layout ──
 
@@ -339,11 +369,9 @@ class TestGovernance:
 
     def test_load_governance_rules(self):
         from haip.togaf.governance import load_governance_rules, get_bp_governance_rules
-        try:
-            rules = load_governance_rules()
-            assert isinstance(rules, list)
-        except Exception:
-            pytest.skip("Governance rules YAML file needs format fix")
+        rules = load_governance_rules()
+        # Returns dict with governance_rules key
+        assert isinstance(rules, (dict, list))
         bp_rules = get_bp_governance_rules()
         assert isinstance(bp_rules, list)
 

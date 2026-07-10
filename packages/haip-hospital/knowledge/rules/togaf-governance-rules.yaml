@@ -115,7 +115,7 @@ rules:
       - 一个能力可支撑多个 ValueStage
       - agents validate --togaf 检查所有能力的 value_stages 非空
     applies_to: all_capabilities
-     toggaf_refs:
+    toggaf_refs:
        - G178 (Value Streams)
        - G211 (Business Capabilities V2)
        - G233 (Business Capability Planning, §Value Stream-to-Capability Mapping)
