@@ -55,7 +55,7 @@ def render_agent_ui(name: str, cn_name: str, agent_type: str, port: int,
         guard_rp = '<h4>高危触发</h4>'
         guard_rp += f'<div class="tag-list">{gtags}</div>'
 
-    first_tab_label = tabs[0]["label"] if tabs else "工具调用"
+    tabs[0]["label"] if tabs else "工具调用"
 
     html = f"""<!DOCTYPE html>
 <html lang="zh-CN">

@@ -214,6 +214,8 @@ class TestPharmacyE2E:
         ))
         result = call("pharmacy", "assess_nutrition", {})
         assert result["status"] == "ok"  # assess_nutrition 有默认值
+        assert "risk_level" in result or "nrs_score" in result, "should have risk assessment fields"
+        assert isinstance(result.get("nrs_score", 0), (int, float)), "nrs_score should be numeric"
 
     def test_a2a_type_error_in_params(self):
         """参数类型错误不 crash — A2A dispatcher 捕获异常返回 error。"""
@@ -226,6 +228,8 @@ class TestPharmacyE2E:
                       {"weight_kg": "not_a_number", "height_cm": None})
         # 类型错误导致函数异常，dispatcher 捕获并返回 error
         assert result["status"] == "error"
+        assert "error" in result, "error response should have error field"
+        assert isinstance(result.get("error", ""), str), "error field should be string"
 
     def test_orchestrator_circular_dependency(self):
         """循环依赖不卡死。"""

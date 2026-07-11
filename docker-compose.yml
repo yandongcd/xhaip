@@ -1,24 +1,328 @@
-# xhaip v1.0 — Hospital AI Platform
+# xhaip v1.0 — Multi-Agent Docker Compose
+# 按科室分组部署，depend 关系自动处理启动顺序
+# 启动子集: docker compose --profile core up
+# 启动全部: docker compose --profile full up
 version: "3.8"
 
+x-agent: &agent-base
+  build:
+    context: .
+    dockerfile: docker/Dockerfile.agent
+  volumes:
+    - ./packages/haip-hospital/agents/definitions:/app/packages/haip-hospital/agents/definitions:ro
+    - ./packages/haip-hospital/data:/app/packages/haip-hospital/data:ro
+    - ./packages/haip-hospital/knowledge:/app/packages/haip-hospital/knowledge:ro
+    - ./packages/haip-hospital/modules:/app/packages/haip-hospital/modules:ro
+    - ./config:/app/config:ro
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:${AGENT_PORT}/api/health')"]
+    interval: 30s
+    timeout: 5s
+    retries: 3
+    start_period: 15s
+
 services:
-  xhaip:
-    build: .
-    container_name: xhaip-server
-    ports:
-      - "8769:8769"
-    volumes:
-      - ./packages/haip-hospital/agents/definitions:/app/packages/haip-hospital/agents/definitions:ro
-      - ./packages/haip-hospital/data:/app/packages/haip-hospital/data:ro
-      - ./packages/haip-hospital/knowledge:/app/packages/haip-hospital/knowledge:ro
-      - ./packages/haip-hospital/modules:/app/packages/haip-hospital/modules:ro
-      - ./config:/app/config:ro
+  # ============================================================
+  # Profile: core — 基础设施 (必须先启动)
+  # ============================================================
+  medical-record:
+    <<: *agent-base
+    profiles: [core, full]
+    container_name: xhaip-medical-record
+    ports: ["8766:8766"]
     environment:
-      - PYTHONPATH=/app/packages/haip-core:/app/packages/haip-hospital
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8769/api/health')"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
+      AGENT_NAME: medical-record
+      AGENT_PORT: "8766"
+
+  metrics:
+    <<: *agent-base
+    profiles: [core, full]
+    container_name: xhaip-metrics
+    ports: ["8767:8767"]
+    environment:
+      AGENT_NAME: metrics
+      AGENT_PORT: "8767"
+
+  pharmacy:
+    <<: *agent-base
+    profiles: [core, full]
+    container_name: xhaip-pharmacy
+    ports: ["8770:8770"]
+    environment:
+      AGENT_NAME: pharmacy
+      AGENT_PORT: "8770"
+
+  # ============================================================
+  # Profile: surgical — 外科线
+  # ============================================================
+  orthopedic-surgery:
+    <<: *agent-base
+    profiles: [surgical, full]
+    container_name: xhaip-orthopedic
+    ports: ["8765:8765"]
+    environment:
+      AGENT_NAME: orthopedic-surgery
+      AGENT_PORT: "8765"
+    depends_on:
+      medical-record: {condition: service_healthy}
+      metrics: {condition: service_healthy}
+
+  cardio-risk:
+    <<: *agent-base
+    profiles: [surgical, full]
+    container_name: xhaip-cardio-risk
+    ports: ["8801:8801"]
+    environment:
+      AGENT_NAME: cardio-risk
+      AGENT_PORT: "8801"
+
+  anesthesia-risk:
+    <<: *agent-base
+    profiles: [surgical, full]
+    container_name: xhaip-anesthesia
+    ports: ["8829:8829"]
+    environment:
+      AGENT_NAME: anesthesia-risk
+      AGENT_PORT: "8829"
+
+  cardio-surgery:
+    <<: *agent-base
+    profiles: [surgical, full]
+    container_name: xhaip-cardio-surgery
+    ports: ["8768:8768"]
+    environment:
+      AGENT_NAME: cardio-surgery
+      AGENT_PORT: "8768"
+
+  neurosurgery:
+    <<: *agent-base
+    profiles: [surgical, full]
+    container_name: xhaip-neurosurgery
+    ports: ["8793:8793"]
+    environment:
+      AGENT_NAME: neurosurgery
+      AGENT_PORT: "8793"
+
+  general-surgery:
+    <<: *agent-base
+    profiles: [surgical, full]
+    container_name: xhaip-general-surgery
+    ports: ["8791:8791"]
+    environment:
+      AGENT_NAME: general-surgery
+      AGENT_PORT: "8791"
+
+  # ============================================================
+  # Profile: medical — 内科线
+  # ============================================================
+  cardiology:
+    <<: *agent-base
+    profiles: [medical, full]
+    container_name: xhaip-cardiology
+    ports: ["8900:8900"]
+    environment:
+      AGENT_NAME: cardiology
+      AGENT_PORT: "8900"
+
+  respiratory:
+    <<: *agent-base
+    profiles: [medical, full]
+    container_name: xhaip-respiratory
+    ports: ["8781:8781"]
+    environment:
+      AGENT_NAME: respiratory
+      AGENT_PORT: "8781"
+
+  gastroenterology:
+    <<: *agent-base
+    profiles: [medical, full]
+    container_name: xhaip-gastroenterology
+    ports: ["8782:8782"]
+    environment:
+      AGENT_NAME: gastroenterology
+      AGENT_PORT: "8782"
+
+  nephrology:
+    <<: *agent-base
+    profiles: [medical, full]
+    container_name: xhaip-nephrology
+    ports: ["8783:8783"]
+    environment:
+      AGENT_NAME: nephrology
+      AGENT_PORT: "8783"
+
+  endocrinology:
+    <<: *agent-base
+    profiles: [medical, full]
+    container_name: xhaip-endocrinology
+    ports: ["8785:8785"]
+    environment:
+      AGENT_NAME: endocrinology
+      AGENT_PORT: "8785"
+
+  hematology:
+    <<: *agent-base
+    profiles: [medical, full]
+    container_name: xhaip-hematology
+    ports: ["8784:8784"]
+    environment:
+      AGENT_NAME: hematology
+      AGENT_PORT: "8784"
+
+  oncology:
+    <<: *agent-base
+    profiles: [medical, full]
+    container_name: xhaip-oncology
+    ports: ["8788:8788"]
+    environment:
+      AGENT_NAME: oncology
+      AGENT_PORT: "8788"
+
+  # ============================================================
+  # Profile: emergency — 急危重症线
+  # ============================================================
+  emergency:
+    <<: *agent-base
+    profiles: [emergency, full]
+    container_name: xhaip-emergency
+    ports: ["8808:8808"]
+    environment:
+      AGENT_NAME: emergency
+      AGENT_PORT: "8808"
+
+  icu:
+    <<: *agent-base
+    profiles: [emergency, full]
+    container_name: xhaip-icu
+    ports: ["8809:8809"]
+    environment:
+      AGENT_NAME: icu
+      AGENT_PORT: "8809"
+
+  # ============================================================
+  # Profile: women-children — 妇幼线
+  # ============================================================
+  obgyn:
+    <<: *agent-base
+    profiles: [women-children, full]
+    container_name: xhaip-obgyn
+    ports: ["8803:8803"]
+    environment:
+      AGENT_NAME: obgyn
+      AGENT_PORT: "8803"
+
+  pediatrics:
+    <<: *agent-base
+    profiles: [women-children, full]
+    container_name: xhaip-pediatrics
+    ports: ["8820:8820"]
+    environment:
+      AGENT_NAME: pediatrics
+      AGENT_PORT: "8820"
+
+  neonatology:
+    <<: *agent-base
+    profiles: [women-children, full]
+    container_name: xhaip-neonatology
+    ports: ["8804:8804"]
+    environment:
+      AGENT_NAME: neonatology
+      AGENT_PORT: "8804"
+
+  # ============================================================
+  # Profile: specialty — 专科线
+  # ============================================================
+  ophthalmology:
+    <<: *agent-base
+    profiles: [specialty, full]
+    container_name: xhaip-ophthalmology
+    ports: ["8805:8805"]
+    environment:
+      AGENT_NAME: ophthalmology
+      AGENT_PORT: "8805"
+
+  ent:
+    <<: *agent-base
+    profiles: [specialty, full]
+    container_name: xhaip-ent
+    ports: ["8806:8806"]
+    environment:
+      AGENT_NAME: ent
+      AGENT_PORT: "8806"
+
+  dermatology:
+    <<: *agent-base
+    profiles: [specialty, full]
+    container_name: xhaip-dermatology
+    ports: ["8810:8810"]
+    environment:
+      AGENT_NAME: dermatology
+      AGENT_PORT: "8810"
+
+  psychiatry:
+    <<: *agent-base
+    profiles: [specialty, full]
+    container_name: xhaip-psychiatry
+    ports: ["8811:8811"]
+    environment:
+      AGENT_NAME: psychiatry
+      AGENT_PORT: "8811"
+
+  rehabilitation:
+    <<: *agent-base
+    profiles: [specialty, full]
+    container_name: xhaip-rehabilitation
+    ports: ["8812:8812"]
+    environment:
+      AGENT_NAME: rehabilitation
+      AGENT_PORT: "8812"
+
+  tcm:
+    <<: *agent-base
+    profiles: [specialty, full]
+    container_name: xhaip-tcm
+    ports: ["8789:8789"]
+    environment:
+      AGENT_NAME: tcm
+      AGENT_PORT: "8789"
+
+  # ============================================================
+  # Profile: pain — 疼痛专病中心
+  # ============================================================
+  pain-hub:
+    <<: *agent-base
+    profiles: [pain, full]
+    container_name: xhaip-pain-hub
+    ports: ["8840:8840"]
+    environment:
+      AGENT_NAME: pain-hub
+      AGENT_PORT: "8840"
+
+  # ============================================================
+  # Profile: arch — 架构治理
+  # ============================================================
+  togaf:
+    <<: *agent-base
+    profiles: [arch, full]
+    container_name: xhaip-togaf
+    ports: ["8750:8750"]
+    environment:
+      AGENT_NAME: togaf
+      AGENT_PORT: "8750"
+
+  # ============================================================
+  # Portal — 全院门户 (8769)
+  # ============================================================
+  portal:
+    <<: *agent-base
+    profiles: [core, full]
+    container_name: xhaip-portal
+    ports: ["8769:8769"]
+    environment:
+      AGENT_NAME: haip
+      AGENT_PORT: "8769"
+    depends_on:
+      medical-record: {condition: service_healthy}
+      metrics: {condition: service_healthy}
+      pharmacy: {condition: service_healthy}

@@ -61,8 +61,11 @@ class TestUIRender:
 
     def test_portal_render_no_errors(self):
         """所有 Agent 渲染不报错。"""
+        assert len(_registry) > 0, "No agents loaded for render test"
         for name in _registry:
-            _render(name)
+            html = _render(name)
+            assert len(html) > 1000, f"{name} render too short"
+            assert "</html>" in html, f"{name} render missing </html>"
 
     def test_pain_hub_sub_agents(self):
         html = _render("pain-hub")

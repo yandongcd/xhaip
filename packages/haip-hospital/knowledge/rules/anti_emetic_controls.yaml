@@ -1,0 +1,493 @@
+# ============================================================
+# Rule Asset: 围术期止吐药管控规则库
+# TOGAF Class: Constraint (Extension ABB)
+# Trust Level: T1 (基于2025版中国PONV诊疗指南)
+# ============================================================
+name: antiemetic-controls
+version: "1.0"
+description: >
+  围术期止吐药管控规则库 — 覆盖7类禁忌证：
+  药物过敏(5-HT3/激素/多巴胺/NK1/抗胆碱/抗组胺)、
+  肝肾功能调整、基础病禁忌(QT延长/癫痫/高血压/高血糖/锥体外系)、
+  特殊人群(孕产妇/老年/儿童)、重复用药拦截、给药时机校验。
+  由 pharmacy/antiemetic/drug_controls.py 加载执行。
+owner: clinical_pharmacist
+guideline_ref:
+  - "guideline-ponv-2025"
+  - "SAMBA Fourth Consensus Guidelines for PONV (Anesth Analg 2020)"
+last_updated: 2026-07-11
+total_rules: 42
+
+rule_sets:
+
+  # ════════════════════════════════════════════
+  # 类别1：药物过敏禁忌
+  # ════════════════════════════════════════════
+  - id: drug_allergy
+    name: 药物过敏禁忌规则集
+    description: 各类止吐药的过敏禁忌与替换策略
+    source_category: A
+    primary_guideline: "guideline-ponv-2025 §3"
+    rules:
+      - id: AE001
+        name: "5-HT3受体拮抗剂过敏"
+        condition: "patient.allergies contains '5ht3_antagonist'"
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "禁用所有5-HT3受体拮抗剂（昂丹司琼/格拉司琼/托烷司琼/帕洛诺司琼等）"
+        alternative: "换用地塞米松 + NK1受体拮抗剂（福沙匹坦/阿瑞匹坦）"
+        guideline_ref: "R11.1"
+        active: true
+
+      - id: AE002
+        name: "糖皮质激素过敏"
+        condition: "patient.allergies contains 'corticosteroid'"
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "禁用地塞米松/甲泼尼龙"
+        alternative: "换用5-HT3受体拮抗剂 + NK1受体拮抗剂或氟哌利多"
+        guideline_ref: "R12.1"
+        active: true
+
+      - id: AE003
+        name: "甲氧氯普胺/多巴胺拮抗剂过敏"
+        condition: "patient.allergies contains 'dopamine_antagonist'"
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "禁用甲氧氯普胺/氨磺必利/氟哌利多/氟哌啶醇"
+        alternative: "换用5-HT3受体拮抗剂 + 地塞米松 + NK1受体拮抗剂"
+        guideline_ref: "R14.1, R14.3"
+        active: true
+
+      - id: AE004
+        name: "NK1受体拮抗剂过敏"
+        condition: "patient.allergies contains 'nk1_antagonist'"
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "禁用福沙匹坦/阿瑞匹坦"
+        alternative: "换用5-HT3受体拮抗剂 + 地塞米松 + 氟哌利多"
+        guideline_ref: "R13"
+        active: true
+
+      - id: AE005
+        name: "抗胆碱能药过敏"
+        condition: "patient.allergies contains 'anticholinergic'"
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "禁用戊乙奎醚/东莨菪碱"
+        alternative: "换用5-HT3受体拮抗剂 + 地塞米松"
+        guideline_ref: "R15"
+        active: true
+
+      - id: AE006
+        name: "抗组胺药过敏"
+        condition: "patient.allergies contains 'antihistamine'"
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "禁用茶苯海明/赛克利嗪/异丙嗪"
+        alternative: "换用5-HT3受体拮抗剂 + 地塞米松（非剖宫产场景）"
+        guideline_ref: "R16"
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别2：肝肾功能剂量调整
+  # ════════════════════════════════════════════
+  - id: renal_hepatic
+    name: 肝肾功能剂量调整规则集
+    description: 根据eGFR和肝功能调整止吐药剂量
+    source_category: B
+    primary_guideline: "guideline-ponv-2025 §3"
+    rules:
+      - id: RH001
+        name: "肾功能减退-甲氧氯普胺减量"
+        condition: "eGFR < 30 ml/min/1.73m2"
+        drug_class: dopamine_antagonist
+        drug_name: 甲氧氯普胺
+        risk_level: medium
+        risk_label: "🟠警告"
+        action: "甲氧氯普胺剂量减半（50%）"
+        alternative: "换用不受肾功能影响的5-HT3受体拮抗剂"
+        guideline_ref: "R14"
+        active: true
+
+      - id: RH002
+        name: "肝功能不全-昂丹司琼减量"
+        condition: "ALT > 3×ULN or AST > 3×ULN or Child-Pugh B/C"
+        drug_class: 5-HT3_receptor_antagonist
+        drug_name: 昂丹司琼
+        risk_level: medium
+        risk_label: "🟠警告"
+        action: "昂丹司琼单次最大剂量不超过8mg"
+        guideline_ref: "R11.1"
+        active: true
+
+      - id: RH003
+        name: "肝功能不全-多巴胺拮抗剂谨慎"
+        condition: "ALT > 5×ULN or Child-Pugh C"
+        drug_class: dopamine_antagonist
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "避免使用甲氧氯普胺/氨磺必利"
+        alternative: "换用5-HT3受体拮抗剂 + 地塞米松"
+        guideline_ref: "R14.1, R14.3"
+        active: true
+
+      - id: RH004
+        name: "终末期肾病-氟哌利多谨慎"
+        condition: "eGFR < 15 ml/min/1.73m2 or dialysis"
+        drug_class: dopamine_antagonist
+        drug_name: 氟哌利多
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "避免使用氟哌利多（排泄途径依赖肾脏）"
+        alternative: "换用5-HT3受体拮抗剂 + 地塞米松"
+        guideline_ref: "R14.3"
+        active: true
+
+      - id: RH005
+        name: "肝功能正常-甲氧氯普胺标准剂量"
+        condition: "ALT ≤ ULN and eGFR ≥ 30"
+        drug_class: dopamine_antagonist
+        drug_name: 甲氧氯普胺
+        risk_level: low
+        risk_label: "🟢正常"
+        action: "可用标准剂量10mg，但仅10mg止吐功效不明确"
+        note: "25-50mg联合地塞米松才显示预防作用，但明显增加锥体外系并发症"
+        guideline_ref: "R14"
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别3：基础病禁忌
+  # ════════════════════════════════════════════
+  - id: comorbidity
+    name: 基础病禁忌规则集
+    description: 基础疾病对止吐药使用的限制
+    source_category: C
+    primary_guideline: "guideline-ponv-2025 §3"
+    rules:
+      - id: CM001
+        name: "QT间期延长-氟哌利多禁忌"
+        condition: "QTc > 470ms (男性) or QTc > 480ms (女性)"
+        drug_class: dopamine_antagonist
+        drug_name: 氟哌利多
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "禁用氟哌利多/氟哌啶醇"
+        alternative: "换用5-HT3受体拮抗剂 + 地塞米松"
+        guideline_ref: "R14.3"
+        active: true
+
+      - id: CM002
+        name: "QT间期延长-5-HT3受体拮抗剂谨慎"
+        condition: "QTc > 470ms (男性) or QTc > 480ms (女性)"
+        drug_class: 5-HT3_receptor_antagonist
+        risk_level: medium
+        risk_label: "🟠警告"
+        action: "避免重复给药，单次使用可接受"
+        note: "重复给药可能导致QT间期进一步延长"
+        guideline_ref: "R11.1"
+        active: true
+
+      - id: CM003
+        name: "癫痫病史-甲氧氯普胺禁忌"
+        condition: "patient.comorbidities contains 'epilepsy'"
+        drug_class: dopamine_antagonist
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "禁用甲氧氯普胺（可能诱发癫痫发作）"
+        alternative: "换用5-HT3受体拮抗剂 + 地塞米松"
+        guideline_ref: "R14"
+        active: true
+
+      - id: CM004
+        name: "帕金森病-多巴胺拮抗剂禁忌"
+        condition: "patient.comorbidities contains 'parkinson'"
+        drug_class: dopamine_antagonist
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "禁用所有多巴胺受体拮抗剂（甲氧氯普胺/氟哌利多/氨磺必利等）"
+        alternative: "换用5-HT3受体拮抗剂 + 地塞米松 + NK1受体拮抗剂"
+        guideline_ref: "R14.1, R14.3"
+        active: true
+
+      - id: CM005
+        name: "高血压-糖皮质激素谨慎"
+        condition: "patient.comorbidities contains 'hypertension' and SBP > 160mmHg"
+        drug_class: corticosteroid
+        risk_level: medium
+        risk_label: "🟠警告"
+        action: "地塞米松可能升高血压，评估获益/风险"
+        alternative: "减少地塞米松剂量至4mg或换用其他止吐药"
+        guideline_ref: "R12.1"
+        active: true
+
+      - id: CM006
+        name: "糖尿病-糖皮质激素谨慎"
+        condition: "patient.comorbidities contains 'diabetes'"
+        drug_class: corticosteroid
+        risk_level: medium
+        risk_label: "🟠警告"
+        action: "地塞米松可能升高血糖，需监测血糖"
+        alternative: "可考虑减量至4mg，或换用其他止吐药"
+        guideline_ref: "R12.1"
+        active: true
+
+      - id: CM007
+        name: "锥体外系疾病-多巴胺拮抗剂禁忌"
+        condition: "patient.comorbidities contains 'extrapyramidal'"
+        drug_class: dopamine_antagonist
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "禁用所有多巴胺受体拮抗剂"
+        alternative: "换用5-HT3受体拮抗剂 + 地塞米松 + NK1受体拮抗剂"
+        guideline_ref: "R14.1, R14.3"
+        active: true
+
+      - id: CM008
+        name: "青光眼-抗胆碱能药禁忌"
+        condition: "patient.comorbidities contains 'glaucoma'"
+        drug_class: anticholinergic
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "禁用戊乙奎醚/东莨菪碱（闭角型青光眼）"
+        alternative: "换用5-HT3受体拮抗剂 + 地塞米松"
+        guideline_ref: "R15"
+        active: true
+
+      - id: CM009
+        name: "前列腺增生-抗胆碱能药禁忌"
+        condition: "patient.comorbidities contains 'bph'"
+        drug_class: anticholinergic
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "禁用戊乙奎醚/东莨菪碱（可能诱发尿潴留）"
+        alternative: "换用5-HT3受体拮抗剂 + 地塞米松"
+        guideline_ref: "R15"
+        active: true
+
+      - id: CM010
+        name: "重症肌无力-氟哌利多禁忌"
+        condition: "patient.comorbidities contains 'myasthenia_gravis'"
+        drug_class: dopamine_antagonist
+        drug_name: 氟哌利多
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "禁用氟哌利多"
+        alternative: "换用5-HT3受体拮抗剂 + 地塞米松"
+        guideline_ref: "R14.3"
+        active: true
+
+      - id: CM011
+        name: "闭角型青光眼-抗组胺药禁忌"
+        condition: "patient.comorbidities contains 'angle_closure_glaucoma'"
+        drug_class: antihistamine
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "禁用茶苯海明/赛克利嗪/异丙嗪"
+        alternative: "换用5-HT3受体拮抗剂 + 地塞米松（剖宫产场景下评估替代）"
+        guideline_ref: "R16"
+        active: true
+
+      - id: CM012
+        name: "电解质紊乱-多巴胺拮抗剂禁忌"
+        condition: "K < 3.5 mmol/L or Mg < 0.7 mmol/L"
+        drug_class: dopamine_antagonist
+        drug_name: 氟哌利多
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "禁用氟哌利多（低钾/低镁增加QT延长风险）"
+        alternative: "先纠正电解质紊乱，或换用5-HT3受体拮抗剂 + 地塞米松"
+        guideline_ref: "R14.3"
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别4：特殊人群
+  # ════════════════════════════════════════════
+  - id: special_population
+    name: 特殊人群规则集
+    description: 孕产妇、老年、儿童等特殊人群的用药限制
+    source_category: D
+    primary_guideline: "guideline-ponv-2025 §3 §6"
+    rules:
+      - id: SP001
+        name: "孕期-多巴胺拮抗剂谨慎"
+        condition: "patient.pregnancy == true"
+        drug_class: dopamine_antagonist
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "孕期避免使用甲氧氯普胺/氟哌利多（FDA C类/D类）"
+        alternative: "单用昂丹司琼4mg，或穴位刺激替代"
+        guideline_ref: "R17.1"
+        active: true
+
+      - id: SP002
+        name: "哺乳期-甲氧氯普胺谨慎"
+        condition: "patient.lactation == true"
+        drug_class: dopamine_antagonist
+        risk_level: medium
+        risk_label: "🟠警告"
+        action: "甲氧氯普胺可进入乳汁，慎用"
+        alternative: "5-HT3受体拮抗剂（昂丹司琼哺乳期安全性较高）"
+        guideline_ref: "R14"
+        active: true
+
+      - id: SP003
+        name: "老年患者-抗胆碱能药禁忌"
+        condition: "patient.age >= 65"
+        drug_class: anticholinergic
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "禁用抗胆碱能药（戊乙奎醚/东莨菪碱），可能诱发谵妄/认知障碍"
+        alternative: "换用5-HT3受体拮抗剂 + 地塞米松"
+        guideline_ref: "R15"
+        active: true
+
+      - id: SP004
+        name: "儿童<3岁-地塞米松禁忌"
+        condition: "patient.age < 3"
+        drug_class: corticosteroid
+        risk_level: high
+        risk_label: "🔴禁忌"
+        action: "3岁以下儿童不建议使用地塞米松预防PONV"
+        alternative: "单用5-HT3受体拮抗剂"
+        guideline_ref: "R12.2"
+        active: true
+
+      - id: SP005
+        name: "剖宫产-抗组胺药推荐"
+        condition: "surgery.type == 'cesarean_section'"
+        drug_class: antihistamine
+        risk_level: low
+        risk_label: "🟢推荐"
+        action: "剖宫产患者推荐使用茶苯海明或赛克利嗪预防PONV（中等证据）"
+        evidence: "R16"
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别5：重复用药拦截
+  # ════════════════════════════════════════════
+  - id: duplicate_medication
+    name: 重复用药拦截规则集
+    description: 防止同类别药物在限定时间内重复使用
+    source_category: E
+    primary_guideline: "guideline-ponv-2025 §3 §6"
+    rules:
+      - id: DM001
+        name: "5-HT3拮抗剂24h内重复使用"
+        condition: "last_5ht3_dose_time < 24h ago"
+        drug_class: 5-HT3_receptor_antagonist
+        risk_level: high
+        risk_label: "🔴拦截"
+        action: "24h内禁止重复给予5-HT3受体拮抗剂（可能增加QT延长风险）"
+        exception: "补救治疗可给予预防剂量的1/4（如昂丹司琼1mg）"
+        guideline_ref: "R11.1, R11.2"
+        active: true
+
+      - id: DM002
+        name: "地塞米松重复使用"
+        condition: "last_dexamethasone_dose_exists"
+        drug_class: corticosteroid
+        risk_level: high
+        risk_label: "🔴拦截"
+        action: "不推荐重复使用地塞米松"
+        guideline_ref: "R12.1"
+        active: true
+
+      - id: DM003
+        name: "5-HT3拮抗剂预防后6h内补救"
+        condition: "last_5ht3_prophylaxis_time < 6h ago and rescue_requested"
+        risk_level: medium
+        risk_label: "🟠警告"
+        action: "6h内不应重复使用同种5-HT3受体拮抗剂作为补救，应换用不同机制药物"
+        guideline_ref: "R21.1"
+        active: true
+
+      - id: DM004
+        name: "三联疗法6h内重复"
+        condition: "last_triple_therapy_time < 6h ago and rescue_requested"
+        risk_level: high
+        risk_label: "🔴拦截"
+        action: "6h内不应重复原三联药物组合，应换用其他类型止吐药"
+        guideline_ref: "R21.1"
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别6：给药时机校验
+  # ════════════════════════════════════════════
+  - id: timing_validation
+    name: 给药时机校验规则集
+    description: 根据药物半衰期和起效时间校验给药时机
+    source_category: F
+    primary_guideline: "guideline-ponv-2025 §3"
+    rules:
+      - id: TM001
+        name: "帕洛诺司琼-麻醉诱导前给药"
+        condition: "drug.name == 'palonosetron' and timing != 'induction'"
+        risk_level: low
+        risk_label: "💡建议"
+        action: "建议在麻醉诱导前给药（长效药，半衰期40h）"
+        guideline_ref: "R11.3"
+        active: true
+
+      - id: TM002
+        name: "昂丹司琼-术毕给药"
+        condition: "drug.name == 'ondansetron' and timing != 'end_of_surgery'"
+        risk_level: low
+        risk_label: "💡建议"
+        action: "建议在临近手术结束时给药（短效药，半衰期3-6h）"
+        guideline_ref: "R11.4"
+        active: true
+
+      - id: TM003
+        name: "地塞米松-麻醉诱导后给药"
+        condition: "drug.name == 'dexamethasone' and timing != 'post_induction'"
+        risk_level: low
+        risk_label: "💡建议"
+        action: "建议在麻醉诱导后给药（约10min起效，药效持续24h）"
+        guideline_ref: "R12.1"
+        active: true
+
+      - id: TM004
+        name: "阿瑞匹坦-术前1-3h给药"
+        condition: "drug.name == 'aprepitant' and route == 'PO' and timing != '1-3h_preop'"
+        risk_level: medium
+        risk_label: "🟠警告"
+        action: "口服阿瑞匹坦应在麻醉诱导前1-3h给予"
+        guideline_ref: "R13"
+        active: true
+
+      - id: TM005
+        name: "东莨菪碱贴剂-术前晚或术前2-4h"
+        condition: "drug.name == 'scopolamine_patch' and timing not in ['night_before', '2-4h_preop']"
+        risk_level: medium
+        risk_label: "🟠警告"
+        action: "东莨菪碱贴剂应在手术前晚上或手术开始前2-4h给予"
+        guideline_ref: "R15"
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别7：药物相互作用
+  # ════════════════════════════════════════════
+  - id: drug_interaction
+    name: 药物相互作用规则集
+    description: 止吐药与其他围术期药物的相互作用
+    source_category: G
+    primary_guideline: "guideline-ponv-2025 §3"
+    rules:
+      - id: DI001
+        name: "氟哌利多+其他延长QT药物"
+        condition: "prescription contains QT-prolonging drugs AND droperidol prescribed"
+        risk_level: high
+        risk_label: "🔴拦截"
+        action: "氟哌利多禁止与其他延长QT间期的药物合用"
+        guideline_ref: "R14.3"
+        active: true
+
+      - id: DI002
+        name: "5-HT3拮抗剂+其他延长QT药物"
+        condition: "prescription contains QT-prolonging drugs AND 5ht3_antagonist prescribed"
+        risk_level: medium
+        risk_label: "🟠警告"
+        action: "联合使用可能增加QT延长风险，建议监测ECG"
+        guideline_ref: "R11.1"
+        active: true

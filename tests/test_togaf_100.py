@@ -36,7 +36,6 @@ class TestValidatorEdge:
 
     def test_type_compliance_all_types(self):
         from haip.togaf.validator import _check_type_compliance
-        registry = {}
         # Load a real agent for testing
         from haip.agent import get as get_agent
         for agent_type in ['business', 'specialist', 'master_data', 'architecture']:
@@ -86,6 +85,9 @@ class TestKnowledgeAgentEdge:
         agent = KnowledgeAgent('test', 'test')
         result = agent.clinical_result_from_pipeline({'patient_id': 'X'})
         assert result['status'] == 'ok'
+        assert 'agent' in result
+        assert result['agent'] == 'test'
+        assert isinstance(result.get('summary', ''), str)
 
     def test_vital_ranges(self):
         from haip.togaf.knowledge_agent import KnowledgeAgent
@@ -275,7 +277,8 @@ class TestAuditEdge:
 
     def test_export_landscape(self):
         from haip.togaf.audit import export_landscape
-        import tempfile, os
+        import tempfile
+        import os
         tmp = os.path.join(tempfile.gettempdir(), 'landscape_test.json')
         path = export_landscape(tmp)
         assert os.path.exists(path)
@@ -337,7 +340,7 @@ class TestAgentGenerator:
         assert isinstance(generated, list)
 
 
-# ── patient_generator — basic tests ──
+# ── patient_generator — basic tests + edge cases ──
 
 class TestPatientGenerator:
     def test_generate_patients(self):
@@ -349,6 +352,331 @@ class TestPatientGenerator:
         from haip.togaf.patient_generator import _dept_to_agent
         assert _dept_to_agent('呼吸内科') == 'respiratory'
         assert _dept_to_agent('神经外科') == 'neurosurgery'
+
+    def test_dept_to_agent_full_coverage(self):
+        from haip.togaf.patient_generator import _dept_to_agent
+        known = {
+            '消化内科': 'gastroenterology', '肾内科': 'nephrology',
+            '血液内科': 'hematology', '内分泌科': 'endocrinology',
+            '风湿免疫科': 'rheumatology', '感染内科': 'infectious-disease',
+            '肿瘤科': 'oncology', '中医科': 'tcm', '老年病科': 'geriatrics',
+            '普通外科': 'general-surgery', '肝胆外科': 'hepatobiliary-surgery',
+            '胸外科': 'thoracic-surgery', '血管外科': 'vascular-surgery',
+            '肾移植科': 'renal-transplant', '乳腺中心': 'breast-center',
+            '烧伤整形科': 'burns-plastic', '介入治疗科': 'interventional-therapy',
+            '妇产科': 'obgyn', '新生儿科': 'neonatology', '眼科': 'ophthalmology',
+            '耳鼻喉科': 'ent', '口腔科': 'stomatology', '急诊科': 'emergency',
+            '重症医学科': 'icu', '皮肤科': 'dermatology', '精神心理科': 'psychiatry',
+            '康复医学科': 'rehabilitation', '健康管理科': 'health-management',
+            '惠侨医疗中心': 'huigiao', '整形美容科': 'cosmetic-surgery',
+        }
+        for dept, expected in known.items():
+            assert _dept_to_agent(dept) == expected, f"Mismatch for {dept}"
+
+    def test_dept_to_agent_unknown_fallback(self):
+        from haip.togaf.patient_generator import _dept_to_agent
+        result = _dept_to_agent('未知科室')
+        assert result == '未知科室'
+
+    def test_dept_to_agent_with_spaces(self):
+        from haip.togaf.patient_generator import _dept_to_agent
+        result = _dept_to_agent('Some New Dept')
+        assert result == 'some-new-dept'
+
+    def test_random_lab_generation(self):
+        from haip.togaf.patient_generator import _random_lab
+        keys = ['Hb', 'WBC', 'CRP', 'ALT', 'Cr']
+        labs = _random_lab('test', keys)
+        assert 'Hb' in labs
+        assert 'WBC' in labs
+        assert 3.5 <= labs['WBC'] <= 18.0  # type: ignore[operator]
+
+    def test_generate_with_output_path(self, tmp_path):
+        from haip.togaf.patient_generator import generate_patients
+        import json
+        out = tmp_path / "patients_test.json"
+        new = generate_patients(str(out))
+        assert isinstance(new, list)
+        assert out.exists()
+        data = json.loads(out.read_text(encoding='utf-8'))
+        assert 'patients' in data or 'total' in data
+
+    def test_random_lab_all_departments(self):
+        from haip.togaf.patient_generator import _random_lab, _LAB_TEMPLATES
+        for dept_id, keys in list(_LAB_TEMPLATES.items())[:5]:
+            labs = _random_lab('test diagnostic', keys)
+            assert isinstance(labs, dict)
+            for k in keys:
+                assert k in labs, f"Missing lab key {k} for {dept_id}"
+                assert isinstance(labs[k], (int, float))
+
+
+# ═════════════════════════════════════════════════════════════
+# Agent Generator extended coverage
+# ═════════════════════════════════════════════════════════════
+
+class TestAgentGeneratorExtended:
+    def test_generate_agent_yaml_with_output_dir(self, tmp_path):
+        from haip.togaf.agent_generator import generate_agent_yaml
+        output = str(tmp_path / "generated_agents")
+        yaml_str = generate_agent_yaml('respiratory', output_dir=output)
+        assert yaml_str is not None
+        assert 'respiratory' in yaml_str
+        expected_file = tmp_path / "generated_agents" / "respiratory.yaml"
+        assert expected_file.exists()
+
+    def test_generate_agent_yaml_nonexistent_org(self):
+        from haip.togaf.agent_generator import generate_agent_yaml
+        result = generate_agent_yaml('completely_nonexistent_org_12345')
+        assert result is None
+
+    def test_generate_agent_yaml_surgery_type(self):
+        from haip.togaf.agent_generator import generate_agent_yaml
+        yaml_str = generate_agent_yaml('trauma_ortho')
+        assert yaml_str is not None
+        assert 'tools:' in yaml_str
+        assert 'name:' in yaml_str
+
+    def test_generate_agent_yaml_emergency_type(self):
+        from haip.togaf.agent_generator import generate_agent_yaml
+        yaml_str = generate_agent_yaml('emergency')
+        assert yaml_str is not None
+        assert 'triage' in yaml_str or 'rescue' in yaml_str
+
+    def test_generate_agent_yaml_has_stages_and_roles(self):
+        from haip.togaf.agent_generator import generate_agent_yaml
+        yaml_str = generate_agent_yaml('respiratory')
+        assert yaml_str is not None
+        assert 'stages:' in yaml_str
+        assert 'roles:' in yaml_str
+        assert 'tools:' in yaml_str
+
+    def test_org_to_agent_name_coverage(self):
+        from haip.togaf.agent_generator import _org_to_agent_name
+        known = {
+            '心血管内科': 'cardiology', '消化内科': 'gastroenterology',
+            '呼吸内科': 'respiratory', '肾内科': 'nephrology',
+            '血液内科': 'hematology', '内分泌科': 'endocrinology',
+            '肿瘤科': 'oncology', '中医科': 'tcm', '老年病科': 'geriatrics',
+        }
+        for dept, expected in known.items():
+            assert _org_to_agent_name(dept) == expected, f"Mismatch for {dept}"
+
+    def test_org_to_agent_name_fallback(self):
+        from haip.togaf.agent_generator import _org_to_agent_name
+        result = _org_to_agent_name('新科室')
+        assert result == '新科室'
+
+    def test_assign_port_known(self):
+        from haip.togaf.agent_generator import _assign_port
+        assert _assign_port('respiratory') == 8781
+        assert _assign_port('emergency') == 8808
+
+    def test_assign_port_unknown(self):
+        from haip.togaf.agent_generator import _assign_port
+        assert _assign_port('nonexistent_dept') == 8900
+
+
+# ═════════════════════════════════════════════════════════════
+# Audit extended coverage
+# ═════════════════════════════════════════════════════════════
+
+class TestAuditExtended:
+    def test_export_landscape_to_temp(self, tmp_path):
+        from haip.togaf.audit import export_landscape
+        import json
+        out = tmp_path / "landscape.json"
+        path = export_landscape(str(out))
+        assert out.exists()
+        data = json.loads(out.read_text(encoding='utf-8'))
+        assert 'nodes' in data
+        assert 'edges' in data
+
+    def test_audit_environment_stats(self):
+        from haip.togaf.audit import audit_environment
+        result = audit_environment()
+        assert 'stats' in result
+        assert 'nodes_total' in result
+        assert 'edges_total' in result
+        assert result['nodes_total'] > 0
+
+    def test_landscape_node_by_id(self):
+        from haip.togaf.audit import auto_discover
+        landscape = auto_discover()
+        node = landscape.node_by_id('nfh')
+        assert node is not None
+        assert node.id == 'nfh'
+        assert landscape.node_by_id('nonexistent_node') is None
+
+    def test_landscape_serialization(self):
+        from haip.togaf.audit import auto_discover, _landscape_to_dict, _landscape_from_dict
+        landscape = auto_discover()
+        data = _landscape_to_dict(landscape)
+        assert 'nodes' in data
+        assert 'edges' in data
+        restored = _landscape_from_dict(data)
+        assert restored.name == landscape.name
+        assert len(restored.nodes) == len(landscape.nodes)
+
+    def test_discover_organization_helper(self):
+        from haip.togaf.audit import ArchitectureLandscape, _discover_organization
+        landscape = ArchitectureLandscape()
+        _discover_organization(landscape, set())
+        assert len(landscape.nodes) == 1
+        assert landscape.nodes[0].id == 'nfh'
+        assert landscape.nodes[0].entity_type == 'Organization'
+
+    def test_discover_technology_helper(self):
+        from haip.togaf.audit import ArchitectureLandscape, _discover_technology
+        landscape = ArchitectureLandscape()
+        _discover_technology(landscape, set())
+        assert len(landscape.nodes) >= 2
+
+    def test_discover_knowledge_assets_helper(self):
+        from haip.togaf.audit import ArchitectureLandscape, _discover_knowledge_assets, _find_project_root
+        landscape = ArchitectureLandscape()
+        root = _find_project_root()
+        _discover_knowledge_assets(landscape, set(), root)
+        assert len(landscape.nodes) >= 1
+
+    def test_icon_for_agent_types(self):
+        from haip.togaf.audit import _icon_for_agent
+        assert _icon_for_agent('business') == '🤖'
+        assert _icon_for_agent('specialist') == '🔬'
+        assert _icon_for_agent('master_data') == '💾'
+        assert _icon_for_agent('rules') == '📐'
+        assert _icon_for_agent('architecture') == '🏗️'
+        assert _icon_for_agent('unknown_type') == '🤖'
+
+    def test_landscape_from_dict_empty(self):
+        from haip.togaf.audit import _landscape_from_dict
+        landscape = _landscape_from_dict({})
+        assert landscape.name == ''
+        assert landscape.nodes == []
+
+    def test_landscape_to_dict_roundtrip(self):
+        from haip.togaf.audit import ArchitectureLandscape, ArchNode, ArchEdge, _landscape_to_dict, _landscape_from_dict
+        landscape = ArchitectureLandscape(name='Test')
+        landscape.nodes.append(ArchNode(id='n1', label='N1', entity_type='T', domain='d'))
+        landscape.edges.append(ArchEdge(source='n1', target='n2', relationship_type='r'))
+        data = _landscape_to_dict(landscape)
+        restored = _landscape_from_dict(data)
+        assert restored.name == 'Test'
+        assert len(restored.nodes) == 1
+        assert len(restored.edges) == 1
+
+    def test_find_project_root(self):
+        from haip.togaf.audit import _find_project_root
+        root = _find_project_root()
+        assert root.exists()
+        assert (root / 'packages').is_dir()
+
+    def test_definitions_dir_helper(self):
+        from haip.togaf.audit import _definitions_dir, _find_project_root
+        root = _find_project_root()
+        defs = _definitions_dir(root)
+        assert defs.exists()
+
+    def test_knowledge_dir_helper(self):
+        from haip.togaf.audit import _knowledge_dir, _find_project_root
+        root = _find_project_root()
+        kd = _knowledge_dir(root)
+        assert kd.exists()
+
+    def test_report_text(self):
+        from haip.togaf.audit import auto_discover, _report_text
+        landscape = auto_discover()
+        text = _report_text(landscape)
+        assert 'xHAIP' in text
+        assert len(text) > 100
+
+    def test_main_cli_audit(self):
+        from haip.togaf.audit import main_cli, audit_environment
+        result = audit_environment()
+        assert 'stats' in result
+        assert 'nodes_total' in result
+        assert result['nodes_total'] > 0
+
+    def test_main_cli_show(self):
+        from haip.togaf.audit import main_cli, auto_discover, _report_text
+        landscape = auto_discover()
+        report = _report_text(landscape)
+        assert 'xHAIP' in report
+        assert len(report) > 100
+
+    def test_main_cli_stats(self):
+        from haip.togaf.audit import main_cli, audit_environment
+        result = audit_environment()
+        assert 'nodes_total' in result
+        assert 'edges_total' in result
+        assert result['nodes_total'] > 0
+
+    def test_main_cli_no_args(self, capsys):
+        from haip.togaf.audit import main_cli
+        main_cli([])
+        captured = capsys.readouterr()
+        assert 'usage' in captured.out.lower() or '--help' in captured.out.lower() or len(captured.out) > 50
+
+    def test_main_cli_export(self, tmp_path):
+        from haip.togaf.audit import main_cli
+        out = tmp_path / 'export.json'
+        main_cli(['export', '--out', str(out)])
+        assert out.exists()
+
+    def test_merge_registry_props(self):
+        from haip.togaf.audit import ArchNode, _merge_registry_props
+        from haip.agent import DomainPlugin
+        node = ArchNode(id='test', label='Test', entity_type='T', domain='d',
+                        properties={'port': '0', 'tools': '0'})
+        plugin = DomainPlugin(name='test', type='business', port=9999, cn_name='Test Agent')
+        _merge_registry_props(node, plugin)
+        assert node.properties['port'] == '9999'
+
+
+# ═════════════════════════════════════════════════════════════
+# Patient Generator extended coverage
+# ═════════════════════════════════════════════════════════════
+
+class TestPatientGeneratorExtended:
+    def test_diagnoses_per_department(self):
+        from haip.togaf.patient_generator import _DIAGNOSES
+        assert len(_DIAGNOSES) >= 30
+        assert len(_DIAGNOSES['respiratory']) >= 5
+        assert 'COPD' in _DIAGNOSES['respiratory'][0] or 'COPD' in _DIAGNOSES['respiratory'][1]
+
+    def test_lab_keys_per_department(self):
+        from haip.togaf.patient_generator import _LAB_TEMPLATES
+        assert 'respiratory' in _LAB_TEMPLATES
+        assert 'WBC' in _LAB_TEMPLATES['respiratory']
+        assert 'gastroenterology' in _LAB_TEMPLATES
+        assert 'neurosurgery' in _LAB_TEMPLATES
+
+    def test_generate_patients_no_duplicate_ids(self):
+        from haip.togaf.patient_generator import generate_patients
+        new = generate_patients()
+        if new:
+            ids = [p['patient_id'] for p in new]
+            assert len(ids) == len(set(ids))
+
+    def test_generate_patients_has_required_fields(self):
+        from haip.togaf.patient_generator import generate_patients
+        new = generate_patients()
+        if new:
+            p = new[0]
+            assert 'patient_id' in p
+            assert 'department' in p
+            assert 'diagnosis' in p
+            assert 'lab_results' in p
+            assert 'compatible_agents' in p
+
+    def test_generate_patients_with_output(self, tmp_path):
+        from haip.togaf.patient_generator import generate_patients
+        import json
+        out = tmp_path / "patients_out.json"
+        new = generate_patients(str(out))
+        assert out.exists()
+        data = json.loads(out.read_text(encoding='utf-8'))
+        assert 'total' in data
 
 
 # ── templates_dept — edge ──

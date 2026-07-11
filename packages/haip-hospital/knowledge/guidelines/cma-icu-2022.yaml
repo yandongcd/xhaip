@@ -9,8 +9,10 @@ abbr: "重症医学指南2022"
 version: "2022"
 publisher: "中华医学会重症医学分会"
 journal: "中华重症医学电子杂志 2022;8(1):1-80"
+doi: "10.3760/cma.j.cn113694-20231024-00261"
 language: zh-CN
 trust_level: T1
+original_pdf: "guidelines/originals/icu-中国重症卒中管理指南2024.pdf"
 
 description: >
   中国重症医学临床诊疗指南（2022版），涵盖脓毒症/脓毒性休克早期识别与治疗、
@@ -52,4 +54,26 @@ rule_sets_covered:
   - icu_nutrition_china
 
 derived_rule_count: 11
-last_updated: 2026-07-10
+last_updated: 2026-07-11
+
+pdf_extracted_sections:
+  - source: "icu-中国重症卒中管理指南2024.pdf"
+    publisher_from_pdf: "中华医学会神经病学分会 中华医学会神经病学分会脑血管病学组"
+    doi: "10.3760/cma.j.cn113694-20231024-00261"
+    sections:
+      - id: "§A"
+        title: "危重症卒中的预测和预防"
+      - id: "§B"
+        title: "神经科特异性治疗"
+        sub: ["重症脑梗死", "重症脑出血", "动脉瘤破裂性"]
+  - source: "icu-中国重症肌无力诊断和治疗指南（2025版）.pdf"
+    doi: "10.3760/cma.j.cn113694-20250120-00041"
+    publisher_from_pdf: "中华医学会神经病学分会神经免疫学组"
+    sections:
+      - id: "§A"
+        title: "严重程度及疗效评估"
+      - id: "§B"
+        title: "疾病活动度评估"
+      - id: "§C"
+        title: "治疗原则与方式"
+        sub: ["治疗原则", "治疗目标", "生活质量评估", "治疗方式"]

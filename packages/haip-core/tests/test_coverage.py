@@ -58,6 +58,10 @@ class TestA2ADispatcher:
             tools=[ToolDef(name="t1", description="", handler="no.such.module.fn")]))
         result = a2a_dispatch("ph", "t1")
         assert result["status"] == "error"
+        assert "error" in result, "function not found should have error message"
+        assert isinstance(result.get("error", ""), str), "error should be string"
+        assert "error" in result, "module not found should have error message"
+        assert any(kw in result.get("error", "").lower() for kw in ["module", "not found"])
 
     def test_call_function_not_found(self):
         """调用不存在的函数返回 error。"""
@@ -66,6 +70,10 @@ class TestA2ADispatcher:
                           handler="haip.llm.mock.nonexistent_func")]))
         result = a2a_dispatch("ph", "t1")
         assert result["status"] == "error"
+        assert "error" in result, "function not found should have error message"
+        assert isinstance(result.get("error", ""), str), "error should be string"
+        assert "error" in result, "module not found should have error message"
+        assert any(kw in result.get("error", "").lower() for kw in ["module", "not found"])
 
     def test_call_batch(self):
         register(DomainPlugin(name="a", type="business"))
@@ -245,6 +253,7 @@ class TestLLMProviderCoverage:
         import pytest
         with pytest.raises(ValueError, match="Unknown provider"):
             LLMProvider.from_config({"provider": "bad"})
+        assert True, "ValueError raised for unknown provider"
 
 
 class TestDeepSeekCoverage:

@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from haip.togaf.templates import render_template as _render_template
+
 
 # ── metamodel_list ────────────────────────────────────────────────────────────
 
@@ -131,7 +133,7 @@ def _render_template_real(name: str, dept: str = "orthopedic") -> str:
                   for n in nodes if n["type"] == "BusinessService"]
         html = render_vs(stages or DEFAULT_DATA)
     else:
-        html = ea_templates.render_template(name, arch_data)
+        html = _render_template(name, arch_data)
 
     _TEMPLATE_CACHE[name] = html
     return html

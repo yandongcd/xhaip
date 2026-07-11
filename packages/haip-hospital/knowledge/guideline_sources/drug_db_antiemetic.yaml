@@ -1,0 +1,314 @@
+# ============================================================
+# Data Asset: 围术期止吐药数据库
+# TOGAF Class: DataEntity (Core ABB)
+# Trust Level: T1 (基于2025版中国PONV诊疗指南 + 药品说明书)
+# ============================================================
+name: drug-db-antiemetic
+version: "1.0"
+description: >
+  围术期止吐药数据库 — 覆盖6大类10+种药品的元数据。
+  每个药品标注类别/半衰期/剂量/给药时机/禁忌证/指南引用。
+owner: clinical_pharmacist
+guideline_ref:
+  - "guideline-ponv-2025 §3"
+last_updated: 2026-07-11
+
+drugs:
+
+  # ── 5-HT3 受体拮抗剂 (第一代) ──
+  - id: ondansetron
+    name: 昂丹司琼
+    name_en: Ondansetron
+    class: 5-HT3_receptor_antagonist
+    generation: 1
+    half_life_h: 3-6
+    onset_min: 30
+    duration_h: 8-12
+    adult_prophylaxis_dose: "4mg IV"
+    adult_rescue_dose: "1mg IV"
+    pediatric_dose: "0.05-0.1mg/kg IV (最大4mg)"
+    timing: "手术结束前 (短效)"
+    route: [IV, PO, ODT]
+    contraindications: [QTc>470ms(男)/480ms(女)谨慎重复给药]
+    side_effects: [头痛(5-27%), 腹泻(<1-16%), 便秘(<1-9%), 发热(<1-8%), 肝酶升高(1-5%)]
+    evidence_level: moderate
+    guideline_refs: [R11.1, R11.2, R11.4]
+
+  - id: granisetron
+    name: 格拉司琼
+    name_en: Granisetron
+    class: 5-HT3_receptor_antagonist
+    generation: 1
+    half_life_h: 3.1-5.9
+    adult_prophylaxis_dose: "1mg IV or 0.04mg/kg"
+    adult_rescue_dose: "0.1mg IV"
+    pediatric_dose: "0.04mg/kg IV (最大3mg)"
+    timing: "手术结束前 (短效)"
+    route: [IV, PO, Transdermal]
+    contraindications: [QTc延长谨慎]
+    side_effects: [头痛, 便秘, 肝酶升高]
+    evidence_level: moderate
+    guideline_refs: [R11.1, R11.2]
+
+  - id: tropisetron
+    name: 托烷司琼
+    name_en: Tropisetron
+    class: 5-HT3_receptor_antagonist
+    generation: 1
+    half_life_h: 8-12
+    adult_prophylaxis_dose: "5mg IV"
+    adult_rescue_dose: "0.5mg IV"
+    timing: "手术结束前30min"
+    route: [IV, PO]
+    contraindications: [QTc延长谨慎]
+    side_effects: [头痛, 便秘, 头晕]
+    evidence_level: moderate
+    guideline_refs: [R11.1, R11.2]
+    note: "结构主环最接近5-HT，更具特异性。半衰期8-12h（长于昂丹司琼/格拉司琼）"
+    china_availability: "国内常用"
+
+  - id: dolasetron
+    name: 多拉司琼
+    name_en: Dolasetron
+    class: 5-HT3_receptor_antagonist
+    generation: 1
+    half_life_h: 7-8
+    adult_prophylaxis_dose: "12.5mg IV"
+    adult_rescue_dose: "12.5mg IV"
+    timing: "手术结束前"
+    route: [IV, PO]
+    contraindications: [QTc延长谨慎]
+    side_effects: [头痛, 头晕, QT间期延长]
+    evidence_level: moderate
+    guideline_refs: [R11.1, R11.2]
+
+  # ── 5-HT3 受体拮抗剂 (第二代) ──
+  - id: palonosetron
+    name: 帕洛诺司琼
+    name_en: Palonosetron
+    class: 5-HT3_receptor_antagonist
+    generation: 2
+    half_life_h: 40
+    adult_prophylaxis_dose: "0.075mg IV"
+    pediatric_dose: "0.5-1.0μg/kg IV (儿童证据有限)"
+    timing: "麻醉诱导前 (长效)"
+    route: [IV]
+    contraindications: [QTc延长谨慎]
+    side_effects: [头痛, 便秘]
+    metabolism: "主要经CYP2D6代谢"
+    evidence_level: moderate
+    guideline_refs: [R11.1, R11.3]
+    note: "第二代高选择性/高亲和性5-HT3拮抗剂，半衰期长达40h。结构与5-HT更接近。临床剂量不受年龄/肝肾功能影响，对QT间期无明显影响"
+
+  - id: ramosetron
+    name: 雷莫司琼
+    name_en: Ramosetron
+    class: 5-HT3_receptor_antagonist
+    generation: 2
+    half_life_h: 5-9
+    adult_prophylaxis_dose: "0.3mg IV"
+    timing: "手术结束前"
+    route: [IV]
+    contraindications: [QTc延长谨慎]
+    side_effects: [头痛, 便秘]
+    evidence_level: moderate
+    guideline_refs: [R11.1]
+
+  # ── 皮质类固醇 ──
+  - id: dexamethasone
+    name: 地塞米松
+    name_en: Dexamethasone
+    class: corticosteroid
+    half_life_h: 36-54 (biological)
+    onset_min: 10
+    duration_h: "≥24"
+    adult_prophylaxis_dose: "4-8mg IV"
+    adult_rescue_dose: "2-4mg IV"
+    pediatric_dose: "0.15mg/kg IV (最大5-8mg, ≥3岁)"
+    timing: "麻醉诱导后"
+    route: [IV]
+    contraindications: [糖尿病(监测血糖), 高血压(SBP>160mmHg谨慎), 感染高风险, 伤口愈合延迟风险, 儿童<3岁禁忌]
+    side_effects: [高血糖, 伤口愈合延迟, 免疫抑制]
+    evidence_level: high (成人 moderate / 儿童 high)
+    guideline_refs: [R12.1, R12.2]
+    note: "单剂量短期使用耐受性良好。不推荐重复给药。≥3岁儿童强推荐(高质量证据)"
+
+  - id: methylprednisolone
+    name: 甲泼尼龙
+    name_en: Methylprednisolone
+    class: corticosteroid
+    half_life_h: 12-36 (biological)
+    adult_prophylaxis_dose: "40mg IV"
+    timing: "麻醉诱导后"
+    route: [IV]
+    contraindications: [同地塞米松]
+    side_effects: [高血糖, 伤口愈合延迟]
+    evidence_level: moderate
+    guideline_refs: [R12.1]
+    note: "高剂量不仅能有效预防PONV，还能减少术后阿片消耗及疼痛评分"
+
+  # ── NK-1 受体拮抗剂 ★新增 ──
+  - id: fosaprepitant
+    name: 福沙匹坦
+    name_en: Fosaprepitant
+    class: NK1_receptor_antagonist
+    half_life_h: 9-13 (aprepitant 9-13h)
+    adult_prophylaxis_dose: "150mg IV"
+    timing: "麻醉诱导前"
+    route: [IV]
+    contraindications: [肝功能严重不全谨慎]
+    side_effects: [头痛, 疲乏, 注射部位反应]
+    evidence_level: moderate
+    guideline_refs: [R13]
+    note: "阿瑞匹坦前体药物，静脉制剂。是所有单药中预防POV效果最佳的药物，单用效果与部分三联疗法相当。成本高于传统止吐药"
+
+  - id: aprepitant
+    name: 阿瑞匹坦
+    name_en: Aprepitant
+    class: NK1_receptor_antagonist
+    half_life_h: 9-13
+    adult_prophylaxis_dose: "40mg PO"
+    timing: "术前1-3h"
+    route: [PO]
+    contraindications: [肝功能严重不全谨慎]
+    side_effects: [头痛, 便秘, 疲乏]
+    evidence_level: moderate
+    guideline_refs: [R13]
+    note: "口服制剂，术前1-3h服用。对NK-1受体具有选择性和高亲和性，对多巴胺/5-HT受体亲和性很低。儿童证据有限"
+
+  # ── 多巴胺受体拮抗剂 ★新增 ──
+  - id: amisulpride
+    name: 氨磺必利
+    name_en: Amisulpride
+    class: dopamine_receptor_antagonist
+    half_life_h: 12
+    adult_prophylaxis_dose: "5mg IV"
+    adult_rescue_dose: "5-10mg IV"
+    timing: "麻醉诱导时"
+    route: [IV]
+    contraindications: [帕金森病, 锥体外系疾病, 严重肝病(ALT>5×ULN)]
+    side_effects: [锥体外系症状(低剂量安全), 嗜睡]
+    evidence_level: "预防: moderate | 缓解: high"
+    guideline_refs: [R14.1, R14.2]
+    note: "低剂量(1-5mg)安全有效，不增加嗜睡或锥体外系副作用。5mg研究证据较充分"
+
+  - id: droperidol
+    name: 氟哌利多
+    name_en: Droperidol
+    class: dopamine_receptor_antagonist
+    half_life_h: 2-3
+    adult_prophylaxis_dose: "0.625mg IV"
+    pediatric_dose: "0.01-0.015mg/kg IV (最大0.625mg)"
+    timing: "手术结束前"
+    route: [IV]
+    contraindications: [QTc延长, 低钾, 低镁, 重症肌无力, 锥体外系疾病, 帕金森病, 终末期肾病]
+    side_effects: [QT间期延长(短暂性), 锥体外系症状(儿童年长史, >50-75μg/kg), 镇静]
+    fda_black_box: "2001年FDA对大剂量(>25mg)心源性猝死风险发出黑框警告，小剂量用于PONV被认为是安全的"
+    evidence_level: moderate
+    guideline_refs: [R14.3]
+    note: "0.625mg小剂量与昂丹司琼4mg效果相似。10-15μg超小剂量也有止吐作用。禁止与其他延长QT间期药物合用"
+
+  - id: haloperidol
+    name: 氟哌啶醇
+    name_en: Haloperidol
+    class: dopamine_receptor_antagonist
+    half_life_h: 14-26
+    adult_prophylaxis_dose: "0.5-2mg IV/IM"
+    timing: "诱导后或手术结束前"
+    route: [IV, IM]
+    contraindications: [QTc延长, 帕金森病, 锥体外系疾病]
+    side_effects: [QT间期延长, 锥体外系症状, 镇静]
+    evidence_level: moderate
+    guideline_refs: [R14]
+    note: "尚未获得FDA批准用于PONV预防。止吐效果与5-HT3受体拮抗剂相当"
+
+  - id: metoclopramide
+    name: 甲氧氯普胺
+    name_en: Metoclopramide
+    class: dopamine_receptor_antagonist
+    half_life_h: 4-6
+    adult_prophylaxis_dose: "10mg IV (常规) or 25-50mg IV (联合地塞米松)"
+    timing: "手术结束前"
+    route: [IV, PO]
+    contraindications: [癫痫, 帕金森病, 锥体外系疾病, 肠梗阻, eGFR<30需减半]
+    side_effects: [锥体外系症状(高剂量时显著增加), 嗜睡]
+    evidence_level: low (常规10mg剂量止吐功效不明确)
+    guideline_refs: [R14]
+    note: "常规10mg未被证明有预防PONV作用。25-50mg联合地塞米松才显示预防作用，但明显增加锥体外系并发症。可进入乳汁，哺乳期慎用"
+
+  # ── 抗胆碱能药 ★新增 ──
+  - id: penehyclidine
+    name: 戊乙奎醚
+    name_en: Penehyclidine
+    class: anticholinergic
+    subtype: selective_M1_M3_antagonist
+    half_life_h: 10-12
+    adult_prophylaxis_dose: "0.01mg/kg IV (最大0.5mg)"
+    timing: "麻醉诱导后"
+    route: [IV]
+    contraindications: [青光眼, 前列腺增生, 年龄≥65岁, 谵妄病史]
+    side_effects: [口干, 视物模糊(较东莨菪碱轻)]
+    evidence_level: moderate
+    guideline_refs: [R15]
+    note: "高选择性M1/M3受体拮抗剂，镇静及视物模糊等不良反应较东莨菪碱少"
+
+  - id: scopolamine
+    name: 东莨菪碱(透皮贴)
+    name_en: Scopolamine (Transdermal)
+    class: anticholinergic
+    subtype: nonselective_antagonist
+    half_life_h: "透皮持续释放72h"
+    adult_prophylaxis_dose: "1.5mg 透皮贴"
+    timing: "手术前晚或手术开始前2-4h"
+    route: [Transdermal]
+    contraindications: [青光眼, 前列腺增生, 年龄≥65岁, 谵妄病史]
+    side_effects: [口干, 视物模糊(显著增加风险), 镇静, 心率增快(M2受体拮抗)]
+    evidence_level: moderate
+    guideline_refs: [R15]
+    note: "非选择性胆碱能受体拮抗剂。术后24h内有效预防恶心呕吐，易透过血脑屏障影响中枢神经系统"
+
+  # ── 抗组胺药 ★新增 ──
+  - id: dimenhydrinate
+    name: 茶苯海明
+    name_en: Dimenhydrinate
+    class: antihistamine
+    half_life_h: 4-6
+    adult_prophylaxis_dose: "50mg IV/PO"
+    timing: "手术结束前"
+    route: [IV, PO]
+    contraindications: [闭角型青光眼, 癫痫病史, 重症肌无力]
+    side_effects: [镇静, 口干]
+    evidence_level: moderate
+    guideline_refs: [R16]
+    note: "剖宫产患者推荐使用（中等证据）。作用于呕吐中枢和前庭通路阻断组胺受体"
+
+  - id: cyclizine
+    name: 赛克利嗪
+    name_en: Cyclizine
+    class: antihistamine
+    half_life_h: 20
+    adult_prophylaxis_dose: "50mg IV/PO"
+    timing: "手术结束前"
+    route: [IV, PO]
+    contraindications: [闭角型青光眼, 癫痫病史, 重症肌无力]
+    side_effects: [镇静, 口干, 注射部位疼痛]
+    evidence_level: moderate
+    guideline_refs: [R16]
+    note: "剖宫产患者推荐使用。半衰期较长（约20h）"
+
+  - id: promethazine
+    name: 异丙嗪
+    name_en: Promethazine
+    class: antihistamine
+    half_life_h: 9-16
+    adult_prophylaxis_dose: "12.5-25mg IV/IM"
+    adult_rescue_dose: "6.25-12.5mg IV"
+    timing: "手术结束前"
+    route: [IV, IM, PO]
+    contraindications: [闭角型青光眼, 癫痫病史, 重症肌无力, 儿童<2岁]
+    side_effects: [镇静(较显著), 口干, 注射部位损伤(IM)]
+    evidence_level: moderate
+    guideline_refs: [R16]
+    note: "显著预防呕吐效果确认，但镇静作用可能影响术后恢复"
+
+total_drugs: 21

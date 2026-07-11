@@ -1,0 +1,247 @@
+# ============================================================
+# Rule Asset: 围术期非药物干预规则
+# TOGAF Class: Constraint (Extension ABB)
+# Trust Level: T1 (基于2025版中国PONV诊疗指南 §4 §5)
+# ============================================================
+name: non-drug-interventions
+version: "1.0"
+description: >
+  围术期非药物止吐干预规则 — 涵盖穴位刺激(TEAS/电针)、耳穴刺激、
+  术前碳水化合物、咀嚼口香糖、音乐疗法、正向心理引导、
+  头高位体位、生姜/芳香疗法。
+  由 pharmacy/antiemetic/nondrug_guide.py 加载执行。
+owner: clinical_pharmacist
+guideline_ref:
+  - "guideline-ponv-2025 §4, §5"
+last_updated: 2026-07-11
+total_rules: 18
+
+rule_sets:
+
+  # ════════════════════════════════════════════
+  # 类别A：穴位刺激
+  # ════════════════════════════════════════════
+  - id: acupoint_stimulation
+    name: 穴位刺激推荐规则
+    description: 经皮穴位电刺激(TEAS)和电针治疗
+    source_category: A
+    primary_guideline: "guideline-ponv-2025 R17.1, R17.2"
+    rules:
+      - id: ND001
+        name: "TEAS推荐"
+        condition: "risk_level in ['medium', 'high'] or drug_contraindications_present"
+        action: "推荐使用经皮穴位电刺激(TEAS)"
+        acupoints: [合谷(LI4), 内关(PC6), 足三里(ST36)]
+        evidence: "可显著降低全身麻醉术后PONV发生率和止吐药需求"
+        strength: weak
+        evidence_quality: very_low
+        guideline_ref: "R17.1"
+        active: true
+
+      - id: ND002
+        name: "胃肠手术TEAS"
+        condition: "surgery_type in ['gastrointestinal', 'abdominal']"
+        action: "推荐使用TEAS（胃肠手术患者证据较强）"
+        evidence: "可显著降低胃肠手术患者PONV发生率"
+        guideline_ref: "R17.1"
+        active: true
+
+      - id: ND003
+        name: "电针治疗"
+        condition: "risk_level in ['medium', 'high'] and acupuncturist_available"
+        action: "可考虑电针治疗，显著降低术后6h内恶心呕吐发生率"
+        note: "对PONV总发生率的影响未达统计学意义"
+        guideline_ref: "R17.1"
+        active: true
+
+      - id: ND004
+        name: "药物+穴位联合"
+        condition: "risk_level in ['medium', 'high'] and drug_contraindications_present"
+        action: "推荐药物和穴位刺激组合的二联或三联疗法"
+        note: "适用于存在用药顾虑的患者"
+        strength: GPS
+        evidence_quality: GPS
+        guideline_ref: "R21.2"
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别B：耳穴刺激
+  # ════════════════════════════════════════════
+  - id: auricular_stimulation
+    name: 耳穴刺激推荐规则
+    description: 耳穴埋豆/耳针等耳穴刺激方法
+    source_category: B
+    primary_guideline: "guideline-ponv-2025 R18"
+    rules:
+      - id: ND005
+        name: "耳穴刺激推荐"
+        condition: "risk_level in ['low', 'medium', 'high']"
+        action: "建议使用耳穴刺激降低PON发生率"
+        auricular_points: [神门, 胃, 交感]
+        evidence: "可显著降低术后48h内恶心呕吐和恶心发生率"
+        note: "对降低POV发生率效果无统计学意义"
+        strength: weak
+        evidence_quality: very_low
+        guideline_ref: "R18"
+        active: true
+
+      - id: ND006
+        name: "腹腔镜/妇科手术耳穴"
+        condition: "surgery_type in ['laparoscopic', 'gynecological']"
+        action: "推荐耳穴埋豆（神门/胃/交感）联合药物预防"
+        evidence: "可降低腹腔镜/妇科手术后24h内恶心呕吐发生率"
+        guideline_ref: "R18"
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别C：术前碳水化合物
+  # ════════════════════════════════════════════
+  - id: preoperative_carbs
+    name: 术前碳水化合物规则
+    description: 术前2h口服碳水化合物饮料
+    source_category: C
+    primary_guideline: "guideline-ponv-2025 R19"
+    rules:
+      - id: ND007
+        name: "术前碳水化合物推荐"
+        condition: "not diabetic and not obese and not contraindicated"
+        action: "建议术前2h口服碳水化合物饮料"
+        dosage:
+          adult: "≤400ml"
+          elderly: "200ml"
+          pediatric: "5ml/kg"
+        evidence: "可显著降低腹腔镜胆囊切除术患者PON和POV发生率"
+        note: "胃排空时间约1.0-1.5h，不增加反流误吸风险"
+        strength: weak
+        evidence_quality: very_low
+        guideline_ref: "R19"
+        active: true
+
+      - id: ND008
+        name: "碳水化合物禁忌证"
+        condition: "diabetes or obesity or gastroparesis"
+        action: "不建议常规使用术前碳水化合物"
+        note: "糖尿病患者/肥胖患者需限制碳水化合物摄入"
+        guideline_ref: "R19"
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别D：咀嚼口香糖
+  # ════════════════════════════════════════════
+  - id: chewing_gum
+    name: 咀嚼口香糖规则
+    description: 术后咀嚼口香糖促进胃肠蠕动
+    source_category: D
+    primary_guideline: "guideline-ponv-2025 R20.1"
+    rules:
+      - id: ND009
+        name: "咀嚼口香糖推荐"
+        condition: "postoperative and alert and able_to_chew"
+        action: "建议术后咀嚼无糖口香糖，降低POV发生率"
+        evidence: "激活口腔-迷走神经反射，加快胃肠蠕动，促进胃排空"
+        strength: weak
+        evidence_quality: moderate
+        guideline_ref: "R20.1"
+        active: true
+
+      - id: ND010
+        name: "口香糖禁忌证"
+        condition: "altered_consciousness or npo or gi_obstruction"
+        action: "意识障碍/禁食/肠梗阻患者禁止咀嚼口香糖"
+        guideline_ref: "R20.1"
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别E：音乐疗法
+  # ════════════════════════════════════════════
+  - id: music_therapy
+    name: 音乐疗法规则
+    description: 术后音乐辅助降低PONV
+    source_category: E
+    primary_guideline: "guideline-ponv-2025 R20.2"
+    rules:
+      - id: ND011
+        name: "音乐疗法推荐"
+        condition: "postoperative and patient_agreeable"
+        action: "建议术后使用音乐疗法"
+        evidence: "降低β-内啡肽水平，调节杏仁核和海马活动，降低PONV发生率"
+        effect_size: "小到中等效果(Hedges' g)"
+        strength: weak
+        evidence_quality: very_low
+        guideline_ref: "R20.2"
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别F：心理与体位
+  # ════════════════════════════════════════════
+  - id: psychology_position
+    name: 心理引导与体位规则
+    description: 正向心理引导和头高位体位
+    source_category: F
+    primary_guideline: "guideline-ponv-2025 R20.3, R20.4"
+    rules:
+      - id: ND012
+        name: "正向心理引导"
+        condition: "preoperative"
+        action: "建议使用正向引导，避免负面心理暗示"
+        evidence: "负面心理暗示可能增加PONV风险"
+        strength: weak
+        evidence_quality: low
+        guideline_ref: "R20.3"
+        active: true
+
+      - id: ND013
+        name: "头高位体位"
+        condition: "postoperative and hemodynamically_stable"
+        action: "建议保持头高位体位"
+        evidence: "头高位可降低PONV发生率"
+        strength: weak
+        evidence_quality: low
+        guideline_ref: "R20.4"
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别G：生姜与芳香疗法
+  # ════════════════════════════════════════════
+  - id: ginger_aromatherapy
+    name: 生姜与芳香疗法规则
+    description: 生姜和精油芳香疗法辅助止吐
+    source_category: G
+    primary_guideline: "guideline-ponv-2025 §5"
+    rules:
+      - id: ND014
+        name: "生姜推荐"
+        condition: "risk_level in ['low', 'medium'] and not anticoagulated"
+        action: "可考虑使用生姜（仅对呕吐有效）"
+        mechanism: "姜辣素调节5-HT3受体和NK-1受体，阻断5-HT信号传导"
+        evidence: "多项RCT支持降低PON严重程度，但结果存在异质性"
+        guideline_ref: "§5"
+        active: true
+
+      - id: ND015
+        name: "芳香疗法"
+        condition: "postoperative and not olfactory_sensitive"
+        action: "可考虑芳香疗法（仅减轻恶心程度）"
+        mechanism: "精油挥发性成分通过嗅觉受体激活边缘系统抑制呕吐中枢"
+        evidence: "对PONV发生率和严重程度无明显作用，但减少了止吐药补救治疗几率"
+        guideline_ref: "§5"
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别H：擦浴护理（不推荐）
+  # ════════════════════════════════════════════
+  - id: not_recommended
+    name: 不推荐措施
+    description: 证据不支持用于PONV预防的措施
+    source_category: H
+    primary_guideline: "guideline-ponv-2025 R20.5"
+    rules:
+      - id: ND016
+        name: "擦浴护理不推荐"
+        condition: "always"
+        action: "不建议将擦浴护理作为PONV的预防措施"
+        evidence: "擦浴护理未见明显获益"
+        strength: weak
+        evidence_quality: low
+        guideline_ref: "R20.5"
+        active: true

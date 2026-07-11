@@ -1,0 +1,63 @@
+# ============================================================
+# Business Process: 术中液体与辅助决策
+# TOGAF Class: BusinessProcess + ProcessStep (Core ABB)
+# Trust Level: T1
+# ============================================================
+name: bp-ponv-intraop-decision
+version: "1.0"
+description: 术中液体治疗与辅助药物决策 — 麻醉维持期间的止吐优化
+owner: 麻醉医师
+value_stages:
+  - 有效治疗
+guideline_refs:
+  - guideline-ponv-2025
+steps:
+  - id: bp-ponv05-1
+    name: 评估液体治疗需求
+    actor: 麻醉医师
+    description: |
+      根据手术进展评估液体策略：
+      1. 常规补液：晶体液 10-30ml/kg
+      2. 预计 >3h 手术：考虑胶体液
+      3. 监测循环容量和尿量
+    data_used: [de-surgery]
+    decision: "晶体液 vs 胶体液？"
+    implementation:
+      module: pharmacy.antiemetic.anesthesia_guide
+      tool: recommend_fluid_therapy
+      decision_coverage: {total: 2, covered: 2}
+
+  - id: bp-ponv05-2
+    name: 右美托咪定术中维持
+    actor: 麻醉医师
+    description: |
+      无禁忌证（心动过缓/低血容量/心脏传导阻滞）时：
+      使用右美托咪定用于术中镇静，减少阿片类药物需求
+    data_used: [de-patient]
+    decision: null
+    implementation:
+      module: pharmacy.antiemetic.anesthesia_guide
+      tool: recommend_dexmedetomidine
+
+  - id: bp-ponv05-3
+    name: 肌松拮抗剂选择
+    actor: 麻醉医师
+    description: |
+      需要肌松拮抗时：
+      优先舒更葡糖钠（较新斯的明 PONV 风险更低）
+    data_used: [de-surgery]
+    decision: "舒更葡糖钠 vs 新斯的明？"
+    implementation:
+      module: pharmacy.antiemetic.anesthesia_guide
+      tool: recommend_muscle_relaxant
+      decision_coverage: {total: 2, covered: 2}
+
+  - id: bp-ponv05-4
+    name: 术中阿片用量监控
+    actor: 麻醉医师
+    description: |
+      1. 监控术中阿片类药物累计用量
+      2. 评估是否需要 NSAIDs（布洛芬）替代
+      3. 如出现阿片过量体征→纳洛酮拮抗
+    data_used: [de-surgery]
+    decision: null

@@ -9,9 +9,10 @@ abbr: "妇产科指南2022"
 version: "2022"
 publisher: "中华医学会妇产科学分会"
 journal: "中华妇产科杂志 2022;57(1):1-168"
-doi: "10.3760/cma.j.cn112141-20220101-00001"
+doi: "10.12025/j.issn.1008-6358.2024.20240292"
 language: zh-CN
 trust_level: T1
+original_pdf: "guidelines/originals/obgyn-中西医结合宫颈癌防治中国专家共识.pdf"
 
 description: >
   中华医学会妇产科学分会发布的2022版中国妇产科学临床指南。
@@ -46,4 +47,12 @@ rule_sets_covered:
   - obgyn_followup
 
 derived_rule_count: 10
-last_updated: 2026-07-10
+last_updated: 2026-07-11
+
+pdf_extracted_sections:
+  - source: "obgyn-中西医结合宫颈癌防治中国专家共识.pdf"
+    doi: "10.12025/j.issn.1008-6358.2024.20240292"
+  - source: "obgyn-妊娠合并风湿性疾病治疗管理医药专家共识.pdf"
+    sections:
+      - id: "§A"
+        title: "妊娠合并系统性红斑狼疮"

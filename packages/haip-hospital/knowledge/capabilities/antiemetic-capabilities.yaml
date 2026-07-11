@@ -1,0 +1,130 @@
+# ============================================================
+# TOGAF Class: BusinessCapability (Extension ABB)
+# Source: G211 Business Capabilities V2
+# Trust Level: T1
+# ============================================================
+name: antiemetic-capabilities
+version: "1.0"
+description: 围术期止吐药智能体业务能力树 — 6大L2能力域，基于2025版中国PONV诊疗指南
+department: pharmacy（药剂科）
+parent_module: antiemetic
+value_stream: 救死扶伤
+
+capabilities:
+
+  # ── L2-1: PONV 风险评估 ──
+  - id: cap-ponv-risk-assessment
+    name: PONV Risk Assessment
+    level: L2
+    description: 术前 PONV 风险识别与量化评分
+    value_stages:
+      - 术前评估
+    enabling_roles:
+      - anesthesiologist（麻醉医师）
+    guideline_refs:
+      - guideline-ponv-2025
+    sub_capabilities:
+      - {id: cap-ponv-apfel, name: "成人 Apfel 简化评分", level: L3}
+      - {id: cap-ponv-povoc, name: "儿童 POVOC 评分", level: L3}
+      - {id: cap-ponv-pdnv, name: "出院后 PDNV 评分", level: L3}
+      - {id: cap-ponv-risk-factors, name: "危险因素识别", level: L3}
+
+  # ── L2-2: 麻醉管理优化 ──
+  - id: cap-ponv-anesthesia
+    name: Anesthesia Optimization
+    level: L2
+    description: 通过麻醉方式选择和辅助策略降低 PONV 风险
+    value_stages:
+      - 术前评估
+      - 有效治疗
+    enabling_roles:
+      - anesthesiologist（麻醉医师）
+    guideline_refs:
+      - guideline-ponv-2025
+    sub_capabilities:
+      - {id: cap-ponv-tiva, name: "丙泊酚 TIVA 推荐", level: L3}
+      - {id: cap-ponv-pnb, name: "外周神经阻滞建议", level: L3}
+      - {id: cap-ponv-epidural, name: "椎管内麻醉评估", level: L3}
+      - {id: cap-ponv-dexmed, name: "右美托咪定辅助", level: L3}
+      - {id: cap-ponv-opioid-sparing, name: "阿片节律策略", level: L3}
+      - {id: cap-ponv-fluid, name: "液体治疗策略", level: L3}
+      - {id: cap-ponv-muscle-relaxant, name: "肌松拮抗剂选择", level: L4}
+
+  # ── L2-3: 药物防治 ──
+  - id: cap-ponv-drug
+    name: Drug Prophylaxis & Treatment
+    level: L2
+    description: 基于风险等级的止吐药物预防与治疗
+    value_stages:
+      - 有效治疗
+    enabling_roles:
+      - clinical_pharmacist（临床药师）
+      - anesthesiologist（麻醉医师）
+    guideline_refs:
+      - guideline-ponv-2025
+    sub_capabilities:
+      - {id: cap-ponv-5ht3, name: "5-HT3 受体拮抗剂推荐", level: L3}
+      - {id: cap-ponv-corticosteroid, name: "皮质类固醇推荐", level: L3}
+      - {id: cap-ponv-nk1, name: "NK-1 受体拮抗剂推荐", level: L3}
+      - {id: cap-ponv-dopamine, name: "多巴胺受体拮抗剂推荐", level: L3}
+      - {id: cap-ponv-anticholinergic, name: "抗胆碱能药推荐", level: L3}
+      - {id: cap-ponv-antihistamine, name: "抗组胺药推荐", level: L3}
+      - {id: cap-ponv-rescue, name: "补救治疗方案", level: L3}
+      - {id: cap-ponv-timing, name: "给药时机指导", level: L4}
+
+  # ── L2-4: 非药物医疗措施 ──
+  - id: cap-ponv-nondrug
+    name: Non-Drug Medical Interventions
+    level: L2
+    description: 穴位刺激、耳穴刺激、术前碳水化合物等非药物措施
+    value_stages:
+      - 有效治疗
+      - 术后恢复
+    enabling_roles:
+      - 麻醉护士
+      - 中医师
+    guideline_refs:
+      - guideline-ponv-2025
+    sub_capabilities:
+      - {id: cap-ponv-acupoint, name: "穴位刺激 (TEAS/电针)", level: L3}
+      - {id: cap-ponv-auricular, name: "耳穴刺激", level: L3}
+      - {id: cap-ponv-carbs, name: "术前碳水化合物", level: L3}
+
+  # ── L2-5: 生活方式干预 ──
+  - id: cap-ponv-lifestyle
+    name: Lifestyle Interventions
+    level: L2
+    description: 咀嚼口香糖、音乐、体位、心理引导、生姜、芳香疗法等
+    value_stages:
+      - 术后恢复
+      - 康复回归
+    enabling_roles:
+      - 麻醉护士
+    guideline_refs:
+      - guideline-ponv-2025
+    sub_capabilities:
+      - {id: cap-ponv-gum, name: "咀嚼口香糖", level: L3}
+      - {id: cap-ponv-music, name: "音乐疗法", level: L3}
+      - {id: cap-ponv-psychology, name: "正向心理引导", level: L3}
+      - {id: cap-ponv-position, name: "头高位体位", level: L3}
+      - {id: cap-ponv-ginger, name: "生姜辅助", level: L3}
+      - {id: cap-ponv-aromatherapy, name: "芳香疗法", level: L3}
+
+  # ── L2-6: 用药管控与联合方案 ──
+  - id: cap-ponv-controls
+    name: Drug Controls & Combination Therapy
+    level: L2
+    description: 禁忌证筛查、重复用药拦截、给药时机校验、二联/三联方案优化
+    value_stages:
+      - 有效治疗
+      - 术后恢复
+    enabling_roles:
+      - clinical_pharmacist（临床药师）
+      - 审方药师
+    guideline_refs:
+      - guideline-ponv-2025
+    sub_capabilities:
+      - {id: cap-ponv-contraindication, name: "7类禁忌证筛查", level: L3}
+      - {id: cap-ponv-duplicate, name: "重复用药拦截", level: L3}
+      - {id: cap-ponv-dose-adjust, name: "肝肾剂量调整", level: L3}
+      - {id: cap-ponv-combo, name: "二联/三联方案生成", level: L3}

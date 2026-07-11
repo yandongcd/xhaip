@@ -1,0 +1,66 @@
+# ============================================================
+# Business Process: 出院后 PDNV 随访
+# TOGAF Class: BusinessProcess + ProcessStep (Core ABB)
+# Trust Level: T1
+# ============================================================
+name: bp-ponv-discharge-followup
+version: "1.0"
+description: 出院后恶心呕吐(PDNV)随访 — 门诊/日间手术患者出院后的 PONV 管理
+owner: 麻醉医师
+value_stages:
+  - 康复回归
+guideline_refs:
+  - guideline-ponv-2025
+steps:
+  - id: bp-ponv08-1
+    name: 出院前 PDNV 风险评分
+    actor: 麻醉医师
+    description: |
+      使用 PDNV 5因子评分：
+      1. 女性 (+1)
+      2. 年龄 < 50 岁 (+1)
+      3. PONV 发生史 (+1)
+      4. PACU 使用阿片类药物 (+1)
+      5. PACU 内出现恶心 (+1)
+      0-5分对应 PDNV 发生率：10%/20%/30%/50%/60%/80%
+    data_used: [de-patient, de-outcome]
+    decision: "评分 0-1 → 低风险 | 2-4 → 中风险 | 5 → 高风险"
+    implementation:
+      module: pharmacy.antiemetic.scoring_engine
+      tool: calculate_pdnv_score
+      decision_coverage: {total: 3, covered: 3}
+
+  - id: bp-ponv08-2
+    name: 出院止吐方案
+    actor: 麻醉医师
+    description: |
+      根据 PDNV 风险给出出院建议：
+      - 低风险：观察，如出现恶心可口服昂丹司琼 ODT
+      - 中高风险：开具口服止吐药（昂丹司琼 8mg PO q8h prn）
+      - 建议非药物措施（口香糖/生姜/头高位）
+    data_used: [de-risk-score]
+    decision: null
+
+  - id: bp-ponv08-3
+    name: 患者教育
+    actor: 麻醉护士
+    description: |
+      出院前宣教：
+      1. PDNV 典型症状和持续时间（24-48h 内）
+      2. 止吐药正确使用方法
+      3. 何时需要联系医院（持续呕吐/脱水征象/无法口服药物）
+      4. 非药物自我管理技巧
+    data_used: []
+    decision: null
+
+  - id: bp-ponv08-4
+    name: 随访记录
+    actor: 麻醉医师
+    description: |
+      术后 48h 电话/线上随访：
+      1. PDNV 是否发生
+      2. 止吐药使用情况
+      3. 患者满意度评分
+      4. 数据回传至 PONV 结局数据库
+    data_used: [de-outcome]
+    decision: null

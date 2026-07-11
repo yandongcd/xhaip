@@ -55,6 +55,8 @@ class TestPharmacyFullPipeline:
         ))
         result = call("test", "probe")
         assert result["status"] == "error"
+        assert "error" in result, "error response should have error message"
+        assert isinstance(result.get("error", ""), str), "error should be string"
         assert "ModuleNotFoundError" in result["error"] or "not found" in result["error"]
 
     def test_a2a_call_to_nonexistent_func(self):
@@ -67,16 +69,22 @@ class TestPharmacyFullPipeline:
         ))
         result = call("test", "probe")
         assert result["status"] == "error"
+        assert "error" in result, "error response should have error message"
+        assert isinstance(result.get("error", ""), str), "error should be string"
 
     def test_a2a_call_unknown_agent(self):
         result = call("nonexistent", "any_tool")
         assert result["status"] == "error"
+        assert "Unknown agent" in result.get("error", "")
+        assert isinstance(result.get("error", ""), str)
 
     def test_a2a_call_unknown_tool(self):
         _registry.clear()
         register(DomainPlugin(name="test", type="business"))
         result = call("test", "unknown_tool")
         assert result["status"] == "error"
+        assert "error" in result, "unknown tool should return error message"
+        assert isinstance(result.get("error", ""), str), "error should be string"
 
     def test_call_history_tracks_errors(self):
         _registry.clear()

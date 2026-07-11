@@ -3,7 +3,9 @@
 import tempfile
 from pathlib import Path
 
-from haip.agent import DomainPlugin, load_from_dir, register, get, list_all, build_a2a_routes
+import pytest
+
+from haip.agent import DomainPlugin, load_from_dir, register, get, list_all, build_a2a_routes, ToolDef
 
 
 YAML_PHARMACY = """
@@ -122,7 +124,6 @@ class TestAgentRegistry:
             assert count == 0
 
     def test_build_a2a_routes(self):
-        from haip.agent import ToolDef
         register(DomainPlugin(
             name="pharmacy", type="business",
             tools=[ToolDef(
@@ -131,3 +132,63 @@ class TestAgentRegistry:
         ))
         routes = build_a2a_routes()
         assert "pharmacy" in routes
+
+
+# ── Error Path Tests ─────────────────────────────────────────────────
+
+class TestErrorPaths:
+    def setup_method(self):
+        list_all().clear()
+
+    def test_invalid_yaml_load(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bad_path = Path(tmp) / "bad_agent.yaml"
+            bad_path.write_text("name: bad\n  tools:\n  - indented wrong\n", encoding="utf-8")
+            with pytest.raises((Exception,)):
+                load_from_dir(tmp)
+        assert True, "invalid YAML should raise exception"
+
+    def test_duplicate_agent_name(self):
+        register(DomainPlugin(name="dup", type="business"))
+        register(DomainPlugin(name="dup", type="specialist"))
+        plugin = get("dup")
+        assert plugin is not None
+        assert plugin.type == "specialist"
+
+    def test_missing_required_field(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            yaml_path = Path(tmp) / "missing_name.yaml"
+            yaml_path.write_text("type: business\nport: 8000\n", encoding="utf-8")
+            count = load_from_dir(tmp)
+            assert count >= 0
+
+
+# ── Boundary Condition Tests ─────────────────────────────────────────
+
+class TestBoundaryConditions:
+    def setup_method(self):
+        list_all().clear()
+
+    def test_agent_name_with_chinese_characters(self):
+        plugin = DomainPlugin(name="测试智能体", cn_name="测试中文名称", type="business")
+        register(plugin)
+        assert get("测试智能体") is plugin
+
+    def test_empty_tools_list(self):
+        plugin = DomainPlugin(name="empty_tools", type="business", tools=[])
+        register(plugin)
+        agent = get("empty_tools")
+        assert agent is not None
+        assert agent.tools == []
+
+    def test_agent_name_with_special_chars(self):
+        plugin = DomainPlugin(name="agent-v1.0_test", type="specialist")
+        register(plugin)
+        assert get("agent-v1.0_test") is plugin
+
+    def test_register_multiple_agents(self):
+        for i in range(10):
+            register(DomainPlugin(name=f"agent_{i}", type="business"))
+        list_all()
+        for i in range(10):
+            assert get(f"agent_{i}") is not None

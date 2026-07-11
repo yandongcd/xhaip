@@ -114,10 +114,9 @@ const TYPE_LABELS = {
   specialist: { label: 'Specialist Agent', icon: '🔬', color: '#22C55E' },
   master_data: { label: 'Master Data Agent', icon: '🗄️', color: '#8B5CF6' },
   architecture: { label: 'Architecture Agent', icon: '🏗️', color: '#F97316' },
-  skill: { label: 'Skill Agent', icon: '🧩', color: '#F97316' },
 };
 
-const TYPE_ORDER = ['business', 'specialist', 'skill', 'master_data', 'architecture'];
+const TYPE_ORDER = ['business', 'specialist', 'master_data', 'architecture'];
 
 function loadAgents() {
   const grid = document.getElementById('agent-grid');
@@ -163,7 +162,7 @@ function renderStats() {
   document.getElementById('stats').innerHTML = `
     <div class="info-item"><div class="val" style="color:var(--primary)">${AGENTS.length}</div><div class="lbl">Agent 总数</div></div>
     <div class="info-item"><div class="val" style="color:var(--info)">${counts.business||0}</div><div class="lbl">Business</div></div>
-    <div class="info-item"><div class="val" style="color:var(--success)">${(counts.specialist||0)+(counts.skill||0)}</div><div class="lbl">Specialist+Skill</div></div>
+    <div class="info-item"><div class="val" style="color:var(--success)">${counts.specialist||0}</div><div class="lbl">Specialist</div></div>
     <div class="info-item"><div class="val" style="color:var(--purple)">${counts.master_data||0}</div><div class="lbl">Master Data</div></div>
     <div class="info-item"><div class="val" style="color:var(--arch)">${counts.architecture||0}</div><div class="lbl">Architecture</div></div>
     <div class="info-item"><div class="val" style="color:var(--warn)">${deptCount}</div><div class="lbl">科室覆盖</div></div>

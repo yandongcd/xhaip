@@ -9,8 +9,9 @@ abbr: "CMA Geriatrics 2023"
 version: "2023"
 publisher: "中华医学会老年医学分会"
 journal: "中华老年医学杂志 2023"
-doi: ""
+doi: "10.3969/j.issn.2095-9958.2023.10.01"
 language: zh-CN
+original_pdf: "guidelines/originals/geriatrics-中国老年骨质疏松症诊疗指南（2023）.pdf"
 trust_level: T2
 
 description: >
@@ -64,4 +65,12 @@ rule_sets_covered:
   - geriatrics_incontinence
 
 derived_rule_count: 21
-last_updated: 2026-07-10
+last_updated: 2026-07-11
+
+pdf_extracted_sections:
+  - source: "geriatrics-中国老年骨质疏松症诊疗指南（2023）.pdf"
+    doi: "10.3969/j.issn.2095-9958.2023.10.01"
+    publisher_from_pdf: "国家卫生健康委员会"
+  - source: "geriatrics-中国老年心肺复苏急诊专家共识.pdf"
+    doi: "10.1016/S2468-2667(23)00173-1"
+    publisher_from_pdf: "中华医学会急诊医学分会 中国老年医学学会急诊医学分会"

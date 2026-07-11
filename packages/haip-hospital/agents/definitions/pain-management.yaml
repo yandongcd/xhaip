@@ -1,7 +1,7 @@
 name: pain-management
 cn_name: 疼痛管理智能体
 version: "1.0.0"
-type: skill
+type: specialist
 department: 跨科室
 port: 8771
 aliases: [疼痛管理, pain, 镇痛]

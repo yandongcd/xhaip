@@ -5,7 +5,9 @@ Covers: portal, dashboard, process pages, demo page, department matrix.
 
 from __future__ import annotations
 
-import sys, json, re
+import sys
+import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -122,13 +124,15 @@ class TestAPI:
         assert resp.status_code == 200
         data = resp.json()
         assert data['status'] == 'ok'
-        assert data['agents_loaded'] >= 48
+        expected = len(_load_yaml_agents())
+        assert data['agents_loaded'] >= expected, f"Expected >= {expected}, got {data['agents_loaded']}"
 
     def test_agents_list(self):
         resp = client.get("/api/agents")
         assert resp.status_code == 200
         agents = resp.json()
-        assert len(agents) >= 48
+        expected = len(_load_yaml_agents())
+        assert len(agents) >= expected, f"Expected >= {expected}, got {len(agents)}"
         types = {a['type'] for a in agents}
         assert 'business' in types
         assert 'specialist' in types
@@ -136,18 +140,101 @@ class TestAPI:
 
 # ── Demo HTML (static file) ──
 
+def _load_yaml_agents() -> dict[str, dict]:
+    """从 YAML definitions 加载 source-of-truth agent 列表."""
+    import yaml
+    agents = {}
+    def_dir = ROOT / "packages" / "haip-hospital" / "agents" / "definitions"
+    for f in sorted(def_dir.glob("*.yaml")):
+        with open(f, encoding="utf-8") as fh:
+            data = yaml.safe_load(fh)
+        agents[data["name"]] = {
+            "type": data.get("type", "unknown"),
+            "cn_name": data.get("cn_name", ""),
+            "port": data.get("port", 0),
+        }
+    return agents
+
+
+def _parse_html_agents() -> dict[str, dict]:
+    """从 demo.html 的 const AGENTS = [...] 中解析 agent 列表."""
+    import ast
+    p = ROOT / "docs" / "xhaip-agent-demo.html"
+    content = p.read_text(encoding="utf-8")
+
+    # 提取 AGENTS 数组文本
+    m = re.search(r"const AGENTS = \[(.*?)\];", content, re.DOTALL)
+    assert m, "未找到 const AGENTS = [...] 定义"
+    array_text = m.group(1)
+
+    # 逐对象正则提取 (name, cn, type, port)
+    entries = re.findall(
+        r'\{name:"([^"]+)",cn:"([^"]*)",type:"([^"]+)",port:(\d+)[^}]*\}',
+        array_text,
+    )
+    agents = {}
+    for name, cn, atype, port_str in entries:
+        agents[name] = {
+            "type": atype,
+            "cn_name": cn,
+            "port": int(port_str),
+        }
+    return agents
+
+
 class TestDemoPage:
     def test_file_exists(self):
-        p = ROOT / "docs" / "xhaip-agent-demo.html"
-        assert p.exists()
+        assert (ROOT / "docs" / "xhaip-agent-demo.html").exists()
 
-    def test_has_48_agents(self):
-        p = ROOT / "docs" / "xhaip-agent-demo.html"
-        content = p.read_text(encoding="utf-8")
-        assert 'const AGENTS = [' in content
-        # Count agent entries
-        count = content.count('{name:"')
-        assert count >= 48, f"Expected >=48 agents, found {count}"
+    def test_agent_count_matches_yaml(self):
+        """HTML 与 YAML 的 agent 数量一致."""
+        yaml_agents = _load_yaml_agents()
+        html_agents = _parse_html_agents()
+        assert len(html_agents) == len(yaml_agents), (
+            f"HTML 有 {len(html_agents)} 个 agent，YAML 有 {len(yaml_agents)} 个"
+        )
+
+    def test_all_yaml_agents_in_html(self):
+        """YAML 中定义的每个 agent 都出现在 HTML 中."""
+        yaml_agents = _load_yaml_agents()
+        html_agents = _parse_html_agents()
+        yaml_names = set(yaml_agents)
+        html_names = set(html_agents)
+        missing = yaml_names - html_names
+        assert not missing, f"HTML 中缺少: {missing}"
+
+    def test_all_html_agents_in_yaml(self):
+        """HTML 中的每个 agent 都有对应的 YAML 定义."""
+        yaml_agents = _load_yaml_agents()
+        html_agents = _parse_html_agents()
+        yaml_names = set(yaml_agents)
+        html_names = set(html_agents)
+        extra = html_names - yaml_names
+        assert not extra, f"HTML 中存在未定义的 agent: {extra}"
+
+    def test_agent_types_consistent(self):
+        """HTML 中每 agent 的 type 与 YAML 一致."""
+        yaml_agents = _load_yaml_agents()
+        html_agents = _parse_html_agents()
+        mismatches = []
+        for name in set(yaml_agents) & set(html_agents):
+            yt = yaml_agents[name]["type"]
+            ht = html_agents[name]["type"]
+            if yt != ht:
+                mismatches.append(f"{name}: YAML={yt} HTML={ht}")
+        assert not mismatches, f"type 不一致:\n  " + "\n  ".join(mismatches)
+
+    def test_agent_ports_consistent(self):
+        """HTML 中每 agent 的 port 与 YAML 一致 (port=0 视为可选)."""
+        yaml_agents = _load_yaml_agents()
+        html_agents = _parse_html_agents()
+        mismatches = []
+        for name in set(yaml_agents) & set(html_agents):
+            yp = yaml_agents[name]["port"]
+            hp = html_agents[name]["port"]
+            if yp != 0 and hp != 0 and yp != hp:
+                mismatches.append(f"{name}: YAML={yp} HTML={hp}")
+        assert not mismatches, f"port 不一致:\n  " + "\n  ".join(mismatches)
 
     def test_html_structure(self):
         p = ROOT / "docs" / "xhaip-agent-demo.html"
@@ -161,7 +248,6 @@ class TestDemoPage:
         m = re.search(r'<script>\n(.*?)\n</script>', content, re.DOTALL)
         assert m, "No script tag"
         js = m.group(1)
-        # Basic JS structure checks (not ES6 syntax validation)
         assert 'const AGENTS = [' in js
         assert 'function selectAgent' in js
         assert 'function callTool' in js

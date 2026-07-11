@@ -8,7 +8,7 @@ from typing import Any, Literal
 
 import yaml
 
-AgentType = Literal["business", "specialist", "skill", "master_data", "rules", "architecture"]
+AgentType = Literal["business", "specialist", "master_data", "rules", "architecture"]
 
 
 @dataclass
@@ -64,9 +64,6 @@ _DEFAULT_STAGES_SPECIALIST = [
     {"order": 3, "id": "recommend", "label": "干预建议", "desc": "基于指南的干预方案推荐、药物调整建议", "role": "专科医师"},
     {"order": 4, "id": "monitor", "label": "疗效监测", "desc": "干预效果跟踪、指标复查、方案调整", "role": "专科医师"},
 ]
-_DEFAULT_STAGES_SKILL = [
-    {"order": 1, "id": "execute", "label": "技能执行", "desc": "接收请求参数、执行技能逻辑、返回结构化结果", "role": "调用方 Agent"},
-]
 _DEFAULT_STAGES_MASTER = [
     {"order": 1, "id": "collect", "label": "数据汇聚", "desc": "多源数据采集、标准化、质量校验", "role": "数据管理员"},
     {"order": 2, "id": "analyze", "label": "数据分析", "desc": "统计分析、趋势发现、异常检测", "role": "数据分析师"},
@@ -75,7 +72,6 @@ _DEFAULT_STAGES_MASTER = [
 _DEFAULT_STAGES_MAP = {
     "business": _DEFAULT_STAGES_BUSINESS,
     "specialist": _DEFAULT_STAGES_SPECIALIST,
-    "skill": _DEFAULT_STAGES_SKILL,
     "master_data": _DEFAULT_STAGES_MASTER,
 }
 
@@ -104,10 +100,6 @@ def _default_roles(agent_type: str, department: str) -> list[dict]:
         return [
             {"id": "specialist", "label": "专科医师", "icon": "🔬"},
             {"id": "consultant", "label": "会诊医师", "icon": "🏥"},
-        ]
-    if agent_type == "skill":
-        return [
-            {"id": "caller", "label": "调用方", "icon": "🧩"},
         ]
     return [
         {"id": "analyst", "label": "数据分析师", "icon": "📊"},

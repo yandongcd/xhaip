@@ -1,0 +1,140 @@
+name: antiemetic
+cn_name: 围术期止吐管理智能体
+version: "1.0.0"
+type: specialist
+department: 跨科室
+port: 8831
+aliases: [止吐药, PONV, 术后恶心呕吐, 围术期止吐, antiemetic agent]
+
+prompt:
+  system: |
+    你是围术期止吐管理AI助手，基于2025版中国《术后恶心呕吐诊疗指南》（35条推荐意见）
+    和SAMBA第四版共识指南，提供PONV风险评估、用药方案推荐、用药管控审核、
+    麻醉止吐优化、非药物干预建议。覆盖6大类21种止吐药，42条管控规则。
+    使用中文回答。
+  temperature: 0.3
+  max_tokens: 4096
+
+tools:
+  - name: reason
+    description: >
+      ReAct推理模式 — LLM自主规划调用风险评估/用药推荐/管控审核/麻醉优化/
+      非药物干预等工具，综合多步结果给出完整临床建议。
+      适用场景: 复杂多步骤临床问题、需要结合多个工具结果的综合分析。
+    handler: pharmacy.antiemetic.pipeline.bp_preop_risk_scoring
+    input:
+      query: str
+
+  - name: ponv_risk_score
+    description: >
+      PONV风险评分 — 成人Apfel简化评分(4因子) / 儿童POVOC评分(4因子) /
+      出院PDNV评分(5因子)。自动返回风险等级和预测概率。
+    handler: pharmacy.antiemetic.scoring_engine.calculate_apfel_score
+    input:
+      gender: str
+      smoking: str
+      ponv_history: str
+      motion_sickness: str
+      opioid_planned: str
+      age: int
+      surgery_duration_min: int
+
+  - name: antiemetic_regimen
+    description: >
+      止吐用药方案推荐 — 基于风险等级(低/中/高) × 人群(成人/儿童) 生成
+      首选和备选方案，含药品/剂量/途径/给药时机/2025指南证据等级。
+    handler: pharmacy.antiemetic.drug_recommend.recommend_regimen_adult
+    input:
+      risk_level: str
+      risk_score: int
+      patient_id: str
+
+  - name: antiemetic_validate
+    description: >
+      止吐用药管控审核 — 7类禁忌证筛查(过敏/肝肾/基础病/特殊人群/重复用药/
+      给药时机/药物相互作用)，输出违规详情和替代方案。
+    handler: pharmacy.antiemetic.drug_controls.validate_contraindications
+    input:
+      regimen: dict
+      patient_id: str
+
+  - name: anesthesia_ponv_guide
+    description: >
+      麻醉管理止吐优化 — TIVA推荐/外周神经阻滞匹配/硬膜外评估/
+      右美托咪定/阿片节律(纳洛酮+布洛芬)/液体治疗(晶体vs胶体)/
+      肌松拮抗剂选择(舒更葡糖钠优先)。
+    handler: pharmacy.antiemetic.anesthesia_guide.recommend_tiva
+    input:
+      risk_level: str
+      surgery_type: str
+
+  - name: nondrug_ponv_guide
+    description: >
+      非药物止吐干预 — 穴位刺激(TEAS/电针)/耳穴刺激/术前碳水化合物/
+      咀嚼口香糖/音乐疗法/头高位体位/正向心理引导/生姜/芳香疗法。
+    handler: pharmacy.antiemetic.nondrug_guide.recommend_acupoint
+    input:
+      risk_level: str
+      drug_contraindications: bool
+
+  - name: antiemetic_knowledge
+    description: >
+      围术期止吐指南知识检索 — 搜索2025版中国PONV诊疗指南中的35条推荐意见、
+      用药方案、管控规则、麻醉规则、非药物干预规则。
+    handler: pharmacy.antiemetic.knowledge_loader.search_knowledge
+    input:
+      query: str
+      domain: str
+
+  - name: antiemetic_drug_db
+    description: 止吐药数据库查询 — 6大类21种止吐药（含NK-1/氨磺必利/戊乙奎醚等新药）
+    handler: pharmacy.antiemetic.drug_db.search_drug
+    input:
+      keyword: str
+      drug_class: str
+
+  - name: bp_ponv_risk_scoring
+    description: BP-PONV-01：术前PONV风险评分完整流程
+    handler: pharmacy.antiemetic.pipeline.bp_preop_risk_scoring
+    input:
+      patient_id: str
+
+  - name: bp_drug_prophylaxis
+    description: BP-PONV-03：药物预防方案生成 + 禁忌证审核
+    handler: pharmacy.antiemetic.pipeline.bp_drug_prophylaxis
+    input:
+      patient_id: str
+      risk_level: str
+      risk_score: int
+
+  - name: bp_nondrug_intervention
+    description: BP-PONV-07：非药物辅助干预综合推荐
+    handler: pharmacy.antiemetic.pipeline.bp_nondrug_intervention
+    input:
+      patient_id: str
+      risk_level: str
+      drug_contraindications: bool
+
+guard:
+  triggers: [止吐药, PONV, 术后恶心呕吐, 围术期止吐]
+  high_risk_scenarios:
+    - 5-HT3受体拮抗剂24h内重复使用
+    - 氟哌利多+延长QT间期药物联用
+    - 三联止吐疗法6h内重复使用
+    - 孕期使用多巴胺受体拮抗剂
+    - 老年患者使用抗胆碱能药
+
+ui:
+  template: chat-with-role-switcher
+  roles:
+    - {id: anesthesiologist, label: 麻醉医师, default: true}
+    - {id: clinical_pharmacist, label: 临床药师}
+    - {id: nurse, label: 麻醉护士}
+    - {id: surgeon, label: 外科医师}
+  sidebar:
+    - {category: 智能推理, tools: [reason]}
+    - {category: 风险评估, tools: [ponv_risk_score, bp_ponv_risk_scoring]}
+    - {category: 用药管理, tools: [antiemetic_regimen, antiemetic_validate, antiemetic_drug_db]}
+    - {category: 麻醉优化, tools: [anesthesia_ponv_guide]}
+    - {category: 非药物干预, tools: [nondrug_ponv_guide, bp_nondrug_intervention]}
+    - {category: 知识检索, tools: [antiemetic_knowledge]}

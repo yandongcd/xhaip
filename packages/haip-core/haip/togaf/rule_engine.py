@@ -268,7 +268,7 @@ class RuleEngine:
         if current is not None:
             return current
         # Alias fallback: try alternative paths
-        aliases = cls._FIELD_ALIASES.get(path, [])
+        aliases = RuleEngine._FIELD_ALIASES.get(path, [])
         for alt_path in aliases:
             alt_parts = alt_path.split(".")
             alt_current: Any = data

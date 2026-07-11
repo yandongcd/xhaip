@@ -93,6 +93,52 @@ def my_function(param1: str = "", param2: int = 0, **kwargs):
 - 每个新增 Agent 至少 3 个 A2A 调用测试
 - MockProvider 用于隔离 LLM 依赖
 
+## Skills & MCP Tools
+
+### Skill 同步
+
+xhaip 技能（Skills）存储在 `.openharness/skills/`，由源模块中的 SKILL.md 文件同步而来。
+
+```bash
+xhaip sync-skills               # 预览变更 (dry-run)
+xhaip sync-skills --apply       # 执行同步
+xhaip sync-skills --validate    # 校验一致性
+xhaip sync-skills --init        # 初始化 (runtime → source，反向)
+xhaip sync-skills --list        # 列出所有已注册 skill
+```
+
+**约定**:
+- 每个 skill 属于源模块中的一个 SKILL.md 文件
+- 源是唯一事实来源，runtime 是镜像
+- 技能所有权通过 `SKILL_OWNERSHIP` 注册表管理（`haip/operations/skill_sync.py`）
+- 支持自动发现 `packages/` 下的 SKILL.md 文件
+
+**当前注册**:
+| Skill | 说明 |
+|-------|------|
+| xhaip-core | 核心引擎（10 模块 + 14 Agent） |
+| xhaip-pharmacy | 药剂科（TPN / 处方审查） |
+| xhaip-orthopedic | 骨外科（时机评估 / 风险评估） |
+| xhaip-cardio | 心血管外科 + 风险（抗凝 / 心脏评估） |
+| xhaip-anesthesia | 麻醉风险（ASA / 气道 / 抗凝） |
+| xhaip-pain | 疼痛中心（急慢性疼痛 / 5 子 Agent） |
+| xhaip-pediatrics | 儿科（IMCI / 生长发育） |
+| xhaip-masterdata | 主数据（病历 / 指标） |
+
+### MCP 服务器
+
+将 Agent 工具暴露为 MCP 协议端点，供外部 AI 客户端（Claude Desktop 等）调用。
+
+```bash
+xhaip tools mcp-serve --agent pharmacy --port 8701     # 单 Agent
+xhaip tools mcp-serve --all --port 8700                # 所有工具
+xhaip tools list                                        # 列出所有工具
+xhaip tools list --agent pharmacy                       # 列出 Agent 工具
+```
+
+**传输协议**: SSE（FastMCP，推荐）/ JSON-RPC HTTP（内置备选）
+**依赖**: `pip install mcp`（可选 — 未安装时自动回退到内置 JSON-RPC 服务器）
+
 ## 质量门禁
 
 ```bash

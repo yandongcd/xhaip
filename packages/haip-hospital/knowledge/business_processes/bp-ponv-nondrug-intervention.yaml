@@ -1,0 +1,71 @@
+# ============================================================
+# Business Process: 非药物辅助干预
+# TOGAF Class: BusinessProcess + ProcessStep (Core ABB)
+# Trust Level: T1
+# ============================================================
+name: bp-ponv-nondrug-intervention
+version: "1.0"
+description: 非药物止吐干预 — 穴位刺激、耳穴、术前碳水、生活方式等综合辅助方案
+owner: 麻醉护士
+value_stages:
+  - 术后恢复
+guideline_refs:
+  - guideline-ponv-2025
+steps:
+  - id: bp-ponv07-1
+    name: 术前非药物准备
+    actor: 麻醉护士
+    description: |
+      术前执行：
+      1. 无禁忌证者 → 术前 2h 口服碳水化合物（成人≤400ml/老年200ml/儿童5ml/kg）
+      2. 糖尿病患者/肥胖 → 跳过
+      3. 正向心理引导，避免负面暗示
+    data_used: [de-patient]
+    decision: null
+    implementation:
+      module: pharmacy.antiemetic.nondrug_guide
+      tool: recommend_preop_carbs
+
+  - id: bp-ponv07-2
+    name: 穴位与耳穴刺激
+    actor: 麻醉护士/中医师
+    description: |
+      根据风险等级和设备可及性：
+      1. TEAS（经皮穴位电刺激）→ 合谷+内关+足三里
+         - 中高危患者推荐
+         - 胃肠手术患者证据较强
+      2. 耳穴刺激 → 神门+胃+交感
+         - 可联合药物使用（腹腔镜/妇科手术）
+         - 非侵入性、成本低
+      3. 存在用药顾虑者 → 药物+穴位联合
+    data_used: [de-risk-score]
+    decision: null
+    implementation:
+      module: pharmacy.antiemetic.nondrug_guide
+      tool: recommend_acupoint
+
+  - id: bp-ponv07-3
+    name: 术后生活方式干预
+    actor: 麻醉护士
+    description: |
+      术后执行：
+      1. 咀嚼口香糖（意识清醒、可咀嚼者）→ 降低 POV
+         - 禁忌：意识障碍/禁食/肠梗阻
+      2. 音乐疗法 → 小到中等效果降低 PONV
+      3. 头高位体位（血流动力学稳定者）
+      4. 生姜（低中危、未抗凝者）→ 仅对呕吐有效
+      5. 芳香疗法 → 仅减轻恶心程度
+    data_used: [de-patient]
+    decision: null
+    implementation:
+      module: pharmacy.antiemetic.nondrug_guide
+      tool: recommend_lifestyle
+
+  - id: bp-ponv07-4
+    name: 避免无效措施
+    actor: 麻醉护士
+    description: |
+      擦浴护理 → 不建议用于 PONV 预防（证据不支持）
+      避免负面心理暗示 → 可能增加 PONV 风险
+    data_used: []
+    decision: null

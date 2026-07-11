@@ -1,0 +1,276 @@
+# ============================================================
+# Rule Asset: 麻醉管理止吐优化规则
+# TOGAF Class: Constraint (Extension ABB)
+# Trust Level: T1 (基于2025版中国PONV诊疗指南 §2)
+# ============================================================
+name: anesthesia-ponv-rules
+version: "1.0"
+description: >
+  麻醉管理对PONV发生率的优化规则 — 涵盖丙泊酚TIVA推荐、
+  外周神经阻滞类型匹配、椎管内麻醉评估、右美托咪定辅助、
+  阿片节律策略（纳洛酮/NSAIDs）、液体治疗策略。
+  由 pharmacy/antiemetic/anesthesia_guide.py 加载执行。
+owner: anesthesiologist
+guideline_ref:
+  - "guideline-ponv-2025 §2"
+last_updated: 2026-07-11
+total_rules: 24
+
+rule_sets:
+
+  # ════════════════════════════════════════════
+  # 类别A：丙泊酚TIVA
+  # ════════════════════════════════════════════
+  - id: tiva_recommendation
+    name: 丙泊酚TIVA推荐规则
+    description: 根据PONV风险等级推荐丙泊酚TIVA
+    source_category: A
+    primary_guideline: "guideline-ponv-2025 R8, R9"
+    rules:
+      - id: AN001
+        name: "高风险患者TIVA推荐"
+        condition: "risk_level == 'high'"
+        action: "强烈推荐使用丙泊酚TIVA替代吸入麻醉"
+        evidence: "与吸入麻醉相比，TIVA可降低约39%的PONV发生率"
+        strength: weak
+        evidence_quality: moderate
+        guideline_ref: "R8"
+        active: true
+
+      - id: AN002
+        name: "中风险患者TIVA建议"
+        condition: "risk_level == 'medium'"
+        action: "建议优先使用丙泊酚TIVA"
+        evidence: "TIVA避免吸入麻醉药使用，显著降低PONV"
+        strength: weak
+        evidence_quality: moderate
+        guideline_ref: "R8"
+        active: true
+
+      - id: AN003
+        name: "吸入麻醉药高风险警告"
+        condition: "inhalation_anesthesia_used and risk_level in ['medium', 'high']"
+        action: "谨慎使用吸入麻醉，建议切换为TIVA或减少吸入麻醉药剂量"
+        evidence: "避免吸入麻醉药可降低约19%的PONV发生率"
+        strength: weak
+        evidence_quality: low
+        guideline_ref: "R9"
+        active: true
+
+      - id: AN004
+        name: "七氟烷PONV风险"
+        condition: "inhalation_agent == 'sevoflurane'"
+        action: "七氟烷在减重/开颅/腹腔镜手术中显著增加PONV"
+        note: "七氟烷可能与5-HT3受体和多巴胺D2受体结合激活呕吐反射"
+        guideline_ref: "R9"
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别B：外周神经阻滞类型匹配
+  # ════════════════════════════════════════════
+  - id: pnb_recommendation
+    name: 外周神经阻滞推荐规则
+    description: 根据手术类型匹配最佳PNB方案
+    source_category: B
+    primary_guideline: "guideline-ponv-2025 R3"
+    rules:
+      - id: AN005
+        name: "乳腺手术-前锯肌平面/菱形肌肋间阻滞"
+        condition: "surgery_type in ['breast_surgery', 'mastectomy']"
+        action: "推荐SAPB(前锯肌平面阻滞)或RIB(菱形肌肋间阻滞)"
+        evidence: "全身麻醉联合SAPB/RIB可显著降低PONV发生率"
+        guideline_ref: "R3"
+        active: true
+
+      - id: AN006
+        name: "骨科下肢手术-股神经/坐骨神经/髂筋膜阻滞"
+        condition: "surgery_type in ['hip_surgery', 'knee_surgery', 'lower_limb']"
+        action: "推荐股神经阻滞/坐骨神经阻滞/髂筋膜间隙阻滞/腰丛阻滞"
+        guideline_ref: "R3"
+        active: true
+
+      - id: AN007
+        name: "开颅手术-头皮神经阻滞"
+        condition: "surgery_type == 'craniotomy'"
+        action: "推荐SNB(头皮神经阻滞)"
+        guideline_ref: "R3"
+        active: true
+
+      - id: AN008
+        name: "脊柱手术-竖脊肌平面/胸腰筋膜平面阻滞"
+        condition: "surgery_type in ['spine_surgery', 'lumbar_surgery']"
+        action: "推荐ESPB(竖脊肌平面阻滞)或TLIP(胸腰筋膜平面阻滞)"
+        guideline_ref: "R3"
+        active: true
+
+      - id: AN009
+        name: "泌尿外科开放手术-TAP阻滞效果不确定"
+        condition: "surgery_type == 'urology_open' and pnb_type == 'TAP'"
+        action: "TAP阻滞应用于泌尿外科开放性手术未显示降低PONV发生率，建议考虑其他PNB类型"
+        note: "但TAP在腹腔镜减重手术中有效"
+        guideline_ref: "R3"
+        active: true
+
+      - id: AN010
+        name: "PNB一般禁忌证"
+        condition: "coagulopathy or injection_site_infection or local_anesthetic_allergy"
+        action: "禁止使用外周神经阻滞"
+        contraindications: [凝血功能障碍, 穿刺部位感染, 局部麻醉药过敏]
+        guideline_ref: "R3"
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别C：椎管内麻醉
+  # ════════════════════════════════════════════
+  - id: epidural_recommendation
+    name: 椎管内麻醉推荐规则
+    description: 硬膜外/骶管阻滞评估
+    source_category: C
+    primary_guideline: "guideline-ponv-2025 R4"
+    rules:
+      - id: AN011
+        name: "成人非心脏重大手术-硬膜外推荐"
+        condition: "surgery_category == 'major_non_cardiac' and patient.age >= 18"
+        action: "建议全身麻醉联合硬膜外麻醉，减少阿片类药物用量"
+        contraindications: [凝血功能障碍, 严重脊柱畸形, 血流动力学不稳定]
+        evidence: "与单纯全麻相比，联合硬膜外可降低PONV发生率"
+        strength: weak
+        evidence_quality: low
+        guideline_ref: "R4"
+        active: true
+
+      - id: AN012
+        name: "小儿≤7岁腹腔镜-骶管阻滞"
+        condition: "patient.age <= 7 and surgery_type == 'laparoscopic'"
+        action: "考虑全身麻醉联合骶管阻滞"
+        note: "尚无高质量多中心RCT，婴幼儿椎管内操作风险较高"
+        evidence: "可减少阿片类药物使用，降低PONV发生率"
+        guideline_ref: "R4"
+        active: true
+
+      - id: AN013
+        name: "鞘内吗啡PONV风险"
+        condition: "intrathecal_morphine_used"
+        action: "注意：鞘内应用阿片类药物可能增加PONV/瘙痒/尿潴留发生"
+        note: "国内缺乏鞘内注射的阿片类药物专用剂型，安全性存不确定性"
+        guideline_ref: "R4"
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别D：右美托咪定
+  # ════════════════════════════════════════════
+  - id: dexmedetomidine
+    name: 右美托咪定推荐规则
+    description: 围术期右美托咪定使用建议
+    source_category: D
+    primary_guideline: "guideline-ponv-2025 R6"
+    rules:
+      - id: AN014
+        name: "右美托咪定术中镇静"
+        condition: "ga_patient and not dexmedetomidine_contraindicated"
+        action: "建议使用右美托咪定用于术中镇静，降低PONV发生率"
+        evidence: "通过减少术后阿片类药物需求 + 激活蓝斑α2受体减少交感活性"
+        strength: weak
+        evidence_quality: moderate
+        guideline_ref: "R6"
+        active: true
+
+      - id: AN015
+        name: "右美托咪定术后PCIA"
+        condition: "postop_pcia_planned and not dexmedetomidine_contraindicated"
+        action: "建议术后PCIA中加入右美托咪定"
+        note: "鼻内镜/胸科/小儿斜视手术中均证实有效"
+        guideline_ref: "R6"
+        active: true
+
+      - id: AN016
+        name: "右美托咪定禁忌"
+        condition: "bradycardia < 50bpm or severe_hypovolemia or heart_block"
+        action: "右美托咪定禁忌：严重心动过缓/低血容量/心脏传导阻滞"
+        guideline_ref: "R6"
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别E：阿片节律策略
+  # ════════════════════════════════════════════
+  - id: opioid_sparing
+    name: 阿片节律策略规则
+    description: 减少阿片类药物用量的替代策略
+    source_category: E
+    primary_guideline: "guideline-ponv-2025 R5, R7"
+    rules:
+      - id: AN017
+        name: "纳洛酮降低PONV"
+        condition: "opioid_overdose_signs and need_reversal"
+        action: "推荐使用纳洛酮拮抗μ受体，降低PONV发生率"
+        evidence: "低剂量纳洛酮可降低PON发生率并减少止吐药补救需求"
+        note: "纳美芬仅对总PONV有降低作用，对单独PON/POV无显著影响"
+        strength: weak
+        evidence_quality: low
+        guideline_ref: "R7"
+        active: true
+
+      - id: AN018
+        name: "布洛芬替代阿片"
+        condition: "mild_to_moderate_pain and not nsaid_contraindicated"
+        action: "建议使用布洛芬替代或减少阿片类药物"
+        evidence: "布洛芬在网状Meta分析中均能显著降低PONV发生率"
+        note: "对乙酰氨基酚/酮咯酸的有效性在不同研究中相悖"
+        strength: weak
+        evidence_quality: moderate
+        guideline_ref: "R5"
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别F：液体治疗
+  # ════════════════════════════════════════════
+  - id: fluid_therapy
+    name: 液体治疗策略规则
+    description: 围术期液体治疗对PONV的预防
+    source_category: F
+    primary_guideline: "guideline-ponv-2025 R10.1, R10.2"
+    rules:
+      - id: AN019
+        name: "围术期输液预防PONV"
+        condition: "ga_patient"
+        action: "建议围术期维持适当液体平衡，补充晶体液10-30ml/kg"
+        evidence: "与限制性输液相比，补充晶体液可显著降低PONV发生率"
+        strength: weak
+        evidence_quality: moderate
+        guideline_ref: "R10.1"
+        active: true
+
+      - id: AN020
+        name: "长时间手术-胶体液推荐"
+        condition: "expected_surgery_duration > 180min"
+        action: "建议使用适量胶体液维持血容量"
+        evidence: "麻醉时间>3h时，胶体较晶体更能有效降低PONV风险"
+        note: "麻醉时间<3h者，胶体与晶体无显著差异"
+        strength: weak
+        evidence_quality: low
+        guideline_ref: "R10.2"
+        active: true
+
+  # ════════════════════════════════════════════
+  # 类别G：肌松拮抗剂
+  # ════════════════════════════════════════════
+  - id: muscle_relaxant
+    name: 肌松拮抗剂选择规则
+    description: 新斯的明 vs 舒更葡糖钠对PONV的影响
+    source_category: G
+    primary_guideline: "guideline-ponv-2025 R1"
+    rules:
+      - id: AN021
+        name: "舒更葡糖钠优先"
+        condition: "muscle_relaxant_reversal_needed and not sugammadex_contraindicated"
+        action: "优先使用舒更葡糖钠而非新斯的明"
+        evidence: "新斯的明的拟胆碱作用可能是导致PONV的重要原因，舒更葡糖钠PONV风险更低"
+        guideline_ref: "R1"
+        active: true
+
+      - id: AN022
+        name: "新斯的明PONV风险提示"
+        condition: "neostigmine_used and risk_level in ['medium', 'high']"
+        action: "使用新斯的明可能增加PONV风险，建议加强止吐预防"
+        guideline_ref: "R1"
+        active: true

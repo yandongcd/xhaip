@@ -1,0 +1,34 @@
+# xhaip v1.0 — Parameterized Agent Container
+# Usage: docker build --build-arg AGENT_NAME=orthopedic-surgery --build-arg AGENT_PORT=8765 -t xhaip-orthopedic .
+FROM python:3.11-slim
+
+ARG AGENT_NAME=haip
+ARG AGENT_PORT=8769
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir fastapi uvicorn pyyaml httpx pydantic
+
+COPY packages/haip-core/ /app/packages/haip-core/
+COPY packages/haip-hospital/ /app/packages/haip-hospital/
+COPY config/ /app/config/
+
+RUN pip install -e /app/packages/haip-core
+
+ENV PYTHONPATH="/app/packages/haip-core:/app/packages/haip-hospital"
+ENV AGENT_NAME=${AGENT_NAME}
+ENV AGENT_PORT=${AGENT_PORT}
+
+RUN python -c "\
+import sys; sys.path.insert(0,'packages/haip-core'); sys.path.insert(0,'packages/haip-hospital'); \
+from haip.agent import load_from_dir, list_all; \
+load_from_dir('/app/packages/haip-hospital/agents/definitions'); \
+agents = list_all(); \
+print(f'Agents loaded: {len(agents)}')"
+
+EXPOSE ${AGENT_PORT}
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:${AGENT_PORT}/api/health')" || exit 1
+
+CMD python -m uvicorn haip.web_server:app --host 0.0.0.0 --port ${AGENT_PORT}

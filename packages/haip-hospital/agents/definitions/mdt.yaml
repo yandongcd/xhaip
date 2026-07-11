@@ -1,7 +1,7 @@
 name: mdt
 cn_name: MDT 会诊智能体
 version: "1.0.0"
-type: skill
+type: specialist
 department: 跨科室
 port: 8773
 aliases: [MDT, 多学科会诊, 会诊]

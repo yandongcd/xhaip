@@ -9,8 +9,10 @@ abbr: "急诊指南2023"
 version: "2023"
 publisher: "中华医学会急诊医学分会"
 journal: "中华急诊医学杂志 2023;32(1):1-50"
+doi: "10.3760/cma.j.issn.1671-0282.2023.02.006"
 language: zh-CN
 trust_level: T1
+original_pdf: "guidelines/originals/emergency-秋水仙碱中毒临床诊治专家共识.pdf"
 
 description: >
   中国急诊临床诊疗指南（2023版），涵盖心肺复苏(CPR)规范化流程、
@@ -51,4 +53,14 @@ rule_sets_covered:
   - emergency_scoring
 
 derived_rule_count: 14
-last_updated: 2026-07-10
+last_updated: 2026-07-11
+
+pdf_extracted_sections:
+  - source: "emergency-秋水仙碱中毒临床诊治专家共识.pdf"
+    doi: "10.3760/cma.j.issn.1671-0282.2023.02.006"
+    publisher_from_pdf: "中华医学会急诊医学分会 中国医师协会急救复苏和"
+  - source: "emergency-基于药代动力学的临床常见药物急性中毒血液净化治疗共识.pdf"
+    doi: "10.12114/j.issn.1007-9572.2024.0514"
+  - source: "emergency-中国老年心肺复苏急诊专家共识.pdf"
+    doi: "10.1016/S2468-2667(23)00173-1"
+    publisher_from_pdf: "中华医学会急诊医学分会 中国老年医学学会急诊医学分会"

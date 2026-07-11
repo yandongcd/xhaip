@@ -39,6 +39,8 @@ class TestA2ADispatcher:
         reg_agent(DomainPlugin(name="test", type="specialist"))
         result = call("test", "nonexistent")
         assert result["status"] == "error"
+        assert "error" in result
+        assert any(kw in result.get("error", "").lower() for kw in ["not found", "unknown", "tool"])
 
     def test_call_history_recorded(self):
         from haip.agent import DomainPlugin, ToolDef

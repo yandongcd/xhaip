@@ -255,3 +255,146 @@ class HarrisHipScore:
 
 def harris_score(**kwargs) -> dict[str, Any]:
     return HarrisHipScore.calculate(**kwargs)
+
+
+# ═══════════════════════════════════════════════
+# 4. 骨折分型 (fracture_classifier — rule-based only)
+# ═══════════════════════════════════════════════
+
+GARDEN_CLASSIFICATION: list[dict[str, Any]] = [
+    {"type": "Garden IV", "description": "完全骨折伴完全移位", "stability": "不稳定",
+     "treatment": "关节置换术"},
+    {"type": "Garden III", "description": "完全骨折伴部分移位", "stability": "不稳定",
+     "treatment": "内固定/关节置换"},
+    {"type": "Garden II", "description": "完全骨折但无移位", "stability": "稳定",
+     "treatment": "内固定术"},
+    {"type": "Garden I", "description": "不完全骨折或外展嵌插骨折", "stability": "稳定",
+     "treatment": "可考虑保守治疗或内固定"},
+]
+
+EVANS_CLASSIFICATION_FULL: list[dict[str, Any]] = [
+    {"type": "Evans I", "subtypes": "IA(无移位)/IB(有移位但后内侧皮质完整)/IC(后内侧皮质断裂)/ID(转子下延伸)",
+     "stability": "IA稳定/IB-D不稳定", "treatment": "PFNA/InterTAN"},
+    {"type": "Evans II", "description": "逆斜型骨折", "stability": "不稳定",
+     "treatment": "PFNA/InterTAN(注意防内翻)"},
+    {"type": "Evans III", "description": "转子下延伸型骨折", "stability": "极不稳定",
+     "treatment": "长PFNA/钢板"},
+]
+
+AO_OTA_HIP: list[dict[str, Any]] = [
+    {"code": "31-A", "description": "股骨转子间骨折",
+     "subtypes": "A1(简单)/A2(多块)/A3(逆斜)"},
+    {"code": "31-B", "description": "股骨颈骨折",
+     "subtypes": "B1(头下型轻移位)/B2(经颈型)/B3(头下型明显移位)"},
+    {"code": "31-C", "description": "股骨头骨折",
+     "subtypes": "C1(劈裂)/C2(伴凹陷)/C3(伴颈骨折)"},
+]
+
+_POSTOP_KEYWORDS: list[str] = [
+    "术后", "内固定术后", "关节置换术后", "PFNA术后", "InterTAN术后",
+    "THA术后", "HA术后", "钢板内固定术后", "空心钉术后", "骨水泥",
+    "假体", "翻修", "愈合", "骨痂", "内固定物", "螺钉位置",
+    "骨折愈合", "骨折线模糊", "内固定位置良好", "假体位置",
+]
+
+
+def _is_postop(text: str) -> bool:
+    text_lower = text.lower()
+    return any(kw.lower() in text_lower for kw in _POSTOP_KEYWORDS)
+
+
+def _match_classification(fracture_type: str, text: str) -> tuple[str, str, str, str]:
+    """Match classification system and result."""
+    if fracture_type == "股骨颈骨折":
+        for g in GARDEN_CLASSIFICATION:
+            if g["type"].lower() in text.lower() or g["description"] in text:
+                return "Garden 分型", g["type"], g["stability"], g["treatment"]
+        if "嵌插" in text or "外展" in text:
+            return "Garden 分型", "Garden I(推测)", "稳定", "可考虑保守治疗或内固定"
+        if "移位" not in text:
+            return "Garden 分型", "Garden II(推测)", "稳定", "内固定术"
+        if "完全移位" in text or "明显移位" in text:
+            return "Garden 分型", "Garden IV(推测)", "不稳定", "关节置换术"
+        return "Garden 分型", "Garden III(推测)", "不稳定", "内固定/关节置换"
+
+    if fracture_type == "股骨转子间骨折":
+        for e in EVANS_CLASSIFICATION_FULL:
+            if e["type"].lower() in text.lower():
+                return "Evans 分型", e["type"], e["stability"], e["treatment"]
+        if "稳定" in text or "无移位" in text:
+            return "Evans 分型", "Evans IA(推测)", "稳定", "PFNA/InterTAN"
+        return "Evans 分型", "Evans 不稳定型(推测)", "不稳定", "PFNA/InterTAN"
+
+    return "", "", "N/A", ""
+
+
+def classify_hip_fracture(
+    diagnosis: str = "",
+    exam_result: str = "",
+    patient_data: dict | None = None,
+    phase: str = "preop",
+) -> dict[str, Any]:
+    """Classify hip fracture — rule-based (Garden I-IV, Evans I-III, AO/OTA 31-A/B/C).
+
+    Args:
+        diagnosis: Clinical diagnosis text.
+        exam_result: Image description text.
+        patient_data: Optional patient metadata (for compat).
+        phase: "preop"(pre-op) | "postop"(post-op).
+
+    Returns:
+        Classification result dict. If phase="postop" or post-op keywords detected,
+        returns redirect_to_stage_9 marker.
+    """
+    text = f"{diagnosis} {exam_result}"
+
+    if phase == "postop" or _is_postop(text):
+        return {
+            "fracture_type": "术后评估",
+            "side": "",
+            "classification_system": "",
+            "classification_type": "",
+            "stability": "N/A",
+            "surgery_recommendation": "",
+            "details": "",
+            "phase": "postop",
+            "redirect_to_stage_9": True,
+            "message": "术后评估由 Stage 9（术后影像评估）独立处理。",
+        }
+
+    side = "不确定"
+    if "左" in text and "右" in text:
+        side = "双侧"
+    elif "左" in text:
+        side = "左侧"
+    elif "右" in text:
+        side = "右侧"
+
+    fracture_type = "不确定"
+    if any(kw in text for kw in ["股骨颈", "股骨颈骨折", "femoral neck"]):
+        fracture_type = "股骨颈骨折"
+    elif any(kw in text for kw in ["转子间", "粗隆间", "转子间骨折", "intertrochanteric"]):
+        fracture_type = "股骨转子间骨折"
+    elif any(kw in text for kw in ["转子下", "粗隆下", "转子下骨折", "subtrochanteric"]):
+        fracture_type = "股骨转子下骨折"
+    elif any(kw in text for kw in ["髋部", "髋部骨折", "hip fracture"]):
+        fracture_type = "髋部骨折(具体部位待影像确认)"
+
+    system, ctype, stability, surgery = _match_classification(fracture_type, text)
+
+    details_parts = []
+    for kw in ["骨折", "骨皮质", "骨折线", "错位", "成角", "压缩", "粉碎"]:
+        if kw in text:
+            idx = text.find(kw)
+            details_parts.append(text[max(0, idx - 10):idx + len(kw) + 20])
+
+    return {
+        "fracture_type": fracture_type,
+        "side": side,
+        "classification_system": system,
+        "classification_type": ctype or "待影像确认分型",
+        "stability": stability,
+        "surgery_recommendation": surgery or "根据分型及患者全身状况综合决定",
+        "details": ";".join(details_parts[:3]) if details_parts else "",
+        "phase": "preop",
+    }

@@ -21,7 +21,6 @@ from __future__ import annotations
 from pathlib import Path
 import json
 from typing import Any
-import logging
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent  # xhaip root
 KNOWLEDGE_DIR = PROJECT_ROOT / "packages" / "haip-hospital" / "knowledge"
@@ -166,27 +165,56 @@ class KnowledgeAgent:
 
         return {"alerts": alerts, "all_normal": len(alerts) == 0}
 
-    def clinical_result(self, summary: str, patient: dict | None = None,
+    def clinical_result(self, summary: str | dict = "",
+                        patient: dict | None = None,
                         guidelines: list[str] | None = None,
                         rules: list[str] | None = None,
-                        alerts: list[str] | None = None) -> dict:
-        """Generate structured clinical reasoning result."""
+                        alerts: list[str] | None = None,
+                        **kwargs: Any) -> dict:
+        """Generate structured clinical reasoning result.
+
+        Backward-compatible: accepts clinical_result(summary_str, patient=...)
+        or clinical_result(patient=patient_obj, summary=...,
+                           stage=..., findings=..., recommendations=...,
+                           guideline_refs=...)
+        """
+        # Backward compat: if first arg is a dict, treat as patient
+        actual_patient = patient
+        actual_summary = ""
+        if isinstance(summary, dict):
+            actual_patient = summary
+        else:
+            actual_summary = summary
+
         result: dict[str, Any] = {
             "status": "ok",
             "agent": self.agent_name,
-            "summary": summary,
         }
-        if patient:
+        if actual_summary:
+            result["summary"] = actual_summary
+
+        stage = kwargs.get("stage", "")
+        if stage:
+            result["stage"] = stage
+        findings = kwargs.get("findings")
+        if findings:
+            result["findings"] = findings
+        recommendations = kwargs.get("recommendations")
+        if recommendations:
+            result["recommendations"] = recommendations
+
+        if actual_patient:
             result["patient"] = {
-                "id": patient.get("patient_id"),
-                "name": patient.get("name"),
-                "diagnosis": patient.get("diagnosis"),
+                "id": actual_patient.get("patient_id"),
+                "name": actual_patient.get("name"),
+                "diagnosis": actual_patient.get("diagnosis"),
             }
             if alerts is None:
-                vitals = self.assess_vitals(patient)
+                vitals = self.assess_vitals(actual_patient)
                 alerts = vitals.get("alerts", [])
-        if guidelines:
-            result["guideline_refs"] = guidelines
+        refs = kwargs.get("guideline_refs") or guidelines or []
+        if refs:
+            result["guideline_refs"] = refs
         if rules:
             result["rule_refs"] = rules
         if alerts:

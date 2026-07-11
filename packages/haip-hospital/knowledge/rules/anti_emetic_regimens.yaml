@@ -1,0 +1,283 @@
+# ============================================================
+# Rule Asset: 围术期止吐用药方案矩阵
+# TOGAF Class: Constraint (Extension ABB)
+# Trust Level: T1 (基于2025版中国PONV诊疗指南)
+# ============================================================
+name: antiemetic-regimens
+version: "1.0"
+description: >
+  围术期止吐用药方案矩阵 — 基于2025版中国PONV诊疗指南 + SAMBA第四版共识。
+  覆盖成人/儿童 × 低/中/高危 × 6类药物类别的推荐方案。
+  由 pharmacy/antiemetic/drug_recommend.py 加载执行。
+owner: clinical_pharmacist
+guideline_ref:
+  - "guideline-ponv-2025"
+  - "SAMBA Fourth Consensus Guidelines for PONV (Anesth Analg 2020)"
+last_updated: 2026-07-11
+
+# ============================================================
+# 风险等级定义
+# ============================================================
+risk_levels:
+  low:
+    adult_apfel_range: [0, 1]
+    pediatric_povoc_range: [0]
+    ponv_probability_pct: "10%-21%"
+    strategy: "观察为主，可选择单药预防"
+  medium:
+    adult_apfel_range: [2]
+    pediatric_povoc_range: [1, 2]
+    ponv_probability_pct: "39% (成人) / 10%-30% (儿童)"
+    strategy: "二联用药预防"
+  high:
+    adult_apfel_range: [3, 4]
+    pediatric_povoc_range: [3, 4]
+    ponv_probability_pct: "61%-79% (成人) / 55%-70% (儿童)"
+    strategy: "三联用药预防"
+
+# ============================================================
+# 用药方案矩阵
+# ============================================================
+regimens:
+
+  # ── 成人方案 ──
+  adult_low:
+    risk_level: low
+    population: adult
+    primary:
+      drugs:
+        - class: 5-HT3_receptor_antagonist
+          name: 托烷司琼
+          dose: "5mg"
+          route: IV
+          timing: "手术结束前30min"
+          evidence: R11.4
+          note: "短效5-HT3拮抗剂，术毕给药"
+    alternatives:
+      - class: 5-HT3_receptor_antagonist
+        name: 昂丹司琼
+        dose: "4mg"
+        route: IV
+        timing: "手术结束前"
+        evidence: R11.4
+      - class: anticholinergic
+        name: 戊乙奎醚
+        dose: "0.01mg/kg (最大0.5mg)"
+        route: IV
+        timing: "麻醉诱导后"
+        evidence: R15
+        contraindications: [青光眼, 前列腺增生, 老年, 谵妄病史]
+
+  adult_medium:
+    risk_level: medium
+    population: adult
+    primary:
+      drugs:
+        - class: 5-HT3_receptor_antagonist
+          name: 托烷司琼
+          dose: "5mg"
+          route: IV
+          timing: "手术结束前30min"
+          evidence: R11.1
+        - class: corticosteroid
+          name: 地塞米松
+          dose: "4-8mg"
+          route: IV
+          timing: "麻醉诱导后"
+          evidence: R12.1
+          note: "无糖皮质激素禁忌证时使用"
+    alternatives:
+      - class: 5-HT3_receptor_antagonist
+        name: 昂丹司琼
+        dose: "4mg"
+        route: IV
+        timing: "手术结束前"
+        evidence: R11.1
+      - class: corticosteroid
+        name: 甲泼尼龙
+        dose: "40mg"
+        route: IV
+        timing: "麻醉诱导后"
+        evidence: R12.1
+      - class: dopamine_antagonist
+        name: 氨磺必利
+        dose: "5mg"
+        route: IV
+        timing: "麻醉诱导时"
+        evidence: R14.1
+        note: "中高风险患者适用"
+
+  adult_high:
+    risk_level: high
+    population: adult
+    primary:
+      drugs:
+        - class: 5-HT3_receptor_antagonist
+          name: 帕洛诺司琼
+          dose: "0.075mg"
+          route: IV
+          timing: "麻醉诱导前"
+          evidence: R11.3
+          note: "长效，半衰期40h，覆盖24h高风险期"
+        - class: corticosteroid
+          name: 地塞米松
+          dose: "8mg"
+          route: IV
+          timing: "麻醉诱导后"
+          evidence: R12.1
+          note: "高剂量方案"
+        - class: dopamine_antagonist
+          name: 氟哌利多
+          dose: "0.625mg"
+          route: IV
+          timing: "手术结束前"
+          evidence: R14.3
+          contraindications: [重症肌无力, 锥体外系疾病, QT间期延长, 电解质紊乱, 低血压, 帕金森]
+    alternatives:
+      - drugs:
+          - class: 5-HT3_receptor_antagonist
+            name: 昂丹司琼
+            dose: "4mg"
+            route: IV
+            timing: "手术结束前"
+            evidence: R11.4
+          - class: corticosteroid
+            name: 地塞米松
+            dose: "8mg"
+            route: IV
+            timing: "麻醉诱导后"
+            evidence: R12.1
+          - class: dopamine_antagonist
+            name: 甲氧氯普胺
+            dose: "10mg"
+            route: IV
+            timing: "手术结束前"
+            evidence: R14
+            note: "10mg剂量止吐功效不明确，25-50mg联合地塞米松才显示预防作用"
+      - drugs:
+          - class: NK1_receptor_antagonist
+            name: 福沙匹坦
+            dose: "150mg"
+            route: IV
+            timing: "麻醉诱导前"
+            evidence: R13
+            note: "单药预防POV效果最佳，成本高于传统止吐药"
+          - class: corticosteroid
+            name: 地塞米松
+            dose: "8mg"
+            route: IV
+            timing: "麻醉诱导后"
+            evidence: R12.1
+      - drugs:
+          - class: NK1_receptor_antagonist
+            name: 阿瑞匹坦
+            dose: "40mg"
+            route: PO
+            timing: "术前1-3h"
+            evidence: R13
+
+  # ── 儿童方案 ──
+  pediatric_low:
+    risk_level: low
+    population: pediatric
+    primary:
+      drugs: []
+      strategy: "观察，无需常规药物预防"
+    alternatives:
+      - drugs:
+          - class: 5-HT3_receptor_antagonist
+            name: 昂丹司琼
+            dose: "0.05-0.1mg/kg (最大4mg)"
+            route: IV
+            timing: "手术结束前"
+            evidence: R11.1
+
+  pediatric_medium:
+    risk_level: medium
+    population: pediatric
+    primary:
+      drugs:
+        - class: 5-HT3_receptor_antagonist
+          name: 昂丹司琼
+          dose: "0.05-0.1mg/kg (最大4mg)"
+          route: IV
+          timing: "手术结束前"
+          evidence: R11.1
+        - class: corticosteroid
+          name: 地塞米松
+          dose: "0.15mg/kg (最大5mg)"
+          route: IV
+          timing: "手术开始前"
+          evidence: R12.2
+          note: "仅适用于≥3岁儿童"
+    alternatives:
+      - drugs:
+          - class: 5-HT3_receptor_antagonist
+            name: 格拉司琼
+            dose: "0.04mg/kg (最大3mg)"
+            route: IV
+            timing: "手术结束前"
+            evidence: R11.1
+
+  pediatric_high:
+    risk_level: high
+    population: pediatric
+    primary:
+      drugs:
+        - class: 5-HT3_receptor_antagonist
+          name: 昂丹司琼
+          dose: "0.1mg/kg (最大4mg)"
+          route: IV
+          timing: "手术结束前"
+          evidence: R11.1
+        - class: corticosteroid
+          name: 地塞米松
+          dose: "0.15mg/kg (最大8mg)"
+          route: IV
+          timing: "手术开始前"
+          evidence: R12.2
+          note: "≥3岁儿童"
+        - class: dopamine_antagonist
+          name: 氟哌利多
+          dose: "0.01-0.015mg/kg (最大0.625mg)"
+          route: IV
+          timing: "手术结束前"
+          evidence: R14.3
+          note: "注意锥体外系症状风险，年长儿童尤需谨慎"
+    alternatives:
+      - drugs:
+          - class: 5-HT3_receptor_antagonist
+            name: 帕洛诺司琼
+            dose: "0.5-1.0μg/kg"
+            route: IV
+            timing: "麻醉诱导前"
+            evidence: R11.3
+            note: "儿童证据有限"
+
+# ============================================================
+# 补救治疗方案
+# ============================================================
+rescue_therapy:
+  no_prior_prophylaxis:
+    description: "患者未接受预防性用药，首次发生PONV"
+    first_line:
+      drug: "5-HT3受体拮抗剂（小剂量）"
+      options:
+        - {name: 昂丹司琼, dose: "1mg", route: IV}
+        - {name: 多拉司琼, dose: "12.5mg", route: IV}
+        - {name: 格拉司琼, dose: "0.1mg", route: IV}
+        - {name: 托烷司琼, dose: "0.5mg", route: IV}
+      note: "治疗剂量约为预防剂量的1/4"
+    alternatives:
+      - {name: 地塞米松, dose: "2-4mg", route: IV}
+      - {name: 氟哌利多, dose: "0.625mg", route: IV}
+      - {name: 异丙嗪, dose: "6.25-12.5mg", route: IV}
+      - {name: 丙泊酚, dose: "20mg", route: IV, note: "PACU内发生PONV时"}
+  after_prophylaxis_failure:
+    description: "已使用预防性用药但无效"
+    within_6h: "换用不同机制的药物，6h内不重复使用原预防药物"
+    after_6h: "可重复给予5-HT3受体拮抗剂和氟哌利多/氟哌啶醇（剂量同前）"
+    dexamethasone_note: "不推荐重复使用地塞米松"
+  after_triple_failure:
+    description: "三联疗法预防后仍发生PONV"
+    action: "6h内不重复使用原三联药物组合，换用其他类型止吐药"

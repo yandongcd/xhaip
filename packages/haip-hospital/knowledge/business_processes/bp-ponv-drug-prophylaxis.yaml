@@ -1,0 +1,91 @@
+# ============================================================
+# Business Process: 止吐药物预防方案生成
+# TOGAF Class: BusinessProcess + ProcessStep (Core ABB)
+# Trust Level: T1
+# ============================================================
+name: bp-ponv-drug-prophylaxis
+version: "1.0"
+description: 药物预防方案生成 — 从风险等级到具体用药方案 + 禁忌证筛查
+owner: 临床药师
+value_stages:
+  - 有效治疗
+guideline_refs:
+  - guideline-ponv-2025
+steps:
+  - id: bp-ponv03-1
+    name: 确定风险等级与人群
+    actor: 临床药师
+    description: |
+      根据评分结果确定：
+      1. 风险等级（低/中/高）
+      2. 人群（成人/儿童）
+      3. 是否有用药顾虑或禁忌
+    data_used: [de-risk-score, de-patient]
+    decision: "低危→观察/单药 | 中危→二联 | 高危→三联"
+    implementation:
+      module: pharmacy.antiemetic.drug_recommend
+      tool: recommend_regimen_adult
+      decision_coverage: {total: 3, covered: 3}
+
+  - id: bp-ponv03-2
+    name: 生成初始用药方案
+    actor: 临床药师
+    description: |
+      根据风险等级生成方案矩阵：
+      成人低危：托烷司琼 5mg（术毕）
+      成人中危：托烷司琼 5mg + 地塞米松 4-8mg
+      成人高危：帕洛诺司琼 0.075mg（诱导前）+ 地塞米松 8mg + 氟哌利多 0.625mg
+      儿童方案：昂丹司琼 0.05-0.1mg/kg ± 地塞米松 0.15mg/kg
+    data_used: [de-risk-score, de-drug-db, de-regimen]
+    decision: null
+    implementation:
+      module: pharmacy.antiemetic.drug_recommend
+      tool: recommend_regimen_adult
+
+  - id: bp-ponv03-3
+    name: 禁忌证筛查
+    actor: 临床药师
+    description: |
+      执行 7 类禁忌证检查：
+      1. 药物过敏（5-HT3/激素/多巴胺/NK1/抗胆碱/抗组胺）
+      2. 肝肾功能剂量调整
+      3. 基础病禁忌（QT延长/癫痫/帕金森/青光眼/高血压/糖尿病）
+      4. 特殊人群（孕期/哺乳/老年/儿童）
+      5. 重复用药拦截
+      6. 给药时机校验
+      7. 药物相互作用
+    data_used: [de-regimen, de-patient, de-surgery]
+    decision: "通过→输出方案 | 拦截→生成替换方案"
+    implementation:
+      module: pharmacy.antiemetic.drug_controls
+      tool: validate_contraindications
+      decision_coverage: {total: 2, covered: 2}
+
+  - id: bp-ponv03-4
+    name: 替换方案生成
+    actor: 临床药师
+    description: |
+      如有禁忌证被拦截：
+      1. 自动查找同类药物替代方案
+      2. 标注替代理由和证据等级
+      3. 重新验证替代方案
+    data_used: [de-drug-db, de-regimen]
+    decision: null
+    implementation:
+      module: pharmacy.antiemetic.drug_controls
+      tool: suggest_alternatives
+
+  - id: bp-ponv03-5
+    name: 输出最终方案
+    actor: 临床药师
+    description: |
+      综合输出：
+      1. 推荐用药清单（药品/剂量/途径/时机）
+      2. 管控审核结果（通过/拦截 + 详情）
+      3. 指南引用（2025 指南推荐编号）
+      4. 注意事项（副作用/监测建议）
+    data_used: [de-regimen]
+    decision: null
+    implementation:
+      module: pharmacy.antiemetic.pipeline
+      tool: bp_drug_prophylaxis

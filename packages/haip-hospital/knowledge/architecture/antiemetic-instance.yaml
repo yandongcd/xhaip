@@ -1,0 +1,174 @@
+# ── 围术期止吐药智能体 TOGAF 10 架构实例 ──
+# 基于 pharmacy-instance.yaml 扩展
+view_name: "围术期止吐药智能体V1.0架构实例"
+description: "药剂科-围术期止吐药智能体 TOGAF 4A 架构实例化"
+vw: 1000
+vh: 600
+
+nodes:
+  - id: org-pharm
+    label: 药剂科
+    type: Organization
+    color: "#0a84ff"
+    icon: "💊"
+    x: 500
+    y: 30
+    big: true
+    detail:
+      title: "💊 药剂科 (Organization)"
+      fields:
+        - ["组织", "南方医科大学南方医院·药剂科"]
+        - ["服务范围", "营养评估 · TPN配比 · 处方审核 · 围术期止吐管理"]
+        - ["角色体系", "8角色(药师/临床药师/审方药师/静配药师/麻醉医师/麻醉护士/中医师/营养师)"]
+
+  - id: agent-pharm
+    label: 药剂科智能体
+    type: ApplicationComponent
+    agent_type: business
+    color: "#30d158"
+    icon: "⚗️"
+    x: 500
+    y: 130
+    detail:
+      title: "⚗️ 药剂科智能体 (ApplicationComponent)"
+      fields:
+        - ["域名", "pharmacy"]
+        - ["端口", "8770"]
+        - ["核心引擎", "NRS2002/TPN/处方审核/止吐评分/用药推荐/管控规则/麻醉建议/非药物干预"]
+        - ["规则", "54条(营养) + 42条(止吐管控) + 24条(麻醉) + 18条(非药物)"]
+        - ["A2A工具", "12个(6原有 + 6止吐新增)"]
+
+  - id: sub-antiemetic
+    label: 围术期止吐子模块
+    type: ApplicationComponent
+    agent_type: specialist
+    color: "#5e5ce6"
+    icon: "🫗"
+    x: 500
+    y: 230
+    detail:
+      title: "🫗 围术期止吐药子模块 (antiemetic/)"
+      fields:
+        - ["版本", "v1.0.0"]
+        - ["模块数", "10个Python文件"]
+        - ["能力域", "6大L2能力域"]
+        - ["BP数", "8个业务流程"]
+        - ["指南", "2025版中国PONV诊疗指南(35条推荐)"]
+        - ["药品", "6大类21种止吐药"]
+        - ["管控规则", "42条(7类禁忌证)"]
+        - ["麻醉规则", "24条"]
+        - ["非药物规则", "18条"]
+
+  - id: de-patient
+    label: 患者数据
+    type: DataEntity
+    color: "#5e5ce6"
+    icon: "👤"
+    x: 150
+    y: 350
+    detail:
+      title: "👤 患者数据 (DataEntity)"
+      fields:
+        - ["内容", "年龄/性别/吸烟/PONV史/晕动史/基础病/过敏史/实验室指标"]
+        - ["来源", "HIS + 数字病人JSON"]
+        - ["架构域", "数据架构"]
+
+  - id: de-surgery
+    label: 手术记录
+    type: DataEntity
+    color: "#5e5ce6"
+    icon: "🏥"
+    x: 370
+    y: 350
+    detail:
+      title: "🏥 手术记录 (DataEntity)"
+      fields:
+        - ["内容", "手术类型/时长/麻醉方式/吸入药/阿片/PNB类型/液体量"]
+        - ["关联", "由麻醉医师/外科医师录入"]
+        - ["架构域", "数据架构"]
+
+  - id: de-risk
+    label: 风险评分
+    type: DataEntity
+    color: "#ff9f0a"
+    icon: "📊"
+    x: 590
+    y: 350
+    detail:
+      title: "📊 风险评分 (DataEntity)"
+      fields:
+        - ["内容", "Apfel/POVOC/PDNV评分 + 风险等级 + 预测概率"]
+        - ["关联", "由scoring_engine计算产出"]
+        - ["架构域", "数据架构"]
+
+  - id: de-regimen
+    label: 用药方案
+    type: DataEntity
+    color: "#30d158"
+    icon: "💉"
+    x: 810
+    y: 350
+    detail:
+      title: "💉 用药方案 (DataEntity)"
+      fields:
+        - ["内容", "药品清单/剂量/途径/时机 + 管控审核结果 + 指南引用"]
+        - ["关联", "由drug_recommend + drug_controls产出"]
+        - ["架构域", "数据架构"]
+
+  - id: de-outcome
+    label: PONV结局
+    type: DataEntity
+    color: "#bf5af2"
+    icon: "📋"
+    x: 1030
+    y: 350
+    detail:
+      title: "📋 PONV结局 (DataEntity)"
+      fields:
+        - ["内容", "PONV发生/时间/VAS评分/完全缓解/补救用药/PDNV/满意度"]
+        - ["关联", "术后48h监测 + 出院随访"]
+        - ["架构域", "数据架构"]
+
+  - id: knowledge-base
+    label: 止吐知识库
+    type: DataEntity
+    color: "#0a84ff"
+    icon: "📚"
+    x: 500
+    y: 480
+    detail:
+      title: "📚 止吐知识库 (DataEntity — Knowledge Layer)"
+      fields:
+        - ["YAML文件", "6个(指南/方案/管控/麻醉/非药物/药品DB)"]
+        - ["规则总数", "84条(42管控+24麻醉+18非药物)"]
+        - ["指南溯源", "35条推荐意见全部GRADE标注"]
+        - ["架构域", "数据架构 (知识层)"]
+
+  - id: platform
+    label: Nexent智能体平台
+    type: TechnologyService
+    color: "#ff453a"
+    icon: "☁️"
+    x: 500
+    y: 560
+    detail:
+      title: "☁️ Nexent智能体平台 (TechnologyService)"
+      fields:
+        - ["类型", "Agent Runtime 平台"]
+        - ["架构域", "技术架构"]
+
+edges:
+  - {sid: org-pharm, tid: agent-pharm, label: 包含, color: "#0a84ff", confidence: real}
+  - {sid: agent-pharm, tid: sub-antiemetic, label: 包含, color: "#30d158", confidence: real}
+  - {sid: sub-antiemetic, tid: de-patient, label: 读取, color: "#30d158", confidence: real}
+  - {sid: sub-antiemetic, tid: de-surgery, label: 读取, color: "#30d158", confidence: real}
+  - {sid: sub-antiemetic, tid: de-risk, label: 生成, color: "#ff9f0a", confidence: real}
+  - {sid: sub-antiemetic, tid: de-regimen, label: 生成, color: "#30d158", confidence: real}
+  - {sid: sub-antiemetic, tid: de-outcome, label: 写入, color: "#bf5af2", confidence: real}
+  - {sid: sub-antiemetic, tid: knowledge-base, label: 加载, color: "#0a84ff", confidence: real}
+  - {sid: agent-pharm, tid: platform, label: 运行于, color: "#30d158", confidence: real}
+  - {sid: de-patient, tid: de-risk, label: 输入, color: "#5e5ce6", confidence: real}
+  - {sid: de-surgery, tid: de-risk, label: 输入, color: "#5e5ce6", confidence: real}
+  - {sid: de-risk, tid: de-regimen, label: 驱动, color: "#ff9f0a", confidence: real}
+  - {sid: de-regimen, tid: de-outcome, label: 影响, color: "#30d158", confidence: real}
+  - {sid: knowledge-base, tid: de-regimen, label: 约束, color: "#0a84ff", confidence: real}

@@ -9,13 +9,19 @@ sys.path.insert(0, str(project_root / "packages" / "haip-hospital"))
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
 from haip.agent import _registry, DomainPlugin, ToolDef, register  # noqa: E402
-from haip.a2a import call, clear_history  # noqa: E402
+from haip.a2a import call, clear_history, _agent_cache  # noqa: E402
 
 
 class TestPainHub:
     def setup_method(self):
         _registry.clear()
         clear_history()
+        _agent_cache.clear()
+        # Clear cached modules so new file content is loaded
+        for mod_name in list(sys.modules.keys()):
+            if mod_name in ("acute_pain", "chronic_pain", "cancer_pain",
+                            "interventional_pain", "pain_rehab", "pain_hub"):
+                sys.modules.pop(mod_name, None)
 
     def test_triage_acute_back_pain(self):
         register(DomainPlugin(name="pain-hub", type="business",
@@ -42,26 +48,39 @@ class TestPainHub:
 class TestAcutePain:
     def setup_method(self):
         _registry.clear()
+        _agent_cache.clear()
+        for mod_name in list(sys.modules.keys()):
+            if mod_name == "acute_pain":
+                sys.modules.pop(mod_name, None)
 
     def test_assess_severe(self):
         register(DomainPlugin(name="acute-pain", type="specialist",
             tools=[ToolDef(name="assess_acute", description="", handler="acute_pain.assess")]))
-        r = call("acute-pain", "assess_acute", {"vas_score": 8, "description": ""})
-        assert r["nrs_level"] == "severe"
+        r = call("acute-pain", "assess_acute", {"nrs_score": 8, "description": ""})
+        assert r["status"] == "ok"
+        assert r["nrs_score"] >= 7
+        assert r["nrs_level"] == "重度疼痛"
+        assert r["nrs_level_en"] == "severe"
+        assert len(r["recommendations"]) >= 2
 
     def test_pca_elderly(self):
         register(DomainPlugin(name="acute-pain", type="specialist",
             tools=[ToolDef(name="manage_pca", description="", handler="acute_pain.pca")]))
         r = call("acute-pain", "manage_pca", {"age": 80, "weight_kg": 60.0, "renal_ok": True})
-        assert r["adjustment_needed"]
-        assert r["bolus_mg"] <= 1.0
+        assert r["status"] == "ok"
+        assert r["adjustment_needed"] is True
+        assert "高龄" in r["adjustment_reason"]
+        assert r["bolus_mg"] <= 0.6
+        assert r["pca_regimen"]["lockout_min"] >= 8
 
     def test_detect_compartment_syndrome(self):
         register(DomainPlugin(name="acute-pain", type="specialist",
             tools=[ToolDef(name="detect_crisis", description="", handler="acute_pain.crisis")]))
-        r = call("acute-pain", "detect_crisis", {"symptoms": ["被动牵拉痛加重"]})
-        assert r["crisis_detected"]
-        assert r["crisis_type"] == "compartment_syndrome"
+        r = call("acute-pain", "detect_crisis", {"symptoms": ["被动牵拉痛加重", "张力高"], "postop_day": 1})
+        assert r["status"] == "ok"
+        assert r["crisis_detected"] is True
+        assert "筋膜室" in str(r["crisis_type"]) or "筋膜室" in str(r)
+        assert r["urgency"] in ("emergent", "urgent")
 
 
 class TestChronicPain:
@@ -69,21 +88,30 @@ class TestChronicPain:
         register(DomainPlugin(name="chronic-pain", type="specialist",
             tools=[ToolDef(name="assess_chronic", description="", handler="chronic_pain.assess")]))
         r = call("chronic-pain", "assess_chronic", {"pain_duration_months": 12, "vas_score": 5})
-        assert r["is_chronic"]
+        assert r["status"] == "ok"
+        assert r["is_chronic"] is True
+        assert r["pain_duration_months"] == 12
 
     def test_stepped_care_step3(self):
         register(DomainPlugin(name="chronic-pain", type="specialist",
             tools=[ToolDef(name="stepped_care", description="", handler="chronic_pain.care")]))
-        r = call("chronic-pain", "stepped_care", {"vas_score": 8, "odi_score": 55, "failed_prev": True})
+        r = call("chronic-pain", "stepped_care", {"nrs_score": 8, "odi_score": 55,
+                   "conservative_failed": True, "intervention_failed": True,
+                   "duration_months": 6})
+        assert r["status"] == "ok"
         assert r["step"] == 3
+        assert "手术" in r["step_name"]
 
 
 class TestCancerPain:
     def test_who_step3(self):
         register(DomainPlugin(name="cancer-pain", type="specialist",
             tools=[ToolDef(name="assess_cancer", description="", handler="cancer_pain.assess")]))
-        r = call("cancer-pain", "assess_cancer", {"vas_score": 8, "current_opioid_mg": 80})
+        r = call("cancer-pain", "assess_cancer", {"nrs_score": 8, "current_opioid_mg": 80})
+        assert r["status"] == "ok"
         assert r["who_step"] == 3
+        assert r["step_description"] == "第三阶梯 (重度)"
+        assert r["current_opioid_mg"] == 80
 
     def test_opioid_overdose_risk(self):
         register(DomainPlugin(name="cancer-pain", type="specialist",

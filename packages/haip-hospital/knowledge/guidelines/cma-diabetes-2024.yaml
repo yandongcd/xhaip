@@ -9,7 +9,7 @@ abbr: "糖尿病指南2024"
 version: "2024"
 publisher: "中华医学会糖尿病学分会"
 journal: "中华糖尿病杂志 2024;16(12):1057-1110"
-doi: "10.3760/cma.j.cn115791-20241230-00400"
+doi: "10.3760/cma.j.cn115791-20241203-00705"
 language: zh-CN
 trust_level: T1
 original_pdf: "guidelines/originals/endocrinology-中国糖尿病防治指南(2024版).pdf"
@@ -71,4 +71,23 @@ rule_sets_covered:
   - dm_followup
 
 derived_rule_count: 6
-last_updated: 2026-07-10
+last_updated: 2026-07-11
+
+pdf_extracted_sections:
+  - chapter: "第一章"
+    title: "中国糖尿病流行病学"
+    sub: ["糖尿病流行病学", "我国糖尿病的流行特点", "我国糖尿病流行的影响因素"]
+  - chapter: "第二章"
+    title: "糖尿病的诊断与分型"
+    sub: ["糖尿病诊断", "糖尿病分型", "1型糖尿病与2型糖尿病的鉴别"]
+  - chapter: "第三章"
+    title: "糖尿病的三级预防"
+    sub: ["基本原则", "具体实施要点"]
+  - chapter: "第四章"
+    title: "糖尿病的筛查和评估"
+    sub: ["筛查", "评估"]
+  - chapter: "第五章"
+    title: "糖尿病的教育和管理"
+    sub: ["教育和管理的目标", "教育和管理的形式", "教育管理的流程和框架"]
+  - chapter: "第六章"
+    title: "2型糖尿病综合控制目标和综合管理"

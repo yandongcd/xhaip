@@ -14,7 +14,7 @@ prompt:
 tools:
   - name: exercise_rx
     description: 康复运动处方 (部位/强度/频率)
-    handler: pain_rehab.exercise_rx
+    handler: pain_rehab.exercise
     input: {patient_id: str}
 
   - name: assess_progress
@@ -24,5 +24,5 @@ tools:
 
   - name: comorbidity
     description: 合并症评估 (抑郁/焦虑/自杀风险)
-    handler: pain_rehab.comorbidity
+    handler: pain_rehab.comorbid
     input: {patient_id: str}

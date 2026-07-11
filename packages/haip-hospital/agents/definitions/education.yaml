@@ -1,7 +1,7 @@
 name: education
 cn_name: 教育技能智能体
 version: "1.0.0"
-type: skill
+type: specialist
 department: 跨科室
 port: 8772
 aliases: [教学, 教育, 培训, edu]

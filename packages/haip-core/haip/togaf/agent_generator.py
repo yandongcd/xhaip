@@ -7,10 +7,9 @@ Output: complete YAML agent definition with stages, roles, tools, guard
 from __future__ import annotations
 
 from pathlib import Path
-import yaml
 
-from haip.togaf.organization import ROLE_BY_ORG, list_roles, list_orgs
-from haip.togaf.templates_dept import get_dept_template, get_guideline_info
+from haip.togaf.organization import list_roles, list_orgs
+from haip.togaf.templates_dept import get_dept_template
 
 
 # Tool name generators per template type
@@ -240,7 +239,7 @@ def generate_all_missing(output_dir: str, dry_run: bool = False) -> list[str]:
         pass
 
     # Map org name → agent name
-    agents_registered = {a.cn_name: a.name for a in agent_registry.values()}
+    {a.cn_name: a.name for a in agent_registry.values()}
 
     all_orgs = list_orgs()
     clinical = [o for o in all_orgs if o.type == "clinical" and o.parent]

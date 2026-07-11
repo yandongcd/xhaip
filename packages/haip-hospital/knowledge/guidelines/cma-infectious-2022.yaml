@@ -9,8 +9,10 @@ abbr: "感染指南2022"
 version: "2022"
 publisher: "中华医学会感染病学分会"
 journal: "中华传染病杂志 2022;40(1):1-60"
+doi: "10.3760/cma.j.issn.1674"
 language: zh-CN
 trust_level: T1
+original_pdf: "guidelines/originals/infectious-中国艾滋病诊疗指南（2024版）.pdf"
 
 description: >
   中国感染性疾病诊疗指南（2022版），涵盖抗菌药物合理使用（窄谱优先、
@@ -58,4 +60,28 @@ rule_sets_covered:
   - infectious_covid19
 
 derived_rule_count: 18
-last_updated: 2026-07-10
+last_updated: 2026-07-11
+
+pdf_extracted_sections:
+  - source: "infectious-中国艾滋病诊疗指南（2024版）.pdf"
+    doi: "10.3760/cma.j.issn.1674"
+    publisher_from_pdf: "中华医学会感染病学分会艾滋病学组 中国疾病预防控制中心"
+    sections:
+      - id: "§A"
+        title: "HIV/AIDS 诊断与分期"
+      - id: "§B"
+        title: "抗病毒治疗 (ART)"
+      - id: "§C"
+        title: "机会性感染预防与治疗"
+  - source: "infectious-碳青霉烯类耐药肠杆菌目感染的实验室诊断和防治专家共识（2026版）.pdf"
+    doi: "10.3760/cma.j.cn112137-20260128-00313"
+    publisher_from_pdf: "中华医学会呼吸病学分会"
+    sections:
+      - id: "§A"
+        title: "共识制订方法"
+      - id: "§B"
+        title: "术语与耐药机制及传播"
+      - id: "§C"
+        title: "实验室检测"
+      - id: "§D"
+        title: "CRE 感染治疗"

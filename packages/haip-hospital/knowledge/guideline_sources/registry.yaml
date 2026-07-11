@@ -32,6 +32,7 @@ sources:
     tier: L2; version: "2024"; publish_date: "2024-08-11"
     publisher: "中华医学会心血管病学分会"; language: zh; department: 心血管内科
     original_pdf: "guidelines/originals/cardiology-中国高血压防治指南(2024年修订版).pdf"
+    doi: "10.3760/cma.j.cn112148-20240701-00400"
     admin_priority: 30; status: active; superseded_by: ""
 
   # === 呼吸内科 (Respiratory) ===
@@ -66,6 +67,7 @@ sources:
     tier: L2; version: "2024"; publish_date: "2024-12-30"
     publisher: "中华医学会糖尿病学分会"; language: zh; department: 内分泌科
     original_pdf: "guidelines/originals/endocrinology-中国糖尿病防治指南(2024版).pdf"
+    doi: "10.3760/cma.j.cn115791-20241203-00705"
     admin_priority: 31; status: active; superseded_by: ""
   - id: ada-standards-2025
     name: "ADA Standards of Care in Diabetes"
@@ -78,6 +80,8 @@ sources:
     name: "中国妇产科学临床指南（2022）"
     tier: L2; version: "2022"; publish_date: "2022-06-01"
     publisher: "中华医学会妇产科学分会"; language: zh; department: 妇产科
+    original_pdf: "guidelines/originals/obgyn-中西医结合宫颈癌防治中国专家共识.pdf"
+    doi: "10.12025/j.issn.1008-6358.2024.20240292"
     admin_priority: 55; status: active; superseded_by: ""
 
   # === 儿科 (Pediatrics) ===
@@ -111,6 +115,7 @@ sources:
     name: "中国血液病诊疗指南（2022）"
     tier: L2; version: "2022"; publish_date: "2022-06-01"
     publisher: "中华医学会血液学分会"; language: zh; department: 血液内科
+    original_pdf: "guidelines/originals/hematology-CAR-T细胞治疗恶性血液病指南2024.pdf"
     admin_priority: 75; status: active; superseded_by: ""
 
   # === 风湿免疫科 (Rheumatology) ===
@@ -130,6 +135,8 @@ sources:
     name: "中国急诊临床诊疗指南（2023）"
     tier: L2; version: "2023"; publish_date: "2023-06-01"
     publisher: "中华医学会急诊医学分会"; language: zh; department: 急诊科
+    original_pdf: "guidelines/originals/emergency-秋水仙碱中毒临床诊治专家共识.pdf"
+    doi: "10.3760/cma.j.issn.1671-0282.2023.02.006"
     admin_priority: 85; status: active; superseded_by: ""
 
   # === 重症医学科 (ICU) ===
@@ -142,6 +149,8 @@ sources:
     name: "中国重症医学临床诊疗指南（2022）"
     tier: L2; version: "2022"; publish_date: "2022-06-01"
     publisher: "中华医学会重症医学分会"; language: zh; department: 重症医学科
+    original_pdf: "guidelines/originals/icu-中国重症卒中管理指南2024.pdf"
+    doi: "10.3760/cma.j.cn113694-20231024-00261"
     admin_priority: 91; status: active; superseded_by: ""
 
   # === 感染内科 (Infectious Disease) ===
@@ -149,6 +158,8 @@ sources:
     name: "中国感染性疾病诊疗指南（2022）"
     tier: L2; version: "2022"; publish_date: "2022-06-01"
     publisher: "中华医学会感染病学分会"; language: zh; department: 感染内科
+    original_pdf: "guidelines/originals/infectious-中国艾滋病诊疗指南（2024版）.pdf"
+    doi: "10.3760/cma.j.issn.1674"
     admin_priority: 95; status: active; superseded_by: ""
 
   # === 神经外科 (Neurosurgery) ===
@@ -288,6 +299,8 @@ sources:
     name: "中国老年医学临床诊疗指南（2023）"
     tier: L2; version: "2023"; publish_date: "2023-06-01"
     publisher: "中华医学会老年医学分会"; language: zh; department: 老年病科
+    original_pdf: "guidelines/originals/geriatrics-中国老年骨质疏松症诊疗指南（2023）.pdf"
+    doi: "10.3969/j.issn.2095-9958.2023.10.01"
     admin_priority: 195; status: active; superseded_by: ""
 
   # === 康复科 (Rehabilitation) ===

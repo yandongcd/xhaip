@@ -15,9 +15,21 @@ app = typer.Typer(name="xhaip", help="HAIP v1.0 — Hospital AI Platform")
 togaf_app = typer.Typer(help="TOGAF 10 Architecture Governance")
 app.add_typer(togaf_app, name="togaf")
 
+# Tools sub-command group
+tools_app = typer.Typer(help="Tools: MCP server, registry")
+app.add_typer(tools_app, name="tools")
 
-@app.command()
-def list():
+# Release sub-command group
+release_app = typer.Typer(help="Release & baseline management")
+app.add_typer(release_app, name="release")
+
+# Audit sub-command group
+audit_app = typer.Typer(help="Audit & recovery (snapshot, diff, rollback)")
+app.add_typer(audit_app, name="audit")
+
+
+@app.command("list")
+def list_agents_cmd():
     """列出所有已注册的 Agent。"""
     load_all()
     agents = list_agents()
@@ -96,6 +108,96 @@ def load_all():
         if d.exists():
             load_from_dir(str(d))
             return
+
+
+# ═══════════════════════════════════════════════════════
+# Skill Sync Commands
+# ═══════════════════════════════════════════════════════
+
+@app.command()
+def sync_skills(
+    apply: bool = typer.Option(False, "--apply", help="Execute sync (default: dry-run)"),
+    validate: bool = typer.Option(False, "--validate", help="Validate sync consistency"),
+    init: bool = typer.Option(False, "--init", help="Initialize: copy runtime -> source"),
+    list_skills: bool = typer.Option(False, "--list", "-l", help="List all skills"),
+):
+    """Sync skills between agent source modules and .openharness/skills/."""
+    from haip.operations.skill_sync import (
+        sync as do_sync,
+        validate as do_validate,
+        init_from_runtime,
+        list_skills as do_list,
+    )
+
+    if validate:
+        exit_code = do_validate()
+        raise typer.Exit(code=exit_code)
+    if init:
+        exit_code = init_from_runtime()
+        raise typer.Exit(code=exit_code)
+    if list_skills:
+        import json
+        result = do_list()
+        typer.echo(json.dumps(result, ensure_ascii=False, indent=2))
+        return
+    do_sync(dry_run=not apply)
+
+
+# ═══════════════════════════════════════════════════════
+# Tools Commands
+# ═══════════════════════════════════════════════════════
+
+@tools_app.command("mcp-serve")
+def tools_mcp_serve(
+    agent: str = typer.Option("", "--agent", "-a", help="Serve single agent's tools"),
+    all_tools: bool = typer.Option(False, "--all", help="Serve all registered tools"),
+    port: int = typer.Option(8700, "--port", "-p", help="Port (default: 8700)"),
+    host: str = typer.Option("0.0.0.0", "--host", help="Host (default: 0.0.0.0)"),
+):
+    """Start MCP server exposing agent tools."""
+    from haip.tools.mcp_server import serve_agent, serve_all
+
+    load_all()
+    if all_tools:
+        serve_all(port=port, host=host)
+    elif agent:
+        serve_agent(agent, port=port, host=host)
+    else:
+        typer.echo("Specify --agent <name> or --all", err=True)
+        raise typer.Exit(code=1)
+
+
+@tools_app.command("list")
+def tools_list(
+    agent: str = typer.Option("", "--agent", "-a", help="Filter by agent name"),
+):
+    """List tools from registry or specific agent."""
+    load_all()
+    from haip.tools.registry import list_schemas
+
+    if agent:
+        plugin = get_agent(agent)
+        if plugin is None:
+            typer.echo(f"Unknown agent: {agent}")
+            return
+        tools = plugin.tools
+        typer.echo(f"Agent '{agent}' ({plugin.cn_name}) — {len(tools)} tools:")
+        for td in tools:
+            typer.echo(f"  {td.name:30s} | {td.description[:60]}")
+        return
+
+    registry_tools = list_schemas()
+    all_agents = list_agents()
+    typer.echo(f"Global Tool Registry: {len(registry_tools)} tools")
+    for t in registry_tools:
+        typer.echo(f"  {t['name']:30s} | {t.get('description', '')[:60]}")
+
+    if all_agents:
+        typer.echo(f"\nAgent Tools ({len(all_agents)} agents):")
+        for aname, ainfo in sorted(all_agents.items()):
+            tnames = [t.name for t in ainfo.tools]
+            if tnames:
+                typer.echo(f"  {aname:30s} | {len(tnames)} tools: {', '.join(tnames[:5])}{'...' if len(tnames) > 5 else ''}")
 
 
 def main():
@@ -238,3 +340,198 @@ def _print_org_tree(node, indent=0):
     typer.echo(f"{prefix}{node.name}{role_info}")
     for child in node.children:
         _print_org_tree(child, indent + 1)
+
+
+# ═══════════════════════════════════════════════════════
+# Release / Baseline Management Commands
+# ═══════════════════════════════════════════════════════
+
+@release_app.command("backup")
+def release_backup(
+    label: str = typer.Option("", "--label", "-l", help="Optional label for this backup"),
+):
+    """Create a named backup of agent definitions, modules, knowledge, and config."""
+    from haip.operations.release_manager import ReleaseManager
+
+    rm = ReleaseManager()
+    result = rm.create_backup(label=label)
+    backup_id = result.get("backup_id", "")
+
+    typer.echo(f"Backup created: {backup_id}")
+    typer.echo(f"  Location: releases/{backup_id}/")
+    typer.echo(f"  Files: {len(result.get('files', {}))}")
+    typer.echo(f"  Commit: {(result.get('commit', '') or '')[:12]}")
+    typer.echo(f"  Branch: {result.get('branch', '')}")
+
+
+@release_app.command("list")
+def release_list():
+    """List all backups."""
+    from haip.operations.release_manager import ReleaseManager
+
+    rm = ReleaseManager()
+    backups = rm.list_backups()
+    if not backups:
+        typer.echo("No backups found.")
+        return
+    typer.echo(f"{'Backup ID':<35} {'Date':<12} {'Commit':<14} {'Branch':<12} {'Files':<6} Message")
+    typer.echo("-" * 100)
+    for b in backups:
+        typer.echo(
+            f"{b['backup_id']:<35} {b['date']:<12} {b['commit']:<14} "
+            f"{b['branch']:<12} {b['total_files']:<6} {b['message']}"
+        )
+
+
+@release_app.command("rollback")
+def release_rollback(
+    backup_id: str = typer.Argument(..., help="Backup ID to restore from"),
+    force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation"),
+):
+    """Restore project files from a backup."""
+    from haip.operations.release_manager import ReleaseManager
+
+    rm = ReleaseManager()
+    info = rm.info(backup_id)
+    if info is None:
+        typer.echo(f"Backup not found: {backup_id}")
+        return
+
+    typer.echo(f"Backup: {backup_id}")
+    typer.echo(f"  Date: {info.get('date', '')}")
+    typer.echo(f"  Files: {len(info.get('files', {}))}")
+    typer.echo()
+
+    if not force:
+        confirm = typer.confirm("Proceed with rollback?")
+        if not confirm:
+            typer.echo("Rollback cancelled.")
+            return
+
+    result = rm.rollback(backup_id)
+    for p in result.get("restored", []):
+        typer.echo(f"  RESTORED {p}")
+    for p in result.get("errors", []):
+        typer.secho(f"  ERROR {p}", fg="red")
+    for p in result.get("skipped", []):
+        typer.secho(f"  SKIPPED {p}", fg="yellow")
+    typer.echo(f"\nDone: {len(result.get('restored', []))} restored, "
+               f"{len(result.get('errors', []))} errors.")
+
+
+# ═══════════════════════════════════════════════════════
+# Audit & Recovery Commands
+# ═══════════════════════════════════════════════════════
+
+@audit_app.command("snapshot")
+def audit_snapshot(
+    paths: list[str] = typer.Argument(..., help="File paths (relative to project root)"),
+    agent: str = typer.Option("", "--agent", help="Agent name"),
+    reason: str = typer.Option("", "--reason", help="Reason for snapshot"),
+):
+    """Create a checksum snapshot of specified files."""
+    from haip.operations.audit_release import AuditEngine
+
+    ae = AuditEngine()
+    snap_id = ae.snapshot(*paths, agent=agent, reason=reason)
+    typer.echo(f"Snapshot created: {snap_id}")
+    typer.echo(f"  Files: {len(paths)}")
+    typer.echo(f"  Agent: {agent or '(unspecified)'}")
+    typer.echo(f"  Reason: {reason or '(unspecified)'}")
+
+
+@audit_app.command("list")
+def audit_list():
+    """List recent snapshots."""
+    from haip.operations.audit_release import AuditEngine
+
+    ae = AuditEngine()
+    snaps = ae.list_snapshots()
+    if not snaps:
+        typer.echo("No snapshots found.")
+        return
+    typer.echo(f"{'Snap ID':<30} {'Time':<28} {'Agent':<20} {'Files':<6} Reason")
+    typer.echo("-" * 100)
+    for s in snaps:
+        typer.echo(f"{s['snap_id']:<30} {s['time']:<28} {s['agent']:<20} "
+                    f"{s['file_count']:<6} {s['reason']}")
+
+
+@audit_app.command("diff")
+def audit_diff(
+    snap_id: str = typer.Argument(..., help="Snapshot ID to diff against current state"),
+    snap2: str = typer.Option("", "--snap2", help="Second snapshot ID for pairwise comparison"),
+):
+    """Compare snapshot against current state, or diff two snapshots."""
+    from haip.operations.audit_release import AuditEngine
+
+    ae = AuditEngine()
+
+    if snap2:
+        diffs = ae.diff_two(snap_id, snap2)
+    else:
+        diffs = ae.diff(snap_id)
+
+    for d in diffs:
+        if d.get("error"):
+            typer.secho(f"ERROR {d['file']}: {d['error']}", fg="red")
+        elif d.get("changed"):
+            typer.secho(f"CHANGED {d['file']}", fg="yellow")
+            diff_text = d.get("diff", "")
+            if diff_text:
+                typer.echo(diff_text)
+        else:
+            typer.echo(f"UNCHANGED {d['file']}")
+
+
+@audit_app.command("log")
+def audit_log(limit: int = typer.Option(30, help="Number of entries")):
+    """View audit trail."""
+    from haip.operations.audit_release import AuditEngine
+
+    ae = AuditEngine()
+    entries = ae.list_audit_log(limit=limit)
+    if not entries:
+        typer.echo("No audit entries found.")
+        return
+    for e in entries:
+        typer.echo(
+            f"[{e.get('time_str', '')}] {e.get('action', ''):<12} "
+            f"snap={e.get('snap_id', ''):<20} agent={e.get('agent', ''):<16} "
+            f"{e.get('detail', '')}"
+        )
+
+
+@audit_app.command("rollback")
+def audit_rollback(
+    snap_id: str = typer.Argument(..., help="Snapshot ID to restore from"),
+    force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation"),
+):
+    """Restore files from a snapshot."""
+    from haip.operations.audit_release import AuditEngine
+
+    ae = AuditEngine()
+
+    diffs = ae.diff(snap_id)
+    changed = [d for d in diffs if d.get("changed")]
+    if not changed:
+        typer.echo("No changes to roll back — files already match snapshot.")
+        return
+
+    typer.echo(f"Files to restore ({len(changed)}):")
+    for d in changed:
+        typer.echo(f"  {d['file']}")
+
+    if not force:
+        confirm = typer.confirm("Proceed with rollback?")
+        if not confirm:
+            typer.echo("Rollback cancelled.")
+            return
+
+    result = ae.rollback(snap_id)
+    for p in result.get("restored", []):
+        typer.echo(f"  RESTORED {p}")
+    for p in result.get("errors", []):
+        typer.secho(f"  ERROR {p}", fg="red")
+    typer.echo(f"Done: {len(result.get('restored', []))} restored, "
+               f"{len(result.get('errors', []))} errors.")

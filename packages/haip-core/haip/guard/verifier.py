@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 from haip.guard.citation import Citation, CitationEngine
 from haip.guard.confidence import ConfidenceScore, ConfidenceScorer
 from haip.llm import LLMProvider
-import logging
 
 
 # ── 高危场景触发条件 ──

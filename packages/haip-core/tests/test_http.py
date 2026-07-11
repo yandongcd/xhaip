@@ -286,7 +286,7 @@ class TestWorkflowUI:
         """骨科应有10个阶段。"""
         r = client.get("/workflow/orthopedic-surgery")
         # 计数 stage-item
-        count = r.text.count("stage-item")
+        count = r.text.count("stage-content")
         assert count >= 10, f"Expected >=10 stages, got {count}"
 
     def test_workflow_guideline_refs(self):

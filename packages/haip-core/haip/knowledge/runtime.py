@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import os
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +16,7 @@ from haip.guard.citation import Citation, CitationEngine
 
 
 class KnowledgeRuntime:
-    """知识库运行时: YAML → SQLite 同步 + 查询 + 热更新。
+    """知识库运行时: YAML → SQLite 同步 + 查询 + 热更新.
 
     用法:
         kb = KnowledgeRuntime(project_root)
@@ -22,6 +24,8 @@ class KnowledgeRuntime:
         kb.find_rules("cardiac_delay")  # 毫秒级查询
         kb.search_guidelines("NICE")    # 搜索指南
         kb.stats()                      # 统计信息
+        kb.start_hot_reload()           # 启动文件监控 (30s 轮询)
+        kb.force_resync()               # 手动强制重载
     """
 
     def __init__(self, project_root: str | Path = "."):
@@ -44,6 +48,13 @@ class KnowledgeRuntime:
 
         self._synced = False
 
+        # ── 热更新 ──
+        self.hot_reload_enabled = False
+        self._watcher_thread: threading.Thread | None = None
+        self._watcher_stop = threading.Event()
+        self._poll_interval = 30.0  # seconds
+        self._file_mtimes: dict[str, float] = {}
+
     def sync(self) -> dict[str, int]:
         """从 YAML 目录同步到 SQLite。启动时调用一次。"""
         stats = self.store.sync_from_dir(
@@ -57,7 +68,88 @@ class KnowledgeRuntime:
         """热重载: 清空数据后重新同步。"""
         self.store.close()
         self.store = KnowledgeStore(":memory:")
+        self._file_mtimes = self._build_file_snapshot()
         return self.sync()
+
+    def force_resync(self) -> dict[str, int]:
+        """强制重载: agent 可调用此方法手动刷新知识库。
+
+        Returns:
+            与 sync() 同格式的统计 dict。
+        """
+        return self.resync()
+
+    # ── 热更新文件监控 ──
+
+    def start_hot_reload(self, poll_interval: float = 30.0) -> None:
+        """启动后台文件监控线程，定期检查 YAML 变更并自动重载。
+
+        Args:
+            poll_interval: 轮询间隔 (秒)，默认 30s。
+        """
+        if self.hot_reload_enabled:
+            return
+        self.hot_reload_enabled = True
+        self._poll_interval = poll_interval
+        self._watcher_stop.clear()
+        self._file_mtimes = self._build_file_snapshot()
+        self._watcher_thread = threading.Thread(
+            target=self._watch_loop, daemon=True, name="kb-hot-reload"
+        )
+        self._watcher_thread.start()
+
+    def stop_hot_reload(self) -> None:
+        """停止热更新监控线程。"""
+        self.hot_reload_enabled = False
+        self._watcher_stop.set()
+        if self._watcher_thread and self._watcher_thread.is_alive():
+            self._watcher_thread.join(timeout=5.0)
+        self._watcher_thread = None
+
+    def _build_file_snapshot(self) -> dict[str, float]:
+        """扫描所有 YAML 文件，返回 {path: mtime} 快照。"""
+        snapshot: dict[str, float] = {}
+        for d in (self.guidelines_dir, self.rules_dir):
+            if d.exists():
+                for path in d.rglob("*.yaml"):
+                    if path.name in ("registry.yaml", "conflict_policy.yaml"):
+                        continue
+                    try:
+                        snapshot[str(path)] = os.path.getmtime(path)
+                    except OSError:
+                        pass
+        return snapshot
+
+    def _check_for_changes(self) -> list[str]:
+        """检查文件快照是否变更，返回变更文件列表。"""
+        changed: list[str] = []
+        current = self._build_file_snapshot()
+
+        # 检查新增/修改
+        for path_str, mtime in current.items():
+            prev = self._file_mtimes.get(path_str)
+            if prev is None or mtime > prev:
+                changed.append(path_str)
+
+        # 检查删除
+        for path_str in self._file_mtimes:
+            if path_str not in current:
+                changed.append(path_str)
+
+        return changed
+
+    def _watch_loop(self) -> None:
+        """后台轮询线程：每 poll_interval 秒检查 YAML 文件变更。"""
+        while not self._watcher_stop.is_set():
+            self._watcher_stop.wait(timeout=self._poll_interval)
+            if self._watcher_stop.is_set():
+                break
+            try:
+                changed = self._check_for_changes()
+                if changed:
+                    self.resync()
+            except Exception:
+                pass
 
     # ── 查询接口 ──
 
@@ -96,6 +188,7 @@ class KnowledgeRuntime:
         }
 
     def close(self):
+        self.stop_hot_reload()
         self.store.close()
 
 

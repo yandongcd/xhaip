@@ -1,0 +1,47 @@
+# ============================================================
+# Business Process: 止吐药给药时机提醒
+# TOGAF Class: BusinessProcess + ProcessStep (Core ABB)
+# Trust Level: T1
+# ============================================================
+name: bp-ponv-drug-timing
+version: "1.0"
+description: 止吐药给药时机提醒 — 根据药物半衰期和起效时间匹配最佳给药节点
+owner: 麻醉护士
+value_stages:
+  - 有效治疗
+guideline_refs:
+  - guideline-ponv-2025
+steps:
+  - id: bp-ponv04-1
+    name: 获取处方药品清单
+    actor: 麻醉护士
+    description: 从 HIS 获取医生开具的止吐药处方清单
+    data_used: [de-rx]
+    decision: null
+    implementation:
+      module: pharmacy.antiemetic.drug_recommend
+      tool: recommend_timing
+
+  - id: bp-ponv04-2
+    name: 匹配最佳给药时机
+    actor: 麻醉护士
+    description: |
+      根据药物类别匹配时机：
+      - 长效 5-HT3（帕洛诺司琼）→ 麻醉诱导前
+      - 短效 5-HT3（昂丹司琼/托烷司琼）→ 手术结束前
+      - 地塞米松 → 麻醉诱导后
+      - 口服阿瑞匹坦 → 术前 1-3h
+      - 东莨菪碱贴剂 → 术前晚或术前 2-4h
+      - NK1 拮抗剂（福沙匹坦）→ 麻醉诱导前
+    data_used: [de-rx, de-drug-db]
+    decision: null
+
+  - id: bp-ponv04-3
+    name: 生成给药时机清单
+    actor: 麻醉护士
+    description: |
+      输出按时间排序的给药计划：
+      术前晚 → 诱导前 → 诱导后 → 术毕
+      标注每种药物的剂量/途径/注意事项
+    data_used: [de-rx]
+    decision: null

@@ -1,0 +1,70 @@
+# ============================================================
+# Business Process: 麻醉方案止吐优化
+# TOGAF Class: BusinessProcess + ProcessStep (Core ABB)
+# Trust Level: T1
+# ============================================================
+name: bp-ponv-anesthesia-optimization
+version: "1.0"
+description: 麻醉管理止吐优化 — 从麻醉方式选择到术中辅助策略的综合优化
+owner: 麻醉医师
+value_stages:
+  - 有效治疗
+guideline_refs:
+  - guideline-ponv-2025
+steps:
+  - id: bp-ponv02-1
+    name: 评估麻醉方式
+    actor: 麻醉医师
+    description: |
+      根据风险等级推荐麻醉方式：
+      1. 高风险 → 优先丙泊酚 TIVA
+      2. 中高风险 → 避免吸入麻醉（七氟烷等）
+      3. 评估外周神经阻滞可行性
+      4. 评估椎管内麻醉适应证
+    data_used: [de-risk-score, de-surgery]
+    decision: "TIVA vs 吸入麻醉 → 选择最优方案"
+    implementation:
+      module: pharmacy.antiemetic.anesthesia_guide
+      tool: recommend_tiva
+      decision_coverage: {total: 2, covered: 2}
+
+  - id: bp-ponv02-2
+    name: 推荐外周神经阻滞
+    actor: 麻醉医师
+    description: |
+      根据手术类型匹配合适 PNB：
+      乳腺→SAPB/RIB | 骨科下肢→股神经/坐骨神经 | 开颅→SNB
+      脊柱→ESPB/TLIP | 排除禁忌证（凝血障碍/感染/过敏）
+    data_used: [de-surgery]
+    decision: "是否适用 PNB？→ 适用(推荐) | 不适用(跳过)"
+    implementation:
+      module: pharmacy.antiemetic.anesthesia_guide
+      tool: recommend_pnb
+      decision_coverage: {total: 2, covered: 2}
+
+  - id: bp-ponv02-3
+    name: 阿片节律策略
+    actor: 麻醉医师
+    description: |
+      减少阿片类药物策略：
+      1. 轻中度疼痛→布洛芬替代
+      2. 阿片过量→纳洛酮拮抗
+      3. 全麻+硬膜外→减少阿片用量
+    data_used: [de-surgery, de-patient]
+    decision: null
+    implementation:
+      module: pharmacy.antiemetic.anesthesia_guide
+      tool: recommend_opioid_sparing
+
+  - id: bp-ponv02-4
+    name: 辅助药物与液体策略
+    actor: 麻醉医师
+    description: |
+      1. 右美托咪定：术中镇静/术后 PCIA（无禁忌证时）
+      2. 液体治疗：晶体液 10-30ml/kg，>3h 手术用胶体液
+      3. 肌松拮抗：优先舒更葡糖钠
+    data_used: [de-surgery]
+    decision: null
+    implementation:
+      module: pharmacy.antiemetic.anesthesia_guide
+      tool: recommend_dexmedetomidine

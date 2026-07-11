@@ -27,6 +27,55 @@ class TestHotReload:
             changed = w._scan()
             assert len(changed) == 0
 
+    def test_file_change_detection(self):
+        with tempfile.TemporaryDirectory() as d:
+            from haip.agent.hotreload import HotReloadWatcher
+            test_file = Path(d) / "test.yaml"
+            test_file.write_text("version: '1.0'\n", encoding="utf-8")
+            w = HotReloadWatcher(d, interval=0.1)
+            w._mtimes = w._build_snapshot()
+            time.sleep(0.3)
+            test_file.write_text("version: '2.0'\n", encoding="utf-8")
+            time.sleep(0.3)
+            changed = w._scan()
+            assert len(changed) >= 1
+
+    def test_scan_detects_modification(self):
+        with tempfile.TemporaryDirectory() as d:
+            from haip.agent.hotreload import HotReloadWatcher
+            test_file = Path(d) / "test.yaml"
+            test_file.write_text("version: '1.0'\n", encoding="utf-8")
+            w = HotReloadWatcher(d, interval=0.1)
+            w._mtimes = w._build_snapshot()
+            time.sleep(0.3)
+            test_file.write_text("version: '2.0'\n", encoding="utf-8")
+            time.sleep(0.3)
+            changed = w._scan()
+            assert len(changed) >= 1
+
+    def test_scan_detects_deletion(self):
+        with tempfile.TemporaryDirectory() as d:
+            from haip.agent.hotreload import HotReloadWatcher
+            test_file = Path(d) / "remove_me.yaml"
+            test_file.write_text("data\n", encoding="utf-8")
+            w = HotReloadWatcher(d, interval=0.1)
+            w._mtimes = w._build_snapshot()
+            test_file.unlink()
+            changed = w._scan()
+            assert len(changed) >= 1
+
+    def test_yaml_reload_on_modification(self):
+        with tempfile.TemporaryDirectory() as d:
+            from haip.agent.hotreload import HotReloadWatcher
+            test_file = Path(d) / "agent_config.yaml"
+            test_file.write_text("name: config\n", encoding="utf-8")
+            w = HotReloadWatcher(d, interval=0.1)
+            w._mtimes = w._build_snapshot()
+            time.sleep(0.1)
+            test_file.write_text("name: config_v2\n", encoding="utf-8")
+            changed = w._scan()
+            assert "agent_config.yaml" in str(changed) or any("agent_config.yaml" in c for c in changed)
+
 
 class TestObservability:
     def test_trace_context(self):

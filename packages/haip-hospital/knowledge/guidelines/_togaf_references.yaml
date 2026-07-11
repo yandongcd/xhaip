@@ -1,0 +1,293 @@
+# ============================================================
+# TOGAF Reference Library — PDF → ABB Mapping
+# 将下载的 PDF 指南映射到 TOGAF ABB + 科室 + 临床规则
+# 生成: 2026-07-11 — 基于 _pdf_extracts.yaml 中 13/27 份 PDF 元数据提取
+# ============================================================
+
+references:
+  # === 心血管内科 / Cardiology ===
+  - pdf: "guidelines/originals/cardiology-中国高血压防治指南(2024年修订版).pdf"
+    department: 心血管内科
+    department_en: Cardiology
+    togaf_abb: guideline-cma-htn-2024
+    guideline_yaml: cma-hypertension-2024.yaml
+    clinical_rules: rules/clinical_cardiology/cardiology_rules.yaml
+    doi: ""
+    extracted_metadata: false
+    sections:
+      - id: "§3"
+        title: "高血压诊断与分级"
+        rules: [htn-grade-3, htn-grade-2, htn-combination]
+      - id: "§4"
+        title: "高血压危险分层"
+        rules: [htn-grade-3, htn-grade-2]
+      - id: "§5"
+        title: "高血压治疗策略"
+        rules: [htn-combination]
+    extra_rule_files:
+      - rules/hypertension/rules.yaml
+
+  # === 内分泌科 / Endocrinology ===
+  - pdf: "guidelines/originals/endocrinology-中国糖尿病防治指南(2024版).pdf"
+    department: 内分泌科
+    department_en: Endocrinology
+    togaf_abb: guideline-cma-dm-2024
+    guideline_yaml: cma-diabetes-2024.yaml
+    clinical_rules: rules/clinical_endocrinology/endocrinology_rules.yaml
+    doi: "10.3760/cma.j.cn115791-20241203-00705"
+    publisher_from_pdf: "中华医学会糖尿病学分会"
+    extracted_metadata: true
+    pdf_sections:
+      - id: "§1"
+        title: "中国糖尿病流行病学"
+        sub: [糖尿病流行病学, 我国糖尿病流行特点, 我国糖尿病流行影响因素]
+      - id: "§2"
+        title: "糖尿病诊断与分型"
+        sub: [糖尿病诊断, 糖尿病分型, 1型与2型糖尿病鉴别]
+        rules: [dm-diagnose-fpg, dm-diagnose-ogtt, dm-diagnose-hba1c, dm-type-classify]
+      - id: "§3"
+        title: "糖尿病三级预防"
+        sub: [基本原则, 具体实施要点]
+      - id: "§4"
+        title: "糖尿病筛查和评估"
+        sub: [筛查, 评估]
+      - id: "§5"
+        title: "糖尿病教育和管理"
+        sub: [教育和管理目标, 教育和管理形式, 教育管理流程和框架]
+      - id: "§6"
+        title: "2型糖尿病综合控制目标和综合管理"
+        rules: [dm-target-hba1c, dm-lifestyle]
+    sections:
+      - id: "§2"
+        title: "糖尿病诊断与分型"
+        rules: [dm-diagnose-fpg, dm-diagnose-ogtt, dm-diagnose-hba1c, dm-type-classify]
+      - id: "§6"
+        title: "综合控制目标与生活方式干预"
+        rules: [dm-target-hba1c, dm-lifestyle]
+      - id: "§6-§9"
+        title: "药物治疗"
+        rules: [dm-metformin, dm-cvd-ckd-priority, dm-insulin-initiation]
+      - id: "§10-§14"
+        title: "急慢性并发症管理"
+        rules: [dm-dka, dm-hhs, dm-complication-screen]
+      - id: "§17"
+        title: "随访管理"
+        rules: [dm-followup-3m, dm-followup-annual]
+
+  # === 急诊科 / Emergency ===
+  - pdf: "guidelines/originals/emergency-中国老年心肺复苏急诊专家共识.pdf"
+    department: 急诊科
+    department_en: Emergency
+    togaf_abb: guideline-cma-emergency-2023
+    guideline_yaml: cma-emergency-2023.yaml
+    clinical_rules: rules/clinical_emergency/emergency_rules.yaml
+    doi: "10.1016/S2468-2667(23)00173-1"
+    publisher_from_pdf: "中华医学会急诊医学分会 中国老年医学学会急诊医学分会"
+    extracted_metadata: true
+    sections:
+      - id: "§2"
+        title: "心肺复苏（CPR）"
+        rules: [em-cardiac-arrest, em-acls-defibrillation]
+
+  - pdf: "guidelines/originals/emergency-基于药代动力学的临床常见药物急性中毒血液净化治疗共识.pdf"
+    department: 急诊科
+    department_en: Emergency
+    togaf_abb: guideline-cma-emergency-2023
+    guideline_yaml: cma-emergency-2023.yaml
+    clinical_rules: rules/clinical_emergency/emergency_rules.yaml
+    doi: "10.12114/j.issn.1007-9572.2024.0514"
+    extracted_metadata: false
+    sections:
+      - id: "§3"
+        title: "急性中毒"
+        rules: [em-poisoning-triage, em-antidote-opioid, em-antidote-benzodiazepine, em-antidote-organophosphate]
+
+  - pdf: "guidelines/originals/emergency-秋水仙碱中毒临床诊治专家共识.pdf"
+    department: 急诊科
+    department_en: Emergency
+    togaf_abb: guideline-cma-emergency-2023
+    guideline_yaml: cma-emergency-2023.yaml
+    clinical_rules: rules/clinical_emergency/emergency_rules.yaml
+    doi: "10.3760/cma.j.issn.1671-0282.2023.02.006"
+    publisher_from_pdf: "中华医学会急诊医学分会 中国医师协会急救复苏和"
+    extracted_metadata: true
+    sections:
+      - id: "§3"
+        title: "急性中毒"
+        rules: [em-poisoning-triage, em-antidote-opioid]
+
+  # === 消化内科 / Gastroenterology ===
+  - pdf: "guidelines/originals/gastroenterology-老年上消化道出血急诊诊疗专家共识.pdf"
+    department: 消化内科
+    department_en: Gastroenterology
+    togaf_abb: guideline-cma-gastritis-2022
+    guideline_yaml: cma-gastritis-2022.yaml
+    clinical_rules: rules/clinical_gastroenterology/gastroenterology_rules.yaml
+    doi: "10.13201/j.issn.1009-5918.2024.12.001"
+    publisher_from_pdf: "中华医学会急诊医学分会 中国老年医学学会急诊医学分会"
+    extracted_metadata: true
+    note: "上消化道出血专家共识，非慢性胃炎；补充急症维度"
+
+  # === 老年病科 / Geriatrics ===
+  - pdf: "guidelines/originals/geriatrics-中国老年心肺复苏急诊专家共识.pdf"
+    department: 老年病科
+    department_en: Geriatrics
+    togaf_abb: guideline-cma-geriatrics-2023
+    guideline_yaml: cma-geriatrics-2023.yaml
+    clinical_rules: rules/clinical_geriatrics/geriatrics_rules.yaml
+    doi: "10.1016/S2468-2667(23)00173-1"
+    publisher_from_pdf: "中华医学会急诊医学分会 中国老年医学学会急诊医学分会"
+    extracted_metadata: true
+
+  - pdf: "guidelines/originals/geriatrics-中国老年骨质疏松症诊疗指南（2023）.pdf"
+    department: 老年病科
+    department_en: Geriatrics
+    togaf_abb: guideline-cma-geriatrics-2023
+    guideline_yaml: cma-geriatrics-2023.yaml
+    clinical_rules: rules/clinical_geriatrics/geriatrics_rules.yaml
+    doi: "10.3969/j.issn.2095-9958.2023.10.01"
+    publisher_from_pdf: "国家卫生健康委员会"
+    extracted_metadata: true
+    sections:
+      - id: "§2"
+        title: "老年综合征 — 衰弱（Fried 标准）"
+        rules: [ge-frailty-fried, ge-frailty-prefrail, ge-frailty-frail]
+      - id: "§6"
+        title: "老年营养评估与支持"
+        rules: [ge-vitd-calcium]
+
+  # === 血液内科 / Hematology ===
+  - pdf: "guidelines/originals/hematology-CAR-T细胞治疗恶性血液病指南2024.pdf"
+    department: 血液内科
+    department_en: Hematology
+    togaf_abb: guideline-cma-hematology-2022
+    guideline_yaml: cma-hematology-2022.yaml
+    clinical_rules: rules/clinical_hematology/hematology_rules.yaml
+    doi: ""
+    extracted_metadata: false
+    note: "CAR-T 细胞治疗指南，补充血液肿瘤治疗维度"
+    sections:
+      - id: "§2"
+        title: "白血病分型与化疗"
+        rules: [he-blast-leukemia, he-aml-chemotherapy, he-cml-hydroxyurea, he-wbc-leukemia-alert]
+
+  # === 重症医学科 / ICU ===
+  - pdf: "guidelines/originals/icu-中国重症卒中管理指南2024.pdf"
+    department: 重症医学科
+    department_en: ICU
+    togaf_abb: guideline-cma-icu-2022
+    guideline_yaml: cma-icu-2022.yaml
+    clinical_rules: rules/clinical_icu/icu_rules.yaml
+    doi: "10.3760/cma.j.cn113694-20231024-00261"
+    publisher_from_pdf: "中华医学会神经病学分会 中华医学会神经病学分会脑血管病学组"
+    extracted_metadata: true
+    pdf_sections:
+      - id: "§1"
+        title: "危重症卒中的预测和预防"
+      - id: "§2"
+        title: "神经科特异性治疗"
+        sub: [重症脑梗死, 重症脑出血, 动脉瘤破裂性]
+    sections:
+      - id: "§4"
+        title: "血流动力学监测与管理 / 神经重症"
+        rules: [icu-qsofa-positive, icu-sofa-sepsis, icu-septic-shock, icu-vasopressor-norepinephrine]
+
+  - pdf: "guidelines/originals/icu-中国重症肌无力诊断和治疗指南（2025版）.pdf"
+    department: 重症医学科
+    department_en: ICU
+    togaf_abb: guideline-cma-icu-2022
+    guideline_yaml: cma-icu-2022.yaml
+    clinical_rules: rules/clinical_icu/icu_rules.yaml
+    doi: "10.3760/cma.j.cn113694-20250120-00041"
+    publisher_from_pdf: "中华医学会神经病学分会神经免疫学组"
+    extracted_metadata: true
+    pdf_sections:
+      - id: "§1"
+        title: "严重程度及疗效评估"
+      - id: "§2"
+        title: "疾病活动度评估"
+      - id: "§3"
+        title: "治疗原则与方式"
+        sub: [治疗原则, 治疗目标, 生活质量评估, 治疗方式]
+    sections:
+      - id: "§5"
+        title: "镇痛镇静与谵妄管理"
+        rules: [icu-sedation-rass, icu-delirium-prevention]
+
+  # === 感染内科 / Infectious Disease ===
+  - pdf: "guidelines/originals/infectious-中国艾滋病诊疗指南（2024版）.pdf"
+    department: 感染内科
+    department_en: Infectious Disease
+    togaf_abb: guideline-cma-infectious-2022
+    guideline_yaml: cma-infectious-2022.yaml
+    clinical_rules: rules/clinical_infectious_disease/infectious_disease_rules.yaml
+    doi: "10.3760/cma.j.issn.1674"
+    publisher_from_pdf: "中华医学会感染病学分会艾滋病学组 中国疾病预防控制中心"
+    extracted_metadata: true
+    sections:
+      - id: "§5"
+        title: "HIV/AIDS 管理"
+        rules: [id-hiv-art-indication, id-hiv-oi-prophylaxis, id-hiv-art-initiation]
+
+  - pdf: "guidelines/originals/infectious-碳青霉烯类耐药肠杆菌目感染的实验室诊断和防治专家共识（2026版）.pdf"
+    department: 感染内科
+    department_en: Infectious Disease
+    togaf_abb: guideline-cma-infectious-2022
+    guideline_yaml: cma-infectious-2022.yaml
+    clinical_rules: rules/clinical_infectious_disease/infectious_disease_rules.yaml
+    doi: "10.3760/cma.j.cn112137-20260128-00313"
+    publisher_from_pdf: "中华医学会呼吸病学分会"
+    extracted_metadata: true
+    pdf_sections:
+      - id: "§1"
+        title: "共识制订方法"
+      - id: "§2"
+        title: "术语与耐药机制及传播"
+      - id: "§5"
+        title: "实验室检测"
+      - id: "§7"
+        title: "治疗"
+    sections:
+      - id: "§2"
+        title: "抗菌药物合理使用"
+        rules: [id-abx-narrow-first, id-abx-deescalation]
+
+  # === 妇产科 / OB/GYN ===
+  - pdf: "guidelines/originals/obgyn-中西医结合宫颈癌防治中国专家共识.pdf"
+    department: 妇产科
+    department_en: OB/GYN
+    togaf_abb: guideline-cma-obgyn-2022
+    guideline_yaml: cma-obgyn-2022.yaml
+    clinical_rules: rules/clinical_obgyn/obgyn_rules.yaml
+    doi: "10.12025/j.issn.1008-6358.2024.20240292"
+    extracted_metadata: true
+    sections:
+      - id: "§3"
+        title: "妇科肿瘤筛查"
+        rules: [obg-cervical-screen, obg-cervical-screening-schedule]
+
+  - pdf: "guidelines/originals/obgyn-妊娠合并风湿性疾病治疗管理医药专家共识.pdf"
+    department: 妇产科
+    department_en: OB/GYN
+    togaf_abb: guideline-cma-obgyn-2022
+    guideline_yaml: cma-obgyn-2022.yaml
+    clinical_rules: rules/clinical_obgyn/obgyn_rules.yaml
+    doi: ""
+    extracted_metadata: true
+    pdf_sections:
+      - id: "§1"
+        title: "妊娠合并系统性红斑狼疮"
+    sections:
+      - id: "§1"
+        title: "妊娠期管理"
+        rules: [obg-pregnancy-risk, obg-preeclampsia-screen, obg-gdm-screen]
+
+# ============================================================
+# 摘要
+# ============================================================
+# 总 PDF: 27
+# 含元数据: 13
+# 映射到 TOGAF ABB: 13
+# 涉及科室: 8 (心血管内科/内分泌科/急诊科/消化内科/老年病科/血液内科/重症医学科/感染内科/妇产科)
+# 关联临床规则文件: 9
+# 缺少 PDF 的指南 (需后续下载): kdigo-ckd-2024, csco-oncology-2024, 及未匹配科室的指南

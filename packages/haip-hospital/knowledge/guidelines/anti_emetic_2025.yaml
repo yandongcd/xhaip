@@ -1,0 +1,474 @@
+# ============================================================
+# Guideline Asset: 术后恶心呕吐诊疗指南（2025版）
+# TOGAF Class: Reference Library + Constraint (Extension ABB)
+# Trust Level: T1
+# Source: 中华麻醉学杂志 2025;45(9)
+# DOI: 10.3760/cma.j.cn131073-20250715-00903
+# ============================================================
+id: "guideline-ponv-2025"
+name: "术后恶心呕吐诊疗指南（2025版）"
+abbr: "PONV指南2025"
+version: "2025"
+publisher: "中华医学会麻醉学分会"
+journal: "中华麻醉学杂志 2025;45(9):1080-1101"
+language: zh-CN
+trust_level: T1
+
+description: >
+  中华医学会麻醉学分会组织多学科专家基于循证医学方法制定，
+  采用 GRADE 方法，就 PONV 管理中的 21 个临床问题形成 35 条推荐意见。
+  内容涵盖 PONV 危险因素识别、评估量表选择、麻醉方式优化、
+  多模式干预策略及联合疗法。
+
+methodology:
+  system: GRADE
+  evidence_levels: [high, moderate, low, very_low]
+  recommendation_strength: [strong, weak, GPS]
+  total_recommendations: 35
+  total_clinical_questions: 21
+
+key_sections:
+  - id: "§1"
+    title: "PONV 的风险评估"
+    stage_ids: [S1]
+    rule_ids: [ponv-risk-factors, ponv-apfel-score, ponv-povoc-score]
+    recommendation_ids: [R1, R2.1, R2.2]
+
+  - id: "§2"
+    title: "麻醉管理对 PONV 发生率的影响"
+    stage_ids: [S1, S2]
+    rule_ids: [anes-pnb, anes-epidural, anes-nsaid, anes-dexmedetomidine,
+               anes-naloxone, anes-tiva, anes-inhaled, anes-fluid]
+    recommendation_ids: [R3, R4, R5, R6, R7, R8, R9, R10.1, R10.2]
+
+  - id: "§3"
+    title: "药物防治 PONV 的有效性"
+    stage_ids: [S2, S3, S4]
+    rule_ids: [drug-5ht3, drug-corticosteroid, drug-nk1, drug-dopamine,
+               drug-anticholinergic, drug-antihistamine]
+    recommendation_ids: [R11.1, R11.2, R11.3, R11.4, R12.1, R12.2,
+                         R13, R14.1, R14.2, R14.3, R15, R16]
+
+  - id: "§4"
+    title: "非药物医疗措施防治 PONV 的有效性"
+    stage_ids: [S3, S4]
+    rule_ids: [nondrug-acupoint, nondrug-auricular, nondrug-carbs]
+    recommendation_ids: [R17.1, R17.2, R18, R19]
+
+  - id: "§5"
+    title: "生活预防措施防治 PONV 的有效性"
+    stage_ids: [S3, S4, S5]
+    rule_ids: [lifestyle-gum, lifestyle-music, lifestyle-psychology,
+               lifestyle-position, lifestyle-bath]
+    recommendation_ids: [R20.1, R20.2, R20.3, R20.4, R20.5]
+
+  - id: "§6"
+    title: "联合疗法的适应证、疗效和安全性"
+    stage_ids: [S2, S3, S4]
+    rule_ids: [combo-drug, combo-drug-acupoint]
+    recommendation_ids: [R21.1, R21.2]
+
+# ============================================================
+# 35 条推荐意见
+# ============================================================
+recommendations:
+
+  # ── §1 PONV 风险评估 ──
+  - id: R1
+    clinical_question: "PONV 的危险因素有哪些？"
+    statement: >
+      推荐在术前严格评估PONV的潜在危险因素：女性（强推荐，高质量证据）、
+      非吸烟者（强推荐，中等质量证据）、PONV史或晕动病史（强推荐，高质量证据）、
+      成人<50岁（强推荐，高质量证据）；儿童从3岁开始随年龄增长逐渐增加，
+      并于5-9岁达到峰值（GPS）；包括N2O在内的吸入麻醉药、阿片类药物、
+      新斯的明（相较于舒更葡糖钠）（强推荐，中等质量证据）；
+      全身麻醉较区域麻醉风险更高（强推荐，高质量证据）；
+      腹腔镜手术、妇科手术、胃肠道手术、耳鼻喉手术和开颅手术等（弱推荐，低质量证据）；
+      手术时间（弱推荐，高质量证据）
+    strength: strong
+    evidence_quality: high
+    category: risk_assessment
+
+  - id: R2.1
+    clinical_question: "PONV 的风险分层有何评估工具（量表）？"
+    statement: >
+      建议使用简化Apfel评分对成人患者进行风险分级，并采取相应预防措施（GPS）。
+      4个独立预测因素：女性、PONV和/或晕动病史、不吸烟、术后使用阿片类药物；
+      0/1/2/3/4分对应PONV发生率约10%/21%/39%/61%/79%。
+      0-1分=低危，2分=中危，≥3分=高危。
+    strength: GPS
+    evidence_quality: GPS
+    category: risk_assessment
+
+  - id: R2.2
+    clinical_question: "PONV 的风险分层有何评估工具（量表）？"
+    statement: >
+      建议使用儿童术后呕吐预测评分(POVOC-score)对儿童患者进行风险分级（GPS）。
+      4个独立因素：年龄≥3岁、手术时间≥30min、术中阿片类药物使用、
+      PONV和/或晕动病史；0/1/2/3/4分对应约9%/10%/30%/55%/70%。
+      0分=低危，1-2分=中危，≥3分=高危。
+    strength: GPS
+    evidence_quality: GPS
+    category: risk_assessment
+
+  # ── §2 麻醉管理 ──
+  - id: R3
+    clinical_question: "全身麻醉联合外周神经阻滞能否降低PONV发生率？"
+    statement: >
+      对预计术中或术后存在中重度疼痛的患者（排除凝血功能障碍、穿刺部位感染
+      及局部麻醉药过敏），建议使用全身麻醉联合外周神经阻滞，作为减少阿片类药物
+      用量的措施，以降低PONV发生率（弱推荐，中等质量证据）。
+      支持证据含股神经/坐骨神经/髂筋膜/腰丛/竖脊肌平面/菱形肌肋间/
+      前锯肌平面/头皮神经/胸腰筋膜平面阻滞。
+    strength: weak
+    evidence_quality: moderate
+    category: anesthesia_management
+
+  - id: R4
+    clinical_question: "全身麻醉联合椎管内麻醉能否降低PONV发生率？"
+    statement: >
+      对预计术中或术后存在中重度疼痛的成人非心脏重大手术患者（排除凝血功能障碍、
+      严重脊柱畸形及血流动力学不稳定），建议使用全身麻醉联合硬膜外麻醉，
+      作为减少阿片类药物用量的措施，以降低PONV发生率（弱推荐，低质量证据）。
+    strength: weak
+    evidence_quality: low
+    category: anesthesia_management
+
+  - id: R5
+    clinical_question: "围手术期使用对乙酰氨基酚、非甾体抗炎药的患者，其PONV发生率是否会降低？"
+    statement: >
+      在需要使用对乙酰氨基酚或非甾体抗炎药的患者中，建议使用布洛芬，
+      作为减少阿片类药物用量的措施，以降低PON发生率（弱推荐，中等质量证据）。
+      COX-2抑制剂（塞来昔布/帕瑞昔布等）预防PONV效果尚有争议。
+    strength: weak
+    evidence_quality: moderate
+    category: anesthesia_management
+
+  - id: R6
+    clinical_question: "围手术期使用右美托咪定的患者，其PONV发生率是否会降低？"
+    statement: >
+      建议在无右美托咪定禁忌证的全身麻醉患者中使用右美托咪定，
+      作为减少阿片类药物用量的措施，应用于术中镇静或术后患者自控静脉镇痛，
+      以降低PONV发生率（弱推荐，中等质量证据）。
+    strength: weak
+    evidence_quality: moderate
+    category: anesthesia_management
+
+  - id: R7
+    clinical_question: "使用阿片受体拮抗剂的患者，其PONV发生率是否会降低？"
+    statement: >
+      对阿片类药物过量导致呼吸抑制/过度镇静需使用阿片受体拮抗剂逆转的成人患者，
+      建议选择纳洛酮，通过拮抗μ受体，降低PONV发生率（弱推荐，低质量证据）。
+      纳美芬仅对PONV总发生率有显著降低作用，对单独PON或POV无显著影响。
+    strength: weak
+    evidence_quality: low
+    category: anesthesia_management
+
+  - id: R8
+    clinical_question: "丙泊酚静脉麻醉是否能降低PONV发生率？"
+    statement: >
+      建议有PONV风险的全身麻醉患者优先使用丙泊酚为基础的全凭静脉麻醉(TIVA)，
+      以降低PONV发生率（弱推荐，中等质量证据）。
+      相比吸入麻醉，TIVA可显著降低PONV发生率约39%。
+    strength: weak
+    evidence_quality: moderate
+    category: anesthesia_management
+
+  - id: R9
+    clinical_question: "吸入麻醉药应用是否会增加PONV发生率？"
+    statement: >
+      建议对PONV高风险患者谨慎采用吸入麻醉，以降低PONV发生率
+      （弱推荐，低质量证据）。避免使用吸入麻醉药可降低约19%的PONV发生率。
+    strength: weak
+    evidence_quality: low
+    category: anesthesia_management
+
+  - id: R10.1
+    clinical_question: "是否推荐应用开放性液体治疗策略预防PONV？"
+    statement: >
+      对于全身麻醉患者，建议围手术期维持适当的液体平衡，
+      以减少循环容量不足引起的PONV（弱推荐，中等质量证据）。
+      补充晶体液10-30ml/kg可显著降低PONV发生率。
+    strength: weak
+    evidence_quality: moderate
+    category: anesthesia_management
+
+  - id: R10.2
+    clinical_question: "如需液体治疗预防PONV，应选择晶体液还是胶体液？"
+    statement: >
+      对于预计手术时间>3h的患者，与晶体液相比，建议使用适量胶体液，
+      有效地维持血容量稳定，以减少循环容量不足引起的PONV
+      （弱推荐，低质量证据）。麻醉时间<3h者两液无显著差异。
+    strength: weak
+    evidence_quality: low
+    category: anesthesia_management
+
+  # ── §3 药物防治 ──
+  - id: R11.1
+    clinical_question: "是否推荐使用5-HT3受体拮抗剂防治PONV？"
+    statement: >
+      推荐使用5-HT3受体拮抗剂以降低PONV发生率（强推荐，中等质量证据）。
+      覆盖一代（昂丹司琼/格拉司琼/托烷司琼/多拉司琼）及二代（帕洛诺司琼/雷莫司琼）。
+    strength: strong
+    evidence_quality: moderate
+    category: drug_prevention
+
+  - id: R11.2
+    clinical_question: "是否推荐使用5-HT3受体拮抗剂防治PONV？"
+    statement: >
+      推荐使用5-HT3受体拮抗剂以提高PONV缓解率（强推荐，中等质量证据）。
+    strength: strong
+    evidence_quality: moderate
+    category: drug_prevention
+
+  - id: R11.3
+    clinical_question: "预防性使用5-HT3受体拮抗剂的给药时机如何选择？"
+    statement: >
+      对于长效5-HT3受体拮抗剂，建议在麻醉诱导前给药，
+      可降低术后6-24h恶心呕吐发生率（弱推荐，低质量证据）。
+      帕洛诺司琼半衰期约40h，诱导前使用可覆盖术后24h高风险期。
+    strength: weak
+    evidence_quality: low
+    category: drug_prevention
+
+  - id: R11.4
+    clinical_question: "预防性使用5-HT3受体拮抗剂的给药时机如何选择？"
+    statement: >
+      对于短效5-HT3受体拮抗剂，建议在临近手术结束时给药（GPS）。
+      昂丹司琼半衰期约3-6h，术毕给药可迅速预防术后早期恶心呕吐。
+    strength: GPS
+    evidence_quality: GPS
+    category: drug_prevention
+
+  - id: R12.1
+    clinical_question: "是否推荐使用皮质类固醇防治PONV？"
+    statement: >
+      推荐无糖皮质激素禁忌证的成人患者使用地塞米松或甲泼尼龙
+      以降低PONV发生率（强推荐，中等质量证据）。
+      地塞米松静注后约10min起效，单剂量药效可持续24h以上。
+    strength: strong
+    evidence_quality: moderate
+    category: drug_prevention
+
+  - id: R12.2
+    clinical_question: "是否推荐使用皮质类固醇防治PONV？"
+    statement: >
+      推荐无糖皮质激素禁忌证的3岁及以上儿童患者，在手术开始前使用地塞米松
+      以降低术后24h内恶心呕吐发生率（强推荐，高质量证据）。
+    strength: strong
+    evidence_quality: high
+    category: drug_prevention
+
+  - id: R13
+    clinical_question: "是否推荐使用NK1受体拮抗剂防治PONV？"
+    statement: >
+      建议成人患者使用NK1受体拮抗剂（福沙匹坦或阿瑞匹坦）
+      以降低PONV发生率（弱推荐，中等质量证据）。
+      福沙匹坦是所有单药中预防POV效果最佳的药物，单用效果与部分三联疗法相当。
+    strength: weak
+    evidence_quality: moderate
+    category: drug_prevention
+
+  - id: R14.1
+    clinical_question: "是否推荐使用多巴胺受体拮抗剂防治PONV？"
+    statement: >
+      推荐PONV中高风险成人患者使用低剂量氨磺必利（5mg）
+      以降低PONV发生率（强推荐，中等质量证据）。
+    strength: strong
+    evidence_quality: moderate
+    category: drug_prevention
+
+  - id: R14.2
+    clinical_question: "是否推荐使用多巴胺受体拮抗剂防治PONV？"
+    statement: >
+      建议成人患者使用氨磺必利5或10mg以提高PONV缓解率
+      （弱推荐，高质量证据）。
+    strength: weak
+    evidence_quality: high
+    category: drug_prevention
+
+  - id: R14.3
+    clinical_question: "是否推荐使用多巴胺受体拮抗剂防治PONV？"
+    statement: >
+      建议有PONV风险，且排除重症肌无力、锥体外系疾病史、QT间期延长、
+      电解质紊乱、低血压倾向及帕金森病史的成人患者，使用低剂量氟哌利多（0.625mg）
+      以降低POV发生率（弱推荐，中等质量证据）。
+    strength: weak
+    evidence_quality: moderate
+    category: drug_prevention
+
+  - id: R15
+    clinical_question: "是否推荐使用抗胆碱能药防治PONV？"
+    statement: >
+      建议有PONV风险，且排除青光眼、前列腺增生、老年或谵妄病史的患者，
+      使用戊乙奎醚（0.01mg/kg，最大剂量不超过0.5mg）
+      以降低PONV发生率（弱推荐，中等质量证据）。
+    strength: weak
+    evidence_quality: moderate
+    category: drug_prevention
+
+  - id: R16
+    clinical_question: "是否推荐使用抗组胺药防治PONV？"
+    statement: >
+      建议排除闭角型青光眼、癫痫病史和重症肌无力病史的剖宫产患者，
+      使用抗组胺药中的茶苯海明或赛克利嗪以降低PONV发生率
+      （弱推荐，中等质量证据）。
+    strength: weak
+    evidence_quality: moderate
+    category: drug_prevention
+
+  # ── §4 非药物医疗措施 ──
+  - id: R17.1
+    clinical_question: "是否推荐应用穴位刺激防治PONV？"
+    statement: >
+      建议使用穴位刺激以降低PONV发生率（弱推荐，极低质量证据）。
+      经皮穴位电刺激(TEAS)可显著降低全身麻醉术后PONV发生率，
+      合谷/内关/足三里为最常用取穴组合。
+    strength: weak
+    evidence_quality: very_low
+    category: non_drug
+
+  - id: R17.2
+    clinical_question: "是否推荐应用穴位刺激防治PONV？"
+    statement: >
+      建议使用穴位刺激以提高PONV缓解率（GPS）。
+    strength: GPS
+    evidence_quality: GPS
+    category: non_drug
+
+  - id: R18
+    clinical_question: "是否推荐应用耳穴刺激防治PONV？"
+    statement: >
+      建议使用耳穴刺激以降低PON发生率（弱推荐，极低质量证据）。
+      耳穴（神门/胃/交感）联合药物可降低腹腔镜/妇科手术后PONV发生率。
+    strength: weak
+    evidence_quality: very_low
+    category: non_drug
+
+  - id: R19
+    clinical_question: "是否推荐术前口服碳水化合物饮料预防PONV？"
+    statement: >
+      建议无禁忌证的患者术前2h适量口服碳水化合物饮料以降低PONV发生率
+      （弱推荐，极低质量证据）。成人≤400ml，老年200ml，儿童5ml/kg。
+    strength: weak
+    evidence_quality: very_low
+    category: non_drug
+
+  # ── §5 生活方式干预 ──
+  - id: R20.1
+    clinical_question: "是否推荐使用咀嚼口香糖用于防治PONV？"
+    statement: >
+      建议使用咀嚼口香糖以降低POV发生率（弱推荐，中等质量证据）。
+      机制为激活口腔-迷走神经反射，加速胃肠蠕动。
+    strength: weak
+    evidence_quality: moderate
+    category: lifestyle
+
+  - id: R20.2
+    clinical_question: "是否推荐使用音乐用于防治PONV？"
+    statement: >
+      建议使用音乐以降低PONV发生率（弱推荐，极低质量证据）。
+      降低β-内啡肽水平，调节杏仁核和海马活动。
+    strength: weak
+    evidence_quality: very_low
+    category: lifestyle
+
+  - id: R20.3
+    clinical_question: "是否推荐使用心理暗示用于防治PONV？"
+    statement: >
+      建议使用正向引导，避免负面心理暗示以降低PONV发生率
+      （弱推荐，低质量证据）。
+    strength: weak
+    evidence_quality: low
+    category: lifestyle
+
+  - id: R20.4
+    clinical_question: "是否推荐体位改变用于防治PONV？"
+    statement: >
+      建议使用"头高位"的体位以降低PONV发生率（弱推荐，低质量证据）。
+    strength: weak
+    evidence_quality: low
+    category: lifestyle
+
+  - id: R20.5
+    clinical_question: "是否推荐擦浴护理用于防治PONV？"
+    statement: >
+      不建议将擦浴护理作为PONV的预防措施（弱推荐，低质量证据）。
+      擦浴护理未见明显获益。
+    strength: weak
+    evidence_quality: low
+    category: lifestyle
+
+  # ── §6 联合疗法 ──
+  - id: R21.1
+    clinical_question: "药物二联或三联疗法的适应证和使用策略？"
+    statement: >
+      由于风险评分并不能完全预测PONV风险，建议对所有手术患者均使用1-2种止吐药。
+      建议对PONV中、高风险患者采用药物二联或三联疗法，
+      选择5-HT3拮抗剂、皮质类固醇、NK1受体拮抗剂、多巴胺受体拮抗剂、
+      抗胆碱能药和抗组胺药中的2-3种（GPS）。
+      常用方案：地塞米松+昂丹司琼，或地塞米松+甲氧氯普胺+昂丹司琼。
+    strength: GPS
+    evidence_quality: GPS
+    category: combination
+
+  - id: R21.2
+    clinical_question: "药物和穴位刺激组合的二联或三联疗法的适应证和使用策略？"
+    statement: >
+      建议对存在用药顾虑的PONV中、高风险患者，采用药物和穴位刺激组合
+      的二联或三联疗法（GPS）。
+    strength: GPS
+    evidence_quality: GPS
+    category: combination
+
+# ============================================================
+# 危险因素清单
+# ============================================================
+risk_factors:
+  patient:
+    - factor: "女性"
+      evidence: strong_high
+      detail: "女性PONV发生率为男性的2-3倍"
+    - factor: "非吸烟者"
+      evidence: strong_moderate
+      detail: "吸烟可能通过诱导肝酶活性或降低多巴胺受体敏感性减少PONV风险"
+    - factor: "PONV史或晕动病史"
+      evidence: strong_high
+      detail: "中枢呕吐阈值较低，风险显著增加"
+    - factor: "成人<50岁"
+      evidence: strong_high
+      detail: "可能与神经反射随年龄减弱相关"
+    - factor: "儿童3岁~9岁峰值"
+      evidence: GPS
+      detail: "3岁以上每增1岁风险递增0.2%-0.8%，5-9岁峰值"
+  anesthesia:
+    - factor: "吸入麻醉药（含N2O）"
+      evidence: strong_moderate
+      detail: "剂量依赖性，术后2-6h尤为突出"
+    - factor: "阿片类药物"
+      evidence: strong_moderate
+      detail: "剂量依赖性，与种类无关，可持续整个术后用药期"
+    - factor: "新斯的明（vs 舒更葡糖钠）"
+      evidence: strong_moderate
+      detail: "拟胆碱作用可能是导致PONV的原因"
+    - factor: "全身麻醉（vs 区域麻醉）"
+      evidence: strong_high
+      detail: "区域阻滞麻醉PONV发生率更低"
+  surgery:
+    - factor: "手术时间"
+      evidence: weak_high
+      detail: "时间越长风险越高"
+    - factor: "手术类型"
+      evidence: weak_low
+      detail: "腹腔镜/妇科/胃肠道/耳鼻喉/开颅手术风险较高"
+  not_confirmed:
+    - factor: "肥胖（BMI≥30kg/m2）"
+    - factor: "鼻胃管"
+    - factor: "高浓度吸氧"
+    - factor: "术前焦虑（证据不一致）"
+    - factor: "高ASA分级（证据不一致）"
+
+rule_sets_covered:
+  - anti_emetic
+derived_rule_count: 35
+last_updated: 2026-07-11

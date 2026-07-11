@@ -329,7 +329,7 @@ def _check_guideline_refs(
     missing: list[str] = []
     for ref_id in refs:
         # Check exact, substring, and filename-variant matches
-        ref_lower = ref_id.lower()
+        ref_id.lower()
         ref_stem = ref_id.lower().replace(" ", "-").replace("/", "-")[:40]
         if ref_id not in existing and ref_stem not in existing:
             # Fuzzy: check if any existing entry contains significant words from ref
@@ -414,7 +414,7 @@ def _check_data_entity_refs(
     for step in steps:
         if isinstance(step, str):
             continue  # Skip string-only placeholder steps
-        step_id = step.get("id", step.get("name", "?"))
+        step.get("id", step.get("name", "?"))
         data_used = step.get("data_used")
         if data_used and isinstance(data_used, list):
             all_data_refs.extend(data_used)

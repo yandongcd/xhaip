@@ -1,0 +1,81 @@
+# ============================================================
+# Business Process: 术后 PONV 监测与补救
+# TOGAF Class: BusinessProcess + ProcessStep (Core ABB)
+# Trust Level: T1
+# ============================================================
+name: bp-ponv-postop-rescue
+version: "1.0"
+description: 术后 PONV 监测与补救治疗 — PACU/病房内发生 PONV 的处理流程
+owner: 麻醉医师
+value_stages:
+  - 术后恢复
+guideline_refs:
+  - guideline-ponv-2025
+steps:
+  - id: bp-ponv06-1
+    name: PONV 监测与评估
+    actor: 麻醉护士
+    description: |
+      术后 48h 内持续监测：
+      1. 恶心 VAS 评分（0=无，10=最难忍受）
+      2. 呕吐/干呕事件记录
+      3. 生命体征监测
+      4. 排除药物或机械性因素（吗啡 PCA/咽部血液引流/腹部梗阻）
+    data_used: [de-patient]
+    decision: "是否发生 PONV？→ 否(继续观察) | 是(进入补救流程)"
+
+  - id: bp-ponv06-2
+    name: 未预防者的首次补救
+    actor: 麻醉医师
+    description: |
+      患者未接受预防性用药，首次发生 PONV：
+      首选小剂量 5-HT3 拮抗剂：
+      - 昂丹司琼 1mg IV（预防剂量的 1/4）
+      - 多拉司琼 12.5mg IV
+      - 格拉司琼 0.1mg IV
+      备选：地塞米松 2-4mg / 氟哌利多 0.625mg / 异丙嗪 6.25-12.5mg
+      PACU 内可考虑丙泊酚 20mg IV
+    data_used: [de-outcome]
+    decision: null
+    implementation:
+      module: pharmacy.antiemetic.drug_recommend
+      tool: recommend_rescue
+
+  - id: bp-ponv06-3
+    name: 已预防者的补救
+    actor: 麻醉医师
+    description: |
+      已使用预防性用药但无效：
+      - 6h 内：换用不同机制药物（不重复原预防药物）
+      - 6h 后：可重复 5-HT3 拮抗剂 + 氟哌利多（剂量同前）
+      - 地塞米松不推荐重复使用
+    data_used: [de-regimen, de-outcome]
+    decision: null
+    implementation:
+      module: pharmacy.antiemetic.drug_recommend
+      tool: recommend_rescue
+
+  - id: bp-ponv06-4
+    name: 三联疗法失败后处理
+    actor: 麻醉医师
+    description: |
+      三联疗法（5-HT3+地塞米松+氟哌利多）预防后仍发生 PONV：
+      - 6h 内不重复原三联药物组合
+      - 换用其他类型止吐药
+      - 考虑非药物干预（穴位刺激/耳穴）
+    data_used: [de-regimen, de-outcome]
+    decision: null
+
+  - id: bp-ponv06-5
+    name: 出院后 PDNV 评估
+    actor: 麻醉护士
+    description: |
+      出院前评估 PDNV 风险：
+      使用 PDNV 5因子评分（女性/年龄<50/ONV史/PACU阿片/PACU恶心）
+      0-5分对应 10%-80% 风险
+      给出出院后止吐建议
+    data_used: [de-risk-score]
+    decision: null
+    implementation:
+      module: pharmacy.antiemetic.scoring_engine
+      tool: calculate_pdnv_score

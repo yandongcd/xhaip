@@ -14,17 +14,17 @@ prompt:
 tools:
   - name: assess_cancer
     description: 癌痛评估 (WHO 阶梯 + 爆发痛 + 神经病理)
-    handler: cancer_pain.assess_cancer
+    handler: cancer_pain.assess
     input: {patient_id: str}
 
   - name: opioid_safety
     description: 阿片类药物安全评估 (过量/DDI/器官功能)
-    handler: cancer_pain.opioid_safety
+    handler: cancer_pain.safety
     input: {patient_id: str}
 
   - name: palliative_refer
     description: 姑息治疗转介评估
-    handler: cancer_pain.palliative_refer
+    handler: cancer_pain.palliative
     input: {patient_id: str}
 
 guard:
