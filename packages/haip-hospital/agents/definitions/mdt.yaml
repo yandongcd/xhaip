@@ -1,0 +1,45 @@
+name: mdt
+cn_name: MDT 会诊智能体
+version: "1.0.0"
+type: skill
+department: 跨科室
+port: 8773
+aliases: [MDT, 多学科会诊, 会诊]
+
+prompt:
+  system: |
+    你是南方医院 MDT 多学科会诊技能智能体，负责聚合心内科、麻醉科、骨科、疼痛管理
+    等多个专科 Agent 的评估结果，生成结构化 MDT 会诊纪要。
+    支持降级模式：部分 Agent 不可用时标注"待补充"，不中断 MDT 流程。
+    注意：MDT 纪要由 AI 辅助生成，需经多学科团队人工审核确认后方可作为临床决策依据。
+  temperature: 0.2
+  max_tokens: 2048
+
+tools:
+  - name: mdt_aggregate
+    description: MDT 多学科会诊聚合 (心内+麻醉+骨科+疼痛 → 结构化纪要)
+    handler: orthopedics.mdt.mdt_aggregate
+    input: {patient_id: str, chief_complaint: str, cardio_eval: dict, anesthesia_eval: dict, orthopedic_eval: dict, pain_eval: dict}
+
+  - name: mdt_summary
+    description: MDT 会诊纪要摘要 (Markdown 格式)
+    handler: orthopedics.mdt.mdt_summary
+    input: {mdt_result: dict}
+
+guard:
+  triggers: [MDT 意见分歧, 超指南推荐]
+  high_risk_scenarios:
+    - MDT 多方评估结果严重冲突
+    - 手术时机超 48h 窗口期
+    - 高风险麻醉+高风险手术叠加
+
+depends_on:
+  - agent: cardio-risk
+    version: ">=1.0"
+    note: "心内科评估 — 降级模式下可选"
+  - agent: anesthesia-risk
+    version: ">=1.0"
+    note: "麻醉评估 — 降级模式下可选"
+  - agent: pain-management
+    version: ">=1.0"
+    note: "疼痛管理 — 可选"
