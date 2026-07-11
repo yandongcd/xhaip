@@ -2,6 +2,7 @@ name: anesthesia-risk
 cn_name: 围术期麻醉评估
 version: "1.0.0"
 type: specialist
+department: 跨科室
 aliases: [麻醉评估, 麻醉科, anesthesia]
 
 prompt:

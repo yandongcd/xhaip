@@ -2,6 +2,7 @@ name: cardio-risk
 cn_name: 围术期心脏评估
 version: "1.0.0"
 type: specialist
+department: 跨科室
 port: 8801
 aliases: [心脏评估, 心内科, cardio-risk]
 

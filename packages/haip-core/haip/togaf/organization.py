@@ -386,6 +386,12 @@ _ORG_TREE_RAW: list[dict] = [
     {"id": "branch-east", "name": "东院区", "type": "branch", "parent": "branches"},
     {"id": "branch-south", "name": "南院区", "type": "branch", "parent": "branches"},
     {"id": "branch-community", "name": "社区医疗中心", "type": "branch", "parent": "branches"},
+
+    # ── 特殊 (2) — 跨科室 / 全院 ──
+    {"id": "cross-dept", "name": "跨科室", "type": "cross_dept",
+     "desc": "跨科室协作 Agent，服务多个科室，不隶属于单一科室。"},
+    {"id": "hospital-wide", "name": "全院", "type": "hospital_wide",
+     "desc": "全院级 Agent，服务所有科室和部门。"},
 ]
 
 

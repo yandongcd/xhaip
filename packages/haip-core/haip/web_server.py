@@ -30,19 +30,18 @@ YAML_DIR = PROJECT_ROOT / "packages" / "haip-hospital" / "agents" / "definitions
 PATIENTS_FILE = PROJECT_ROOT / "packages" / "haip-hospital" / "data" / "patients.json"
 
 # 启动时加载所有 Agent（含 TOGAF 校验）
-def _togaf_on_register(plugin) -> None:
-    """TOGAF architecture validation callback — runs on each agent registration."""
-    try:
-        from haip.togaf.validator import validate_agent
-        report = validate_agent(plugin.name, registry=_registry)
-        if report and not report.passed:
-            failed = [c.id for c in report.checks if not c.passed]
+load_from_dir(str(YAML_DIR))
+# TOGAF validation — run after all agents loaded so CHK-004 dependency graph sees full registry
+try:
+    from haip.togaf.validator import validate_all  # noqa: E402
+    reports = validate_all(registry=_registry)
+    for r in reports:
+        if not r.passed:
+            failed = [c.id for c in r.checks if not c.passed]
             import sys
-            print(f"  [TOGAF] ⚠ {plugin.name}: {len(failed)} checks failed — {failed}", file=sys.stderr)
-    except Exception:
-        pass  # Silent — TOGAF validation is best-effort at startup
-
-load_from_dir(str(YAML_DIR), on_register=_togaf_on_register)
+            print(f"  [TOGAF] ⚠ {r.agent_name}: {len(failed)} checks failed — {failed}", file=sys.stderr)
+except Exception:
+    pass
 case_mgr = CaseManager()
 if PATIENTS_FILE.exists():
     case_mgr.load(PATIENTS_FILE.parent)
