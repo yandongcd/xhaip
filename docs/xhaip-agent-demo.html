@@ -5,107 +5,240 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>xhaip — 南方医院 Agent 功能演示</title>
 <style>
-:root { --primary: #C8102E; --bg: #F5F6FA; --card: #FFF; --text: #1a1a1a; --text2: #666; --border: #E2E4EA; --success: #22C55E; --warn: #F59E0B; --info: #3B82F6; --purple: #8B5CF6; --arch: #F97316; }
+:root {
+  --red: #C8102E; --red-light: #FFF5F5;
+  --bg: #F0F2F5; --surface: #FFFFFF; --surface-hover: #F8FAFC;
+  --text: #1E293B; --text-secondary: #64748B; --text-tertiary: #94A3B8;
+  --border: #E2E8F0; --border-light: #F1F5F9;
+  --blue: #3B82F6; --blue-bg: #EFF6FF; --blue-text: #1E40AF;
+  --green: #22C55E; --green-bg: #F0FDF4; --green-text: #166534;
+  --purple: #8B5CF6; --purple-bg: #F5F3FF; --purple-text: #6D28D9;
+  --orange: #F97316; --orange-bg: #FFF7ED; --orange-text: #9A3412;
+  --amber: #F59E0B; --amber-bg: #FFFBEB;
+  --slate: #0F172A;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.04); --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 6px rgba(0,0,0,.05), 0 2px 4px rgba(0,0,0,.04);
+  --radius-sm: 6px; --radius: 10px; --radius-lg: 14px;
+  --transition: all .2s cubic-bezier(.4,0,.2,1);
+}
+
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family: -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
-.header { background: linear-gradient(135deg,#1a1a1a,#2B2B2B); color:#fff; padding:20px 32px; }
-.header h1 { font-size:22px; }
-.header .sub { color:rgba(255,255,255,.6); font-size:12px; margin-top:2px; }
 
-.container { max-width:1600px; margin:0 auto; padding:20px 32px; }
-.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:8px; margin-bottom:20px; }
-.card { background:var(--card); border-radius:8px; padding:12px 14px; box-shadow:0 1px 3px rgba(0,0,0,.06); border:1px solid var(--border); cursor:pointer; transition:all .15s; }
-.card:hover { border-color:var(--info); box-shadow:0 2px 8px rgba(59,130,246,.15); }
-.card.selected { border-color:var(--primary); background:#FFF5F5; }
-.card .agent-name { font-size:14px; font-weight:700; }
-.card .agent-cn { font-size:11px; color:var(--text2); margin:2px 0 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.card .tags { display:flex; gap:4px; flex-wrap:wrap; }
-.tag { font-size:10px; padding:2px 8px; border-radius:10px; font-weight:600; }
-.tag-business { background:#DBEAFE; color:#1E40AF; }
-.tag-specialist { background:#DCFCE7; color:#166534; }
-.tag-master { background:#F3E8FF; color:#6B21A8; }
-.tag-architecture { background:#FFEDD5; color:#9A3412; }
-.tag-tools { background:#F3F4F6; color:#4B5563; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+  background: var(--bg); color: var(--text); line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
 
-.search { margin-bottom:12px; }
-.search input { width:100%; padding:8px 14px; border:1px solid var(--border); border-radius:8px; font-size:13px; background:#fff; }
-.search input:focus { outline:none; border-color:var(--info); }
+.header {
+  background: linear-gradient(135deg, var(--slate) 0%, #1E293B 100%);
+  padding: 28px 32px; position: relative; overflow: hidden;
+}
+.header::after {
+  content: ''; position: absolute; top: 0; right: 0; width: 400px; height: 100%;
+  background: radial-gradient(circle at top right, rgba(200,16,46,.15), transparent 70%);
+}
+.header h1 { font-size: 24px; font-weight: 700; color: #FFF; letter-spacing: -.5px; position: relative; }
+.header .sub { color: rgba(255,255,255,.5); font-size: 13px; margin-top: 4px; position: relative; }
 
-.panel { background:var(--card); border-radius:8px; padding:20px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,.06); border:1px solid var(--border); }
-.panel h2 { font-size:16px; margin-bottom:12px; }
-.tool-row { display:flex; gap:8px; align-items:flex-start; margin:8px 0; }
-.tool-row select { padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-size:13px; min-width:200px; background:#fff; }
-.tool-row input, .tool-row textarea { padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-size:13px; flex:1; font-family:Consolas,monospace; background:#fff; }
-.tool-row textarea { height:80px; resize:vertical; }
-.tool-row button { padding:8px 20px; background:var(--primary); color:#fff; border:none; border-radius:6px; font-size:13px; cursor:pointer; font-weight:600; }
-.tool-row button:hover { opacity:.9; }
-.result { background:#1a1a1a; color:#e0e0e0; border-radius:6px; padding:16px; font-family:Consolas,monospace; font-size:12px; line-height:1.6; max-height:400px; overflow-y:auto; white-space:pre-wrap; }
-.result .ok { color:#22C55E; } .result .err { color:#EF4444; } .result .key { color:#60A5FA; }
-.info-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:16px; }
-.info-item { background:#F8F9FB; border-radius:6px; padding:12px; text-align:center; }
-.info-item .val { font-size:24px; font-weight:700; }
-.info-item .lbl { font-size:11px; color:var(--text2); text-transform:uppercase; margin-top:2px; }
-.section { margin-bottom:16px; }
-.section-title { font-size:14px; font-weight:700; padding:10px 16px; border-radius:8px 8px 0 0; display:flex; align-items:center; gap:8px; }
-.section-title .count { font-size:11px; font-weight:400; opacity:0.7; }
-.section-body { background:rgba(255,255,255,.5); border-radius:0 0 8px 8px; padding:8px; }
-.dept-chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
-.dept-chip { padding:6px 14px; border-radius:20px; font-size:12px; cursor:pointer; border:1px solid var(--border); background:var(--card); transition:all .15s; user-select:none; }
-.dept-chip:hover { border-color:var(--info); }
-.dept-chip.active { background:var(--primary); color:#FFF; border-color:var(--primary); }
-.dept-agents { display:none; grid-template-columns:repeat(auto-fill,minmax(440px,1fr)); gap:6px; margin-top:8px; }
-.dept-agents.open { display:grid; }
-.section-divider { height:2px; background:linear-gradient(to right,var(--border),transparent); margin:4px 0; }
+.container { max-width: 1440px; margin: 0 auto; padding: 24px 32px; }
+
+.stats-bar {
+  display: flex; gap: 1px; background: var(--border); border-radius: var(--radius); overflow: hidden;
+  margin-bottom: 20px; box-shadow: var(--shadow-sm);
+}
+.stat-item {
+  flex: 1; background: var(--surface); padding: 14px 20px; text-align: center; cursor: pointer;
+  transition: var(--transition); position: relative;
+}
+.stat-item:hover { background: var(--surface-hover); }
+.stat-item:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+.stat-item:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+.stat-value { font-size: 26px; font-weight: 700; letter-spacing: -.5px; }
+.stat-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
+.stat-dot { position: absolute; top: 12px; right: 14px; width: 6px; height: 6px; border-radius: 50%; }
+
+.search-bar { position: relative; margin-bottom: 20px; }
+.search-bar input {
+  width: 100%; padding: 12px 16px 12px 42px; border: 1px solid var(--border); border-radius: var(--radius);
+  font-size: 14px; background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+.search-bar input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,.1); }
+.search-bar::before {
+  content: '🔍'; position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  font-size: 14px; opacity: .5;
+}
+.search-bar input::placeholder { color: var(--text-tertiary); }
+
+.section { margin-bottom: 20px; animation: fadeIn .3s ease; }
+@keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+.section-header {
+  display: flex; align-items: center; gap: 10px; padding: 10px 16px; margin-bottom: 0;
+  border-radius: var(--radius) var(--radius) 0 0; font-size: 13px; font-weight: 700;
+}
+.section-header .icon { font-size: 16px; }
+.section-header .badge {
+  font-size: 11px; font-weight: 500; padding: 2px 10px; border-radius: 12px;
+  margin-left: auto; color: inherit; opacity: .8;
+}
+.section-body { padding: 12px; border-radius: 0 0 var(--radius) var(--radius); background: rgba(255,255,255,.6); }
+.dept-chips {
+  display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0 8px;
+  overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+}
+.dept-chips::-webkit-scrollbar { display: none; }
+.dept-chip {
+  padding: 7px 16px; border-radius: 20px; font-size: 13px; cursor: pointer;
+  border: 1.5px solid var(--border); background: var(--surface); color: var(--text-secondary);
+  transition: var(--transition); white-space: nowrap; font-weight: 500;
+}
+.dept-chip:hover { border-color: var(--red); color: var(--red); background: var(--red-light); }
+.dept-chip.active { background: var(--red); color: #FFF; border-color: var(--red); font-weight: 600; }
+
+.agent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 8px; margin-top: 4px; }
+.agent-grid.wide { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); }
+
+.agent-card {
+  background: var(--surface); border-radius: var(--radius); padding: 14px 16px;
+  border: 1px solid var(--border); cursor: pointer; transition: var(--transition);
+  box-shadow: var(--shadow-sm); display: flex; align-items: center; gap: 14px;
+}
+.agent-card:hover { border-color: var(--blue); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.agent-card.selected { border-color: var(--red); background: var(--red-light); box-shadow: 0 0 0 1px var(--red); }
+.agent-card .card-icon {
+  width: 40px; height: 40px; border-radius: var(--radius-sm); display: flex;
+  align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
+}
+.agent-card .card-body { flex: 1; min-width: 0; }
+.agent-card .card-name { font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.agent-card .card-meta { font-size: 11px; color: var(--text-secondary); margin-top: 2px; display: flex; gap: 10px; }
+.agent-card .card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.agent-card .card-port { font-size: 10px; color: var(--text-tertiary); }
+.maturity-badge {
+  font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 10px; letter-spacing: .5px;
+}
+.maturity-l3 { background: #DCFCE7; color: #166534; }
+.maturity-l2 { background: #FEF3C7; color: #92400E; }
+.maturity-l1 { background: #FEE2E2; color: #991B1B; }
+
+.tool-badge {
+  font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 8px;
+  background: var(--border-light); color: var(--text-secondary);
+}
+
+.panel {
+  background: var(--surface); border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+  box-shadow: var(--shadow); border: 1px solid var(--border);
+}
+.panel h2 { font-size: 15px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.panel h2::before { content: ''; width: 3px; height: 16px; background: var(--red); border-radius: 2px; }
+
+.tool-row { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; flex-wrap: wrap; }
+.tool-row select, .tool-row input, .tool-row textarea {
+  padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 13px; background: var(--surface); color: var(--text); font-family: inherit;
+  transition: var(--transition);
+}
+.tool-row select { min-width: 240px; }
+.tool-row select:focus, .tool-row input:focus, .tool-row textarea:focus {
+  outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,.08);
+}
+.tool-row textarea { flex: 1; height: 70px; resize: vertical; font-family: "SF Mono",Consolas,monospace; font-size: 12px; }
+
+.btn {
+  padding: 9px 20px; border: none; border-radius: var(--radius-sm); font-size: 13px;
+  font-weight: 600; cursor: pointer; transition: var(--transition); font-family: inherit;
+}
+.btn-primary { background: var(--red); color: #FFF; }
+.btn-primary:hover { background: #A00D24; }
+.btn-secondary { background: #F1F5F9; color: var(--text); }
+.btn-secondary:hover { background: #E2E8F0; }
+
+.result {
+  background: #1E293B; color: #CBD5E1; border-radius: var(--radius-sm);
+  padding: 16px; font-family: "SF Mono",Consolas,monospace; font-size: 12px;
+  line-height: 1.7; max-height: 360px; overflow-y: auto; white-space: pre-wrap;
+  border: 1px solid #334155;
+}
+
+.demo-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.demo-chip {
+  padding: 6px 14px; border: 1px solid var(--border); border-radius: 20px;
+  font-size: 12px; cursor: pointer; background: var(--surface); color: var(--text-secondary);
+  transition: var(--transition); font-family: inherit;
+}
+.demo-chip:hover { border-color: var(--red); color: var(--red); background: var(--red-light); }
+
+.loop-panel { border-left: 3px solid var(--purple); }
+.loop-panel h2::before { background: var(--purple); }
+
+.footer {
+  text-align: center; padding: 20px; color: var(--text-tertiary); font-size: 11px;
+  border-top: 1px solid var(--border); margin-top: 24px;
+}
+
+.empty-state { text-align: center; padding: 48px 20px; color: var(--text-tertiary); font-size: 14px; }
+
+@media (max-width: 768px) {
+  .container { padding: 16px; }
+  .header { padding: 20px 16px; }
+  .stats-bar { flex-wrap: wrap; }
+  .stat-item { flex: 1 1 33%; }
+  .agent-grid, .agent-grid.wide { grid-template-columns: 1fr; }
+  .agent-card .card-right { display: none; }
+}
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>xhaip — 南方医院 Agent 功能演示</h1>
-  <div class="sub">科室分组 · 功能命名 · 动态加载 · TOGAF 成熟度排序</div>
+  <h1>xhaip — 南方医院 AI Agent 平台</h1>
+  <div class="sub">科室分组的业务智能体 · 可复用的技能智能体 · 数据与架构支撑</div>
 </div>
 
 <div class="container">
 
-<div class="info-grid" id="stats"></div>
+<div class="stats-bar" id="stats"></div>
 
-<div class="search"><input type="text" id="search-input" placeholder="搜索 Agent（名称/科室/类型）..." oninput="filterAgents()"></div>
-<div class="grid" id="agent-grid"></div>
+<div class="search-bar">
+  <input type="text" id="search-input" placeholder="搜索智能体（名称 / 科室 / 功能）..." oninput="filterAgents()">
+</div>
+
+<div id="agent-grid"></div>
 
 <div class="panel" id="detail-panel" style="display:none">
   <h2 id="detail-title"></h2>
   <div class="tool-row">
-    <select id="patient-select" style="min-width:280px" onchange="onPatientSelect()">
+    <select id="patient-select" onchange="onPatientSelect()">
       <option value="">-- 选择数字病人 --</option>
     </select>
-    <span id="patient-info" style="font-size:11px;color:var(--text2);margin-left:8px"></span>
+    <span id="patient-info" style="font-size:12px;color:var(--text-secondary)"></span>
   </div>
   <div class="tool-row">
     <select id="tool-select"><option>-- 选择工具 --</option></select>
-    <button onclick="callTool()">执行调用</button>
+    <button class="btn btn-primary" onclick="callTool()">执行调用</button>
   </div>
   <div id="tool-params" style="margin-top:8px"></div>
-  <div class="result" id="tool-result">点击「执行调用」查看结果...</div>
+  <div class="result" id="tool-result">选择 Agent 和工具后点击「执行调用」查看返回结果</div>
 </div>
 
 <div class="panel">
   <h2>快速演示</h2>
-  <div id="demos"></div>
-  <div class="result" id="demo-result" style="margin-top:8px">点击上方按钮运行演示...</div>
+  <div class="demo-chips" id="demos"></div>
+  <div class="result" id="demo-result" style="margin-top:10px">点击上方按钮运行演示...</div>
 </div>
 
-<div class="panel" style="border-left:3px solid #8B5CF6">
-  <h2>Loop Engineering Demo — ReAct 多步推理</h2>
-  <p style="font-size:12px;color:var(--text2);margin-bottom:12px">
-    演示 LLM 自主规划调用风险评估 → 用药推荐 → 管控审核 → 综合回答的完整推理链路
+<div class="panel loop-panel">
+  <h2>Loop Engineering — ReAct 多步推理</h2>
+  <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px">
+    LLM 自主规划：风险评估 → 用药推荐 → 管控审核 → 综合回答
   </p>
   <div class="tool-row">
-    <button onclick="runLoopDemo()" style="background:#8B5CF6">运行 Loop 演示</button>
-    <span id="loop-status" style="font-size:12px;color:var(--text2)"></span>
+    <button class="btn" onclick="runLoopDemo()" style="background:var(--purple);color:#FFF">运行 Loop 演示</button>
+    <span id="loop-status" style="font-size:12px;color:var(--text-secondary)"></span>
   </div>
-  <div class="result" id="loop-demo-result" style="margin-top:8px">点击运行查看 ReAct Loop 推理过程...</div>
-</div>
-  <div class="result" id="loop-demo-result" style="margin-top:8px">点击运行查看 ReAct Loop 推理过程...</div>
+  <div class="result" id="loop-demo-result" style="margin-top:10px">点击运行查看 ReAct Loop 推理过程...</div>
 </div>
 
 </div>
@@ -119,142 +252,105 @@ const API_ONLINE = true;
 let AGENTS = [];
 let selectedAgent = null, allPatients = [], currentPatient = null;
 
-const TYPE_LABELS = {
-  business:  { label: 'Business Agent', icon: '🏥', color: '#3B82F6' },
-  specialist: { label: 'Specialist Agent', icon: '🔬', color: '#22C55E' },
-  master_data: { label: 'Master Data Agent', icon: '🗄️', color: '#8B5CF6' },
-  architecture: { label: 'Architecture Agent', icon: '🏗️', color: '#F97316' },
+const TYPE_CONFIG = {
+  business:  { label: '科室业务', icon: '🏥', color: '#3B82F6', bg: '#EFF6FF', text: '#1E40AF' },
+  specialist: { label: '技能', icon: '🔬', color: '#22C55E', bg: '#F0FDF4', text: '#166534' },
+  master_data: { label: '数据', icon: '🗄️', color: '#8B5CF6', bg: '#F5F3FF', text: '#6D28D9' },
+  architecture: { label: '架构', icon: '🏗️', color: '#F97316', bg: '#FFF7ED', text: '#9A3412' },
 };
 
-const TYPE_ORDER = ['business', 'specialist', 'master_data', 'architecture'];
-
 function loadAgents() {
-  const grid = document.getElementById('agent-grid');
-  grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">加载 Agent 列表中...</div>';
-
+  document.getElementById('agent-grid').innerHTML = '<div class="empty-state">⏳ 加载智能体列表中...</div>';
   fetch(API_BASE + '/api/agents')
     .then(r => r.json())
     .then(raw => {
       if (!Array.isArray(raw)) { showError('API 返回格式异常'); return; }
       AGENTS = raw.map(a => {
-        const toolCount = (a.tools || []).length;
-        const typeBonus = { business: 5, architecture: 10, specialist: 0, master_data: 2 };
-        const mat = Math.min(100, 60 + Math.min(toolCount, 10) * 3 + (typeBonus[a.type] || 0));
-        return {
-          name: a.name,
-          cn: a.cn_name || a.name,
-          type: a.type || 'business',
-          port: a.port || 0,
-          dept: a.department || '-',
-          tags: toolCount,
-          tools: a.tools || [],
-          mat: mat,
-          desc: (a.tools || []).slice(0, 3).map(t => t.name).join(' / ') || '-',
-          depends_on: a.depends_on || [],
-        };
+        const tc = (a.tools || []).length;
+        const tb = { business: 5, architecture: 10, specialist: 0, master_data: 2 };
+        const mat = Math.min(100, 60 + Math.min(tc, 10) * 3 + (tb[a.type] || 0));
+        return { name: a.name, cn: a.cn_name || a.name, type: a.type || 'business',
+          port: a.port || 0, dept: a.department || '-', tags: tc,
+          tools: a.tools || [], mat: mat, depends_on: a.depends_on || [] };
       });
       AGENTS.sort((a, b) => b.mat - a.mat);
-      renderStats();
-      renderAgents();
-      document.getElementById('meta-info').textContent =
-        'xhaip v1.1 · ' + AGENTS.length + ' Agents · TOGAF 10 Architecture · 动态加载 (API: /api/agents)';
+      renderStats(); renderAgents();
+      document.getElementById('meta-info').textContent = 'xhaip v1.1 · ' + AGENTS.length + ' Agents · TOGAF 架构治理 · 南方医院';
     })
-    .catch(e => { showError('API 未响应 — 请确认 xhaip 服务器已启动 (port 8769)'); });
+    .catch(e => { showError('API 未响应 — 请确认服务器已启动 (port 8769)'); });
 }
 
 function showError(msg) {
-  document.getElementById('agent-grid').innerHTML = '<div style="text-align:center;padding:40px;color:#EF4444">' + msg + '</div>';
-  document.getElementById('stats').innerHTML = '<div class="info-item"><div class="val" style="color:#EF4444">OFFLINE</div><div class="lbl">API 状态</div></div>';
+  document.getElementById('agent-grid').innerHTML = '<div class="empty-state" style="color:#EF4444">⚠ ' + msg + '</div>';
+  document.getElementById('stats').innerHTML = '<div class="stat-item"><div class="stat-value" style="color:#EF4444">OFFLINE</div><div class="stat-label">API 状态</div></div>';
 }
 
-const DEMOS = [
-  // quick demo buttons — uses agent names from YAML definitions
-];
-
 function renderStats() {
-  const counts = {};
-  AGENTS.forEach(a => counts[a.type] = (counts[a.type]||0) + 1);
-  const deptCount = new Set(AGENTS.filter(a => a.dept !== '跨科室' && a.dept !== '全院').map(a => a.dept)).size;
+  const c = {}; AGENTS.forEach(a => c[a.type] = (c[a.type]||0) + 1);
+  const depts = new Set(AGENTS.filter(a => a.dept !== '跨科室' && a.dept !== '全院').map(a => a.dept)).size;
   document.getElementById('stats').innerHTML = `
-    <div class="info-item"><div class="val" style="color:var(--primary)">${AGENTS.length}</div><div class="lbl">Agent 总数</div></div>
-    <div class="info-item"><div class="val" style="color:var(--info)">${counts.business||0}</div><div class="lbl">Business</div></div>
-    <div class="info-item"><div class="val" style="color:var(--success)">${counts.specialist||0}</div><div class="lbl">Specialist</div></div>
-    <div class="info-item"><div class="val" style="color:var(--purple)">${counts.master_data||0}</div><div class="lbl">Master Data</div></div>
-    <div class="info-item"><div class="val" style="color:var(--arch)">${counts.architecture||0}</div><div class="lbl">Architecture</div></div>
-    <div class="info-item"><div class="val" style="color:var(--warn)">${deptCount}</div><div class="lbl">科室覆盖</div></div>
-  `;
+    <div class="stat-item"><div class="stat-value" style="color:var(--red)">${AGENTS.length}</div><div class="stat-label">Agent 总数</div><div class="stat-dot" style="background:var(--red)"></div></div>
+    <div class="stat-item"><div class="stat-value" style="color:var(--blue)">${c.business||0}</div><div class="stat-label">科室业务</div><div class="stat-dot" style="background:var(--blue)"></div></div>
+    <div class="stat-item"><div class="stat-value" style="color:var(--green)">${c.specialist||0}</div><div class="stat-label">技能</div><div class="stat-dot" style="background:var(--green)"></div></div>
+    <div class="stat-item"><div class="stat-value" style="color:var(--purple)">${c.master_data||0}</div><div class="stat-label">数据</div><div class="stat-dot" style="background:var(--purple)"></div></div>
+    <div class="stat-item"><div class="stat-value" style="color:var(--orange)">${c.architecture||0}</div><div class="stat-label">架构</div><div class="stat-dot" style="background:var(--orange)"></div></div>
+    <div class="stat-item"><div class="stat-value" style="color:var(--amber)">${depts}</div><div class="stat-label">科室覆盖</div><div class="stat-dot" style="background:var(--amber)"></div></div>`;
 }
 
 function renderAgents() {
   const q = (document.getElementById('search-input')?.value || '').toLowerCase();
   const filtered = q ? AGENTS.filter(a => (a.cn+a.name+a.dept+a.type).toLowerCase().includes(q)) : AGENTS;
+  const biz = filtered.filter(a => a.type === 'business');
+  const spc = filtered.filter(a => a.type === 'specialist');
+  const mst = filtered.filter(a => a.type === 'master_data');
+  const arc = filtered.filter(a => a.type === 'architecture');
 
-  const business = filtered.filter(a => a.type === 'business');
-  const specialist = filtered.filter(a => a.type === 'specialist');
-  const master = filtered.filter(a => a.type === 'master_data');
-  const arch = filtered.filter(a => a.type === 'architecture');
+  const deptMap = {}; biz.forEach(a => { const d = a.dept || '其他'; if (!deptMap[d]) deptMap[d] = []; deptMap[d].push(a); });
+  const sortedDepts = Object.keys(deptMap).sort((a,b) => a.localeCompare(b,'zh'));
 
-  const deptMap = {};
-  business.forEach(a => {
-    const d = a.dept || '其他';
-    if (!deptMap[d]) deptMap[d] = [];
-    deptMap[d].push(a);
-  });
-  const sortedDepts = Object.keys(deptMap).sort((a, b) => a.localeCompare(b, 'zh'));
-
-  const grid = document.getElementById('agent-grid');
   const agentCard = a => {
-    const tc = { business: '#DBEAFE', specialist: '#DCFCE7', master_data: '#F3E8FF', architecture: '#FFEDD5' };
-    const tl = { business: '业务', specialist: '技能', master_data: '数据', architecture: '架构' };
-    const mc = a.mat >= 85 ? '#22C55E' : a.mat >= 75 ? '#F59E0B' : '#EF4444';
-    const mt = a.mat >= 85 ? 'L3' : a.mat >= 75 ? 'L2' : 'L1';
-    return `<div class="card" onclick="selectAgent('${a.name}')" id="card-${a.name}">
-      <div class="agent-name">${a.cn}</div>
-      <div class="agent-cn">${a.name}${a.port?':'+a.port:''}</div>
-      <div class="tags"><span class="tag" style="background:${tc[a.type]||'#F3F4F6'}">${tl[a.type]||a.type}</span><span class="tag tag-tools">${a.tags} tools</span><span class="tag" style="background:#F0FFF0;color:${mc};font-weight:700">${mt} ${a.mat}分</span></div></div>`;
+    const cfg = TYPE_CONFIG[a.type] || TYPE_CONFIG.business;
+    const mt = a.mat >= 85 ? 'l3' : a.mat >= 75 ? 'l2' : 'l1';
+    return `<div class="agent-card" onclick="selectAgent('${a.name}')" id="card-${a.name}">
+      <div class="card-icon" style="background:${cfg.bg}">${cfg.icon}</div>
+      <div class="card-body">
+        <div class="card-name">${a.cn}</div>
+        <div class="card-meta"><span>${a.name}</span></div>
+      </div>
+      <div class="card-right">
+        <span class="maturity-badge maturity-${mt}">${a.mat >= 85 ? 'L3' : a.mat >= 75 ? 'L2' : 'L1'} ${a.mat}</span>
+        <span class="tool-badge">${a.tags} tools</span>
+        <span class="card-port">${a.port ? ':' + a.port : ''}</span>
+      </div></div>`;
   };
 
   let html = '';
 
-  // 上栏: 科室业务智能体
-  html += '<div class="section">';
-  html += `<div class="section-title" style="background:#DBEAFE;color:#1E40AF"><span>科室业务智能体</span><span class="count">${business.length} 个</span></div>`;
-  html += '<div class="section-body">';
-  html += '<div class="dept-chips" id="dept-chips">';
-  sortedDepts.forEach((dept, i) => {
-    html += `<span class="dept-chip${i===0?' active':''}" data-dept="${dept}" onclick="toggleDept('${dept}', this)">${dept} (${deptMap[dept].length})</span>`;
-  });
+  // 上栏：科室业务智能体
+  html += '<div class="section"><div class="section-header" style="background:var(--blue-bg);color:var(--blue-text)">';
+  html += '<span class="icon">🏥</span>科室业务智能体<span class="badge" style="background:rgba(59,130,246,.15)">' + biz.length + ' 个</span></div>';
+  html += '<div class="section-body"><div class="dept-chips" id="dept-chips">';
+  sortedDepts.forEach((d,i) => html += '<span class="dept-chip' + (i===0?' active':'') + '" data-dept="' + d + '" onclick="toggleDept(\'' + d + '\',this)">' + d + ' (' + deptMap[d].length + ')</span>');
   html += '</div>';
-  sortedDepts.forEach((dept, i) => {
-    html += `<div class="dept-agents${i===0?' open':''}" id="dept-${dept}">${deptMap[dept].map(agentCard).join('')}</div>`;
-  });
+  sortedDepts.forEach((d,i) => html += '<div class="agent-grid wide' + (i===0?'':' dept-hidden') + '" id="dept-' + d + '">' + deptMap[d].map(agentCard).join('') + '</div>');
   html += '</div></div>';
 
-  // 中栏: 技能智能体
-  if (specialist.length) {
-    html += '<div class="section">';
-    html += `<div class="section-title" style="background:#DCFCE7;color:#166534"><span>技能智能体</span><span class="count">${specialist.length} 个</span></div>`;
-    html += `<div class="section-body"><div class="grid">${specialist.sort((a,b)=>b.mat-a.mat).map(agentCard).join('')}</div></div>`;
-    html += '</div>';
-  }
+  // 中栏：技能智能体
+  if (spc.length) { html += '<div class="section"><div class="section-header" style="background:var(--green-bg);color:var(--green-text)">';
+    html += '<span class="icon">🔬</span>技能智能体<span class="badge" style="background:rgba(34,197,94,.15)">' + spc.length + ' 个</span></div>';
+    html += '<div class="section-body"><div class="agent-grid">' + spc.sort((a,b)=>b.mat-a.mat).map(agentCard).join('') + '</div></div></div>'; }
 
-  // 下栏: 数据智能体
-  if (master.length) {
-    html += '<div class="section">';
-    html += `<div class="section-title" style="background:#F3E8FF;color:#6B21A8"><span>数据智能体</span><span class="count">${master.length} 个</span></div>`;
-    html += `<div class="section-body"><div class="grid">${master.map(agentCard).join('')}</div></div>`;
-    html += '</div>';
-  }
+  // 下栏：数据智能体
+  if (mst.length) { html += '<div class="section"><div class="section-header" style="background:var(--purple-bg);color:var(--purple-text)">';
+    html += '<span class="icon">🗄️</span>数据智能体<span class="badge" style="background:rgba(139,92,246,.15)">' + mst.length + ' 个</span></div>';
+    html += '<div class="section-body"><div class="agent-grid">' + mst.map(agentCard).join('') + '</div></div></div>'; }
 
-  // 下下栏: 架构智能体
-  if (arch.length) {
-    html += '<div class="section">';
-    html += `<div class="section-title" style="background:#FFEDD5;color:#9A3412"><span>架构智能体</span><span class="count">${arch.length} 个</span></div>`;
-    html += `<div class="section-body"><div class="grid">${arch.map(agentCard).join('')}</div></div>`;
-    html += '</div>';
-  }
+  // 下下栏：架构智能体
+  if (arc.length) { html += '<div class="section"><div class="section-header" style="background:var(--orange-bg);color:var(--orange-text)">';
+    html += '<span class="icon">🏗️</span>架构智能体<span class="badge" style="background:rgba(249,115,22,.15)">' + arc.length + ' 个</span></div>';
+    html += '<div class="section-body"><div class="agent-grid">' + arc.map(agentCard).join('') + '</div></div></div>'; }
 
-  grid.innerHTML = html || '<div style="text-align:center;padding:40px;color:var(--text2)">未找到匹配的 Agent</div>';
+  document.getElementById('agent-grid').innerHTML = html || '<div class="empty-state">未找到匹配的智能体</div>';
 }
 
 function filterAgents() { renderAgents(); }
@@ -262,19 +358,19 @@ function filterAgents() { renderAgents(); }
 function toggleDept(dept, chip) {
   document.querySelectorAll('.dept-chip').forEach(c => c.classList.remove('active'));
   chip.classList.add('active');
-  document.querySelectorAll('.dept-agents').forEach(d => d.classList.remove('open'));
-  document.getElementById('dept-' + dept).classList.add('open');
+  document.querySelectorAll('#agent-grid .agent-grid.wide, #agent-grid .agent-grid').forEach(el => {
+    el.style.display = el.id === 'dept-' + dept ? '' : 'none';
+  });
 }
 
 function selectAgent(name) {
-  document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.agent-card').forEach(c => c.classList.remove('selected'));
   document.getElementById('card-' + name)?.classList.add('selected');
   selectedAgent = AGENTS.find(a => a.name === name);
   if (!selectedAgent) return;
   document.getElementById('detail-panel').style.display = 'block';
   document.getElementById('detail-title').textContent = selectedAgent.cn + ' (' + selectedAgent.name + ')';
-  loadPatients(name);
-  updateToolSelector(selectedAgent.tools || []);
+  loadPatients(name); updateToolSelector(selectedAgent.tools || []);
 }
 
 function updateToolSelector(tools) {
@@ -282,48 +378,43 @@ function updateToolSelector(tools) {
   sel.innerHTML = '<option value="">-- 选择工具 (' + (tools?tools.length:0) + ' 个) --</option>';
   if (!tools) return;
   tools.forEach(t => {
-    const params = t.input || {};
-    sel.innerHTML += `<option value="${t.name}" data-params='${JSON.stringify(params)}'>${t.name}: ${t.description||''}</option>`;
+    const ps = t.input || {};
+    sel.innerHTML += '<option value="' + t.name + '" data-params=\'' + JSON.stringify(ps).replace(/'/g,"&#39;") + '\'>' + t.name + ': ' + (t.description||'') + '</option>';
   });
   sel.onchange = function() {
-    const opt = sel.selectedOptions[0];
-    const ps = opt.getAttribute('data-params') || '{}';
-    document.getElementById('tool-params').innerHTML = `<p style="font-size:11px;color:var(--text2);margin-bottom:4px">参数:</p>
-      <textarea id="params-input" style="width:100%;height:60px;font-family:Consolas,monospace;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:8px">${ps}</textarea>`;
+    const opt = sel.selectedOptions[0]; const ps = opt.getAttribute('data-params') || '{}';
+    document.getElementById('tool-params').innerHTML = '<p style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">调用参数 (JSON)：</p><textarea id="params-input" style="width:100%;height:70px;font-family:monospace;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:8px">' + ps + '</textarea>';
     setTimeout(autoFillParams, 50);
   };
 }
 
 function loadPatients(agentName) {
   const sel = document.getElementById('patient-select');
-  sel.innerHTML = '<option value="">-- 加载中... --</option>';
+  sel.innerHTML = '<option>-- 加载中... --</option>';
   fetch(API_BASE + '/patients?agent=' + encodeURIComponent(agentName))
     .then(r => r.json()).then(pts => {
       allPatients = Array.isArray(pts) ? pts : (pts.cases || []);
       sel.innerHTML = '<option value="">-- 选择病人 (' + allPatients.length + ' 位) --</option>';
       allPatients.forEach((p,i) => {
         const ageLabel = p.age_months ? (p.age_months+'月') : (p.age||'?')+'岁';
-        sel.innerHTML += `<option value="${i}">${p.patient_id} | ${p.name} | ${ageLabel} | ${p.diagnosis||''}</option>`;
+        sel.innerHTML += '<option value="' + i + '">' + p.patient_id + ' | ' + p.name + ' | ' + ageLabel + ' | ' + (p.diagnosis||'') + '</option>';
       });
-    }).catch(()=>{ sel.innerHTML = '<option>-- 加载失败 --</option>'; });
+    }).catch(() => { sel.innerHTML = '<option>-- 加载失败 --</option>'; });
 }
 
 function onPatientSelect() {
   const idx = parseInt(document.getElementById('patient-select').value);
   if (isNaN(idx)) { currentPatient = null; document.getElementById('patient-info').textContent = ''; return; }
-  currentPatient = allPatients[idx];
-  const p = currentPatient;
-  document.getElementById('patient-info').innerHTML = `<strong>${p.patient_id}</strong> ${p.name} ${p.gender==='M'?'男':'女'}`;
+  currentPatient = allPatients[idx]; const p = currentPatient;
+  document.getElementById('patient-info').innerHTML = '<strong>' + p.patient_id + '</strong> ' + p.name + ' ' + (p.gender==='M'?'男':'女');
   setTimeout(autoFillParams, 100);
 }
 
 function autoFillParams() {
   if (!currentPatient) return;
+  const el = document.getElementById('params-input'); if (!el) return;
   const p = currentPatient;
-  const paramsEl = document.getElementById('params-input');
-  if (!paramsEl) return;
-  let params = {patient_id: p.patient_id, weight_kg: p.weight_kg, height_cm: p.height_cm, lab_results: p.lab_results || {}, age: p.age || 0};
-  paramsEl.value = JSON.stringify(params, null, 2);
+  el.value = JSON.stringify({patient_id:p.patient_id, weight_kg:p.weight_kg, height_cm:p.height_cm, lab_results:p.lab_results||{}, age:p.age||0}, null, 2);
 }
 
 function callTool() {
@@ -333,78 +424,62 @@ function callTool() {
   const paramsEl = document.getElementById('params-input');
   let params = {};
   try { params = paramsEl ? JSON.parse(paramsEl.value) : {}; } catch(e) { el.textContent = 'JSON 格式错误: ' + e.message; return; }
-  el.textContent = '调用中...';
+  el.textContent = '⏳ 调用中...';
   fetch(API_BASE + '/api/call', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent:selectedAgent.name,tool:tool,params:params})})
-    .then(r=>r.json()).then(data=>{ el.textContent = JSON.stringify(data, null, 2); })
+    .then(r=>r.json()).then(d=>{ el.textContent = JSON.stringify(d, null, 2); })
     .catch(e=>{ el.textContent = '请求失败: ' + e.message; });
 }
 
+const DEMOS = [];
+
 function renderDemos() {
   document.getElementById('demos').innerHTML = DEMOS.map((d,i) =>
-    `<button style="margin:4px;padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer;font-size:12px;font-family:inherit" onclick="runDemo(${i})" title="${d.desc}">${d.label}</button>`
+    '<span class="demo-chip" onclick="runDemo(' + i + ')" title="' + d.desc + '">' + d.label + '</span>'
   ).join('');
 }
 
 function runDemo(i) {
-  const d = DEMOS[i];
-  const el = document.getElementById('demo-result');
-  el.textContent = '调用中...';
+  const d = DEMOS[i]; const el = document.getElementById('demo-result');
+  el.textContent = '⏳ 调用中...';
   fetch(API_BASE + '/api/call', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent:d.agent,tool:d.tool,params:d.params})})
     .then(r=>r.json()).then(data=>{ el.textContent = JSON.stringify(data, null, 2); })
-    .catch(e=>{ el.textContent = '请求失败: ' + e.message + '\n请确认服务器已启动: .\\deploy.ps1'; });
+    .catch(e=>{ el.textContent = '请求失败: ' + e.message; });
 }
 
 function runLoopDemo() {
   const el = document.getElementById('loop-demo-result');
-  const status = document.getElementById('loop-status');
-  try {
-    status.textContent = '请求中...';
-    el.textContent = 'Loop 推理中...';
-    el.innerHTML = '<div style="color:#8B5CF6;font-weight:700">ReAct Loop 启动，等待推理结果...</div>';
-    
-    fetch(API_BASE + '/api/loop/demo', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
-      .then(function(r) {
-        status.textContent = '状态: ' + r.status;
-        return r.json();
-      })
-      .then(function(data) {
-        let html = '';
-        
-        html += '<div style="margin-bottom:12px"><b style="color:#8B5CF6">ReAct Loop - ' + data.total_steps + ' 步推理</b> <span style="color:#999;font-size:11px">(' + data.duration_ms + 'ms)</span></div>';
-        
-        data.tool_calls.forEach(function(tc) {
-          var color = tc.success ? '#22C55E' : '#EF4444';
-          var icon = tc.success ? 'OK' : 'FAIL';
-          html += '<div style="display:flex;align-items:flex-start;margin:8px 0;padding:8px 12px;background:#F8F9FB;border-radius:6px;border-left:3px solid ' + color + '">';
-          html += '<div style="min-width:60px;font-weight:700;color:' + color + '">Step ' + tc.step + '</div>';
-          html += '<div><b>' + tc.tool + '</b> <span style="color:#999;font-size:11px">' + icon + '</span>';
-          html += '<pre style="font-size:10px;margin:4px 0;color:#666;white-space:pre-wrap;max-height:80px;overflow-y:auto">' + JSON.stringify(tc.output || '').slice(0,300) + '</pre></div></div>';
-        });
-        
-        html += '<div style="margin:12px 0;padding:8px 12px;background:#F5F3FF;border-radius:6px;font-size:12px">';
-        html += '<b style="color:#8B5CF6">推理链路:</b><br>';
-        data.explanation.flow.forEach(function(f) { html += '  ' + f + '<br>'; });
-        html += '</div>';
-        
-        html += '<div style="margin-top:12px;padding:12px;background:#F0FFF0;border-radius:6px;border-left:3px solid #22C55E">';
-        html += '<b>综合回答:</b><br>' + data.final_answer + '</div>';
-        
-        el.innerHTML = html;
-        status.textContent = '完成 (' + data.total_steps + ' steps)';
-      })
-      .catch(function(e) {
-        el.innerHTML = '<span style="color:#EF4444">请求失败: ' + e.message + '</span>';
-        status.textContent = '失败';
+  const s = document.getElementById('loop-status');
+  s.textContent = '⏳ 推理中...'; el.innerHTML = '<div style="color:var(--purple);font-weight:600">ReAct Loop 推理中...</div>';
+  fetch(API_BASE + '/api/loop/demo', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
+    .then(r => { s.textContent = '状态: ' + r.status; return r.json(); })
+    .then(data => {
+      let h = '<div style="margin-bottom:12px"><b style="color:var(--purple)">ReAct Loop — ' + data.total_steps + ' 步</b> <span style="color:var(--text-tertiary);font-size:11px">(' + data.duration_ms + 'ms)</span></div>';
+      data.tool_calls.forEach(tc => {
+        const c = tc.success ? '#22C55E' : '#EF4444';
+        h += '<div style="display:flex;gap:12px;margin:6px 0;padding:10px 12px;background:#F8FAFC;border-radius:8px;border-left:3px solid ' + c + '">';
+        h += '<div style="min-width:50px;font-weight:700;color:' + c + '">Step ' + tc.step + '</div>';
+        h += '<div><b>' + tc.tool + '</b><pre style="font-size:10px;margin:4px 0;color:var(--text-secondary);max-height:60px;overflow-y:auto;white-space:pre-wrap">' + JSON.stringify(tc.output||'').slice(0,200) + '</pre></div></div>';
       });
-  } catch(e) {
-    el.innerHTML = '<span style="color:#EF4444">JS错误: ' + e.message + '</span>';
-    status.textContent = '异常';
-  }
+      if (data.explanation) {
+        h += '<div style="margin:10px 0;padding:10px 14px;background:#F5F3FF;border-radius:8px;font-size:12px">';
+        h += '<b style="color:var(--purple)">推理链路:</b><br>';
+        data.explanation.flow.forEach(f => h += '  → ' + f + '<br>');
+        h += '</div>';
+      }
+      h += '<div style="margin-top:12px;padding:12px 16px;background:#F0FDF4;border-radius:8px;border-left:3px solid #22C55E"><b>综合回答:</b><br>' + data.final_answer + '</div>';
+      el.innerHTML = h; s.textContent = '完成 (' + data.total_steps + ' steps)';
+    })
+    .catch(e => { el.innerHTML = '<span style="color:#EF4444">请求失败: ' + e.message + '</span>'; s.textContent = '失败'; });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  loadAgents();
-  renderDemos();
+document.addEventListener('DOMContentLoaded', () => { loadAgents(); renderDemos(); });
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.getElementById('detail-panel').style.display = 'none';
+    document.querySelectorAll('.agent-card').forEach(c => c.classList.remove('selected'));
+    selectedAgent = null;
+  }
 });
 </script>
 
