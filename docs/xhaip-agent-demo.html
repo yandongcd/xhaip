@@ -306,7 +306,11 @@ function renderAgents() {
   const arc = filtered.filter(a => a.type === 'architecture');
 
   const deptMap = {}; biz.forEach(a => { const d = a.dept || '其他'; if (!deptMap[d]) deptMap[d] = []; deptMap[d].push(a); });
-  const sortedDepts = Object.keys(deptMap).sort((a,b) => a.localeCompare(b,'zh'));
+  const sortedDepts = Object.keys(deptMap).sort((a, b) => {
+    const avgA = deptMap[a].reduce((s, x) => s + x.mat, 0) / deptMap[a].length;
+    const avgB = deptMap[b].reduce((s, x) => s + x.mat, 0) / deptMap[b].length;
+    return avgB - avgA || a.localeCompare(b, 'zh');
+  });
 
   const agentCard = a => {
     const cfg = TYPE_CONFIG[a.type] || TYPE_CONFIG.business;
