@@ -126,18 +126,24 @@ function loadAgents() {
     .then(r => r.json())
     .then(raw => {
       if (!Array.isArray(raw)) { showError('API 返回格式异常'); return; }
-      AGENTS = raw.map(a => ({
-        name: a.name,
-        cn: a.cn_name || a.name,
-        type: a.type || 'business',
-        port: a.port || 0,
-        dept: a.department || '-',
-        tags: (a.tools || []).length,
-        tools: a.tools || [],
-        mat: a.tools ? Math.min(100, 60 + (a.tools.length || 0) * 3) : 60,
-        desc: (a.tools || []).slice(0, 3).map(t => t.name).join(' / ') || '-',
-        depends_on: a.depends_on || [],
-      }));
+      AGENTS = raw.map(a => {
+        const toolCount = (a.tools || []).length;
+        const typeBonus = { business: 5, architecture: 10, specialist: 0, master_data: 2 };
+        const mat = Math.min(100, 60 + Math.min(toolCount, 10) * 3 + (typeBonus[a.type] || 0));
+        return {
+          name: a.name,
+          cn: a.cn_name || a.name,
+          type: a.type || 'business',
+          port: a.port || 0,
+          dept: a.department || '-',
+          tags: toolCount,
+          tools: a.tools || [],
+          mat: mat,
+          desc: (a.tools || []).slice(0, 3).map(t => t.name).join(' / ') || '-',
+          depends_on: a.depends_on || [],
+        };
+      });
+      AGENTS.sort((a, b) => b.mat - a.mat);
       renderStats();
       renderAgents();
       document.getElementById('meta-info').textContent =
