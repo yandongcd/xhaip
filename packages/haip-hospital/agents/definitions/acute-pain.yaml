@@ -2,6 +2,7 @@ name: acute-pain
 cn_name: 急性疼痛评估与管理
 version: "1.0.0"
 type: specialist
+department: 疼痛科
 port: 8841
 aliases: [急性疼痛, acute-pain]
 parent: pain-hub

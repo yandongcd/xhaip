@@ -2,6 +2,7 @@ name: pain-hub
 cn_name: 疼痛专病智能体门户
 version: "1.0.0"
 type: business
+department: 疼痛科
 port: 8840
 aliases: [疼痛中枢, 疼痛门户, pain-hub]
 
