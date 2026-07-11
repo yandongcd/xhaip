@@ -51,8 +51,8 @@ body { font-family: -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft Ya
 <body>
 
 <div class="header">
-  <h1>xhaip v1.0 — 南方医院 Agent 功能演示</h1>
-  <div class="sub">Hospital AI Platform · 52 Agents · 38 Clinical Departments · TOGAF 10 Architecture Governance</div>
+  <h1>xhaip — 南方医院 Agent 功能演示</h1>
+  <div class="sub">按科室分组 · 功能命名 · 52 Agents · 38 临床科室</div>
 </div>
 
 <div class="container">
@@ -178,24 +178,51 @@ function renderStats() {
 function renderAgents() {
   const q = (document.getElementById('search-input')?.value || '').toLowerCase();
   const filtered = q ? AGENTS.filter(a => (a.cn+a.name+a.dept+a.type).toLowerCase().includes(q)) : AGENTS;
+
+  const deptMap = {};
+  filtered.forEach(a => {
+    const dept = a.dept || '其他';
+    if (!deptMap[dept]) deptMap[dept] = [];
+    deptMap[dept].push(a);
+  });
+
+  const DEBT_ORDER = ['跨科室', '全院'];
+  const sortedDepts = Object.keys(deptMap).sort((a, b) => {
+    const ai = DEBT_ORDER.indexOf(a), bi = DEBT_ORDER.indexOf(b);
+    if (ai !== -1 && bi !== -1) return ai - bi;
+    if (ai !== -1) return 1;
+    if (bi !== -1) return -1;
+    return a.localeCompare(b, 'zh');
+  });
+
   const grid = document.getElementById('agent-grid');
   let html = '';
-  TYPE_ORDER.forEach(typeKey => {
-    const cat = TYPE_LABELS[typeKey];
-    if (!cat) return;
-    const list = filtered.filter(a => a.type === typeKey);
-    if (!list.length) return;
-    html += `<div style="grid-column:1/-1;margin:8px 0 2px;font-size:12px;font-weight:700;color:${cat.color};padding:4px 0;border-bottom:1px solid var(--border)">
-      ${cat.icon} ${cat.label} <span style="font-weight:400;color:var(--text2);font-size:10px">${list.length} 个</span>
-    </div>`;
-    list.forEach(a => {
-      const tagClass = `tag-${typeKey === 'architecture' ? 'architecture' : typeKey === 'business' ? 'business' : typeKey === 'specialist' ? 'specialist' : 'tools'}`;
+  sortedDepts.forEach(dept => {
+    const agents = deptMap[dept];
+    agents.sort((a, b) => b.mat - a.mat);
+    const businessCount = agents.filter(a => a.type === 'business').length;
+    const specialistCount = agents.filter(a => a.type === 'specialist').length;
+    const deptIcons = { '跨科室': '🧩', '全院': '🏥' };
+    html += '<div style="grid-column:1/-1;margin:12px 0 4px;padding:8px 12px;background:#FFF;border-radius:8px;border-left:3px solid var(--primary)">';
+    html += `<span style="font-size:14px;font-weight:700">${deptIcons[dept] || '🏥'} ${dept}</span>`;
+    html += `<span style="font-size:11px;color:var(--text2);margin-left:8px">${agents.length} 个智能体`;
+    if (businessCount) html += ` · ${businessCount} 业务`;
+    if (specialistCount) html += ` · ${specialistCount} 技能`;
+    html += '</span></div>';
+
+    agents.forEach(a => {
+      const typeColors = { business: '#DBEAFE', specialist: '#DCFCE7', master_data: '#F3E8FF', architecture: '#FFEDD5' };
+      const typeLabels = { business: '业务', specialist: '技能', master_data: '数据', architecture: '架构' };
       const matColor = a.mat >= 85 ? '#22C55E' : a.mat >= 75 ? '#F59E0B' : '#EF4444';
       const matTier = a.mat >= 85 ? 'L3' : a.mat >= 75 ? 'L2' : 'L1';
       html += `<div class="card" onclick="selectAgent('${a.name}')" id="card-${a.name}">
         <div class="agent-name">${a.cn}</div>
-        <div class="agent-cn">${a.name} | ${a.dept}${a.port?':'+a.port:''}</div>
-        <div class="tags"><span class="tag ${tagClass}">${a.type}</span><span class="tag tag-tools">${a.tags} tools</span><span class="tag" style="background:#F0FFF0;color:${matColor};font-weight:700">${matTier} ${a.mat}分</span></div></div>`;
+        <div class="agent-cn">${a.name}${a.port?': '+a.port:''}</div>
+        <div class="tags">
+          <span class="tag" style="background:${typeColors[a.type]||'#F3F4F6'}">${typeLabels[a.type]||a.type}</span>
+          <span class="tag tag-tools">${a.tags} tools</span>
+          <span class="tag" style="background:#F0FFF0;color:${matColor};font-weight:700">${matTier} ${a.mat}分</span>
+        </div></div>`;
     });
   });
   grid.innerHTML = html || '<div style="text-align:center;padding:40px;color:var(--text2)">未找到匹配的 Agent</div>';

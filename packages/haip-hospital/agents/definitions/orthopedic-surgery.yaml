@@ -1,8 +1,8 @@
 name: orthopedic-surgery
-cn_name: 创伤骨科智能体
-version: "1.0.0"
+cn_name: 老年髋部骨折精准治疗智能体
+version: "1.1.0"
 type: business
-department: 骨外科
+department: 创伤骨科
 port: 8765
 aliases: [骨科, 创伤骨科, 骨外科, ortho]
 
