@@ -330,9 +330,10 @@ function renderAgents() {
   html += '<div class="section"><div class="section-header" style="background:var(--blue-bg);color:var(--blue-text)">';
   html += '<span class="icon">🏥</span>科室业务智能体<span class="badge" style="background:rgba(59,130,246,.15)">' + biz.length + ' 个</span></div>';
   html += '<div class="section-body"><div class="dept-chips" id="dept-chips">';
-  sortedDepts.forEach((d,i) => html += '<span class="dept-chip' + (i===0?' active':'') + '" data-dept="' + d + '" onclick="toggleDept(\'' + d + '\',this)">' + d + ' (' + deptMap[d].length + ')</span>');
+  sortedDepts.forEach(d => html += '<span class="dept-chip" data-dept="' + d + '" onclick="toggleDept(\'' + d + '\',this)">' + d + ' (' + deptMap[d].length + ')</span>');
   html += '</div>';
-  sortedDepts.forEach((d,i) => html += '<div class="agent-grid wide' + (i===0?'':' dept-hidden') + '" id="dept-' + d + '">' + deptMap[d].map(agentCard).join('') + '</div>');
+  html += '<div id="dept-placeholder" style="text-align:center;padding:32px;color:var(--text-tertiary);font-size:13px">👆 点击上方科室查看对应智能体</div>';
+  sortedDepts.forEach(d => html += '<div class="agent-grid wide dept-hidden" id="dept-' + d + '" style="display:none">' + deptMap[d].map(agentCard).join('') + '</div>');
   html += '</div></div>';
 
   // 中栏：技能智能体
@@ -356,11 +357,14 @@ function renderAgents() {
 function filterAgents() { renderAgents(); }
 
 function toggleDept(dept, chip) {
+  const wasActive = chip.classList.contains('active');
   document.querySelectorAll('.dept-chip').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('#agent-grid .agent-grid.wide, #agent-grid .agent-grid').forEach(el => el.style.display = 'none');
+  const ph = document.getElementById('dept-placeholder');
+  if (wasActive) { if (ph) ph.style.display = ''; return; }
   chip.classList.add('active');
-  document.querySelectorAll('#agent-grid .agent-grid.wide, #agent-grid .agent-grid').forEach(el => {
-    el.style.display = el.id === 'dept-' + dept ? '' : 'none';
-  });
+  const el = document.getElementById('dept-' + dept); if (el) el.style.display = '';
+  if (ph) ph.style.display = 'none';
 }
 
 function selectAgent(name) {
