@@ -45,14 +45,24 @@ body { font-family: -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft Ya
 .info-item { background:#F8F9FB; border-radius:6px; padding:12px; text-align:center; }
 .info-item .val { font-size:24px; font-weight:700; }
 .info-item .lbl { font-size:11px; color:var(--text2); text-transform:uppercase; margin-top:2px; }
-.footer { text-align:center; padding:16px; color:var(--text2); font-size:11px; }
+.section { margin-bottom:16px; }
+.section-title { font-size:14px; font-weight:700; padding:10px 16px; border-radius:8px 8px 0 0; display:flex; align-items:center; gap:8px; }
+.section-title .count { font-size:11px; font-weight:400; opacity:0.7; }
+.section-body { background:rgba(255,255,255,.5); border-radius:0 0 8px 8px; padding:8px; }
+.dept-chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+.dept-chip { padding:6px 14px; border-radius:20px; font-size:12px; cursor:pointer; border:1px solid var(--border); background:var(--card); transition:all .15s; user-select:none; }
+.dept-chip:hover { border-color:var(--info); }
+.dept-chip.active { background:var(--primary); color:#FFF; border-color:var(--primary); }
+.dept-agents { display:none; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:6px; margin-top:8px; }
+.dept-agents.open { display:grid; }
+.section-divider { height:2px; background:linear-gradient(to right,var(--border),transparent); margin:4px 0; }
 </style>
 </head>
 <body>
 
 <div class="header">
   <h1>xhaip — 南方医院 Agent 功能演示</h1>
-  <div class="sub">按科室分组 · 功能命名 · 52 Agents · 38 临床科室</div>
+  <div class="sub">科室分组 · 功能命名 · 动态加载 · TOGAF 成熟度排序</div>
 </div>
 
 <div class="container">
@@ -179,56 +189,82 @@ function renderAgents() {
   const q = (document.getElementById('search-input')?.value || '').toLowerCase();
   const filtered = q ? AGENTS.filter(a => (a.cn+a.name+a.dept+a.type).toLowerCase().includes(q)) : AGENTS;
 
-  const deptMap = {};
-  filtered.forEach(a => {
-    const dept = a.dept || '其他';
-    if (!deptMap[dept]) deptMap[dept] = [];
-    deptMap[dept].push(a);
-  });
+  const business = filtered.filter(a => a.type === 'business');
+  const specialist = filtered.filter(a => a.type === 'specialist');
+  const master = filtered.filter(a => a.type === 'master_data');
+  const arch = filtered.filter(a => a.type === 'architecture');
 
-  const DEBT_ORDER = ['跨科室', '全院'];
-  const sortedDepts = Object.keys(deptMap).sort((a, b) => {
-    const ai = DEBT_ORDER.indexOf(a), bi = DEBT_ORDER.indexOf(b);
-    if (ai !== -1 && bi !== -1) return ai - bi;
-    if (ai !== -1) return 1;
-    if (bi !== -1) return -1;
-    return a.localeCompare(b, 'zh');
+  const deptMap = {};
+  business.forEach(a => {
+    const d = a.dept || '其他';
+    if (!deptMap[d]) deptMap[d] = [];
+    deptMap[d].push(a);
   });
+  const sortedDepts = Object.keys(deptMap).sort((a, b) => a.localeCompare(b, 'zh'));
 
   const grid = document.getElementById('agent-grid');
-  let html = '';
-  sortedDepts.forEach(dept => {
-    const agents = deptMap[dept];
-    agents.sort((a, b) => b.mat - a.mat);
-    const businessCount = agents.filter(a => a.type === 'business').length;
-    const specialistCount = agents.filter(a => a.type === 'specialist').length;
-    const deptIcons = { '跨科室': '🧩', '全院': '🏥' };
-    html += '<div style="grid-column:1/-1;margin:12px 0 4px;padding:8px 12px;background:#FFF;border-radius:8px;border-left:3px solid var(--primary)">';
-    html += `<span style="font-size:14px;font-weight:700">${deptIcons[dept] || '🏥'} ${dept}</span>`;
-    html += `<span style="font-size:11px;color:var(--text2);margin-left:8px">${agents.length} 个智能体`;
-    if (businessCount) html += ` · ${businessCount} 业务`;
-    if (specialistCount) html += ` · ${specialistCount} 技能`;
-    html += '</span></div>';
+  const agentCard = a => {
+    const tc = { business: '#DBEAFE', specialist: '#DCFCE7', master_data: '#F3E8FF', architecture: '#FFEDD5' };
+    const tl = { business: '业务', specialist: '技能', master_data: '数据', architecture: '架构' };
+    const mc = a.mat >= 85 ? '#22C55E' : a.mat >= 75 ? '#F59E0B' : '#EF4444';
+    const mt = a.mat >= 85 ? 'L3' : a.mat >= 75 ? 'L2' : 'L1';
+    return `<div class="card" onclick="selectAgent('${a.name}')" id="card-${a.name}">
+      <div class="agent-name">${a.cn}</div>
+      <div class="agent-cn">${a.name}${a.port?':'+a.port:''}</div>
+      <div class="tags"><span class="tag" style="background:${tc[a.type]||'#F3F4F6'}">${tl[a.type]||a.type}</span><span class="tag tag-tools">${a.tags} tools</span><span class="tag" style="background:#F0FFF0;color:${mc};font-weight:700">${mt} ${a.mat}分</span></div></div>`;
+  };
 
-    agents.forEach(a => {
-      const typeColors = { business: '#DBEAFE', specialist: '#DCFCE7', master_data: '#F3E8FF', architecture: '#FFEDD5' };
-      const typeLabels = { business: '业务', specialist: '技能', master_data: '数据', architecture: '架构' };
-      const matColor = a.mat >= 85 ? '#22C55E' : a.mat >= 75 ? '#F59E0B' : '#EF4444';
-      const matTier = a.mat >= 85 ? 'L3' : a.mat >= 75 ? 'L2' : 'L1';
-      html += `<div class="card" onclick="selectAgent('${a.name}')" id="card-${a.name}">
-        <div class="agent-name">${a.cn}</div>
-        <div class="agent-cn">${a.name}${a.port?': '+a.port:''}</div>
-        <div class="tags">
-          <span class="tag" style="background:${typeColors[a.type]||'#F3F4F6'}">${typeLabels[a.type]||a.type}</span>
-          <span class="tag tag-tools">${a.tags} tools</span>
-          <span class="tag" style="background:#F0FFF0;color:${matColor};font-weight:700">${matTier} ${a.mat}分</span>
-        </div></div>`;
-    });
+  let html = '';
+
+  // 上栏: 科室业务智能体
+  html += '<div class="section">';
+  html += `<div class="section-title" style="background:#DBEAFE;color:#1E40AF"><span>科室业务智能体</span><span class="count">${business.length} 个</span></div>`;
+  html += '<div class="section-body">';
+  html += '<div class="dept-chips" id="dept-chips">';
+  sortedDepts.forEach((dept, i) => {
+    html += `<span class="dept-chip${i===0?' active':''}" data-dept="${dept}" onclick="toggleDept('${dept}', this)">${dept} (${deptMap[dept].length})</span>`;
   });
+  html += '</div>';
+  sortedDepts.forEach((dept, i) => {
+    html += `<div class="dept-agents${i===0?' open':''}" id="dept-${dept}">${deptMap[dept].map(agentCard).join('')}</div>`;
+  });
+  html += '</div></div>';
+
+  // 中栏: 技能智能体
+  if (specialist.length) {
+    html += '<div class="section">';
+    html += `<div class="section-title" style="background:#DCFCE7;color:#166534"><span>技能智能体</span><span class="count">${specialist.length} 个</span></div>`;
+    html += `<div class="section-body"><div class="grid">${specialist.sort((a,b)=>b.mat-a.mat).map(agentCard).join('')}</div></div>`;
+    html += '</div>';
+  }
+
+  // 下栏: 数据智能体
+  if (master.length) {
+    html += '<div class="section">';
+    html += `<div class="section-title" style="background:#F3E8FF;color:#6B21A8"><span>数据智能体</span><span class="count">${master.length} 个</span></div>`;
+    html += `<div class="section-body"><div class="grid">${master.map(agentCard).join('')}</div></div>`;
+    html += '</div>';
+  }
+
+  // 下下栏: 架构智能体
+  if (arch.length) {
+    html += '<div class="section">';
+    html += `<div class="section-title" style="background:#FFEDD5;color:#9A3412"><span>架构智能体</span><span class="count">${arch.length} 个</span></div>`;
+    html += `<div class="section-body"><div class="grid">${arch.map(agentCard).join('')}</div></div>`;
+    html += '</div>';
+  }
+
   grid.innerHTML = html || '<div style="text-align:center;padding:40px;color:var(--text2)">未找到匹配的 Agent</div>';
 }
 
 function filterAgents() { renderAgents(); }
+
+function toggleDept(dept, chip) {
+  document.querySelectorAll('.dept-chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  document.querySelectorAll('.dept-agents').forEach(d => d.classList.remove('open'));
+  document.getElementById('dept-' + dept).classList.add('open');
+}
 
 function selectAgent(name) {
   document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
