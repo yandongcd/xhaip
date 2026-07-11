@@ -21,6 +21,15 @@ depends_on:
     version: ">=1.0"
   - agent: anesthesia-risk
     version: ">=1.0"
+  - agent: mdt
+    version: ">=1.0"
+    note: "跨科室 MDT 会诊技能 Agent (8773)"
+  - agent: pain-management
+    version: ">=1.0"
+    note: "疼痛管理技能 Agent (8771)"
+  - agent: education
+    version: ">=1.0"
+    note: "教育技能 Agent (8772)"
 
 tools:
   - name: classify_fracture
@@ -98,6 +107,56 @@ tools:
     handler: orthopedics.clinical.harris_score
     input: {pain: str, gait: str, support: str, distance: str}
 
+  - name: mdt_aggregate
+    description: MDT 多学科会诊聚合 (心内+麻醉+骨科+疼痛 → 结构化纪要)
+    handler: orthopedics.mdt.mdt_aggregate
+    input: {patient_id: str, chief_complaint: str, cardio_eval: dict, anesthesia_eval: dict, orthopedic_eval: dict, pain_eval: dict}
+
+  - name: mdt_summary
+    description: MDT 会诊纪要摘要 (Markdown 格式)
+    handler: orthopedics.mdt.mdt_summary
+    input: {mdt_result: dict}
+
+  - name: pain_assess
+    description: 疼痛评估 (VAS/NRS) — 输入必须由护士提供
+    handler: pain_management.assess_pain
+    input: {patient_id: str, vas_score: float, nurse_id: str, assessment_time: str}
+
+  - name: pain_analgesia
+    description: 多模式镇痛阶梯方案
+    handler: pain_management.multimodal_analgesia
+    input: {patient_id: str, vas_score: float, allergies: list, renal_function: str, liver_function: str}
+
+  - name: case_teach
+    description: 典型病例教学 (合成病例)
+    handler: education.case_teaching
+    input: {fracture_type: str, difficulty: str}
+
+  - name: guideline_ref
+    description: 指南速查 (NHSA/NICE/AAOS)
+    handler: education.guideline_quick_ref
+    input: {guideline: str, topic: str}
+
+  - name: his_labs
+    description: Mock LIS 检验数据查询
+    handler: orthopedics.his_adapter.query_labs
+    input: {patient_id: str, lab_items: list}
+
+  - name: his_patient
+    description: Mock HIS 患者病历查询
+    handler: orthopedics.his_adapter.query_patient
+    input: {patient_id: str}
+
+  - name: his_image
+    description: Mock PACS 影像查询
+    handler: orthopedics.his_adapter.query_imaging
+    input: {patient_id: str, modality: str}
+
+  - name: idata_search
+    description: Mock iData 知识库检索
+    handler: orthopedics.idata_adapter.search_knowledge
+    input: {query: str, category: str}
+
 guard:
   triggers: [手术决策, 心梗评估, MDT分歧]
   high_risk_scenarios:
@@ -136,42 +195,48 @@ stages:
     role: "主治医师 / 住院医师 / 麻醉医师 / 责任护士"
     role_ids: [attending, resident, anesthesiologist, staff_nurse]
   - order: 4
+    id: mdt
+    label: MDT 会诊
+    desc: "多学科会诊: 聚合心内+麻醉+骨科+疼痛评估 → MDT 纪要"
+    role: "主治医师 / 麻醉医师"
+    role_ids: [attending, anesthesiologist]
+  - order: 5
     id: timing
     label: 手术时机
     desc: "T2 8因素层次决策 (高危→择期 / 中危→限期 / 无→48h急诊)"
     role: "主治医师 / 麻醉医师"
     role_ids: [attending, anesthesiologist]
-  - order: 5
+  - order: 6
     id: complication
     label: 并发症预测
     desc: "DVT/感染/心脏/跌倒-谵妄 4维风险评估"
     role: "主治医师"
     role_ids: [attending]
-  - order: 6
+  - order: 7
     id: surgery
     label: 手术方案
     desc: "THA/HA/PFNA/DHS 手术方式推荐"
     role: "主治医师"
     role_ids: [attending]
-  - order: 7
+  - order: 8
     id: nursing
     label: 围术期护理
     desc: "4阶段25项护理计划 (术前/D0/D1-3/恢复期)"
     role: "主治医师 / 住院医师 / 护士长 / 责任护士"
     role_ids: [attending, resident, head_nurse, staff_nurse]
-  - order: 8
+  - order: 9
     id: rehab
     label: 术后康复
     desc: "4阶段康复跟踪 + Harris 髋关节评分"
     role: "主治医师 / 住院医师 / 护士长 / 责任护士"
     role_ids: [attending, resident, head_nurse, staff_nurse]
-  - order: 9
+  - order: 10
     id: followup
     label: 随访计划
     desc: "1/3/6/12月随访 + 6个红旗症状 + 骨质疏松管理"
     role: "主治医师 / 护士长 / 责任护士"
     role_ids: [attending, head_nurse, staff_nurse]
-  - order: 10
+  - order: 11
     id: quality
     label: 质控审计
     desc: "6阶段18检查点合规评分"

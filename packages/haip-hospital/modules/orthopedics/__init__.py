@@ -20,6 +20,32 @@ from .extended import (  # noqa: F401
 )
 # Re-export clinical functions
 from .clinical import analyze_xray, parse_clinical_text, harris_score  # noqa: F401
+# Re-export new modules (v1.1: MDT + HIS Mock + iData Mock)
+from .mdt import mdt_aggregate, mdt_summary  # noqa: F401
+from .his_adapter import query_labs, query_patient, query_imaging  # noqa: F401
+from .idata_adapter import search_knowledge, list_categories  # noqa: F401
+
+EVIDENCE_REFS = {
+    "general": [
+        "# 国家卫健委 2022 版《老年髋部骨折诊疗与管理指南》(65 条规则)",
+        "# NICE NG37: Hip Fracture Management (2023 update)",
+        "# AAOS 2022: Management of Hip Fractures in the Elderly",
+        "# CSCO 2018/2020 骨与软组织肿瘤诊疗指南 (22 条)",
+    ],
+    "timing": [
+        "# 国家卫健委 2022 §4.1: 力争入院 48h 内完成手术",
+        "# NICE NG37 §1.1: Surgery on day of or day after admission",
+        "# 南方医院 T2 层次调整 (5 项差异)",
+    ],
+    "surgery": [
+        "# NICE NG37 §1.5: 移位型股骨颈骨折推荐 THA",
+        "# AAOS 2022 §III: Cephalomedullary nail vs sliding hip screw",
+        "# 国家卫健委 2022 §5.2: 转子间骨折内固定选择",
+    ],
+}
+
+DISCLAIMER = ("本建议由 AI 辅助生成，需经临床医师审核确认后方可作为诊疗依据。"
+              "不构成独立医疗决策。")
 
 
 # ═══════════════════════════════════════════════════════════
@@ -451,6 +477,108 @@ def plan(patient_id: str = "", fracture_type: str = "", age: int = 0, **kwargs):
         "patient_id": patient_id, "procedure": procedure, "approach": approach,
         "anesthesia": "腰麻 (ASA≤2) / 全麻 (ASA≥3)",
         "guideline_ref": ["国家卫健委 2022 §5", "AAOS 2022", "CSCO 股骨颈 2018 / 转子间 2020"],
+    }
+
+
+def recommend_surgery(
+    patient_id: str = "",
+    diagnosis: str = "",
+    fracture_type: str = "",
+    fracture_stability: str = "",
+    age: int = 0,
+    **kwargs,
+) -> dict[str, Any]:
+    """年龄驱动决策树: 个性化手术方案推荐 (纯规则版).
+
+    根据骨折类型 + 年龄 + 稳定性推荐手术方案、入路、植入物。
+    不依赖 LLM，纯 Python 决策树，作为 LLM 降级方案。
+
+    Args:
+        patient_id: 患者 ID。
+        diagnosis: 诊断文本 (用于关键词匹配)。
+        fracture_type: 骨折类型 (如 "股骨颈骨折")。
+        fracture_stability: 稳定性 ("稳定"/"不稳定")。
+        age: 患者年龄。
+
+    Returns:
+        {recommended_surgery, alternative_surgery, surgical_approach,
+         implant_choice, anesthesia_recommendation, key_considerations,
+         guideline_ref, reasoning}
+    """
+    combined = (fracture_type + " " + diagnosis).lower()
+
+    # ── 股骨颈骨折 ──
+    if "股骨颈" in combined or "femoral neck" in combined:
+        if age >= 75:
+            return {
+                "recommended_surgery": "人工全髋关节置换术(THA)",
+                "alternative_surgery": "人工股骨头置换术(HA,若预期寿命较短)",
+                "surgical_approach": "后外侧入路或直接前入路(DAA)",
+                "implant_choice": "生物型假体(骨质量尚可)/骨水泥型假体(骨质疏松严重)",
+                "anesthesia_recommendation": "全身麻醉或腰硬联合麻醉",
+                "key_considerations": ["高龄患者注意围术期管理", "抗凝药物桥接", "预防DVT"],
+                "guideline_ref": "AAOS 2022: 老年移位股骨颈骨折行关节置换",
+                "reasoning": f"患者{age}岁,股骨颈骨折,关节置换可早期负重,降低并发症",
+            }
+        elif age < 65:
+            return {
+                "recommended_surgery": "闭合/切开复位内固定术(空心螺钉/动力髋螺钉)",
+                "alternative_surgery": "若复位不满意则考虑THA",
+                "surgical_approach": "经皮微创或前外侧入路",
+                "implant_choice": "3枚空心螺钉(稳定型)/DHS(不稳定型)",
+                "anesthesia_recommendation": "腰麻或全麻",
+                "key_considerations": ["尽量保留自身股骨头", "术后避免早期完全负重",
+                                       "监测股骨头坏死风险"],
+                "guideline_ref": "中国成人股骨颈骨折诊治指南(2018)",
+                "reasoning": f"患者{age}岁相对年轻,内固定可保留自身关节",
+            }
+        else:
+            return {
+                "recommended_surgery": "THA 或 内固定(空心螺钉/DHS)",
+                "alternative_surgery": "HA (若功能需求低)",
+                "surgical_approach": "根据骨质量和功能需求选择",
+                "implant_choice": "根据分型决定",
+                "anesthesia_recommendation": "全麻或腰硬联合",
+                "key_considerations": ["需综合功能需求和骨质量决策", "术前评估并存症"],
+                "guideline_ref": "NICE NG37 + 国家卫健委 2022",
+                "reasoning": f"患者{age}岁(65-74),手术方案需个体化决策",
+            }
+
+    # ── 转子间骨折 ──
+    if "转子间" in combined or "intertroch" in combined:
+        return {
+            "recommended_surgery": "股骨近端防旋髓内钉(PFNA)",
+            "alternative_surgery": "InterTAN髓内钉/动力髋螺钉(DHS,稳定型)",
+            "surgical_approach": "微创小切口",
+            "implant_choice": "PFNA(首选)/InterTAN(反转子间骨折)",
+            "anesthesia_recommendation": "全身麻醉或腰硬联合麻醉",
+            "key_considerations": ["恢复颈干角和解剖力线", "避免内翻畸形", "尖顶距控制<25mm"],
+            "guideline_ref": "老年股骨转子间骨折诊疗指南(2020)",
+            "reasoning": "PFNA是转子间骨折金标准,微创,固定牢固",
+        }
+
+    # ── 转子下骨折 ──
+    if "转子下" in combined or "subtroch" in combined:
+        return {
+            "recommended_surgery": "长PFNA或股骨近端锁定钢板",
+            "alternative_surgery": "逆行髓内钉",
+            "surgical_approach": "微创髓内入路",
+            "implant_choice": "长PFNA(首选)",
+            "anesthesia_recommendation": "全身麻醉",
+            "key_considerations": ["注意复位力线", "避免内翻", "长髓内钉跨过骨折端"],
+            "guideline_ref": "NICE NG37",
+            "reasoning": "转子下骨折需长髓内钉跨过骨折端提供稳定固定",
+        }
+
+    return {
+        "recommended_surgery": "需进一步明确骨折类型和患者状况",
+        "alternative_surgery": "",
+        "surgical_approach": "",
+        "implant_choice": "",
+        "anesthesia_recommendation": "",
+        "key_considerations": ["请完善影像学检查明确骨折分型"],
+        "guideline_ref": "",
+        "reasoning": "信息不足以做出明确手术推荐",
     }
 
 
