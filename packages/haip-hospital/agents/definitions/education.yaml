@@ -16,10 +16,9 @@ prompt:
 
 tools:
   - name: case_teaching
-    description: 典型病例教学 — 合成病例，不含真实患者数据
+    description: 典型病例教学 (合成病例不含真实患者数据)
     handler: education.case_teaching
     input: {fracture_type: str, difficulty: str}
-    note: "病例为合成病例，非真实患者数据 — 缓解 Risk #5"
 
   - name: decision_review
     description: 决策复盘 — 智能体推荐 vs 实际临床决策对比分析

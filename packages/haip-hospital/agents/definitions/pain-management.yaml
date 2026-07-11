@@ -16,11 +16,9 @@ prompt:
 
 tools:
   - name: assess_pain
-    description: 疼痛评估 (VAS/NRS/FLACC) — VAS 值必须由护理人员输入
+    description: 疼痛评估 VAS/NRS/FLACC (VAS值须由护理人员床旁输入，不接受空值)
     handler: pain_management.assess_pain
     input: {patient_id: str, vas_score: float, nurse_id: str, assessment_time: str}
-    input_required: true
-    note: "VAS 评分依赖护理人员床旁评估输入，智能体不接受空值"
 
   - name: multimodal_analgesia
     description: 多模式镇痛阶梯方案推荐 (NSAIDs→弱阿片→强阿片→局麻→神经阻滞)
@@ -28,10 +26,9 @@ tools:
     input: {patient_id: str, vas_score: float, allergies: list, renal_function: str, liver_function: str}
 
   - name: pain_free_ward_metrics
-    description: 无痛化病房质控指标 (VAS<3比例/爆发痛频率/补救用药率)
+    description: 无痛化病房质控指标 VAS<3比例/爆发痛频率/补救用药率 (±2分评估容差)
     handler: pain_management.pain_free_ward_metrics
     input: {ward_id: str, period: str}
-    note: "质控指标基于护理评估记录，±2 分评估容差"
 
   - name: pca_config
     description: 术后 PCA 镇痛泵配置建议
