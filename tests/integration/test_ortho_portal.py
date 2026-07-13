@@ -105,3 +105,27 @@ class TestPortalLayout:
         assert "创伤骨科" in body
         assert "--accent" in body
         assert "body.light" in body
+
+
+class TestPortalContent:
+    def _body(self):
+        return client.get("/ortho-portal").text
+
+    def test_has_eight_capabilities(self):
+        body = self._body()
+        for api in ["classify", "assess", "mdt", "timing",
+                    "complications", "plan", "rehab", "followup"]:
+            assert api in body, f"缺能力API {api}"
+
+    def test_has_eleven_stages_labels(self):
+        body = self._body()
+        for label in ["急诊分诊", "骨折分型", "术前评估", "MDT 会诊",
+                      "手术时机", "并发症预测", "手术方案", "围术期护理",
+                      "术后康复", "随访计划", "质控审计"]:
+            assert label in body, f"缺阶段 {label}"
+
+    def test_has_patient_ids_and_loader(self):
+        body = self._body()
+        assert "P001" in body and "P005" in body
+        assert "/api/call" in body
+        assert "his_patient" in body
