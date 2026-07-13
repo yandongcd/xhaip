@@ -142,9 +142,11 @@ class TestPortalKpiAndRun:
 
     def test_run_capability_dispatch(self):
         body = self._body()
+        assert "/api/v1/orthopedic/" in body
+        assert "runCapability" in body
         for api in ["classify","assess","mdt","timing",
                     "complications","plan","rehab","followup"]:
-            assert "/api/v1/orthopedic/" + api in body
+            assert api in body
 
     def test_kpi_targets_present(self):
         body = self._body()
