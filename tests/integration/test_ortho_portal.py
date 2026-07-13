@@ -129,3 +129,54 @@ class TestPortalContent:
         assert "P001" in body and "P005" in body
         assert "/api/call" in body
         assert "his_patient" in body
+
+
+class TestPortalKpiAndRun:
+    def _body(self):
+        return client.get("/ortho-portal").text
+
+    def test_kpi_uses_v1_api(self):
+        body = self._body()
+        assert "/api/v1/orthopedic/timing" in body
+        assert "/api/v1/orthopedic/complications" in body
+
+    def test_run_capability_dispatch(self):
+        body = self._body()
+        for api in ["classify","assess","mdt","timing",
+                    "complications","plan","rehab","followup"]:
+            assert "/api/v1/orthopedic/" + api in body
+
+    def test_kpi_targets_present(self):
+        body = self._body()
+        for kid in ["kpi-total","kpi-pending","kpi-48h",
+                    "kpi-highrisk","kpi-avgfactor"]:
+            assert kid in body
+
+
+class TestV1ApiSmoke:
+    def _p(self, pid):
+        from orthopedics.his_adapter import MOCK_PATIENT_DB
+        return MOCK_PATIENT_DB[pid]
+
+    def test_timing_api(self):
+        p = self._p("P003")
+        r = client.post("/api/v1/orthopedic/timing",
+                        json={"patient_id":"P003","labs":p["labs"],
+                              "conditions":p["conditions"],"meds":p["meds"],
+                              "ecg_findings":""})
+        assert r.status_code == 200
+        assert r.json()["urgency"] == "elective"
+
+    def test_complications_api(self):
+        p = self._p("P005")
+        r = client.post("/api/v1/orthopedic/complications",
+                        json={"patient_id":"P005","age":p["age"],
+                              "labs":p["labs"],"conditions":p["conditions"]})
+        assert r.status_code == 200
+        assert r.json()["overall_risk"] in ("low","moderate","high")
+
+    def test_plan_api(self):
+        r = client.post("/api/v1/orthopedic/plan",
+                        json={"patient_id":"P001","fracture_type":"股骨颈骨折","age":78})
+        assert r.status_code == 200
+        assert "procedure" in r.json()

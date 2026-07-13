@@ -100,6 +100,7 @@ const STAGES = [
   {order:10, label:"随访计划", desc:"1/3/6/12 月 + 红旗症状 + 骨质疏松"},
   {order:11, label:"质控审计", desc:"6 阶段 18 检查点合规评分"},
 ];
+const V1_ENDPOINTS = ["/api/v1/orthopedic/classify","/api/v1/orthopedic/assess","/api/v1/orthopedic/mdt","/api/v1/orthopedic/timing","/api/v1/orthopedic/complications","/api/v1/orthopedic/plan","/api/v1/orthopedic/rehab","/api/v1/orthopedic/followup"];
 let selectedPid = null;
 let patients = {};
 
@@ -159,8 +160,68 @@ document.getElementById("theme-toggle").addEventListener("click", () => {
 // 初始化
 renderStages();
 renderCaps();
-function computeKpi(){}      // Task 5 覆盖实现
-function runCapability(){}   // Task 5 覆盖实现
+async function computeKpi(){
+  const ids = Object.keys(patients);
+  if(!ids.length){ return; }
+  let pending=0, emergency=0, highrisk=0, factorSum=0, n=0;
+  for(const pid of ids){
+    const p = patients[pid];
+    try{
+      const t = await apiCall("/api/v1/orthopedic/timing",
+        {patient_id:pid, labs:p.labs||{}, conditions:p.conditions||[], meds:p.meds||[], ecg_findings:""});
+      if(t.urgency==="emergency") emergency++;
+      if(t.urgency==="emergency"||t.urgency==="urgent") pending++;
+      factorSum += (t.total_factors||0);
+      const c = await apiCall("/api/v1/orthopedic/complications",
+        {patient_id:pid, age:p.age||0, labs:p.labs||{}, conditions:p.conditions||[]});
+      if(c.overall_risk==="high") highrisk++;
+      n++;
+    }catch(e){ /* 跳过 */ }
+  }
+  document.getElementById("kpi-total").textContent = ids.length;
+  document.getElementById("kpi-pending").textContent = pending;
+  document.getElementById("kpi-48h").textContent = n ? Math.round(emergency/n*100)+"%" : "—";
+  document.getElementById("kpi-highrisk").textContent = highrisk;
+  document.getElementById("kpi-avgfactor").textContent = n ? (factorSum/n).toFixed(1) : "—";
+}
+
+function badge(v){
+  const cls = {high:"high",moderate:"moderate",low:"low",emergency:"emergency",urgent:"urgent",elective:"high"}[v] || "moderate";
+  return `<span class="badge ${cls}">${v}</span>`;
+}
+
+function buildParams(api, p){
+  const pid = selectedPid;
+  switch(api){
+    case "timing": return {patient_id:pid, labs:p.labs||{}, conditions:p.conditions||[], meds:p.meds||[], ecg_findings:""};
+    case "complications": return {patient_id:pid, age:p.age||0, labs:p.labs||{}, conditions:p.conditions||[]};
+    case "classify": return {patient_id:pid, xray_findings:{location:p.fracture_type||"", type:""}};
+    case "assess": return {patient_id:pid};
+    case "plan": return {patient_id:pid, fracture_type:p.fracture_type||"", age:p.age||0};
+    case "mdt": return {patient_id:pid, chief_complaint:p.diagnosis||""};
+    case "rehab": return {patient_id:pid, procedure:p.procedure||""};
+    case "followup": return {patient_id:pid, procedure:p.procedure||""};
+    default: return {patient_id:pid};
+  }
+}
+
+async function runCapability(api){
+  const content = document.getElementById("result-content");
+  document.getElementById("result-empty").style.display = "none";
+  if(!selectedPid){ content.innerHTML = '<div class="muted">请先在左侧选择患者</div>'; return; }
+  const p = patients[selectedPid];
+  content.innerHTML = '<div class="muted">调用中…</div>';
+  try{
+    const d = await apiCall("/api/v1/orthopedic/"+api, buildParams(api, p));
+    let head = "";
+    if(d.urgency) head += "手术时机: " + badge(d.urgency) + " · SLA " + (d.sla||"") + "<br>";
+    if(d.overall_risk) head += "综合风险: " + badge(d.overall_risk) + "<br>";
+    if(d.error) head += '<span class="badge high">错误</span> ' + d.error + "<br>";
+    content.innerHTML = `<div style="margin-bottom:8px">${head}</div><div class="result-box">${JSON.stringify(d,null,2)}</div>`;
+  }catch(e){
+    content.innerHTML = '<div class="result-box"><span class="badge high">后端未连接</span> ' + e.message + '</div>';
+  }
+}
 loadPatients();
 </script>
 </body>
