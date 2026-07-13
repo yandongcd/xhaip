@@ -24,14 +24,64 @@ MOCK_IMAGING = {
 
 MOCK_PATIENT_DB = {
     "P001": {
-        "name": "张**", "age": 78, "gender": "女", "diagnosis": "右股骨颈骨折 Garden III",
-        "comorbidities": ["高血压", "2型糖尿病"], "medications": ["硝苯地平 30mg qd", "二甲双胍 500mg bid"],
+        "name": "张**", "age": 78, "gender": "女",
+        "diagnosis": "右股骨颈骨折 Garden III",
+        "comorbidities": ["高血压", "2型糖尿病"],
+        "medications": ["硝苯地平 30mg qd", "二甲双胍 500mg bid"],
         "allergies": ["青霉素"],
+        "labs": {"cTnI": 0.02, "Hb": 95, "Cr": 110, "Glu": 9.5,
+                 "WBC": 8.5, "CRP": 40, "INR": 1.1, "egfr": 65},
+        "conditions": ["高血压", "糖尿病"],
+        "meds": ["nifedipine", "metformin"],
+        "fracture_type": "股骨颈骨折", "procedure": "THA (全髋关节置换)",
     },
     "P002": {
-        "name": "李**", "age": 82, "gender": "男", "diagnosis": "左股骨转子间骨折 Evans ID",
-        "comorbidities": ["房颤", "高血压"], "medications": ["华法林 3mg qd", "氨氯地平 5mg qd"],
+        "name": "李**", "age": 82, "gender": "男",
+        "diagnosis": "左股骨转子间骨折 Evans ID",
+        "comorbidities": ["房颤", "高血压"],
+        "medications": ["华法林 3mg qd", "氨氯地平 5mg qd"],
         "allergies": [],
+        "labs": {"cTnI": 0.01, "Hb": 138, "Cr": 90, "Glu": 5.4,
+                 "WBC": 6.5, "CRP": 6, "INR": 1.1, "egfr": 82},
+        "conditions": ["高血压"],
+        "meds": ["amlodipine"],
+        "fracture_type": "转子间骨折", "procedure": "PFNA (股骨近端防旋髓内钉)",
+    },
+    "P003": {
+        "name": "王**", "age": 80, "gender": "男",
+        "diagnosis": "右股骨颈骨折 Garden IV",
+        "comorbidities": ["冠心病", "陈旧心梗", "高血压"],
+        "medications": ["阿司匹林 100mg qd", "美托洛尔 25mg bid"],
+        "allergies": [],
+        "labs": {"cTnI": 0.08, "Hb": 105, "Cr": 120, "Glu": 6.8,
+                 "WBC": 9.0, "CRP": 30, "INR": 1.2, "egfr": 55},
+        "conditions": ["冠心病", "心梗史", "高血压"],
+        "meds": ["aspirin", "metoprolol"],
+        "fracture_type": "股骨颈骨折", "procedure": "THA (全髋关节置换)",
+    },
+    "P004": {
+        "name": "赵**", "age": 68, "gender": "女",
+        "diagnosis": "左股骨转子间骨折 Evans IIA",
+        "comorbidities": ["骨质疏松"],
+        "medications": ["阿仑膦酸钠 70mg qw"],
+        "allergies": [],
+        "labs": {"cTnI": 0.01, "Hb": 128, "Cr": 78, "Glu": 5.1,
+                 "WBC": 7.0, "CRP": 8, "INR": 1.0, "egfr": 90},
+        "conditions": ["骨质疏松"],
+        "meds": ["alendronate"],
+        "fracture_type": "转子间骨折", "procedure": "PFNA (股骨近端防旋髓内钉)",
+    },
+    "P005": {
+        "name": "陈**", "age": 85, "gender": "女",
+        "diagnosis": "右股骨颈骨折 Garden III 合并贫血",
+        "comorbidities": ["慢性肾病", "贫血", "痴呆"],
+        "medications": ["氯吡格雷 75mg qd"],
+        "allergies": ["磺胺"],
+        "labs": {"cTnI": 0.03, "Hb": 88, "Cr": 150, "Glu": 6.2,
+                 "WBC": 8.0, "CRP": 50, "INR": 1.3, "egfr": 45},
+        "conditions": ["慢性肾病", "贫血", "痴呆", "冠心病"],
+        "meds": ["clopidogrel"],
+        "fracture_type": "股骨颈骨折", "procedure": "THA (全髋关节置换)",
     },
 }
 
@@ -102,7 +152,7 @@ def query_patient(*, patient_id: str, **kwargs: Any) -> dict[str, Any]:
 
 def query_imaging(*, patient_id: str, modality: str = "pelvis_xray",
                   **kwargs: Any) -> dict[str, Any]:
-    """Mock PACS 影像查询.
+    """模拟 PACS 影像查询.
 
     Args:
         patient_id: 患者 ID
