@@ -88,3 +88,20 @@ class TestPortalRoute:
         body = r.text.lower()
         for tag in ["<!doctype", "<html", "<head", "<body", "<title"]:
             assert tag in body, f"缺{tag}"
+
+
+class TestPortalLayout:
+    def _body(self):
+        return client.get("/ortho-portal").text
+
+    def test_has_layout_anchors(self):
+        body = self._body()
+        for anchor in ["kpi-bar", "patient-list", "capability-grid",
+                       "result-panel", "stage-timeline", "theme-toggle"]:
+            assert anchor in body, f"缺锚点 {anchor}"
+
+    def test_has_title_and_tokens(self):
+        body = self._body()
+        assert "创伤骨科" in body
+        assert "--accent" in body
+        assert "body.light" in body
