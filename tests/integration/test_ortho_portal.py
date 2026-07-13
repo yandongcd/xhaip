@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
+
+os.environ["HAIP_TEST_MODE"] = "true"
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT / "packages" / "haip-core"))
@@ -73,3 +76,15 @@ class TestUrgencyDistribution:
                                       labs=p["labs"], conditions=p["conditions"])
             overalls.append(r["overall_risk"])
         assert "high" in overalls  # P005 高龄+痴呆+CKD
+
+
+class TestPortalRoute:
+    def test_route_returns_200(self):
+        r = client.get("/ortho-portal")
+        assert r.status_code == 200
+
+    def test_route_is_html(self):
+        r = client.get("/ortho-portal")
+        body = r.text.lower()
+        for tag in ["<!doctype", "<html", "<head", "<body", "<title"]:
+            assert tag in body, f"缺{tag}"

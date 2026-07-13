@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -13,24 +14,150 @@ sys.path.insert(0, str(PROJECT_ROOT / "packages" / "haip-core"))
 sys.path.insert(0, str(PROJECT_ROOT / "packages" / "haip-hospital"))
 sys.path.insert(0, str(PROJECT_ROOT / "packages" / "haip-hospital" / "modules"))
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 
 from haip.agent import load_from_dir, _registry, get as get_agent  # noqa: E402
-from haip.a2a import call as a2a_call, get_history, call_with_loop  # noqa: E402
+from haip.a2a import call as a2a_call, get_history, call_with_loop, stream_events  # noqa: E402
 from haip.guard.verifier import GuardVerifier  # noqa: E402
 from haip.knowledge.runtime import get_kb  # noqa: E402
 from haip.knowledge.cases import CaseManager  # noqa: E402
 
-app = FastAPI(title="xhaip v1.0 API", version="1.0.0")
+
+def _seed_default_admin():
+    """Create default admin user if no users exist."""
+    from haip.auth import get_auth_service
+    auth = get_auth_service()
+    if not auth.list_users():
+        try:
+            admin_pass = os.environ.get("HAIP_ADMIN_PASSWORD", "Admin@123456")
+            auth.create_user(
+                username="admin",
+                password=admin_pass,
+                display_name="系统管理员",
+                roles=["admin"],
+            )
+            auth.create_user(
+                username="doctor",
+                password="Doctor@123",
+                display_name="演示医生",
+                roles=["doctor"],
+            )
+        except Exception:
+            pass
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    _seed_default_admin()
+    # Initialize default tenant
+    try:
+        from haip.tenants import init_default_tenant
+        init_default_tenant()
+    except Exception:
+        pass
+    # Initialize database
+    try:
+        from haip.database import init_database, create_tables
+        init_database()
+        await create_tables()
+    except Exception:
+        pass
+    yield
+    # Shutdown
+    try:
+        from haip.database import close_database
+        await close_database()
+    except Exception:
+        pass
+
+
+app = FastAPI(title="xhaip v1.1 API", version="1.1.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+# Auth middleware — validates JWT on protected routes
+from haip.auth.middleware import AuthMiddleware  # noqa: E402
+app.add_middleware(AuthMiddleware)
+
+# Audit middleware — records all API calls
+from haip.audit.middleware import AuditMiddleware  # noqa: E402
+app.add_middleware(AuditMiddleware)
+
+# Auth API router
+from haip.auth import auth_router  # noqa: E402
+app.include_router(auth_router)
+
+# Audit API router
+from haip.audit import audit_router  # noqa: E402
+app.include_router(audit_router)
+
+# FHIR API router
+from haip.fhir import fhir_router  # noqa: E402
+app.include_router(fhir_router)
+
+# Tenant API router
+from haip.tenants.api import tenant_router  # noqa: E402
+app.include_router(tenant_router)
+
+# License API router
+from haip.licensing.api import license_router  # noqa: E402
+app.include_router(license_router)
+
+# TOGAF template API
+from haip.togaf.templates.engine import get_togaf_engine  # noqa: E402
+togaf_engine = get_togaf_engine()
+
+
+@app.get("/api/togaf/templates")
+def list_togaf_templates():
+    """List all available TOGAF architecture templates."""
+    return togaf_engine.list_all()
+
+
+@app.get("/api/togaf/templates/{template_id}")
+def render_togaf_template(template_id: str):
+    """Render a TOGAF template as HTML."""
+    html = togaf_engine.render(template_id)
+    if html is None:
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"error": f"Template not found: {template_id}"}, 404)
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(html)
+
+
+@app.get("/api/leanix/export")
+def leanix_export():
+    """Export LeanIX fact sheets as JSON."""
+    from haip.togaf.leanix import auto_discover
+    exporter = auto_discover()
+    return exporter.to_leanix_json()
+
+# Prometheus metrics endpoint
+from haip.metrics import setup_metrics  # noqa: E402
+setup_metrics(app)
+
+# Structured logging — setup on import
+try:
+    from haip.logging_utils import setup_logging
+    setup_logging()
+except Exception:
+    pass
 
 YAML_DIR = PROJECT_ROOT / "packages" / "haip-hospital" / "agents" / "definitions"
 PATIENTS_FILE = PROJECT_ROOT / "packages" / "haip-hospital" / "data" / "patients.json"
 
 # 启动时加载所有 Agent（含 TOGAF 校验）
 load_from_dir(str(YAML_DIR))
+# Initialize A2A service auth secrets for all agents
+try:
+    from haip.a2a.auth import init_agent_secrets
+    from haip.agent import _registry as _agent_registry
+    init_agent_secrets(list(_agent_registry.keys()))
+except Exception:
+    pass
 # TOGAF validation — run after all agents loaded so CHK-004 dependency graph sees full registry
 try:
     from haip.togaf.validator import validate_all  # noqa: E402
@@ -106,6 +233,131 @@ async def call_tool(request: Request):
 
     result = a2a_call(agent, tool, params)
     return result
+
+
+# ── SSE 流式端点 (v1.2) ──
+
+@app.get("/api/sse")
+async def stream_get(request: Request):
+    """SSE GET 端点 — 用于浏览器 EventSource.
+
+    Query params: ?agent=antiemetic&query=评估PONV&max_steps=5&session_id=xxx
+    """
+    agent = request.query_params.get("agent", "")
+    query = request.query_params.get("query", "")
+    max_steps = int(request.query_params.get("max_steps", "5"))
+    session_id = request.query_params.get("session_id", "default")
+    user_id = request.query_params.get("user_id", "default")
+
+    if not agent or not query:
+        return JSONResponse({"status": "error", "error": "Missing agent or query"}, 400)
+
+    return StreamingResponse(
+        stream_events(agent, query, max_steps, session_id, user_id),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@app.get("/stream-demo", response_class=HTMLResponse)
+def stream_demo():
+    """SSE 流式调试页面 — 实时查看 Agent 推理过程的每个 Event."""
+    return (Path(__file__).parent / "templates" / "stream.html").read_text(encoding="utf-8")
+
+
+@app.post("/api/stream")
+async def stream_call(request: Request):
+    """SSE 流式 AgentLoop — 每步实时推送 Event (state_delta + content).
+
+    前端通过 EventSource 接收:
+      event: step
+      data: {"author":"assistant","content":"...","state_delta":{...}}
+
+    POST body: {"agent": "antiemetic", "query": "评估PONV风险", "max_steps": 5,
+                "session_id": "optional"}
+    """
+    data = await request.json()
+    agent = data.get("agent", "")
+    query = data.get("query", "") or data.get("params", {}).get("query", "")
+    max_steps = data.get("max_steps", 5)
+    session_id = data.get("session_id", "default")
+    user_id = data.get("user_id", "default")
+
+    if not agent or not query:
+        return JSONResponse({"status": "error", "error": "Missing agent or query"}, 400)
+
+    return StreamingResponse(
+        stream_events(agent, query, max_steps, session_id, user_id),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+# ── Session API (v1.2) ──
+
+@app.post("/api/sessions")
+async def create_session(request: Request):
+    """创建新会话. POST body: {"user_id": "doctor1", "state": {...}}"""
+    from haip.session.store import SessionService
+    data = await request.json()
+    svc = SessionService(_get_session_db_path())
+    s = svc.create_session(
+        user_id=data.get("user_id", "default"),
+        state=data.get("state"),
+    )
+    return {"session_id": s.id, "created_at": s.last_update}
+
+
+@app.get("/api/sessions/{session_id}")
+async def get_session(session_id: str, user_id: str = "default"):
+    """获取会话详情（含 events 和 state）."""
+    from haip.session.store import SessionService
+    svc = SessionService(_get_session_db_path())
+    s = svc.get_session(session_id, user_id=user_id)
+    if s is None:
+        return JSONResponse({"error": "Session not found"}, 404)
+    return {
+        "session_id": s.id, "user_id": s.user_id,
+        "state": s.state,
+        "events": [e.to_dict() for e in s.events[-50:]],
+        "last_update": s.last_update,
+        "token_estimate": s.token_estimate(),
+    }
+
+
+@app.get("/api/sessions")
+async def list_sessions(user_id: str = "default", limit: int = 20):
+    """列出用户的会话列表."""
+    from haip.session.store import SessionService
+    svc = SessionService(_get_session_db_path())
+    return svc.list_sessions(user_id=user_id, limit=limit)
+
+
+@app.post("/api/sessions/{session_id}/rewind")
+async def rewind_session(session_id: str, request: Request):
+    """回滚会话到指定事件数. POST body: {"keep_events": 5}"""
+    from haip.session.store import SessionService
+    data = await request.json()
+    svc = SessionService(_get_session_db_path())
+    s = svc.get_session(session_id)
+    if s is None:
+        return JSONResponse({"error": "Session not found"}, 404)
+    svc.rewind_session(s, data.get("keep_events", 0))
+    return {"session_id": s.id, "events_remaining": len(s.events)}
+
+
+def _get_session_db_path() -> str:
+    data_dir = PROJECT_ROOT / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    return str(data_dir / "sessions.db")
 
 
 @app.post("/api/loop/demo")
@@ -329,6 +581,13 @@ def agent_ui(name: str):
 def ortho_ui():
     """创伤骨科专业界面 — 15 Tab 临床工作台。"""
     with open(Path(__file__).parent / "ui_ortho.html", encoding="utf-8") as f:
+        return f.read()
+
+
+@app.get("/ortho-portal", response_class=HTMLResponse)
+def ortho_portal_ui():
+    """创伤骨科诊疗门户 — KPI 看板 + AI 诊疗能力卡 + 患者队列 + 流程时间轴。"""
+    with open(Path(__file__).parent / "ui_ortho_portal.html", encoding="utf-8") as f:
         return f.read()
 
 
