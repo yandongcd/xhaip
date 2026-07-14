@@ -28,9 +28,17 @@ class PromptConfig:
 
 
 @dataclass
+class CitationConfig:
+    required: bool = False
+    min_sources: int = 1
+    min_trust: str = "T2"          # T1 = only T1 citations accepted; T2 = T1 or T2
+
+
+@dataclass
 class GuardConfig:
     triggers: list[str] = field(default_factory=list)
     high_risk_scenarios: list[str] = field(default_factory=list)
+    citation: CitationConfig = field(default_factory=CitationConfig)
 
 
 @dataclass
@@ -140,9 +148,16 @@ class DomainPlugin:
     def from_yaml(cls, data: dict[str, Any]) -> DomainPlugin:
         prompt = PromptConfig(**data.get("prompt", {}))
         tools = [ToolDef(**t) for t in data.get("tools", [])]
+        guard_data = data.get("guard") or {}
+        citation_data = guard_data.get("citation") or {}
         guard = GuardConfig(
-            triggers=(data.get("guard") or {}).get("triggers", []),
-            high_risk_scenarios=(data.get("guard") or {}).get("high_risk_scenarios", []),
+            triggers=guard_data.get("triggers", []),
+            high_risk_scenarios=guard_data.get("high_risk_scenarios", []),
+            citation=CitationConfig(
+                required=citation_data.get("required", False),
+                min_sources=citation_data.get("min_sources", 1),
+                min_trust=citation_data.get("min_trust", "T2"),
+            ),
         )
         ui = UIConfig(
             template=data.get("ui", {}).get("template", ""),

@@ -1,0 +1,8 @@
+# xhaip Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: xhaip
+  labels:
+    app: xhaip
+    environment: production

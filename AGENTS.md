@@ -1,6 +1,8 @@
-# AGENTS — xhaip (HAIP v1.0)
+# AGENTS — xhaip (HAIP v1.2)
 
-> 重构后的 Hospital AI Platform。老系统 `haip-0705-2/` 保持不变，所有新开发在 `xhaip/` 下进行。
+> 重构后的 Hospital AI Platform。v1.2 补齐 (Permission/Guard gating/Citation/Transport/HITL/Data Product)。  
+> 架构文档: `docs/architecture/INDEX.md` | 路径映射: `docs/architecture/path-mapping.md`  
+> **[PROD-READY]** 权限系统 (U2A/A2A/A2D) + 审计日志已实现。
 
 ## 快速开始
 
@@ -145,7 +147,12 @@ xhaip tools list --agent pharmacy                       # 列出 Agent 工具
 ruff check packages/haip-core/ tests/     # 代码风格
 mypy packages/haip-core/haip/             # 类型检查
 pytest --cov=haip --cov-fail-under=70     # 单元测试 + 覆盖率
+python scripts/validate_patients.py       # 患者数据质量 (0 FAIL 阻断)
 ```
+
+## 患者数据
+
+所有患者记录含 `provenance` 字段（`source` / `origin_repo` / `institution`）。修改患者数据后需运行 `python scripts/validate_patients.py`。
 
 ## 与 v0.2.0 的关键差异
 

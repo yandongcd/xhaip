@@ -138,22 +138,22 @@ tools:
     input: {guideline: str, topic: str}
 
   - name: his_labs
-    description: Mock LIS 检验数据查询
+    description: 模拟 LIS 检验数据查询
     handler: orthopedics.his_adapter.query_labs
     input: {patient_id: str, lab_items: list}
 
   - name: his_patient
-    description: Mock HIS 患者病历查询
+    description: 模拟 HIS 患者病历查询
     handler: orthopedics.his_adapter.query_patient
     input: {patient_id: str}
 
   - name: his_image
-    description: Mock PACS 影像查询
+    description: 模拟 PACS 影像查询
     handler: orthopedics.his_adapter.query_imaging
     input: {patient_id: str, modality: str}
 
   - name: idata_search
-    description: Mock iData 知识库检索
+    description: 模拟 iData 知识库检索
     handler: orthopedics.idata_adapter.search_knowledge
     input: {query: str, category: str}
 

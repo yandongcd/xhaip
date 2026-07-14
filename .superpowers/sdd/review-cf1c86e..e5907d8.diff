@@ -1,0 +1,123 @@
+﻿# Review package: cf1c86e..e5907d8
+
+## Commits
+e5907d8 feat(ortho): 鏂板 /ortho-portal 璺敱 + HTML 楠ㄦ灦
+
+## Files changed
+ packages/haip-core/haip/ui_ortho_portal.html |  11 ++
+ packages/haip-core/haip/web_server.py        | 265 ++++++++++++++++++++++++++-
+ tests/integration/test_ortho_portal.py       |  15 ++
+ 3 files changed, 288 insertions(+), 3 deletions(-)
+
+## Diff (ui_ortho_portal.html + test only; web_server.py isolated below)
+diff --git a/packages/haip-core/haip/ui_ortho_portal.html b/packages/haip-core/haip/ui_ortho_portal.html
+new file mode 100644
+index 0000000..98c67ef
+--- /dev/null
++++ b/packages/haip-core/haip/ui_ortho_portal.html
+@@ -0,0 +1,11 @@
++<!DOCTYPE html>
++<html lang="zh-CN">
++<head>
++<meta charset="UTF-8">
++<meta name="viewport" content="width=device-width, initial-scale=1.0">
++<title>xhaip 鈥?鍒涗激楠ㄧ璇婄枟闂ㄦ埛</title>
++</head>
++<body>
++<div id="app">鍒涗激楠ㄧ璇婄枟闂ㄦ埛 鍔犺浇涓€?/div>
++</body>
++</html>
+diff --git a/tests/integration/test_ortho_portal.py b/tests/integration/test_ortho_portal.py
+index 7cb2b1d..66a2061 100644
+--- a/tests/integration/test_ortho_portal.py
++++ b/tests/integration/test_ortho_portal.py
+@@ -1,17 +1,20 @@
+ """鍒涗激楠ㄧ璇婄枟闂ㄦ埛 (/ortho-portal) 闆嗘垚娴嬭瘯."""
+ 
+ from __future__ import annotations
+ 
++import os
+ import sys
+ from pathlib import Path
+ 
++os.environ["HAIP_TEST_MODE"] = "true"
++
+ ROOT = Path(__file__).resolve().parent.parent.parent
+ sys.path.insert(0, str(ROOT / "packages" / "haip-core"))
+ sys.path.insert(0, str(ROOT / "packages" / "haip-hospital"))
+ sys.path.insert(0, str(ROOT / "packages" / "haip-hospital" / "modules"))
+ 
+ from fastapi.testclient import TestClient  # noqa: E402
+ from haip.agent import load_from_dir  # noqa: E402
+ 
+ load_from_dir(str(ROOT / "packages" / "haip-hospital" / "agents" / "definitions"))
+ from haip.web_server import app  # noqa: E402
+@@ -66,10 +69,22 @@ class TestUrgencyDistribution:
+     def test_complications_high_risk_exists(self):
+         from orthopedics import predict_complications
+         from orthopedics.his_adapter import MOCK_PATIENT_DB
+         overalls = []
+         for pid in REQUIRED_PATIENTS:
+             p = MOCK_PATIENT_DB[pid]
+             r = predict_complications(patient_id=pid, age=p["age"],
+                                       labs=p["labs"], conditions=p["conditions"])
+             overalls.append(r["overall_risk"])
+         assert "high" in overalls  # P005 楂橀緞+鐥村憜+CKD
++
++
++class TestPortalRoute:
++    def test_route_returns_200(self):
++        r = client.get("/ortho-portal")
++        assert r.status_code == 200
++
++    def test_route_is_html(self):
++        r = client.get("/ortho-portal")
++        body = r.text.lower()
++        for tag in ["<!doctype", "<html", "<head", "<body", "<title"]:
++            assert tag in body, f"缂簕tag}"
+
+## web_server.py — ONLY the /ortho-portal addition (grep context)
+  Date:   Mon Jul 13 14:01:55 2026 +0800
+  
+>     feat(ortho): 鏂板 /ortho-portal 璺敱 + HTML 楠ㄦ灦
+  
+> diff --git a/packages/haip-core/haip/ui_ortho_portal.html b/packages/haip-core/haip/ui_ortho_portal.html
+  new file mode 100644
+  index 0000000..98c67ef
+  --- /dev/null
+> +++ b/packages/haip-core/haip/ui_ortho_portal.html
+  @@ -0,0 +1,11 @@
+  +<!DOCTYPE html>
+  +<html lang="zh-CN">
+  +<head>
+   
+   
+> +@app.get("/ortho-portal", response_class=HTMLResponse)
+> +def ortho_portal_ui():
+  +    """鍒涗激楠ㄧ璇婄枟闂ㄦ埛 鈥?KPI 鐪嬫澘 + AI 璇婄枟鑳藉姏鍗?+ 鎮ｈ€呴槦鍒?+ 娴佺▼鏃堕棿杞淬€?""
+> +    with open(Path(__file__).parent / "ui_ortho_portal.html", encoding="utf-8") as f:
+  +        return f.read()
+  +
+  +
+   @app.get("/pharmacy", response_class=HTMLResponse)
+  +class TestPortalRoute:
+  +    def test_route_returns_200(self):
+> +        r = client.get("/ortho-portal")
+  +        assert r.status_code == 200
+  +
+  +    def test_route_is_html(self):
+> +        r = client.get("/ortho-portal")
+  +        body = r.text.lower()
+  +        for tag in ["<!doctype", "<html", "<head", "<body", "<title"]:
+  +            assert tag in body, f"缂簕tag}"
+  """xhaip Web Server 鈥?FastAPI 鐢熶骇绾?HTTP API + Web UI.
+  
+  
+> @app.get("/ortho-portal", response_class=HTMLResponse)
+> def ortho_portal_ui():
+      """鍒涗激楠ㄧ璇婄枟闂ㄦ埛 鈥?KPI 鐪嬫澘 + AI 璇婄枟鑳藉姏鍗?+ 鎮ｈ€呴槦鍒?+ 娴佺▼鏃堕棿杞淬€?""
+>     with open(Path(__file__).parent / "ui_ortho_portal.html", encoding="utf-8") as f:
+          return f.read()
+  
+  
+  @app.get("/pharmacy", response_class=HTMLResponse)

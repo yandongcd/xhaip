@@ -1,42 +1,43 @@
-# Task Plan: Code Generator for xhaip Modules ✅ COMPLETE
+# xhaip 商用化技术改造 — Implementation Plan
+
+> Created: 2026-07-12 | Status: in_progress
 
 ## Goal
-Transform 39 STUB modules into functioning Python modules with real clinical logic.
+将 xhaip 从 Demo 级改造为可部署到医院内网的商用基础版本。
 
-## Results
+## Phases
 
-### Generator
-- **Script**: `D:\FC\xhaip\scripts\generate_modules.py`
-- **Usage**: `python scripts/generate_modules.py [--agents ...] [--dry-run] [--tier B|C]`
-- **Inputs**: 31 YAML agent definitions + 36 guidelines + 38+ clinical rule groups
+### P0: 安全基建筑 (当前)
+- [ ] P0-1: 认证与授权系统 (auth module)
+- [ ] P0-2: A2A Agent 间服务认证
+- [ ] P0-3: 操作审计日志
+- [ ] P0-4: 数据加密模块
 
-### Generated Modules
+### P1: 数据持久化
+- [ ] P1-1: SQLAlchemy 抽象层 + PostgreSQL 迁移
+- [ ] P1-2: 配置中心化
 
-| Tier | Count | Avg Lines | Notes |
-|------|-------|-----------|-------|
-| **Tier B** | 18 | ~200 | Deep clinical logic: vitals, guidelines, rules, checklists, condition branching |
-| **Tier C** | 13 | ~130 | Pipeline-based with guideline refs and stage info |
-| **Total** | 31 | 5,305 lines | All importable and functional |
+### P2: 可观测性升级
+- [ ] P2-1: Prometheus Metrics
+- [ ] P2-2: 结构化日志 (structlog)
+- [ ] P2-3: OpenTelemetry 分布式追踪
 
-### Tier B Modules (18)
-emergency, icu, obgyn, neonatology, oncology, nephrology, gastroenterology, neurosurgery, hematology, rheumatology, infectious_disease, geriatrics, general_surgery, hepatobiliary_surgery, thoracic_surgery, vascular_surgery, interventional_therapy, endocrinology
+### P3: 基础设施
+- [ ] P3-1: K8s 部署配置
+- [ ] P3-2: 优雅关停
 
-### Tier C Modules (13)
-dermatology, ent, stomatology, ophthalmology, rehabilitation, psychiatry, tcm, breast_center, burns_plastic, cosmetic_surgery, renal_transplant, health_management, huigiao
+### P4: 数据集成
+- [ ] P4-1: HL7 FHIR Server
+- [ ] P4-2: HL7 v2 解析器
+- [ ] P4-3: HIS 适配器抽象层
 
-### Already Full (preserved)
-cardiology, respiratory
+### P5: 多租户
+- [ ] P5-1: 租户隔离
 
-### Key Patterns Per Module
-- `_agent = KnowledgeAgent(agent_name="...", department="科室名")`
-- `_GUIDELINES = [...]` with real guideline references
-- `_agent.rule_engine.load_all()` for preloading clinical rules
-- `_clinical_error()` helper for error returns
-- Tier B: `_agent.clinical_result()` with vitals, checklists, condition branching
-- Tier C: `_agent.run_clinical_pipeline()` + `clinical_result_from_pipeline()` with guideline refs
+### P6: License 管理
+- [ ] P6-1: License 系统
 
-### Verification
-- All 31 modules import successfully
-- Functions tested with real patient P010 (急诊科)
-- `bp_triage` returns structured clinical result with guidelines
-- `bp_diagnosis` returns department-specific summary with stage info
+## Errors Encountered
+| Error | Phase | Resolution |
+|-------|-------|------------|
+| - | - | - |

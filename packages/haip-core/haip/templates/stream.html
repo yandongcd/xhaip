@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>xhaip v1.2 — Live Agent Stream</title>
+<style>
+:root{--bg:#0d1117;--card:#161b22;--border:#30363d;--text:#e6edf3;--text2:#8b949e;--accent:#58a6ff;--success:#3fb950;--warn:#d29922;--danger:#f85149;--delta:#1f6feb;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC',sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh}
+.sidebar{width:280px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.sidebar h2{padding:20px 16px 12px;font-size:15px;color:var(--accent);border-bottom:1px solid var(--border)}
+.agent-item{padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s}
+.agent-item:hover{background:rgba(88,166,255,.06)}
+.agent-item.active{background:rgba(88,166,255,.1);border-left:3px solid var(--accent)}
+.agent-item .name{font-size:14px;font-weight:500}
+.agent-item .meta{font-size:12px;color:var(--text2);margin-top:2px}
+.main{flex:1;display:flex;flex-direction:column}
+.toolbar{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--card)}
+.toolbar select{padding:8px 12px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:13px}
+.toolbar input{flex:1;padding:8px 12px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:13px}
+.toolbar button{padding:8px 20px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;font-weight:500}
+.toolbar button:hover{opacity:.9}
+.toolbar button:disabled{opacity:.5;cursor:not-allowed}
+.stream{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+.event-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:13px;animation:slideIn .2s ease}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.event-card .header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.event-card .badge{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.badge-user{background:rgba(88,166,255,.15);color:var(--accent)}
+.badge-assistant{background:rgba(63,185,80,.15);color:var(--success)}
+.badge-tool{background:rgba(210,153,34,.15);color:var(--warn)}
+.badge-error{background:rgba(248,81,73,.15);color:var(--danger)}
+.badge-complete{background:rgba(139,148,158,.15);color:var(--text2)}
+.event-card .ts{font-size:11px;color:var(--text2);margin-left:auto}
+.event-card .content{color:var(--text);line-height:1.5;white-space:pre-wrap}
+.event-card .state{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.state-chip{padding:1px 8px;border-radius:10px;font-size:11px;background:var(--delta);color:#fff}
+.session-info{font-size:11px;color:var(--text2);padding:4px 20px 12px;border-bottom:1px solid var(--border)}
+.controls{display:flex;gap:8px}
+.controls label{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:4px;cursor:pointer}
+.status-indicator{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+.status-idle{background:var(--text2)}.status-streaming{background:var(--accent);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+</style>
+</head>
+<body>
+<div class="sidebar" id="sidebar">
+  <h2>xhaip v1.2 — Live Stream</h2>
+  <div class="session-info">
+    Session: <code id="sessionId">default</code> |
+    Status: <span class="status-indicator status-idle" id="statusDot"></span><span id="statusText">Idle</span>
+  </div>
+  <div id="agentList">Loading agents...</div>
+</div>
+<div class="main">
+  <div class="toolbar">
+    <span id="activeAgent" style="font-size:14px;font-weight:500;min-width:120px">Select agent</span>
+    <input id="queryInput" placeholder="输入临床问题..." onkeypress="if(event.key==='Enter')startStream()">
+    <input id="stepsInput" type="number" value="5" min="1" max="10" title="Max steps" style="width:60px">
+    <button id="sendBtn" onclick="startStream()">Send</button>
+    <button onclick="clearStream()" style="background:var(--border);color:var(--text)">Clear</button>
+    <div class="controls">
+      <label><input type="checkbox" id="showState" checked onchange="toggleState()">State</label>
+      <label><input type="checkbox" id="autoScroll" checked>Auto-scroll</label>
+    </div>
+  </div>
+  <div class="stream" id="streamContainer">
+    <div style="color:var(--text2);text-align:center;padding:60px 0;font-size:14px">
+      Select an agent and enter a query to start streaming &#x2191;
+    </div>
+  </div>
+</div>
+
+<script>
+let activeAgent = '';
+let eventSource = null;
+let eventCount = 0;
+
+async function loadAgents() {
+  try {
+    const r = await fetch('/api/agents');
+    const agents = await r.json();
+    const list = document.getElementById('agentList');
+    list.innerHTML = agents.map(a =>
+      `<div class="agent-item" onclick="selectAgent('${a.name}','${a.cn_name||a.name}')">
+        <div class="name">${a.name}</div>
+        <div class="meta">${a.cn_name||''} &middot; ${a.department||''} &middot; ${a.tools?.length||0} tools</div>
+      </div>`
+    ).join('');
+  } catch(e) {
+    document.getElementById('agentList').innerHTML = '<div class="agent-item"><span style="color:var(--danger)">Failed to load agents</span></div>';
+  }
+}
+
+function selectAgent(name, cnName) {
+  activeAgent = name;
+  document.getElementById('activeAgent').textContent = `${cnName} (${name})`;
+  document.querySelectorAll('.agent-item').forEach(el => el.classList.remove('active'));
+  event.target?.closest('.agent-item')?.classList.add('active');
+  document.getElementById('queryInput').focus();
+}
+
+function startStream() {
+  const query = document.getElementById('queryInput').value.trim();
+  if (!query || !activeAgent) return;
+  if (eventSource) eventSource.close();
+
+  const maxSteps = parseInt(document.getElementById('stepsInput').value) || 5;
+  const sessionId = document.getElementById('sessionId').textContent;
+
+  setStatus('streaming', 'Streaming...');
+  document.getElementById('sendBtn').disabled = true;
+
+  // Use POST to /api/stream with SSE response
+  eventSource = new EventSource(
+    `/api/sse?agent=${encodeURIComponent(activeAgent)}&query=${encodeURIComponent(query)}&max_steps=${maxSteps}&session_id=${sessionId}`
+  );
+
+  eventSource.onmessage = function(e) {
+    try {
+      const evt = JSON.parse(e.data);
+      addEventCard(evt);
+      if (evt.turn_complete) {
+        eventSource.close();
+        setStatus('idle', 'Complete');
+        document.getElementById('sendBtn').disabled = false;
+      }
+      if (evt.error) {
+        setStatus('idle', `Error: ${evt.error}`);
+        document.getElementById('sendBtn').disabled = false;
+      }
+    } catch(err) {
+      console.error('Parse error:', err);
+    }
+  };
+
+  eventSource.onerror = function(e) {
+    console.error('SSE error:', e);
+    eventSource.close();
+    setStatus('idle', 'Connection closed');
+    document.getElementById('sendBtn').disabled = false;
+  };
+}
+
+function addEventCard(evt) {
+  eventCount++;
+  const container = document.getElementById('streamContainer');
+  if (eventCount === 1) container.innerHTML = '';
+
+  const badge = evt.role === 'user' ? 'badge-user' :
+                evt.role === 'tool' ? 'badge-tool' :
+                evt.error ? 'badge-error' :
+                evt.turn_complete ? 'badge-complete' : 'badge-assistant';
+  const badgeText = evt.role === 'user' ? 'USER' :
+                     evt.role === 'tool' ? `TOOL:${evt.tool_name}` :
+                     evt.turn_complete ? 'DONE' : 'AI';
+  const headerExtra = evt.author ? ` @${evt.author}` : '';
+  const time = new Date(evt.timestamp * 1000).toLocaleTimeString();
+
+  let stateHtml = '';
+  if (evt.state_delta && Object.keys(evt.state_delta).length > 0) {
+    stateHtml = '<div class="state" data-state>' +
+      Object.entries(evt.state_delta).map(([k,v]) =>
+        `<span class="state-chip">${k}: ${JSON.stringify(v).substring(0,60)}</span>`
+      ).join('') + '</div>';
+  }
+
+  const errHtml = evt.error ? `<div style="color:var(--danger);margin-top:4px">Error: ${evt.error}</div>` : '';
+
+  const card = document.createElement('div');
+  card.className = 'event-card';
+  card.innerHTML = `
+    <div class="header">
+      <span class="badge ${badge}">${badgeText}${headerExtra}</span>
+      <span class="ts">#${eventCount} ${time}</span>
+    </div>
+    <div class="content">${escapeHtml(evt.content || '')}</div>
+    ${errHtml}
+    ${stateHtml}
+  `;
+  container.appendChild(card);
+  toggleState();
+
+  if (document.getElementById('autoScroll').checked) {
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+function clearStream() {
+  document.getElementById('streamContainer').innerHTML = '';
+  eventCount = 0;
+  if (eventSource) eventSource.close();
+  setStatus('idle', 'Idle');
+  document.getElementById('sendBtn').disabled = false;
+}
+
+function toggleState() {
+  const show = document.getElementById('showState').checked;
+  document.querySelectorAll('[data-state]').forEach(el => el.style.display = show ? 'flex' : 'none');
+}
+
+function setStatus(status, text) {
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusText');
+  dot.className = 'status-indicator status-' + status;
+  txt.textContent = text;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// Init
+loadAgents();
+// Click first agent by default
+setTimeout(() => {
+  const first = document.querySelector('.agent-item');
+  if (first) first.click();
+}, 300);
+</script>
+</body>
+</html>

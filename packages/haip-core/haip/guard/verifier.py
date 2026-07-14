@@ -62,19 +62,29 @@ class GuardVerifier:
         cross_agent_outputs: list[str] | None = None,
         llm_temperature: float = 0.3,
     ) -> GuardResult:
-        # 快速路径: 非高危场景直接放行
-        if not self._is_high_risk(scenario, agent_output):
-            return GuardResult()
-
         agent_output = agent_output.strip()
         result = GuardResult()
 
-        # Layer 1: Citation
+        # Layer 1: Citation — always run (even for non-high-risk)
         citations = self.citation_engine.extract(agent_output)
         citations = self.citation_engine.verify(citations)
         result.citations = citations
+
+        # Non-high-risk: citation-only lightweight check
+        if not self._is_high_risk(scenario, agent_output):
+            if self.citation_engine.has_unverified(citations):
+                result.flags.append("存在未验证的指南引用 (低风险场景)")
+            return result
+
+        # ── High-risk: full 4-layer pipeline ──
         if self.citation_engine.has_unverified(citations):
             result.flags.append("存在未验证的指南引用")
+
+        # T1/T2 trust enforcement for high-risk scenarios
+        if not CitationEngine.all_t1(citations) and citations:
+            result.flags.append("高危场景缺少 T1 级权威引用——建议升级引用源")
+        if not citations:
+            result.flags.append("高危场景无任何指南引用——建议补充引文")
 
         # Layer 2: Confidence
         score = self.confidence_scorer.compute(

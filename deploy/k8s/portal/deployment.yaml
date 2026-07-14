@@ -1,0 +1,103 @@
+# xhaip Portal Deployment — main application server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xhaip-portal
+  namespace: xhaip
+  labels:
+    app: xhaip-portal
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: xhaip-portal
+  template:
+    metadata:
+      labels:
+        app: xhaip-portal
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: portal
+        image: xhaip-portal:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8769
+          name: http
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: xhaip-config
+        - secretRef:
+            name: xhaip-secret
+        env:
+        - name: HAIP_CONFIG_DIR
+          value: "/app/config"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 8769
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 8769
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 1
+        startupProbe:
+          httpGet:
+            path: /api/health
+            port: 8769
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 30
+        volumeMounts:
+        - name: agent-definitions
+          mountPath: /app/packages/haip-hospital/agents/definitions
+          readOnly: true
+        - name: knowledge
+          mountPath: /app/packages/haip-hospital/knowledge
+          readOnly: true
+        - name: patient-data
+          mountPath: /app/packages/haip-hospital/data
+          readOnly: true
+        - name: config
+          mountPath: /app/config
+          readOnly: true
+      volumes:
+      - name: agent-definitions
+        configMap:
+          name: xhaip-agent-definitions
+      - name: knowledge
+        configMap:
+          name: xhaip-knowledge
+      - name: patient-data
+        configMap:
+          name: xhaip-patient-data
+      - name: config
+        configMap:
+          name: xhaip-config

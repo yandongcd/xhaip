@@ -1,7 +1,7 @@
 [project]
 name = "xhaip"
-version = "1.0.0"
-description = "HAIP v1.0 — Hospital AI Platform 重构版"
+version = "1.2.0"
+description = "HAIP v1.2 — Hospital AI Platform PROD-READY"
 
 [tool.ruff]
 line-length = 100

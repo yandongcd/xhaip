@@ -1,0 +1,37 @@
+# Kustomization — combine all resources
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: xhaip
+
+resources:
+- base/namespace.yaml
+- base/configmap.yaml
+- base/secret.yaml
+- base/network-policy.yaml
+- portal/deployment.yaml
+- portal/service.yaml
+- postgres/statefulset.yaml
+- redis/deployment.yaml
+
+images:
+- name: xhaip-portal
+  newTag: latest
+
+commonLabels:
+  app.kubernetes.io/name: xhaip
+  app.kubernetes.io/version: "1.1.0"
+
+configMapGenerator:
+- name: xhaip-agent-definitions
+  files:
+  - ../../packages/haip-hospital/agents/definitions/*.yaml
+- name: xhaip-knowledge
+  files:
+  - ../../packages/haip-hospital/knowledge/guidelines/*.yaml
+
+secretGenerator:
+- name: xhaip-secret
+  literals:
+  - JWT_SECRET_KEY=replace-with-random
+  - ENCRYPTION_KEY=replace-with-random

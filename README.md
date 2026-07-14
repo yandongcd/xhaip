@@ -1,12 +1,22 @@
-# xhaip — HAIP v1.0
+# xhaip — HAIP v1.2
 
-Hospital AI Platform 重构版。基于 4 个核心原则从零重建。
+> **Hospital AI Platform** — YAML 驱动的多 Agent 医院智能体平台。  
+> v1.2: 补齐权限/审计/Guard 门控/Transport/Pre-LLM路由/Data Product，达到 PROD-READY。
+
+## 合规状态
+
+> **[PROD-READY]** 权限系统 (U2A/A2A/A2D) + 审计日志 + Guard 门控已实现。  
+> Citation 强制 + 版本依赖校验 + T1/T2 信任强制执行已就位。  
+> 患者数据均已脱敏，含 `provenance` 溯源。详见 `docs/architecture/DESIGN/permission-system.md`
 
 ## 快速开始
 
 ```bash
 pip install -e "packages/haip-core[dev]"
 python -m pytest packages/haip-core/tests/ tests/integration/ -v
+
+# 数据质量检查
+python scripts/validate_patients.py
 ```
 
 ## 项目结构
@@ -15,23 +25,24 @@ python -m pytest packages/haip-core/tests/ tests/integration/ -v
 xhaip/
 ├── packages/
 │   ├── haip-core/              # 核心引擎 (pip installable)
-│   │   ├── haip/               # agent/a2a/llm/tools/guard/orchestrator/knowledge/togaf/
-│   │   └── tests/              # 216 单元测试
-│   └── haip-hospital/          # 48 个 Agent (39 clinical + 7 specialist + 1 architecture + 1 master_data)
-│       ├── agents/definitions/ # YAML Agent 定义
-│       ├── modules/            # 52 Handler 模块 (KnowledgeAgent + RuleEngine)
-│       ├── knowledge/          # 50 BP + 36 指南 + 38 科室规则组 (314 条)
-│       └── data/               # 384 位数字病人
-├── tests/                      # 75 集成测试 + 25 TOGAF 测试 + 18 HTML 测试
+│   │   └── haip/               # agent/a2a/llm/tools/guard/orchestrator/knowledge/togaf/
+│   └── haip-hospital/          # 48 Agent (39 clinical + 7 specialist + 2 master_data)
+│       ├── agents/definitions/ # YAML Agent 定义 (52 文件)
+│       ├── modules/            # Handler 模块 + 骨科 8 engine (from haip-0710)
+│       ├── knowledge/          # 19 BP + 70 指南 + 53 规则组 (314 条)
+│       └── data/               # 498 位数字病人 (含 provenance 溯源)
+├── docs/architecture/          # 三层架构文档 (CURRENT/DESIGN/REFERENCE)
+├── data/sql/schemas/           # 模拟医院 SQL 参考 (from haip-0710)
+├── scripts/                    # validate_patients.py 等工具
 ├── config/                     # llm.yaml + haip.yaml
-└── .github/workflows/ci.yml    # CI: ruff + mypy + pytest + 70% cov
+└── .github/                    # CI 6-job + PR/Issue/SECURITY/CODEOWNERS (from haip-0710)
 ```
 
 ## 4 个核心原则
 
 | 原则 | 收益 |
 |------|------|
-| **YAML 驱动 Agent** | 新增 Agent: 2 天 → 2 小时 |
+| **YAML 驱动 Agent** | 新增 Agent: 30 行 YAML + 纯业务逻辑 |
 | **引擎独立包** | haip-core pip installable, 跨医院复用 |
 | **LLM Provider 抽象** | 模型切换: 改 1 行配置, CI 可用 Mock |
 | **知识库 SQLite** | YAML 保持版本化, 运行时毫秒级查询 |
@@ -44,16 +55,21 @@ xhaip/
 | 覆盖率 (core) | 70% |
 | ruff | 0 errors |
 | mypy | 0 errors |
-| TOGAF ABB 追溯 | 100% (111/111) |
+| 患者数据校验 | validate_patients.py (0 FAIL) |
+| CI 流水线 | 6-job (validate/lint/unit/integration/coverage/docker) |
 
-## 与 v0.2.0 对比
+## v1.2 更新 (2026-07-12)
 
-| 维度 | v0.2.0 | v1.0 |
-|------|--------|------|
-| Agent 定义 | Python 子包 + 620 行胶水代码 | 30 行 YAML + 纯业务逻辑 |
-| A2A 路由 | 硬编码 A2A_AGENTS | 自动从 YAML 生成 |
-| 引擎位置 | 业务包内 | 独立 pip 包 |
-| LLM 调用 | urllib 直连 | Provider 抽象 + retry + Mock |
-| 编排 | 顺序 for | toposort 分层并行 |
-| 测试 | ~5% | 320+ tests, 70% core coverage |
-| CI | 无 | ruff + mypy + pytest + 70% gate |
+### Gap 补齐 (12 项 → 0 项未闭合)
+- **权限系统**: SQLite RBAC (U2A/A2A/A2D) + 审计日志
+- **Guard 门控**: GuardVerifier 从诊断 → 强制阻断 (citation/confidence/threshold)
+- **Citation 强制**: Agent YAML `guard.citation` 字段支持 required/min_sources/min_trust
+- **版本依赖**: `depends_on` 在运行时校验，不匹配时阻断
+- **T1/T2 信任**: 高危场景强制 T1 引用检查
+- **Transport 抽象**: AgentTransport ABC (InProcess/MCP/Mock) + 注册表
+- **Pre-LLM 路由**: KeywordRouter — 关键词匹配零 token 快速通道
+- **HITL 集成**: HITLHook — 高危决策暂停等人工确认
+- **Data Product**: 适配器模式 DataProduct(DataSourceAdapter) 解耦 Agent×数据源
+- **全量测试**: 651 tests / 631 passed
+
+详见 `docs/architecture/gap-remediation-strategy.md`

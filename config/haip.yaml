@@ -1,10 +1,29 @@
-# xhaip v1.0 — Platform Configuration
+# xhaip v1.1 — Platform Configuration with Security
 
 server:
   host: "0.0.0.0"
   port: 8769
   reload: false
   workers: 1
+
+auth:
+  enabled: true
+  jwt_secret_key: "${JWT_SECRET_KEY:xhaip-dev-secret-change-in-production}"
+  access_token_expire: 900       # 15 minutes
+  refresh_token_expire: 604800   # 7 days
+  default_admin_password: "${HAIP_ADMIN_PASSWORD:Admin@123456}"
+
+security:
+  cors_origins: ["*"]
+  rate_limit_enabled: false
+  rate_limit_per_minute: 100
+  encryption_key: "${ENCRYPTION_KEY:xhaip-dev-encryption-key-change-me}"
+
+audit:
+  enabled: true
+  max_events: 100000
+  log_agent_calls: true
+  log_api_calls: true
 
 agents:
   definitions_dir: "packages/haip-hospital/agents/definitions"

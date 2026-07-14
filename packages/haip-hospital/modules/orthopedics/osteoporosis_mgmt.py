@@ -1,0 +1,220 @@
+# @origin: haip-0710/src/agents/domains/haip/orthopedic_surgery/core/osteoporosis_mgmt.py
+# @origin_repo: https://github.com/yandongcd/haip
+# @ported_date: 2026-07-12
+# @status: REFERENCE — requires import adaptation for xhaip engine
+#   Key deps to adapt:
+#     agents.domains.haip.core.* -> packages/haip-hospital/modules/shared/
+#     agents.harness.* -> packages/haip-core/haip/
+#     Rule path resolution -> packages/haip-hospital/knowledge/rules/
+"""骨质疏松管理模块 — 骨折风险评估, 药物推荐, 骨密度监测.
+
+功能:
+  1. FRAX 骨折风险评估(简化版)
+  2. 抗骨质疏松药物推荐
+  3. 钙剂 + 维生素D补充方案
+  4. 骨密度监测计划
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+
+# 抗骨质疏松药物分类
+OSTEO_MEDICATIONS: list[dict[str, Any]] = [
+    {
+        "category": "双膦酸盐类",
+        "drugs": [
+            {"name": "阿仑膦酸钠", "dose": "70mg 每周1次", "route": "口服", "note": "空腹, 清水送服,服后30分钟内不可躺卧"},
+            {"name": "唑来膦酸", "dose": "5mg 每年1次", "route": "静脉输注", "note": "输注前需充分水化,监测肾功能"},
+            {"name": "利塞膦酸钠", "dose": "35mg 每周1次", "route": "口服", "note": "同阿仑膦酸钠服药要求"},
+        ],
+        "indication": "各类骨质疏松症,首选",
+        "contraindication": "CrCl<35mL/min, 低钙血症, 食管狭窄",
+    },
+    {
+        "category": "RANKL抑制剂",
+        "drugs": [
+            {"name": "地舒单抗", "dose": "60mg 每6个月1次", "route": "皮下注射", "note": "不可中断治疗,停药后需衔接其他药物"},
+        ],
+        "indication": "双膦酸盐不耐受/无效, 肾功能不全者",
+        "contraindication": "低钙血症(需纠正后再用)",
+    },
+    {
+        "category": "甲状旁腺激素类似物",
+        "drugs": [
+            {"name": "特立帕肽", "dose": "20μg 每日1次", "route": "皮下注射", "note": "治疗期限不超过24个月"},
+        ],
+        "indication": "严重骨质疏松, 椎体骨折高风险, 双膦酸盐无效",
+        "contraindication": "Paget病, 骨恶性肿瘤, 高钙血症",
+    },
+    {
+        "category": "选择性雌激素受体调节剂",
+        "drugs": [
+            {"name": "雷洛昔芬", "dose": "60mg 每日1次", "route": "口服", "note": "降低椎体骨折风险,不降低非椎体骨折"},
+        ],
+        "indication": "绝经后女性骨质疏松(尤其椎体骨折高风险)",
+        "contraindication": "VTE病史, 不明原因子宫出血",
+    },
+]
+
+# 钙剂和维生素D方案
+CALCIUM_VITD_PROTOCOL = {
+    "calcium": {"dose": "1000-1200mg/日", "form": "碳酸钙/枸橼酸钙", "note": "餐中服用减少胃肠刺激"},
+    "vitamin_d": {"dose": "800-1200IU/日", "form": "维生素D3", "note": "监测血清25(OH)D水平,目标>30ng/mL"},
+}
+
+# 骨密度监测计划
+BMD_MONITORING = [
+    {"timing": "基线", "exam": "DXA (腰椎+髋部)", "purpose": "确诊骨质疏松/骨量减少"},
+    {"timing": "治疗后1年", "exam": "DXA复查", "purpose": "评估治疗反应"},
+    {"timing": "此后每1-2年", "exam": "DXA复查", "purpose": "长期监测"},
+    {"timing": "药物切换/停药时", "exam": "DXA + 骨转换标志物", "purpose": "评估病情变化"},
+]
+
+
+def assess_osteoporosis_risk(patient: dict | None = None) -> dict:
+    """评估骨质疏松风险和FRAX简化评分.
+
+    Args:
+        patient: 患者信息 dict
+
+    Returns:
+        风险评估结果和推荐方案
+    """
+    if patient is None:
+        patient = {}
+
+    age = patient.get("age", 0)
+    gender = patient.get("gender", "")
+    past = (patient.get("past_history", "") or "").lower()
+    diagnosis = (patient.get("diagnosis", "") or "").lower()
+    weight = patient.get("weight", 60)
+    combined = f"{past} {diagnosis}"
+
+    score = 0
+    factors = []
+
+    # 主要危险因素
+    if "骨质疏松" in combined or "骨松" in combined:
+        score += 3
+        factors.append("确诊骨质疏松")
+    if "骨折" in combined:
+        score += 2
+        factors.append("既往骨折史(尤其是脆性骨折)")
+    if gender == "女" and age and age >= 65:
+        score += 2
+        factors.append(f"女性年龄≥65岁 ({age}岁)")
+    elif gender == "男" and age and age >= 70:
+        score += 2
+        factors.append(f"男性年龄≥70岁 ({age}岁)")
+
+    # 次要危险因素
+    if "类固醇" in past or "激素" in past or "强的松" in past:
+        score += 2
+        factors.append("长期糖皮质激素使用")
+    if "类风湿" in past:
+        score += 1
+        factors.append("类风湿关节炎")
+    if "吸烟" in past or "抽烟" in past:
+        score += 1
+        factors.append("吸烟")
+    if "饮酒" in past or "酗酒" in past:
+        score += 1
+        factors.append("过量饮酒")
+    if "低体重" in past or "厌食" in past or (weight and weight < 50):
+        score += 1
+        factors.append(f"低体重 ({weight}kg)")
+    if "父母" in past and "骨折" in past:
+        score += 1
+        factors.append("父母髋部骨折史")
+
+    if score >= 5:
+        risk = "高危"
+    elif score >= 3:
+        risk = "中危"
+    else:
+        risk = "低危"
+
+    return {
+        "risk_score": score,
+        "risk_level": risk,
+        "factors": factors,
+        "recommendation": _osteoporosis_recommendation(risk, age, gender),
+        "medication_suggestion": _suggest_medication(risk, patient),
+        "calcium_vitd": CALCIUM_VITD_PROTOCOL,
+        "bmd_monitoring": BMD_MONITORING if risk in ("高危", "中危") else [],
+    }
+
+
+def _osteoporosis_recommendation(risk: str, age: int, gender: str) -> str:
+    if risk == "高危":
+        return "建议启动抗骨质疏松药物治疗 + 钙剂维生素D补充 + DXA基线检查"
+    elif risk == "中危" and age and age >= 65:
+        return "建议DXA骨密度检查,根据结果决定是否药物干预"
+    elif risk == "中危":
+        return "建议DXA骨密度检查 + 生活方式干预(补充钙剂维生素D, 负重运动)"
+    return "保持健康生活方式,均衡营养,适量运动"
+
+
+def _suggest_medication(risk: str, patient: dict) -> list[dict]:
+    if risk == "低危":
+        return []
+    age = patient.get("age", 0)
+    gender = patient.get("gender", "")
+    past = (patient.get("past_history", "") or "").lower()
+
+    suggestions = []
+    if risk == "高危":
+        suggestions.append({
+            "category": "双膦酸盐类",
+            "recommended": "阿仑膦酸钠 70mg 每周1次(首选)或 唑来膦酸 5mg 每年1次",
+            "note": "骨折术后尽早启动,注意肾功能监测",
+        })
+        if "肾功能" in past or "肾" in past:
+            suggestions.append({
+                "category": "RANKL抑制剂",
+                "recommended": "地舒单抗 60mg 每6个月1次(肾功能不全者适用)",
+                "note": "不可中断治疗,注意低钙血症风险",
+            })
+
+    suggestions.append({
+        "category": "基础补充",
+        "recommended": f"钙剂 {CALCIUM_VITD_PROTOCOL['calcium']['dose']} + 维生素D {CALCIUM_VITD_PROTOCOL['vitamin_d']['dose']}",
+        "note": "所有骨折患者均应补充",
+    })
+    return suggestions
+
+
+def print_osteoporosis_report(result: dict) -> None:
+    """打印骨质疏松管理报告."""
+    print("===== 骨质疏松管理 =====")
+    print(f"风险评分: {result.get('risk_score', 0)}")
+    print(f"风险等级: {result.get('risk_level', '')}")
+    print()
+    print("危险因素:")
+    for f in result.get("factors", []):
+        print(f"  • {f}")
+    print()
+    print(f"推荐方案: {result.get('recommendation', '')}")
+
+    if result.get("medication_suggestion"):
+        print("\n药物建议:")
+        for m in result["medication_suggestion"]:
+            print(f"  [{m['category']}]")
+            print(f"    推荐: {m['recommended']}")
+            print(f"    注意: {m['note']}")
+        print()
+
+    cv = result.get("calcium_vitd", {})
+    if cv:
+        print("基础补充:")
+        for key in ["calcium", "vitamin_d"]:
+            item = cv.get(key, {})
+            print(f"  {item.get('dose', '')} {item.get('form', '')} — {item.get('note', '')}")
+        print()
+
+    if result.get("bmd_monitoring"):
+        print("骨密度监测计划:")
+        for m in result["bmd_monitoring"]:
+            print(f"  {m['timing']}: {m['exam']} — {m['purpose']}")

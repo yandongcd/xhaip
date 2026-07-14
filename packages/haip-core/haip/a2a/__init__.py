@@ -22,8 +22,57 @@ _agent_cache: dict[str, Any] = {}       # module cache: module_path → module_o
 _call_history: list[dict[str, Any]] = []
 
 
+def _check_version(requirement: str, actual: str) -> bool:
+    """简单的语义版本约束校验。支持 >=1.0, ==1.0, 1.0 (exact)."""
+    req = requirement.strip()
+    if req.startswith(">="):
+        target = req[2:].strip()
+        return _version_tuple(actual) >= _version_tuple(target)
+    if req.startswith("=="):
+        target = req[2:].strip()
+        return _version_tuple(actual) == _version_tuple(target)
+    if req.startswith(">") and not req.startswith(">="):
+        target = req[1:].strip()
+        return _version_tuple(actual) > _version_tuple(target)
+    # bare version: exact match
+    return _version_tuple(actual) == _version_tuple(req)
+
+
+def _version_tuple(v: str) -> tuple:
+    try:
+        parts = [int(x) for x in v.split(".")[:3]]
+        while len(parts) < 3:
+            parts.append(0)
+        return tuple(parts)
+    except (ValueError, AttributeError):
+        return (0, 0, 0)
+
+
+def _validate_depends(caller_name: str, target_agent: str) -> str:
+    """校验调用方对目标 Agent 的版本依赖。返回空字符串表示通过，否则返回错误描述。"""
+    if not caller_name or not target_agent:
+        return ""
+    caller = get_agent(caller_name)
+    if caller is None or not caller.depends_on:
+        return ""
+    target = get_agent(target_agent)
+    if target is None:
+        return ""
+    for dep in caller.depends_on:
+        dep_agent = dep.get("agent", "")
+        dep_version = dep.get("version", "")
+        if dep_agent == target_agent and dep_version:
+            if not _check_version(dep_version, target.version):
+                return (
+                    f"Version mismatch: {caller_name} requires {target_agent}"
+                    f" {dep_version}, but found {target.version}"
+                )
+    return ""
+
+
 def call(agent: str, tool: str, params: dict[str, Any] | None = None,
-         workflow_id: str = "") -> dict[str, Any]:
+         workflow_id: str = "", caller_agent: str = "",
+         perm_ctx: Any = None) -> dict[str, Any]:
     """调用目标 Agent 的工具。
 
     引擎自动完成:
@@ -40,6 +89,36 @@ def call(agent: str, tool: str, params: dict[str, Any] | None = None,
         err = {"status": "error", "error": f"Unknown agent: {agent}"}
         _record(agent, tool, "error", str(err), 0, workflow_id)
         return err
+
+    # Version dependency enforcement
+    if caller_agent:
+        verr = _validate_depends(caller_agent, agent)
+        if verr:
+            err = {"status": "error", "error": verr, "code": "VERSION_MISMATCH"}
+            _record(agent, tool, "error", verr, 0, workflow_id)
+            return err
+
+    # Permission enforcement (A2A)
+    if perm_ctx is not None:
+        try:
+            from haip.permission import PermissionManager, PermissionContext
+            if isinstance(perm_ctx, dict):
+                pc = PermissionContext(**{k: perm_ctx.get(k, "") for k in
+                    ("user_id", "role", "agent_id", "department", "is_emergency")})
+            else:
+                pc = perm_ctx
+            pm = PermissionManager(":memory:")
+            pm.seed_defaults()
+            if not pm.can_call_agent(pc, agent, tool):
+                err = {"status": "error", "error": "Permission denied",
+                       "code": "PERMISSION_DENIED",
+                       "detail": f"Cannot call {agent}.{tool}"}
+                _record(agent, tool, "error", "Permission denied", 0, workflow_id)
+                return err
+            pm.log_access(pc, "A2A_call", f"{agent}.{tool}", "allow")
+            pm.close()
+        except ImportError:
+            pass  # Permission module not available — allow all (dev mode)
 
     tool_def = _find_tool(plugin, tool)
     if tool_def is None:
@@ -146,6 +225,19 @@ def _record(agent: str, tool: str, status: str, error: str,
     if len(_call_history) > 1000:
         _call_history[:] = _call_history[-500:]
 
+    # ── Audit logging ──
+    try:
+        from haip.audit import get_audit_logger
+        audit = get_audit_logger()
+        audit.log(
+            action="agent_call",
+            resource=f"agent:{agent}.{tool}",
+            status=status,
+            detail={"tool": tool, "elapsed_ms": elapsed_ms, "error": error},
+        )
+    except Exception:
+        pass
+
 
 def get_history(limit: int = 20) -> list[dict[str, Any]]:
     return _call_history[-limit:]
@@ -170,6 +262,85 @@ def _load_llm_config() -> dict[str, Any]:
     return {"provider": "mock", "mock_responses": True}
 
 
+def _build_loop_components(agent: str):
+    """构建 AgentLoop 所需组件 (共享逻辑)."""
+    plugin = get_agent(agent)
+    if plugin is None:
+        raise ValueError(f"Unknown agent: {agent}")
+
+    tools = [
+        {"name": t.name, "description": t.description, "input": t.input}
+        for t in plugin.tools
+    ]
+
+    from haip.llm import LLMProvider
+    llm_config = _load_llm_config()
+    try:
+        llm = LLMProvider.from_config(llm_config)
+    except Exception:
+        from haip.llm.mock import MockProvider
+        llm = MockProvider({})
+
+    def _a2a_executor(tool_name: str, tool_args: dict) -> dict:
+        return call(agent, tool_name, tool_args)
+
+    return plugin, tools, llm, _a2a_executor
+
+
+def _run_guard(output: str, tool_calls: list, plugin) -> dict:
+    """执行 Guard 校验 + Citation 强制 (共享逻辑)."""
+    guard_result: dict[str, Any] = {"checked": False, "passed": True, "flags": [],
+                                     "citations": [], "blocked_reason": ""}
+    guard_cfg = plugin.guard
+
+    try:
+        from haip.guard.verifier import GuardVerifier
+        verifier = GuardVerifier()
+        g = verifier.verify(
+            agent_output=output,
+            scenario=_detect_scenario_from_text(str(tool_calls)),
+            agent_name=plugin.name,
+        )
+        guard_result.update({
+            "checked": True,
+            "passed": g.passed,
+            "flags": g.flags,
+            "requires_human_review": g.requires_human_review,
+            "citations": [{"source": c.source, "trust_level": c.trust_level} for c in g.citations],
+        })
+
+        if guard_cfg.citation.required and g.citations:
+            verified_count = sum(1 for c in g.citations if c.verified)
+            if verified_count < guard_cfg.citation.min_sources:
+                guard_result["passed"] = False
+                guard_result["blocked_reason"] = (
+                    f"Citation enforcement: {verified_count}/{guard_cfg.citation.min_sources}"
+                    f" verified sources required"
+                )
+                guard_result["flags"].append(guard_result["blocked_reason"])
+            if guard_cfg.citation.min_trust == "T1":
+                t1_count = sum(1 for c in g.citations if c.trust_level == "T1")
+                if t1_count == 0:
+                    guard_result["passed"] = False
+                    guard_result["blocked_reason"] = (
+                        "Citation enforcement: T1 trust level required,"
+                        " but no T1 citations found"
+                    )
+                    guard_result["flags"].append(guard_result["blocked_reason"])
+    except Exception:
+        pass
+
+    return guard_result
+
+
+def _detect_scenario_from_text(text: str) -> str:
+    """从工具调用文本中推断高危场景."""
+    for kw in ["antiemetic", "ponv", "drug", "regimen", "surgery", "cardiac", "抗凝"]:
+        if kw in text.lower():
+            return kw
+    return ""
+
+
 def call_with_loop(
     agent: str,
     query: str,
@@ -181,29 +352,10 @@ def call_with_loop(
     Agent 的 tools 通过 A2A call() 执行，而非全局 tool registry。
     每次请求创建新的 AgentLoop 实例，无状态共享，无竞态风险。
     """
-    plugin = get_agent(agent)
-    if plugin is None:
-        return {"status": "error", "error": f"Unknown agent: {agent}"}
-
-    # 提取 per-agent tools → schema
-    tools = [
-        {"name": t.name, "description": t.description, "input": t.input}
-        for t in plugin.tools
-    ]
-
-    # 创建 LLM
-    from haip.llm import LLMProvider
-
-    llm_config = _load_llm_config()
     try:
-        llm = LLMProvider.from_config(llm_config)
-    except Exception:
-        from haip.llm.mock import MockProvider
-        llm = MockProvider({})
-
-    # 工具执行器 → 通过 A2A 路由（支持跨 Agent 调用）
-    def _a2a_executor(tool_name: str, tool_args: dict) -> dict:
-        return call(agent, tool_name, tool_args)
+        plugin, tools, llm, _a2a_executor = _build_loop_components(agent)
+    except ValueError as e:
+        return {"status": "error", "error": str(e)}
 
     from haip.loop import AgentLoop
 
@@ -219,26 +371,20 @@ def call_with_loop(
     result = loop.run(query)
     elapsed = round((time.perf_counter() - t0) * 1000, 2)
 
-    # 高危输出 Guard 校验
-    guard_result = {"checked": False, "passed": True, "flags": []}
-    try:
-        from haip.guard.verifier import GuardVerifier
-        verifier = GuardVerifier()
-        g = verifier.verify(
-            output=result.reply,
-            scenario="药物交互" if any(
-                kw in str(result.tool_calls) for kw in ["antiemetic", "ponv", "drug", "regimen"]
-            ) else "",
-            agent_name=agent,
-        )
-        guard_result = {
-            "checked": True,
-            "passed": g.passed,
-            "flags": g.flags,
-            "requires_human_review": g.requires_human_review,
+    guard_result = _run_guard(result.reply, result.tool_calls, plugin)
+
+    # Guard gating: if not passed, block response
+    if not guard_result["passed"]:
+        return {
+            "status": "blocked",
+            "reply": result.reply,
+            "steps": result.steps,
+            "tool_calls": result.tool_calls,
+            "duration_ms": elapsed,
+            "tokens": {"input": result.input_tokens, "output": result.output_tokens},
+            "guard": guard_result,
+            "error": f"Guard verification failed: {'; '.join(guard_result['flags'])}",
         }
-    except Exception:
-        pass  # Guard is best-effort, don't block response
 
     return {
         "status": "ok",
@@ -250,3 +396,114 @@ def call_with_loop(
         "error": result.error or None,
         "guard": guard_result,
     }
+
+
+# ── Async Streaming Loop (v1.2) ──
+
+async def call_with_loop_async(
+    agent: str,
+    query: str,
+    max_steps: int = 5,
+    session_id: str = "default",
+    user_id: str = "default",
+    use_session_service: bool = False,
+    db_path: str = ":memory:",
+) -> dict[str, Any]:
+    """异步 ReAct AgentLoop — 支持 state_delta + session 持久化."""
+    try:
+        plugin, tools, llm, _a2a_executor = _build_loop_components(agent)
+    except ValueError as e:
+        return {"status": "error", "error": str(e)}
+
+    from haip.loop import AsyncAgentLoop
+    from haip.session.store import InMemorySessionService, SessionService
+    from haip.loop.context import InvocationContext
+
+    if use_session_service:
+        from pathlib import Path as _Path
+        db_path_actual = db_path
+        if db_path_actual == ":memory:":
+            db_path_actual = str(_Path(__file__).parent.parent.parent.parent / "data" / "sessions.db")
+        session_svc = SessionService(db_path_actual)
+    else:
+        session_svc = InMemorySessionService()
+
+    session = session_svc.get_or_create_session(session_id, user_id=user_id)
+    invocation_id = session_svc.begin_invocation(session)
+    ctx = InvocationContext(
+        session=session, agent_name=agent,
+        invocation_id=invocation_id, session_service=session_svc,
+    )
+
+    loop = AsyncAgentLoop(
+        llm=llm, system_prompt=plugin.prompt.system,
+        tool_executor=_a2a_executor, tools=tools,
+        max_steps=max_steps, agent_name=agent, ctx=ctx,
+    )
+
+    t0 = time.perf_counter()
+    events = []
+    final_reply = ""
+    final_error = ""
+    steps = 0
+
+    async for evt in loop.run(query):
+        events.append(evt.to_dict())
+        if evt.turn_complete:
+            final_reply = evt.content
+            final_error = evt.error or ""
+        if evt.role == "assistant" and not evt.turn_complete:
+            steps += 1
+
+    session_svc.end_invocation(session)
+    elapsed = round((time.perf_counter() - t0) * 1000, 2)
+    guard_result = _run_guard(final_reply, [], plugin)
+
+    return {
+        "status": "ok",
+        "reply": final_reply,
+        "steps": steps,
+        "duration_ms": elapsed,
+        "events": events,
+        "session_id": session_id,
+        "invocation_id": invocation_id,
+        "error": final_error or None,
+        "guard": guard_result,
+    }
+
+
+async def stream_events(
+    agent: str, query: str, max_steps: int = 5,
+    session_id: str = "default", user_id: str = "default",
+):
+    """SSE 事件流生成器 — 每步实时推送 Event (state_delta + content)."""
+    import json as _json
+
+    try:
+        plugin, tools, llm, _a2a_executor = _build_loop_components(agent)
+    except ValueError as e:
+        yield f"data: {_json.dumps({'error': str(e)}, ensure_ascii=False)}\n\n"
+        return
+
+    from haip.loop import AsyncAgentLoop
+    from haip.session.store import InMemorySessionService
+    from haip.loop.context import InvocationContext
+
+    session_svc = InMemorySessionService()
+    session = session_svc.get_or_create_session(session_id, user_id=user_id)
+    invocation_id = session_svc.begin_invocation(session)
+    ctx = InvocationContext(
+        session=session, agent_name=agent,
+        invocation_id=invocation_id, session_service=session_svc,
+    )
+
+    loop = AsyncAgentLoop(
+        llm=llm, system_prompt=plugin.prompt.system,
+        tool_executor=_a2a_executor, tools=tools,
+        max_steps=max_steps, agent_name=agent, ctx=ctx,
+    )
+
+    async for evt in loop.run(query):
+        yield f"data: {_json.dumps(evt.to_dict(), ensure_ascii=False)}\n\n"
+
+    session_svc.end_invocation(session)

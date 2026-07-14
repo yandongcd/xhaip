@@ -1,0 +1,576 @@
+﻿# FINAL Review package: 30e140e..b3d617e
+
+## Commits
+b3d617e feat(ortho): 闂ㄦ埛 KPI 鑱氬悎 + 鑳藉姏鍗＄湡瀹?v1 API 鎵ц
+5b5ff8d feat(ortho): 闂ㄦ埛 JS 鎮ｈ€呴槦鍒?+ 鑳藉姏鍗?+ 闃舵娓叉煋
+a180d58 feat(ortho): 闂ㄦ埛 HTML 甯冨眬 + 璁捐浠ょ墝
+e5907d8 feat(ortho): 鏂板 /ortho-portal 璺敱 + HTML 楠ㄦ灦
+cf1c86e feat(ortho): expand his_adapter patients to 5 with structured labs/conditions/meds
+
+## Files changed (my 4 commits)
+ packages/haip-core/haip/ui_ortho_portal.html       | 228 ++++++++++++++++++
+ packages/haip-core/haip/web_server.py              | 265 ++++++++++++++++++++-
+ .../modules/orthopedics/his_adapter.py             |  60 ++++-
+ tests/integration/test_ortho_portal.py             | 182 ++++++++++++++
+ 4 files changed, 727 insertions(+), 8 deletions(-)
+
+## Diff: ui_ortho_portal.html + test_ortho_portal.py + his_adapter.py (full)
+diff --git a/packages/haip-core/haip/ui_ortho_portal.html b/packages/haip-core/haip/ui_ortho_portal.html
+new file mode 100644
+index 0000000..1bef674
+--- /dev/null
++++ b/packages/haip-core/haip/ui_ortho_portal.html
+@@ -0,0 +1,228 @@
++<!DOCTYPE html>
++<html lang="zh-CN">
++<head>
++<meta charset="UTF-8">
++<meta name="viewport" content="width=device-width, initial-scale=1.0">
++<title>xhaip 鈥?鍒涗激楠ㄧ璇婄枟闂ㄦ埛</title>
++<style>
++:root{--bg:#1c1c1e;--card-bg:#2c2c2e;--text:#f5f5f7;--text-secondary:#a1a1a6;--accent:#0a84ff;--danger:#ff453a;--warning:#ff9f0a;--success:#30d158;--border:#38383a;--bg-gradient:radial-gradient(ellipse at 50% 0%,var(--card-bg) 0%,var(--bg) 60%)}
++body.light{--bg:#f2f2f7;--card-bg:#ffffff;--text:#1c1c1e;--text-secondary:#6e6e73;--accent:#007aff;--danger:#ff3b30;--warning:#ff9500;--success:#34c759;--border:#e5e5ea;--bg-gradient:radial-gradient(ellipse at 50% 0%,#ffffff 0%,#f2f2f7 60%)}
++*{margin:0;padding:0;box-sizing:border-box}
++::selection{background:var(--accent);color:#fff}
++body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','PingFang SC','Microsoft YaHei',sans-serif;-webkit-font-smoothing:antialiased;background:var(--bg-gradient);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column;letter-spacing:-.01em}
++::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
++.header{height:52px;flex-shrink:0;padding:0 20px;background:var(--card-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
++.header h1{font-size:16px;font-weight:600}
++.header .sub{font-size:11px;color:var(--text-secondary)}
++.header .spacer{margin-left:auto}
++.btn{padding:6px 14px;border:1px solid var(--border);border-radius:8px;font-size:12px;cursor:pointer;background:transparent;color:var(--text);font-family:inherit;transition:all .12s}
++.btn:hover{border-color:var(--accent);color:var(--accent)}
++.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
++#kpi-bar{flex-shrink:0;display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:14px 20px}
++.kpi{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:12px 16px}
++.kpi .val{font-size:24px;font-weight:700}
++.kpi .label{font-size:11px;color:var(--text-secondary);margin-top:2px}
++.body-grid{flex:1;display:flex;overflow:hidden}
++#patient-list{width:240px;flex-shrink:0;background:var(--card-bg);border-right:1px solid var(--border);overflow-y:auto;padding:8px}
++.p-card{padding:10px 12px;border-radius:10px;cursor:pointer;transition:all .12s;border:1px solid transparent}
++.p-card:hover{background:var(--bg)}
++.p-card.active{background:rgba(10,132,255,.12);border-color:var(--accent)}
++.p-card .p-name{font-size:13px;font-weight:600}
++.p-card .p-meta{font-size:11px;color:var(--text-secondary);margin-top:2px}
++.center{flex:1;overflow-y:auto;padding:16px 20px}
++#capability-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
++.cap{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:all .15s}
++.cap:hover{border-color:var(--accent);transform:translateY(-2px)}
++.cap .cap-ico{font-size:20px}
++.cap .cap-title{font-size:13px;font-weight:600;margin-top:6px}
++.cap .cap-desc{font-size:11px;color:var(--text-secondary);margin-top:3px}
++#stage-timeline{margin-top:20px;background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:14px}
++#stage-timeline h3{font-size:13px;color:var(--accent);margin-bottom:10px}
++.stage-row{display:flex;gap:10px;align-items:flex-start;padding:6px 0;font-size:12px}
++.stage-row .num{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
++.stage-row .st-desc{color:var(--text-secondary);font-size:11px}
++#result-panel{width:360px;flex-shrink:0;background:var(--card-bg);border-left:1px solid var(--border);overflow-y:auto;padding:16px}
++#result-panel h3{font-size:13px;color:var(--accent);margin-bottom:10px}
++.result-box{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;font-family:'SF Mono',Consolas,monospace;font-size:11px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
++.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600}
++.badge.high{background:rgba(255,69,58,.15);color:var(--danger)}
++.badge.moderate,.badge.medium,.badge.urgent{background:rgba(255,159,10,.15);color:var(--warning)}
++.badge.low,.badge.emergency{background:rgba(48,209,88,.15);color:var(--success)}
++.muted{color:var(--text-secondary);font-size:12px}
++</style>
++</head>
++<body>
++<div class="header">
++  <h1>馃Υ 鍒涗激楠ㄧ 路 璇婄枟闂ㄦ埛</h1>
++  <span class="sub">鑰佸勾楂嬮儴楠ㄦ姌绮惧噯娌荤枟鏅鸿兘浣?/span>
++  <div class="spacer"></div>
++  <button class="btn" id="theme-toggle">鈽€ 娴呰壊</button>
++  <button class="btn btn-primary" onclick="location.href='/workflow/orthopedic-surgery'">杩涘叆瀹屾暣宸ヤ綔娴?鈫?/button>
++</div>
++
++<div id="kpi-bar"><div class="kpi"><div class="val" id="kpi-total">鈥?/div><div class="label">鍦ㄩ櫌楂嬮儴楠ㄦ姌</div></div>
++<div class="kpi"><div class="val" id="kpi-pending">鈥?/div><div class="label">寰呮墜鏈?/div></div>
++<div class="kpi"><div class="val" id="kpi-48h">鈥?/div><div class="label">48h 鎵嬫湳绐楄揪鏍囩巼</div></div>
++<div class="kpi"><div class="val" id="kpi-highrisk">鈥?/div><div class="label">楂樺嵄骞跺彂鐥囬璀?/div></div>
++<div class="kpi"><div class="val" id="kpi-avgfactor">鈥?/div><div class="label">骞冲潎寤惰繜鍥犵礌鏁?/div></div></div>
++
++<div class="body-grid">
++  <div id="patient-list"><div class="muted" style="padding:8px">鍔犺浇鎮ｈ€呪€?/div></div>
++  <div class="center">
++    <div id="capability-grid"></div>
++    <div id="stage-timeline"><h3>璇婄枟鍏ㄦ祦绋?路 11 闃舵</h3><div id="stage-rows"></div></div>
++  </div>
++  <div id="result-panel"><h3>缁撴灉闈㈡澘</h3><div class="muted" id="result-empty">鈫?閫夋嫨鎮ｈ€呭悗鐐瑰嚮涓婃柟鑳藉姏鍗℃煡鐪?AI 璇婄枟缁撴灉</div><div id="result-content"></div></div>
++</div>
++
++<script>
++const PATIENT_IDS = ["P001","P002","P003","P004","P005"];
++const CAPS = [
++  {id:"classify", ico:"馃Υ", title:"楠ㄦ姌鍒嗗瀷", desc:"Garden/Evans/AO", api:"classify"},
++  {id:"assess", ico:"馃數", title:"鏈墠璇勪及", desc:"鍚堝苟鐥?鑽墿/钀ュ吇", api:"assess"},
++  {id:"mdt", ico:"馃敡", title:"MDT 浼氳瘖", desc:"澶氬绉戣仛鍚堢邯瑕?, api:"mdt"},
++  {id:"timing", ico:"鈴筹笍", title:"T2 鎵嬫湳鏃舵満", desc:"8 鍥犵礌鍒嗙骇鍐崇瓥", api:"timing"},
++  {id:"complications", ico:"馃洊", title:"骞跺彂鐥囬娴?, desc:"DVT/鎰熸煋/蹇冭剰/璺屽€?, api:"complications"},
++  {id:"plan", ico:"馃敡", title:"鎵嬫湳鏂规", desc:"THA/HA/PFNA/DHS", api:"plan"},
++  {id:"rehab", ico:"馃幃", title:"鏈悗搴峰", desc:"4 闃舵 + Harris", api:"rehab"},
++  {id:"followup", ico:"馃摦", title:"闅忚璁″垝", desc:"1/3/6/12 鏈?, api:"followup"},
++];
++const STAGES = [
++  {order:1, label:"鎬ヨ瘖鍒嗚瘖", desc:"11 椤规鏌ユ竻鍗?+ 缁胯壊閫氶亾鍒ゅ畾"},
++  {order:2, label:"楠ㄦ姌鍒嗗瀷", desc:"Garden/Evans/AO 鍒嗗瀷璇勪及"},
++  {order:3, label:"鏈墠璇勪及", desc:"鍚堝苟鐥?鑽墿/钀ュ吇/璁ょ煡 + 14 椤瑰畬澶囨€?},
++  {order:4, label:"MDT 浼氳瘖", desc:"鑱氬悎蹇冨唴+楹婚唹+楠ㄧ+鐤肩棝 鈫?绾"},
++  {order:5, label:"鎵嬫湳鏃舵満", desc:"T2 8 鍥犵礌灞傛鍐崇瓥"},
++  {order:6, label:"骞跺彂鐥囬娴?, desc:"DVT/鎰熸煋/蹇冭剰/璺屽€?璋靛 4 缁?},
++  {order:7, label:"鎵嬫湳鏂规", desc:"THA/HA/PFNA/DHS 鎺ㄨ崘"},
++  {order:8, label:"鍥存湳鏈熸姢鐞?, desc:"4 闃舵 25 椤规姢鐞嗚鍒?},
++  {order:9, label:"鏈悗搴峰", desc:"4 闃舵搴峰 + Harris 璇勫垎"},
++  {order:10, label:"闅忚璁″垝", desc:"1/3/6/12 鏈?+ 绾㈡棗鐥囩姸 + 楠ㄨ川鐤忔澗"},
++  {order:11, label:"璐ㄦ帶瀹¤", desc:"6 闃舵 18 妫€鏌ョ偣鍚堣璇勫垎"},
++];
++const V1_ENDPOINTS = ["/api/v1/orthopedic/classify","/api/v1/orthopedic/assess","/api/v1/orthopedic/mdt","/api/v1/orthopedic/timing","/api/v1/orthopedic/complications","/api/v1/orthopedic/plan","/api/v1/orthopedic/rehab","/api/v1/orthopedic/followup"];
++let selectedPid = null;
++let patients = {};
++
++function renderStages(){
++  document.getElementById("stage-rows").innerHTML = STAGES.map(s =>
++    `<div class="stage-row"><div class="num">${s.order}</div><div><div>${s.label}</div><div class="st-desc">${s.desc}</div></div></div>`
++  ).join("");
++}
++
++function renderCaps(){
++  document.getElementById("capability-grid").innerHTML = CAPS.map(c =>
++    `<div class="cap" data-api="${c.api}" onclick="runCapability('${c.api}')"><div class="cap-ico">${c.ico}</div><div class="cap-title">${c.title}</div><div class="cap-desc">${c.desc}</div></div>`
++  ).join("");
++}
++
++function renderPatients(){
++  const el = document.getElementById("patient-list");
++  const ids = Object.keys(patients);
++  if(!ids.length){ el.innerHTML = '<div class="muted" style="padding:8px">鍚庣鏈繛鎺?/ 鏃犳偅鑰?/div>'; return; }
++  el.innerHTML = ids.map(pid => {
++    const p = patients[pid];
++    const active = pid === selectedPid ? "active" : "";
++    return `<div class="p-card ${active}" onclick="selectPatient('${pid}')"><div class="p-name">${p.name||pid}</div><div class="p-meta">${p.age||"?"}宀?路 ${p.gender||""} 路 ${pid}</div><div class="p-meta">${p.diagnosis||""}</div></div>`;
++  }).join("");
++}
++
++function selectPatient(pid){
++  selectedPid = pid;
++  renderPatients();
++  document.getElementById("result-empty").style.display = "none";
++  document.getElementById("result-content").innerHTML = `<div class="muted">宸查€夋嫨 ${patients[pid].name||pid}锛岀偣鍑昏兘鍔涘崱鎵ц AI 璇婄枟</div>`;
++}
++
++async function apiCall(path, body){
++  const r = await fetch(path, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
++  if(!r.ok) throw new Error("HTTP "+r.status);
++  return r.json();
++}
++
++async function loadPatients(){
++  for(const pid of PATIENT_IDS){
++    try{
++      const d = await apiCall("/api/call", {agent:"orthopedic-surgery", tool:"his_patient", params:{patient_id:pid}});
++      if(!d.error) patients[pid] = d;
++    }catch(e){ /* 璺宠繃澶辫触椤?*/ }
++  }
++  renderPatients();
++  computeKpi();  // Task 5 瀹氫箟
++}
++
++// 涓婚鍒囨崲
++document.getElementById("theme-toggle").addEventListener("click", () => {
++  document.body.classList.toggle("light");
++  document.getElementById("theme-toggle").textContent = document.body.classList.contains("light") ? "馃寵 娣辫壊" : "鈽€ 娴呰壊";
++});
++
++// 鍒濆鍖?+renderStages();
++renderCaps();
++async function computeKpi(){
++  const ids = Object.keys(patients);
++  if(!ids.length){ return; }
++  let pending=0, emergency=0, highrisk=0, factorSum=0, n=0;
++  for(const pid of ids){
++    const p = patients[pid];
++    try{
++      const t = await apiCall("/api/v1/orthopedic/timing",
++        {patient_id:pid, labs:p.labs||{}, conditions:p.conditions||[], meds:p.meds||[], ecg_findings:""});
++      if(t.urgency==="emergency") emergency++;
++      if(t.urgency==="emergency"||t.urgency==="urgent") pending++;
++      factorSum += (t.total_factors||0);
++      const c = await apiCall("/api/v1/orthopedic/complications",
++        {patient_id:pid, age:p.age||0, labs:p.labs||{}, conditions:p.conditions||[]});
++      if(c.overall_risk==="high") highrisk++;
++      n++;
++    }catch(e){ /* 璺宠繃 */ }
++  }
++  document.getElementById("kpi-total").textContent = ids.length;
++  document.getElementById("kpi-pending").textContent = pending;
++  document.getElementById("kpi-48h").textContent = n ? Math.round(emergency/n*100)+"%" : "鈥?;
++  document.getElementById("kpi-highrisk").textContent = highrisk;
++  document.getElementById("kpi-avgfactor").textContent = n ? (factorSum/n).toFixed(1) : "鈥?;
++}
++
++function badge(v){
++  const cls = {high:"high",moderate:"moderate",low:"low",emergency:"emergency",urgent:"urgent",elective:"high"}[v] || "moderate";
++  return `<span class="badge ${cls}">${v}</span>`;
++}
++
++function buildParams(api, p){
++  const pid = selectedPid;
++  switch(api){
++    case "timing": return {patient_id:pid, labs:p.labs||{}, conditions:p.conditions||[], meds:p.meds||[], ecg_findings:""};
++    case "complications": return {patient_id:pid, age:p.age||0, labs:p.labs||{}, conditions:p.conditions||[]};
++    case "classify": return {patient_id:pid, xray_findings:{location:p.fracture_type||"", type:""}};
++    case "assess": return {patient_id:pid};
++    case "plan": return {patient_id:pid, fracture_type:p.fracture_type||"", age:p.age||0};
++    case "mdt": return {patient_id:pid, chief_complaint:p.diagnosis||""};
++    case "rehab": return {patient_id:pid, procedure:p.procedure||""};
++    case "followup": return {patient_id:pid, procedure:p.procedure||""};
++    default: return {patient_id:pid};
++  }
++}
++
++async function runCapability(api){
++  const content = document.getElementById("result-content");
++  document.getElementById("result-empty").style.display = "none";
++  if(!selectedPid){ content.innerHTML = '<div class="muted">璇峰厛鍦ㄥ乏渚ч€夋嫨鎮ｈ€?/div>'; return; }
++  const p = patients[selectedPid];
++  content.innerHTML = '<div class="muted">璋冪敤涓€?/div>';
++  try{
++    const d = await apiCall("/api/v1/orthopedic/"+api, buildParams(api, p));
++    let head = "";
++    if(d.urgency) head += "鎵嬫湳鏃舵満: " + badge(d.urgency) + " 路 SLA " + (d.sla||"") + "<br>";
++    if(d.overall_risk) head += "缁煎悎椋庨櫓: " + badge(d.overall_risk) + "<br>";
++    if(d.error) head += '<span class="badge high">閿欒</span> ' + d.error + "<br>";
++    content.innerHTML = `<div style="margin-bottom:8px">${head}</div><div class="result-box">${JSON.stringify(d,null,2)}</div>`;
++  }catch(e){
++    content.innerHTML = '<div class="result-box"><span class="badge high">鍚庣鏈繛鎺?/span> ' + e.message + '</div>';
++  }
++}
++loadPatients();
++</script>
++</body>
++</html>
+\ No newline at end of file
+diff --git a/packages/haip-hospital/modules/orthopedics/his_adapter.py b/packages/haip-hospital/modules/orthopedics/his_adapter.py
+index 970fa6f..4fb6ee2 100644
+--- a/packages/haip-hospital/modules/orthopedics/his_adapter.py
++++ b/packages/haip-hospital/modules/orthopedics/his_adapter.py
+@@ -19,24 +19,74 @@ MOCK_LAB_REFERENCE = {
+ 
+ MOCK_IMAGING = {
+     "pelvis_xray": {"view": "楠ㄧ泦姝ｄ綅", "description": "鍙宠偂楠ㄩ楠ㄦ姌锛孏arden III 鍨嬶紝绉讳綅绾?8mm", "quality": "adequate"},
+     "hip_ct": {"view": "楂嬮儴 CT 涓夌淮閲嶅缓", "description": "鑲￠杞瓙闂撮鎶橈紝Evans ID 鍨嬶紝鍚庡唴渚у绮夌", "quality": "good"},
+ }
+ 
+ MOCK_PATIENT_DB = {
+     "P001": {
+-        "name": "寮?*", "age": 78, "gender": "濂?, "diagnosis": "鍙宠偂楠ㄩ楠ㄦ姌 Garden III",
+-        "comorbidities": ["楂樿鍘?, "2鍨嬬硸灏跨梾"], "medications": ["纭濊嫰鍦板钩 30mg qd", "浜岀敳鍙岃儘 500mg bid"],
++        "name": "寮?*", "age": 78, "gender": "濂?,
++        "diagnosis": "鍙宠偂楠ㄩ楠ㄦ姌 Garden III",
++        "comorbidities": ["楂樿鍘?, "2鍨嬬硸灏跨梾"],
++        "medications": ["纭濊嫰鍦板钩 30mg qd", "浜岀敳鍙岃儘 500mg bid"],
+         "allergies": ["闈掗湁绱?],
++        "labs": {"cTnI": 0.02, "Hb": 95, "Cr": 110, "Glu": 9.5,
++                 "WBC": 8.5, "CRP": 40, "INR": 1.1, "egfr": 65},
++        "conditions": ["楂樿鍘?, "绯栧翱鐥?],
++        "meds": ["nifedipine", "metformin"],
++        "fracture_type": "鑲￠棰堥鎶?, "procedure": "THA (鍏ㄩ珛鍏宠妭缃崲)",
+     },
+     "P002": {
+-        "name": "鏉?*", "age": 82, "gender": "鐢?, "diagnosis": "宸﹁偂楠ㄨ浆瀛愰棿楠ㄦ姌 Evans ID",
+-        "comorbidities": ["鎴块ⅳ", "楂樿鍘?], "medications": ["鍗庢硶鏋?3mg qd", "姘ㄦ隘鍦板钩 5mg qd"],
++        "name": "鏉?*", "age": 82, "gender": "鐢?,
++        "diagnosis": "宸﹁偂楠ㄨ浆瀛愰棿楠ㄦ姌 Evans ID",
++        "comorbidities": ["鎴块ⅳ", "楂樿鍘?],
++        "medications": ["鍗庢硶鏋?3mg qd", "姘ㄦ隘鍦板钩 5mg qd"],
+         "allergies": [],
++        "labs": {"cTnI": 0.01, "Hb": 138, "Cr": 90, "Glu": 5.4,
++                 "WBC": 6.5, "CRP": 6, "INR": 1.1, "egfr": 82},
++        "conditions": ["楂樿鍘?],
++        "meds": ["amlodipine"],
++        "fracture_type": "杞瓙闂撮鎶?, "procedure": "PFNA (鑲￠杩戠闃叉棆楂撳唴閽?",
++    },
++    "P003": {
++        "name": "鐜?*", "age": 80, "gender": "鐢?,
++        "diagnosis": "鍙宠偂楠ㄩ楠ㄦ姌 Garden IV",
++        "comorbidities": ["鍐犲績鐥?, "闄堟棫蹇冩", "楂樿鍘?],
++        "medications": ["闃垮徃鍖规灄 100mg qd", "缇庢墭娲涘皵 25mg bid"],
++        "allergies": [],
++        "labs": {"cTnI": 0.08, "Hb": 105, "Cr": 120, "Glu": 6.8,
++                 "WBC": 9.0, "CRP": 30, "INR": 1.2, "egfr": 55},
++        "conditions": ["鍐犲績鐥?, "蹇冩鍙?, "楂樿鍘?],
++        "meds": ["aspirin", "metoprolol"],
++        "fracture_type": "鑲￠棰堥鎶?, "procedure": "THA (鍏ㄩ珛鍏宠妭缃崲)",
++    },
++    "P004": {
++        "name": "璧?*", "age": 68, "gender": "濂?,
++        "diagnosis": "宸﹁偂楠ㄨ浆瀛愰棿楠ㄦ姌 Evans IIA",
++        "comorbidities": ["楠ㄨ川鐤忔澗"],
++        "medications": ["闃夸粦鑶﹂吀閽?70mg qw"],
++        "allergies": [],
++        "labs": {"cTnI": 0.01, "Hb": 128, "Cr": 78, "Glu": 5.1,
++                 "WBC": 7.0, "CRP": 8, "INR": 1.0, "egfr": 90},
++        "conditions": ["楠ㄨ川鐤忔澗"],
++        "meds": ["alendronate"],
++        "fracture_type": "杞瓙闂撮鎶?, "procedure": "PFNA (鑲￠杩戠闃叉棆楂撳唴閽?",
++    },
++    "P005": {
++        "name": "闄?*", "age": 85, "gender": "濂?,
++        "diagnosis": "鍙宠偂楠ㄩ楠ㄦ姌 Garden III 鍚堝苟璐",
++        "comorbidities": ["鎱㈡€ц偩鐥?, "璐", "鐥村憜"],
++        "medications": ["姘悺鏍奸浄 75mg qd"],
++        "allergies": ["纾鸿兒"],
++        "labs": {"cTnI": 0.03, "Hb": 88, "Cr": 150, "Glu": 6.2,
++                 "WBC": 8.0, "CRP": 50, "INR": 1.3, "egfr": 45},
++        "conditions": ["鎱㈡€ц偩鐥?, "璐", "鐥村憜", "鍐犲績鐥?],
++        "meds": ["clopidogrel"],
++        "fracture_type": "鑲￠棰堥鎶?, "procedure": "THA (鍏ㄩ珛鍏宠妭缃崲)",
+     },
+ }
+ 
+ 
+ def query_labs(*, patient_id: str, lab_items: list[str] | None = None,
+                **kwargs: Any) -> dict[str, Any]:
+     """Mock LIS 妫€楠屾暟鎹煡璇?
+ 
+@@ -97,17 +147,17 @@ def query_patient(*, patient_id: str, **kwargs: Any) -> dict[str, Any]:
+         "source": "HIS",
+         "_mock": True,
+         "_mock_note": "妯℃嫙 HIS 鐥呭巻鏁版嵁锛岄潪鐪熷疄鎮ｈ€呬俊鎭?,
+     }
+ 
+ 
+ def query_imaging(*, patient_id: str, modality: str = "pelvis_xray",
+                   **kwargs: Any) -> dict[str, Any]:
+-    """Mock PACS 褰卞儚鏌ヨ.
++    """妯℃嫙 PACS 褰卞儚鏌ヨ.
+ 
+     Args:
+         patient_id: 鎮ｈ€?ID
+         modality: 褰卞儚绫诲瀷 (pelvis_xray / hip_ct)
+ 
+     Returns:
+         褰卞儚鎻忚堪锛屾爣娉?_mock: true
+     """
+diff --git a/tests/integration/test_ortho_portal.py b/tests/integration/test_ortho_portal.py
+new file mode 100644
+index 0000000..9661142
+--- /dev/null
++++ b/tests/integration/test_ortho_portal.py
+@@ -0,0 +1,182 @@
++"""鍒涗激楠ㄧ璇婄枟闂ㄦ埛 (/ortho-portal) 闆嗘垚娴嬭瘯."""
++
++from __future__ import annotations
++
++import os
++import sys
++from pathlib import Path
++
++os.environ["HAIP_TEST_MODE"] = "true"
++
++ROOT = Path(__file__).resolve().parent.parent.parent
++sys.path.insert(0, str(ROOT / "packages" / "haip-core"))
++sys.path.insert(0, str(ROOT / "packages" / "haip-hospital"))
++sys.path.insert(0, str(ROOT / "packages" / "haip-hospital" / "modules"))
++
++from fastapi.testclient import TestClient  # noqa: E402
++from haip.agent import load_from_dir  # noqa: E402
++
++load_from_dir(str(ROOT / "packages" / "haip-hospital" / "agents" / "definitions"))
++from haip.web_server import app  # noqa: E402
++
++client = TestClient(app)
++
++REQUIRED_PATIENTS = ["P001", "P002", "P003", "P004", "P005"]
++
++
++class TestPatientData:
++    def test_five_patients_exist(self):
++        from orthopedics.his_adapter import MOCK_PATIENT_DB
++        for pid in REQUIRED_PATIENTS:
++            assert pid in MOCK_PATIENT_DB, f"缂哄皯鎮ｈ€?{pid}"
++
++    def test_each_patient_has_structured_fields(self):
++        from orthopedics.his_adapter import MOCK_PATIENT_DB
++        for pid in REQUIRED_PATIENTS:
++            p = MOCK_PATIENT_DB[pid]
++            assert p.get("labs"), f"{pid} 缂?labs"
++            assert isinstance(p["labs"], dict) and len(p["labs"]) >= 5
++            assert isinstance(p.get("conditions"), list)
++            assert isinstance(p.get("meds"), list)
++            assert p.get("fracture_type"), f"{pid} 缂?fracture_type"
++
++    def test_query_patient_passes_structured_fields(self):
++        from orthopedics.his_adapter import query_patient
++        r = query_patient(patient_id="P003")
++        assert r["patient_id"] == "P003"
++        assert "labs" in r and "conditions" in r and "meds" in r
++        assert r["_mock"] is True
++
++
++class TestUrgencyDistribution:
++    """鏍￠獙鎮ｈ€呮暟鎹兘瑕嗙洊涓嶅悓鎵嬫湳鏃舵満鍒嗙骇 (鐪熷疄寮曟搸璁＄畻)."""
++
++    def _timing(self, pid):
++        from orthopedics import evaluate_timing
++        from orthopedics.his_adapter import MOCK_PATIENT_DB
++        p = MOCK_PATIENT_DB[pid]
++        return evaluate_timing(patient_id=pid, labs=p["labs"],
++                               conditions=p["conditions"], meds=p["meds"],
++                               ecg_findings="")["urgency"]
++
++    def test_has_elective_high_risk(self):
++        assert self._timing("P003") == "elective"  # cTnI 0.08 > 0.04
++
++    def test_has_emergency_case(self):
++        urgencies = {self._timing(p) for p in REQUIRED_PATIENTS}
++        assert "emergency" in urgencies
++
++    def test_complications_high_risk_exists(self):
++        from orthopedics import predict_complications
++        from orthopedics.his_adapter import MOCK_PATIENT_DB
++        overalls = []
++        for pid in REQUIRED_PATIENTS:
++            p = MOCK_PATIENT_DB[pid]
++            r = predict_complications(patient_id=pid, age=p["age"],
++                                      labs=p["labs"], conditions=p["conditions"])
++            overalls.append(r["overall_risk"])
++        assert "high" in overalls  # P005 楂橀緞+鐥村憜+CKD
++
++
++class TestPortalRoute:
++    def test_route_returns_200(self):
++        r = client.get("/ortho-portal")
++        assert r.status_code == 200
++
++    def test_route_is_html(self):
++        r = client.get("/ortho-portal")
++        body = r.text.lower()
++        for tag in ["<!doctype", "<html", "<head", "<body", "<title"]:
++            assert tag in body, f"缂簕tag}"
++
++
++class TestPortalLayout:
++    def _body(self):
++        return client.get("/ortho-portal").text
++
++    def test_has_layout_anchors(self):
++        body = self._body()
++        for anchor in ["kpi-bar", "patient-list", "capability-grid",
++                       "result-panel", "stage-timeline", "theme-toggle"]:
++            assert anchor in body, f"缂洪敋鐐?{anchor}"
++
++    def test_has_title_and_tokens(self):
++        body = self._body()
++        assert "鍒涗激楠ㄧ" in body
++        assert "--accent" in body
++        assert "body.light" in body
++
++
++class TestPortalContent:
++    def _body(self):
++        return client.get("/ortho-portal").text
++
++    def test_has_eight_capabilities(self):
++        body = self._body()
++        for api in ["classify", "assess", "mdt", "timing",
++                    "complications", "plan", "rehab", "followup"]:
++            assert api in body, f"缂鸿兘鍔汚PI {api}"
++
++    def test_has_eleven_stages_labels(self):
++        body = self._body()
++        for label in ["鎬ヨ瘖鍒嗚瘖", "楠ㄦ姌鍒嗗瀷", "鏈墠璇勪及", "MDT 浼氳瘖",
++                      "鎵嬫湳鏃舵満", "骞跺彂鐥囬娴?, "鎵嬫湳鏂规", "鍥存湳鏈熸姢鐞?,
++                      "鏈悗搴峰", "闅忚璁″垝", "璐ㄦ帶瀹¤"]:
++            assert label in body, f"缂洪樁娈?{label}"
++
++    def test_has_patient_ids_and_loader(self):
++        body = self._body()
++        assert "P001" in body and "P005" in body
++        assert "/api/call" in body
++        assert "his_patient" in body
++
++
++class TestPortalKpiAndRun:
++    def _body(self):
++        return client.get("/ortho-portal").text
++
++    def test_kpi_uses_v1_api(self):
++        body = self._body()
++        assert "/api/v1/orthopedic/timing" in body
++        assert "/api/v1/orthopedic/complications" in body
++
++    def test_run_capability_dispatch(self):
++        body = self._body()
++        for api in ["classify","assess","mdt","timing",
++                    "complications","plan","rehab","followup"]:
++            assert "/api/v1/orthopedic/" + api in body
++
++    def test_kpi_targets_present(self):
++        body = self._body()
++        for kid in ["kpi-total","kpi-pending","kpi-48h",
++                    "kpi-highrisk","kpi-avgfactor"]:
++            assert kid in body
++
++
++class TestV1ApiSmoke:
++    def _p(self, pid):
++        from orthopedics.his_adapter import MOCK_PATIENT_DB
++        return MOCK_PATIENT_DB[pid]
++
++    def test_timing_api(self):
++        p = self._p("P003")
++        r = client.post("/api/v1/orthopedic/timing",
++                        json={"patient_id":"P003","labs":p["labs"],
++                              "conditions":p["conditions"],"meds":p["meds"],
++                              "ecg_findings":""})
++        assert r.status_code == 200
++        assert r.json()["urgency"] == "elective"
++
++    def test_complications_api(self):
++        p = self._p("P005")
++        r = client.post("/api/v1/orthopedic/complications",
++                        json={"patient_id":"P005","age":p["age"],
++                              "labs":p["labs"],"conditions":p["conditions"]})
++        assert r.status_code == 200
++        assert r.json()["overall_risk"] in ("low","moderate","high")
++
++    def test_plan_api(self):
++        r = client.post("/api/v1/orthopedic/plan",
++                        json={"patient_id":"P001","fracture_type":"鑲￠棰堥鎶?,"age":78})
++        assert r.status_code == 200
++        assert "procedure" in r.json()
+
+## web_server.py — ONLY /ortho-portal route (rest is pre-existing WIP, out of scope)
+  
+      feat(ortho): 闂ㄦ埛 KPI 鑱氬悎 + 鑳藉姏鍗＄湡瀹?v1 API 鎵ц
+  
+> diff --git a/packages/haip-core/haip/ui_ortho_portal.html b/packages/haip-core/haip/ui_ortho_portal.html
+  index da75b43..1bef674 100644
+> --- a/packages/haip-core/haip/ui_ortho_portal.html
+> +++ b/packages/haip-core/haip/ui_ortho_portal.html
+  @@ -100,6 +100,7 @@ const STAGES = [
+     {order:10, label:"闅忚璁″垝", desc:"1/3/6/12 鏈?+ 绾㈡棗鐥囩姸 + 楠ㄨ川鐤忔澗"},
+     {order:11, label:"璐ㄦ帶瀹¤", desc:"6 闃舵 18 妫€鏌ョ偣鍚堣璇勫垎"},
+   ];
+  +const V1_ENDPOINTS = ["/api/v1/orthopedic/classify","/api/v1/orthopedic/assess","/api/v1/orthopedic/mdt","/api/v1/orthopedic/timing","/api/v1/orthopedic/complications","/api/v1/orthopedic/plan","/api/v1/orthopedic/rehab","/api/v1/orthopedic/followup"];
+  +
+  +class TestPortalKpiAndRun:
+  +    def _body(self):
+> +        return client.get("/ortho-portal").text
+  +
+  +    def test_kpi_uses_v1_api(self):
+  +        body = self._body()
+  +        assert "/api/v1/orthopedic/timing" in body
+  +        assert "/api/v1/orthopedic/complications" in body
+          return f.read()
+  
+  
+> @app.get("/ortho-portal", response_class=HTMLResponse)
+> def ortho_portal_ui():
+      """鍒涗激楠ㄧ璇婄枟闂ㄦ埛 鈥?KPI 鐪嬫澘 + AI 璇婄枟鑳藉姏鍗?+ 鎮ｈ€呴槦鍒?+ 娴佺▼鏃堕棿杞淬€?""
+>     with open(Path(__file__).parent / "ui_ortho_portal.html", encoding="utf-8") as f:
+          return f.read()
+  
+  
+  @app.get("/pharmacy", response_class=HTMLResponse)
+  def pharmacy_ui():

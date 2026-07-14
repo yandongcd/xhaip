@@ -535,3 +535,190 @@ def audit_rollback(
         typer.secho(f"  ERROR {p}", fg="red")
     typer.echo(f"Done: {len(result.get('restored', []))} restored, "
                f"{len(result.get('errors', []))} errors.")
+
+
+# ── License Commands ──
+
+license_app = typer.Typer(help="License management")
+app.add_typer(license_app, name="license")
+
+
+@license_app.command("gen")
+def license_gen(
+    customer: str = typer.Option(..., "--customer", "-c", help="Customer/hospital name"),
+    code: str = typer.Option("", "--code", help="Customer code"),
+    agents: int = typer.Option(48, "--agents", "-a", help="Max agents"),
+    users: int = typer.Option(100, "--users", "-u", help="Max users"),
+    days: int = typer.Option(365, "--days", "-d", help="Validity in days"),
+    output: str = typer.Option("license.key", "--output", "-o", help="Output file"),
+):
+    """Generate a license key file."""
+    from haip.licensing import generate_license, write_license_file
+
+    lic = generate_license(
+        customer_name=customer,
+        customer_code=code,
+        max_agents=agents,
+        max_users=users,
+        expiry_days=days,
+    )
+    write_license_file(lic, output)
+    typer.echo(f"License generated: {output}")
+    typer.echo(f"  Customer: {lic['customer_name']}")
+    typer.echo(f"  Max agents: {lic['max_agents']}, Max users: {lic['max_users']}")
+    typer.echo(f"  Expiry: {lic['expiry_date']}")
+    typer.echo(f"  Features: {', '.join(lic['features'])}")
+
+
+@license_app.command("validate")
+def license_validate(
+    file: str = typer.Option("license.key", "--file", "-f", help="License file to validate"),
+):
+    """Validate a license key file."""
+    from haip.licensing import LicenseManager
+
+    mgr = LicenseManager(license_file=file)
+    info = mgr.validate()
+    if info.valid:
+        typer.secho("✓ License is valid", fg="green")
+        typer.echo(f"  Customer: {info.customer_name}")
+        typer.echo(f"  Expiry: {info.expiry_date}")
+        typer.echo(f"  Features: {', '.join(info.features)}")
+        warning = mgr.check_expiry_warning()
+        if warning:
+            typer.secho(f"  ⚠ {warning}", fg="yellow")
+    else:
+        typer.secho(f"✗ License is invalid: {info.error}", fg="red")
+
+
+# ── Tenant Commands ──
+
+tenant_app = typer.Typer(help="Multi-tenant management")
+app.add_typer(tenant_app, name="tenant")
+
+
+@tenant_app.command("create")
+def tenant_create(
+    name: str = typer.Argument(..., help="Tenant name"),
+    hospital: str = typer.Option("", "--hospital", "-H", help="Hospital name"),
+    max_users: int = typer.Option(100, "--max-users", help="Max users"),
+    max_agents: int = typer.Option(48, "--max-agents", help="Max agents"),
+):
+    """Create a new tenant."""
+    from haip.tenants import get_tenant_manager
+
+    mgr = get_tenant_manager()
+    t = mgr.create(name=name, hospital_name=hospital or name, max_users=max_users, max_agents=max_agents)
+    typer.echo(f"Tenant created: {t.id}")
+    typer.echo(f"  Name: {t.name}, Hospital: {t.hospital_name}")
+    typer.echo(f"  Status: {t.status.value}")
+
+
+@tenant_app.command("list")
+def tenant_list():
+    """List all tenants."""
+    from haip.tenants import get_tenant_manager
+
+    mgr = get_tenant_manager()
+    tenants = mgr.list_all()
+    if not tenants:
+        typer.echo("No tenants registered.")
+        return
+    for t in tenants:
+        typer.echo(f"  {t.id:12s} | {t.name:20s} | {t.hospital_name:20s} | {t.status.value}")
+
+
+@tenant_app.command("activate")
+def tenant_activate(
+    tenant_id: str = typer.Argument(..., help="Tenant ID"),
+):
+    """Activate a tenant."""
+    from haip.tenants import get_tenant_manager
+
+    mgr = get_tenant_manager()
+    if mgr.activate(tenant_id):
+        typer.echo(f"Tenant {tenant_id} activated.")
+    else:
+        typer.secho(f"Tenant {tenant_id} not found.", fg="red")
+
+
+@tenant_app.command("suspend")
+def tenant_suspend(
+    tenant_id: str = typer.Argument(..., help="Tenant ID"),
+):
+    """Suspend a tenant."""
+    from haip.tenants import get_tenant_manager
+
+    mgr = get_tenant_manager()
+    if mgr.suspend(tenant_id):
+        typer.echo(f"Tenant {tenant_id} suspended.")
+    else:
+        typer.secho(f"Tenant {tenant_id} not found.", fg="red")
+
+
+# ── LeanIX Commands ──
+
+leanix_app = typer.Typer(help="LeanIX factsheet export")
+app.add_typer(leanix_app, name="leanix")
+
+
+@leanix_app.command("export")
+def leanix_export(
+    output: str = typer.Option("leanix-export.json", "--output", "-o", help="Output file"),
+    fmt: str = typer.Option("json", "--format", "-f", help="Output format: json, html"),
+):
+    """Export LeanIX fact sheets from agent registry."""
+    from haip.togaf.leanix import auto_discover
+
+    exporter = auto_discover()
+
+    if fmt == "html":
+        html = exporter.to_html_summary()
+        out = output.replace(".json", ".html")
+        with open(out, "w", encoding="utf-8") as f:
+            f.write(html)
+    else:
+        json_str = exporter.to_json()
+        with open(output, "w", encoding="utf-8") as f:
+            f.write(json_str)
+
+    typer.echo(f"Exported {output} ({len(exporter._facts)} fact sheets)")
+
+
+# ── TOGAF Template Commands ──
+
+
+@togaf_app.command("templates")
+def togaf_templates():
+    """List all available TOGAF architecture templates."""
+    from haip.togaf.templates.engine import get_togaf_engine
+
+    engine = get_togaf_engine()
+    templates = engine.list_all()
+
+    typer.echo(f"Available TOGAF templates ({len(templates)}):")
+    for t in templates:
+        typer.echo(f"  {t['id']:30s} | {t['category']:14s} | {t['name']:30s} | Phase {t['phase']}")
+    typer.echo("\nRender with: python -c \"from haip.togaf.templates.engine import get_togaf_engine; print(get_togaf_engine().render('<id>'))\"")
+
+
+@togaf_app.command("render")
+def togaf_render(
+    template_id: str = typer.Argument(..., help="Template ID to render"),
+    output: str = typer.Option("", "--output", "-o", help="Output HTML file"),
+):
+    """Render a TOGAF architecture template as HTML."""
+    from haip.togaf.templates.engine import get_togaf_engine
+
+    engine = get_togaf_engine()
+    html = engine.render(template_id)
+    if html is None:
+        typer.secho(f"Template not found: {template_id}", fg="red")
+        return
+
+    if output:
+        with open(output, "w", encoding="utf-8") as f:
+            f.write(html)
+        typer.echo(f"Rendered to {output}")
+    else:
+        typer.echo(html[:1000] + "..." if len(html) > 1000 else html)
