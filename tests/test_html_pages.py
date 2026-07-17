@@ -127,14 +127,7 @@ class TestWorkflowPages:
             )
 
 
-    def test_workflow_js_ids_exist(self):
-        """JS getElementById 引用的静态 id 必须在 HTML 中存在 (否则选患者填参会崩溃)."""
-        resp = client.get("/workflow/orthopedic-surgery")
-        html = resp.text
-        js_ids = set(re.findall(r"getElementById\('([\w-]+)'\)", html))
-        dom_ids = set(re.findall(r'id="([\w-]+)"', html))
-        missing = js_ids - dom_ids
-        assert not missing, f"JS 引用了不存在的 id: {missing}"
+    # JS id 契约已由 test_ui_contracts.py C1 全站覆盖
 
 
     def test_workflow_agent_var_is_agent_name(self):
