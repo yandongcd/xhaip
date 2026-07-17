@@ -25,11 +25,23 @@ DEFAULT_PORTS: dict[str, int] = {
 }
 
 
+def _resolve_port(agent_name: str) -> int:
+    """端口解析: agent YAML 的 port 字段优先, DEFAULT_PORTS 仅作回退。"""
+    try:
+        from haip.agent import get as get_agent
+        plugin = get_agent(agent_name)
+        if plugin and plugin.port:
+            return plugin.port
+    except Exception:
+        pass
+    return DEFAULT_PORTS.get(agent_name, 8700)
+
+
 def launch_agent(agent_name: str, port: int | None = None, host: str = "127.0.0.1",
                  open_browser: bool = True) -> subprocess.Popen | None:
     """启动单个 Agent 的 Web 服务。"""
     if port is None:
-        port = DEFAULT_PORTS.get(agent_name, 8700)
+        port = _resolve_port(agent_name)
 
     if _port_in_use(host, port):
         print(f"  ⚠ 端口 {port} 已被占用, Agent '{agent_name}' 可能已在运行")

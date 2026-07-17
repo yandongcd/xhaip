@@ -42,7 +42,7 @@ def _seed_default_admin():
             )
             auth.create_user(
                 username="doctor",
-                password="Doctor@123",
+                password=os.environ.get("HAIP_DOCTOR_PASSWORD", "Doctor@123"),
                 display_name="演示医生",
                 roles=["doctor"],
             )

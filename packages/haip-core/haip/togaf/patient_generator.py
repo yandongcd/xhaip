@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import json
 import random
-from pathlib import Path
 
 random.seed(42)
 
@@ -101,7 +100,8 @@ def generate_patients(output_path: str = "") -> list[dict]:
     clinical = [o for o in all_orgs if o.type == "clinical" and o.parent]
 
     # Read existing patients to avoid duplicates
-    patients_file = Path("D:/FC/xhaip/packages/haip-hospital/data/patients.json")
+    from haip.patients import PATIENTS_FILE
+    patients_file = PATIENTS_FILE
     existing_patients: list[dict] = []
     existing_ids: set[str] = set()
     existing_depts: set[str] = set()

@@ -2,13 +2,20 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import time
 from typing import Any
 
 import jwt
 
-_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "xhaip-dev-secret-change-in-production")
+logger = logging.getLogger(__name__)
+
+_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "")
+if not _SECRET_KEY:
+    _SECRET_KEY = "xhaip-dev-secret-change-in-production"
+    if os.environ.get("HAIP_TEST_MODE") != "true" and os.environ.get("AUTH_ENABLED") != "false":
+        logger.warning("JWT_SECRET_KEY 未设置, 正在使用开发默认密钥 — 生产环境必须通过环境变量配置")
 _ALGORITHM = "HS256"
 _ACCESS_TOKEN_EXPIRE = int(os.environ.get("JWT_ACCESS_EXPIRE", "900"))  # 15 minutes
 _REFRESH_TOKEN_EXPIRE = int(os.environ.get("JWT_REFRESH_EXPIRE", "604800"))  # 7 days
