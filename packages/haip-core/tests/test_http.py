@@ -195,6 +195,18 @@ class TestGuardEndpoint:
         assert "passed" in data
         assert "citations" in data
 
+    def test_guard_verifies_known_guideline(self):
+        """指南资产库中存在的引用 (nice-ng37.yaml) 必须 verified=true."""
+        r = client.post("/api/guard", json={
+            "output": "建议 THA 手术, 时机 48h。参考: NICE NG37",
+            "scenario": "手术决策", "agent": "orthopedic-surgery",
+        })
+        data = r.json()
+        ng37 = [c for c in data["citations"] if "NG37" in c["source"].upper()]
+        assert ng37, "未提取到 NICE NG37 引用"
+        assert ng37[0]["verified"] is True, "nice-ng37.yaml 在资产库中, 引用应 verified"
+        assert "存在未验证的指南引用" not in data["flags"]
+
     def test_guard_cross_validation(self):
         r = client.post("/api/guard", json={
             "output": "ASA III, 建议延迟手术",

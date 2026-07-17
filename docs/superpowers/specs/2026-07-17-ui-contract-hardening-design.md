@@ -13,6 +13,7 @@
 | B1 | 数字病人列表为空 | `ui_workflow._load_patients` 只接受 list 格式, patients.json 实为 `{"total","patients"}` dict | 患者加载逻辑重复 4+ 处, 格式假设各异, 静默回退 `[]` |
 | B2 | 选患者后参数不更新 | JS 引用 `hp-badge`/`rb-current-stage`, DOM 中不存在 → TypeError 中断 | f-string 拼 HTML+JS 无契约校验 |
 | B3 | 所有工具调用报 `Unknown agent: 护士长` | 循环变量 `name` 遮蔽函数参数 `name` | 300+ 行渲染大函数作用域污染 |
+| B4 | Guard 引文恒 `verified:false` (NICE NG37 在库仍未验证) | `/api/guard` 裸构造 `GuardVerifier()`, CitationEngine 从未索引指南目录 | 组件支持注入但调用点未接线; 测试只有结构断言 |
 
 ### 测试未拦截的原因
 

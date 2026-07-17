@@ -465,6 +465,27 @@ async def loop_demo(request: Request):
     }
 
 
+GUIDELINE_DIRS = [
+    PROJECT_ROOT / "packages" / "haip-hospital" / "knowledge" / "guidelines",
+    PROJECT_ROOT / "knowledge" / "guidelines",
+]
+
+_citation_engine = None
+
+
+def _get_citation_engine():
+    """模块级单例 — 索引指南资产库, 供 /api/guard 引文验证。"""
+    global _citation_engine
+    if _citation_engine is None:
+        from haip.guard.citation import CitationEngine
+        engine = CitationEngine()
+        for d in GUIDELINE_DIRS:
+            if d.exists():
+                engine.index_guidelines(d)
+        _citation_engine = engine
+    return _citation_engine
+
+
 @app.post("/api/guard")
 async def guard_verify(request: Request):
     """对 Agent 输出执行 Guard 安全验证。"""
@@ -473,7 +494,7 @@ async def guard_verify(request: Request):
     scenario = data.get("scenario", "")
     agent_name = data.get("agent", "")
     cross = data.get("cross_agent_outputs", [])
-    v = GuardVerifier()
+    v = GuardVerifier(citation_engine=_get_citation_engine())
     result = v.verify(output, scenario=scenario, agent_name=agent_name,
                       cross_agent_outputs=cross if cross else None)
     return {
