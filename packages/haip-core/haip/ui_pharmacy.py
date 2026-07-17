@@ -70,8 +70,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text'
   <div class="main-h"><span id="panel-title">🥗 NRS2002 营养风险评估</span><div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--text-secondary)">药学部临床工作台</span><button class="header-btn" onclick="toggleTheme()" id="btn-theme">🌙 黑夜</button></div></div>
   <div class="content">
     <div class="left">
-      <div class="panel active" id="panel-nutrition"><h3>患者基本信息</h3><div class="row"><div class="form-group" style="flex:1"><label>患者ID</label><input id="f-id" value="P001"></div><div class="form-group" style="flex:1"><label>年龄</label><input id="f-age" value="75" type="number"></div><div class="form-group" style="flex:1"><label>体重(kg)</label><input id="f-wt" value="55" type="number"></div><div class="form-group" style="flex:1"><label>身高(cm)</label><input id="f-ht" value="170" type="number"></div></div><div class="form-group"><label>实验室 (JSON)</label><textarea id="f-labs">{"albumin":28,"crp":80,"na":135,"k":3.2,"ca":2.0,"mg":0.7,"bun":12,"glucose":8.5}</textarea></div><button class="btn btn-primary" onclick="callTool('assess_nutrition')">评估营养风险</button><div class="result-box" id="result-nutrition"></div></div>
-      <div class="panel" id="panel-tpn"><h3>TPN 配比计算</h3><div class="row"><div class="form-group" style="flex:1"><label>体重(kg)</label><input id="f-wt2" value="55" type="number"></div><div class="form-group" style="flex:1"><label>能量(kcal)</label><input id="f-ene" value="1800" type="number"></div></div><button class="btn btn-primary" onclick="callTool('calculate_tpn')">计算 TPN</button><div class="result-box" id="result-tpn"></div></div>
+      <div class="panel active" id="panel-nutrition"><h3>患者基本信息</h3><div class="row"><div class="form-group" style="flex:1"><label>患者ID</label><input id="f-id" value="__PID__"></div><div class="form-group" style="flex:1"><label>年龄</label><input id="f-age" value="__AGE__" type="number"></div><div class="form-group" style="flex:1"><label>体重(kg)</label><input id="f-wt" value="__WT__" type="number"></div><div class="form-group" style="flex:1"><label>身高(cm)</label><input id="f-ht" value="__HT__" type="number"></div></div><div class="form-group"><label>实验室 (JSON)</label><textarea id="f-labs">__LABS__</textarea></div><button class="btn btn-primary" onclick="callTool('assess_nutrition')">评估营养风险</button><div class="result-box" id="result-nutrition"></div></div>
+      <div class="panel" id="panel-tpn"><h3>TPN 配比计算</h3><div class="row"><div class="form-group" style="flex:1"><label>体重(kg)</label><input id="f-wt2" value="__WT__" type="number"></div><div class="form-group" style="flex:1"><label>能量(kcal)</label><input id="f-ene" value="1800" type="number"></div></div><button class="btn btn-primary" onclick="callTool('calculate_tpn')">计算 TPN</button><div class="result-box" id="result-tpn"></div></div>
       <div class="panel" id="panel-review"><h3>处方审核 — 17条药物交互规则</h3><div class="form-group"><label>处方项目 (JSON数组)</label><textarea id="f-rx" style="height:100px">[{"name":"华法林","dose":"2.5mg qd"},{"name":"低分子肝素","dose":"4000IU q12h"},{"name":"布洛芬","dose":"400mg tid"},{"name":"庆大霉素","dose":"80mg q8h"},{"name":"呋塞米","dose":"20mg qd"}]</textarea></div><button class="btn btn-primary" onclick="callTool('full_prescription_review')">完整审核 (17规则)</button><button class="btn" style="background:var(--warning);color:#000;margin-left:4px" onclick="callTool('review_prescription')">基础审核</button><div class="result-box" id="result-review"></div></div>
       <div class="panel" id="panel-drugs"><h3>药品查询</h3><div class="row"><div class="form-group" style="flex:1"><label>关键词</label><input id="f-drug" value="华法林"></div></div><button class="btn btn-primary" onclick="callTool('list_medications')">查询</button><div class="result-box" id="result-drugs"></div></div>
       <div class="panel" id="panel-route"><h3>营养途径推荐</h3><div class="form-group"><label>胃肠功能</label><select id="f-gi"><option>normal</option><option>impaired</option></select></div><button class="btn btn-primary" onclick="callTool('recommend_nutrition_route')">推荐</button><div class="result-box" id="result-route"></div></div>
@@ -115,3 +115,24 @@ async function runGuard(){const r=await fetch('/api/guard',{method:'POST',header
 </script>
 </body>
 </html>"""
+
+
+_DEFAULT_LABS = {"albumin": 28, "crp": 80, "na": 135, "k": 3.2, "ca": 2.0,
+                 "mg": 0.7, "bun": 12, "glucose": 8.5}
+
+
+def render_pharmacy_ui() -> str:
+    """渲染药剂科 UI — 患者信息取自数字病人库首位兼容患者, 无则用演示默认值。"""
+    import json
+
+    from haip.patients import load_patients
+
+    pts = load_patients("pharmacy", limit=1, only_compatible=True)
+    p = pts[0] if pts else {}
+    labs = p.get("lab_results") or _DEFAULT_LABS
+    return (PHARMACY_TEMPLATE
+            .replace("__PID__", str(p.get("patient_id", "P001")))
+            .replace("__AGE__", str(p.get("age", 75)))
+            .replace("__WT__", str(p.get("weight_kg", 55)))
+            .replace("__HT__", str(p.get("height_cm", 170)))
+            .replace("__LABS__", json.dumps(labs, ensure_ascii=False)))

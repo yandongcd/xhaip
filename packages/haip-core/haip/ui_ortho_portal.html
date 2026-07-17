@@ -77,7 +77,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','PingFang SC'
 </div>
 
 <script>
-const PATIENT_IDS = ["P001","P002","P003","P004","P005"];
+let PATIENT_IDS = [];  // 由 his_patient_list 动态获取, 失败时回退演示 ID
+const FALLBACK_PATIENT_IDS = ["P001","P002","P003","P004","P005"];
 const CAPS = [
   {id:"classify", ico:"🦴", title:"骨折分型", desc:"Garden/Evans/AO", api:"classify"},
   {id:"assess", ico:"🔵", title:"术前评估", desc:"合并症/药物/营养", api:"assess"},
@@ -141,6 +142,10 @@ async function apiCall(path, body){
 }
 
 async function loadPatients(){
+  try{
+    const l = await apiCall("/api/call", {agent:"orthopedic-surgery", tool:"his_patient_list", params:{}});
+    PATIENT_IDS = (Array.isArray(l.patient_ids) && l.patient_ids.length) ? l.patient_ids : FALLBACK_PATIENT_IDS;
+  }catch(e){ PATIENT_IDS = FALLBACK_PATIENT_IDS; }
   for(const pid of PATIENT_IDS){
     try{
       const d = await apiCall("/api/call", {agent:"orthopedic-surgery", tool:"his_patient", params:{patient_id:pid}});

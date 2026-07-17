@@ -615,8 +615,8 @@ def ortho_portal_ui():
 @app.get("/pharmacy", response_class=HTMLResponse)
 def pharmacy_ui():
     """药剂科专业界面 — 处方审核 + 药物交互可视化。"""
-    from haip.ui_pharmacy import PHARMACY_TEMPLATE
-    return PHARMACY_TEMPLATE
+    from haip.ui_pharmacy import render_pharmacy_ui
+    return render_pharmacy_ui()
 
 
 @app.get("/api/agent-ui/{agent_name}")

@@ -147,6 +147,11 @@ tools:
     handler: orthopedics.his_adapter.query_patient
     input: {patient_id: str}
 
+  - name: his_patient_list
+    description: 模拟 HIS 在册患者 ID 列表
+    handler: orthopedics.his_adapter.list_patient_ids
+    input: {}
+
   - name: his_image
     description: 模拟 PACS 影像查询
     handler: orthopedics.his_adapter.query_imaging

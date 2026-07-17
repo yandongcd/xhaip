@@ -48,8 +48,8 @@ def _build_stage_panels(stages: list[dict]) -> str:
             f'<div><h3>{s["label"]}</h3><p>{s["description"]}</p>'
             f'<span class="guide-ref">{s.get("guideline_ref", "")}</span></div></div>'
             f'<div class="form-group"><label>参数</label>'
-            f'<textarea id="params-{s["id"]}">'
-            f'{{"patient_id":"P001","age":78,"weight_kg":55,"height_cm":170}}</textarea></div>'
+            f'<textarea id="params-{s["id"]}" '
+            f'placeholder="请先在左侧选择数字病人, 参数将自动填充"></textarea></div>'
             f'<div class="btn-row">'
             f'<button class="btn-exec" onclick="callStage(\'{s["id"]}\',\'{tool_name}\')">'
             f'▶ 执行 {s["label"]}</button>'
@@ -249,7 +249,7 @@ body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Mic
 var AGENT='{name}';var STAGES={wf_json};var ROLES={roles_json};
 var PATIENTS={patients_json};
 var CURRENT_ROLE='{first_role or "attending"}';
-var WORKFLOW_DATA={{patient_id:'P001',age:78,weight_kg:55,height_cm:170}};
+var WORKFLOW_DATA={{}};
 var COMPLETED_STAGES=new Set();var STAGE_RESULTS={{}};
 var currentPatient=null;var currentStage=1;
 
@@ -257,6 +257,7 @@ function init(){{
   renderPatientList();
   clickStage(1);
   switchRole(CURRENT_ROLE);
+  if(PATIENTS.length)selectPatient(PATIENTS[0].patient_id);
 }}
 
 function switchRole(rid){{
@@ -296,8 +297,10 @@ function clickStage(n){{
 }}
 
 async function callStage(sid,tool){{
-  var el=document.getElementById('result-'+sid);el.textContent='⏳ 执行中...';
+  var el=document.getElementById('result-'+sid);
   var pe=document.getElementById('params-'+sid),params=WORKFLOW_DATA;
+  if(!currentPatient&&(!pe||!pe.value.trim())){{el.textContent='⚠ 请先在左侧选择数字病人';return}}
+  el.textContent='⏳ 执行中...';
   if(pe){{try{{Object.assign(params,JSON.parse(pe.value))}}catch(e){{}}}}
   try{{
     var r=await fetch('/api/call',{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{agent:AGENT,tool:tool,params:params}})}});

@@ -150,6 +150,17 @@ def query_patient(*, patient_id: str, **kwargs: Any) -> dict[str, Any]:
     }
 
 
+def list_patient_ids(**kwargs: Any) -> dict[str, Any]:
+    """Mock HIS 在册患者 ID 列表 — 前端患者面板的唯一 ID 来源."""
+    return {
+        "patient_ids": sorted(MOCK_PATIENT_DB.keys()),
+        "total": len(MOCK_PATIENT_DB),
+        "source": "HIS",
+        "_mock": True,
+        "_mock_note": "模拟 HIS 在册患者索引",
+    }
+
+
 def query_imaging(*, patient_id: str, modality: str = "pelvis_xray",
                   **kwargs: Any) -> dict[str, Any]:
     """模拟 PACS 影像查询.
