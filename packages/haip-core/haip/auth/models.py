@@ -73,6 +73,46 @@ PREDEFINED_ROLES: dict[str, list[Permission]] = {
         Permission.AGENT_EXECUTE,
         Permission.PATIENT_READ,
     ],
+    "nurse": [
+        # 最小权限: 无全域 AGENT_EXECUTE, 护理工具经 permission 细粒度白名单放行
+        Permission.AGENT_LIST,
+        Permission.AGENT_READ,
+        Permission.PATIENT_READ,
+    ],
+    "med_tech": [
+        Permission.AGENT_LIST,
+        Permission.AGENT_READ,
+        Permission.AGENT_EXECUTE,
+        Permission.PATIENT_READ,
+    ],
+    "intern": [
+        Permission.AGENT_LIST,
+        Permission.AGENT_READ,
+        Permission.PATIENT_READ,
+    ],
+    "leadership": [
+        Permission.AGENT_LIST,
+        Permission.AGENT_READ,
+        Permission.PATIENT_READ,
+        Permission.AUDIT_READ,
+    ],
+}
+
+
+# 12 门户身份 → RBAC 角色映射 (haip-roles 门户身份体系, 商用 M1 越权治理)
+PORTAL_IDENTITY_ROLES: dict[str, str] = {
+    "director": "leadership",
+    "secretary": "leadership",
+    "vice-director": "leadership",
+    "dept-head": "dept_head",
+    "attending": "doctor",
+    "head-nurse": "nurse",
+    "pharmacist": "pharmacist",
+    "anesthesiologist": "doctor",
+    "med-tech": "med_tech",
+    "admin": "admin",
+    "resident": "resident",
+    "intern": "intern",
 }
 
 

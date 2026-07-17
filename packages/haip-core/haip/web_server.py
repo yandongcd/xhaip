@@ -52,6 +52,9 @@ def _seed_default_admin():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # 安全基线检查 (HAIP_STRICT_SECURITY=true 时违规阻断启动)
+    from haip.security_baseline import check_security_baseline
+    check_security_baseline()
     _seed_default_admin()
     # Initialize default tenant
     try:

@@ -58,6 +58,7 @@ _RBAC_ROLE_ALIASES: dict[str, str] = {
     "ROLE_EMERGENCY": "doctor",
     "ROLE_ANESTHESIOLOGIST": "doctor",
     "ROLE_PHARMACIST": "pharmacist",
+    "ROLE_NURSE": "nurse",
     "ROLE_ADMIN": "admin",
 }
 
