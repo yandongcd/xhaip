@@ -51,12 +51,22 @@ class DataPolicy:
 
 # ── Permission Manager ──────────────────────────────────────
 
+# permission 的 ROLE_* 码 → auth/rbac (PREDEFINED_ROLES) 角色名桥接
+_RBAC_ROLE_ALIASES: dict[str, str] = {
+    "ROLE_PHYSICIAN": "doctor",
+    "ROLE_SPECIALIST": "doctor",
+    "ROLE_EMERGENCY": "doctor",
+    "ROLE_ANESTHESIOLOGIST": "doctor",
+    "ROLE_PHARMACIST": "pharmacist",
+    "ROLE_ADMIN": "admin",
+}
+
 
 class PermissionManager:
     """角色 + 策略 权限管理。基于 SQLite 存储。"""
 
     def __init__(self, db_path: str = ":memory:"):
-        self._db = sqlite3.connect(db_path)
+        self._db = sqlite3.connect(db_path, check_same_thread=False)
         self._db.row_factory = sqlite3.Row
         self._init_schema()
 
@@ -210,11 +220,17 @@ class PermissionManager:
         if has_explicit_policy:
             return False
 
-        # 3. Fall back to auth/rbac blanket check
+        # 3. Fall back to auth/rbac blanket check (桥接 ROLE_* 码与 rbac 角色名)
         try:
-            from haip.auth.rbac import has_permission
             from haip.auth.models import Permission
-            return has_permission([ctx.role], Permission.AGENT_EXECUTE)
+            from haip.auth.rbac import has_permission
+            roles = [ctx.role]
+            alias = _RBAC_ROLE_ALIASES.get(ctx.role)
+            if alias:
+                roles.append(alias)
+            if has_permission(roles, Permission.AGENT_EXECUTE):
+                return True
+            return self._role_can_fallback(ctx.role, target_agent, tool)
         except ImportError:
             return self._role_can_fallback(ctx.role, target_agent, tool)
 
@@ -296,6 +312,17 @@ class PermissionManager:
         except ImportError:
             return self._role_can_fallback(role, action, "*")
 
+    def get_audit_logs(self, limit: int = 100, action: str = "") -> list[dict]:
+        """审计记录查询 — 供审计处/管理后台使用。"""
+        sql = "SELECT * FROM audit_access_log"
+        args: list = []
+        if action:
+            sql += " WHERE action=?"
+            args.append(action)
+        sql += " ORDER BY id DESC LIMIT ?"
+        args.append(limit)
+        return [dict(r) for r in self._db.execute(sql, args)]
+
     def close(self) -> None:
         self._db.close()
 
@@ -305,8 +332,44 @@ class PermissionManager:
 _perm: PermissionManager | None = None
 
 
-def get_permission(db_path: str = ":memory:") -> PermissionManager:
+def _default_db_path() -> str:
+    """默认持久化路径: <项目根>/data/permission.db。"""
+    import os
+    from pathlib import Path
+    root = Path(__file__).resolve().parent.parent.parent.parent.parent
+    data_dir = root / "data"
+    try:
+        data_dir.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        return ":memory:"
+    return str(data_dir / "permission.db") if os.access(data_dir, os.W_OK) else ":memory:"
+
+
+def get_permission_manager(db_path: str = "") -> PermissionManager:
+    """进程级单例 (D2 修复: 禁止每次调用重建 + 审计必须落盘)。
+
+    路径优先级: 显式参数 > 环境变量 HAIP_PERMISSION_DB > <root>/data/permission.db。
+    """
     global _perm
     if _perm is None:
-        _perm = PermissionManager(db_path)
+        import os
+        path = db_path or os.environ.get("HAIP_PERMISSION_DB", "") or _default_db_path()
+        _perm = PermissionManager(path)
+        _perm.seed_defaults()
     return _perm
+
+
+def reset_permission_manager() -> None:
+    """关闭并清空单例 (测试/重载用)。"""
+    global _perm
+    if _perm is not None:
+        try:
+            _perm.close()
+        except Exception:  # noqa: BLE001 — 关闭失败不应阻断重置
+            pass
+        _perm = None
+
+
+def get_permission(db_path: str = ":memory:") -> PermissionManager:
+    """向后兼容别名 — 新代码请用 get_permission_manager()。"""
+    return get_permission_manager(db_path if db_path != ":memory:" else "")

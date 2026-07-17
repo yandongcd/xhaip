@@ -101,22 +101,21 @@ def call(agent: str, tool: str, params: dict[str, Any] | None = None,
     # Permission enforcement (A2A)
     if perm_ctx is not None:
         try:
-            from haip.permission import PermissionManager, PermissionContext
+            from haip.permission import PermissionContext, get_permission_manager
             if isinstance(perm_ctx, dict):
                 pc = PermissionContext(**{k: perm_ctx.get(k, "") for k in
                     ("user_id", "role", "agent_id", "department", "is_emergency")})
             else:
                 pc = perm_ctx
-            pm = PermissionManager(":memory:")
-            pm.seed_defaults()
+            pm = get_permission_manager()  # D2: 进程级单例, 审计落盘
             if not pm.can_call_agent(pc, agent, tool):
+                pm.log_access(pc, "A2A_call", f"{agent}.{tool}", "deny", "no policy/role grant")
                 err = {"status": "error", "error": "Permission denied",
                        "code": "PERMISSION_DENIED",
                        "detail": f"Cannot call {agent}.{tool}"}
                 _record(agent, tool, "error", "Permission denied", 0, workflow_id)
                 return err
             pm.log_access(pc, "A2A_call", f"{agent}.{tool}", "allow")
-            pm.close()
         except ImportError:
             pass  # Permission module not available — allow all (dev mode)
 
