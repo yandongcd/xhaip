@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
 from pathlib import Path
@@ -491,15 +492,26 @@ def _get_citation_engine():
 
 @app.post("/api/guard")
 async def guard_verify(request: Request):
-    """对 Agent 输出执行 Guard 安全验证。"""
+    """对 Agent 输出执行 Guard 安全验证。需人工复核时自动创建签核单。"""
     data = await request.json()
     output = data.get("output", "")
     scenario = data.get("scenario", "")
     agent_name = data.get("agent", "")
+    patient_id = data.get("patient_id", "")
     cross = data.get("cross_agent_outputs", [])
     v = GuardVerifier(citation_engine=_get_citation_engine())
     result = v.verify(output, scenario=scenario, agent_name=agent_name,
                       cross_agent_outputs=cross if cross else None)
+    signoff_id = ""
+    if result.requires_human_review:
+        try:
+            from haip.signoff import get_signoff_manager
+            signoff_id = get_signoff_manager().create(
+                agent=agent_name, tool=scenario or "guard",
+                patient_id=patient_id, output_summary=output,
+                risk_level="high" if not result.passed else "medium")
+        except Exception as e:
+            logging.getLogger(__name__).warning("签核单创建失败: %s", e)
     return {
         "passed": result.passed,
         "flags": result.flags,
@@ -508,7 +520,39 @@ async def guard_verify(request: Request):
         "confidence": result.confidence.value if result.confidence else None,
         "requires_human_review": result.requires_human_review,
         "cross_validation_conflict": result.cross_validation_conflict,
+        "signoff_id": signoff_id,
     }
+
+
+# ── 医生签核工作流 (M3 / C1) ──
+
+@app.get("/api/signoff/pending")
+def signoff_pending(limit: int = 100):
+    """待签核队列。"""
+    from haip.signoff import get_signoff_manager
+    return {"items": get_signoff_manager().list_pending(limit)}
+
+
+@app.get("/api/signoff/patient/{patient_id}")
+def signoff_by_patient(patient_id: str, limit: int = 100):
+    """患者维度签核留痕 (病历视角)。"""
+    from haip.signoff import get_signoff_manager
+    return {"items": get_signoff_manager().list_by_patient(patient_id, limit)}
+
+
+@app.post("/api/signoff/{signoff_id}/decision")
+async def signoff_decide(signoff_id: str, request: Request):
+    """签核决定: {"reviewer_id": "...", "decision": "approved|rejected", "reason": "..."}"""
+    data = await request.json()
+    from haip.signoff import get_signoff_manager
+    try:
+        return get_signoff_manager().decide(
+            signoff_id,
+            reviewer_id=data.get("reviewer_id", ""),
+            decision=data.get("decision", ""),
+            reason=data.get("reason", ""))
+    except ValueError as e:
+        return JSONResponse({"status": "error", "error": str(e)}, 400)
 
 
 @app.get("/api/history")
