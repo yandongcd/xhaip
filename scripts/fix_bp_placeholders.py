@@ -1,7 +1,10 @@
 """Fix ALL BP YAML ???? placeholders — replace every single one."""
 import os
+from pathlib import Path
 
-BP_DIR = 'D:/FC/xhaip/packages/haip-hospital/knowledge/business_processes'
+ROOT = Path(__file__).resolve().parent.parent
+
+BP_DIR = ROOT / "packages" / "haip-hospital" / "knowledge" / "business_processes"
 STEP_CYCLE = ['病史采集', '辅助检查', '诊断确认', '方案制定', '执行监测', '随访评估', '康复管理', '质控审计']
 
 for fname in sorted(os.listdir(BP_DIR)):

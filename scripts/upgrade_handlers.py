@@ -1,7 +1,10 @@
 """Batch-upgrade all handler modules from KnowledgeAgent stubs to RuleEngine-driven."""
 import os, re
+from pathlib import Path
 
-MODULES_DIR = 'D:/FC/xhaip/packages/haip-hospital/modules'
+ROOT = Path(__file__).resolve().parent.parent
+
+MODULES_DIR = ROOT / "packages" / "haip-hospital" / "modules"
 # Already upgraded
 UPGRADED = {'respiratory', 'cardiology', 'emergency', 'orthopedics', 'cardio_surgery', 
             'pediatrics', 'pharmacy', 'pain_hub', 'togaf', 'medical_record', 'metrics',

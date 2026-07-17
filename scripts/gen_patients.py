@@ -1,5 +1,8 @@
 """Generate 200+ additional digital patients across all departments."""
 import json, random, os
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
 random.seed(2026)
 
 # ── Data ──
@@ -76,7 +79,7 @@ def random_labs(dept, dx):
     return labs
 
 # ── Load existing ──
-with open('D:/FC/xhaip/packages/haip-hospital/data/patients.json', encoding='utf-8') as f:
+with open(ROOT / "packages" / "haip-hospital" / "data" / "patients.json", encoding='utf-8') as f:
     data = json.load(f)
 existing = data.get('patients', [])
 next_id = max(int(p['patient_id'][1:]) for p in existing) + 1
@@ -141,7 +144,7 @@ for sa in specialists:
 
 # ── Write ──
 final = {'total': len(all_patients), 'patients': all_patients}
-with open('D:/FC/xhaip/packages/haip-hospital/data/patients.json', 'w', encoding='utf-8') as f:
+with open(ROOT / "packages" / "haip-hospital" / "data" / "patients.json", 'w', encoding='utf-8') as f:
     json.dump(final, f, ensure_ascii=False, indent=2)
 
 # ── Report ──

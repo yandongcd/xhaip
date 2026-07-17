@@ -1,6 +1,10 @@
 """Debug RuleEngine evaluation."""
 import sys
-sys.path.insert(0, 'D:/FC/xhaip/packages/haip-core')
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+
+sys.path.insert(0, str(ROOT / "packages" / "haip-core"))
 from haip.togaf.rule_engine import RuleEngine
 import json
 
@@ -8,7 +12,7 @@ engine = RuleEngine()
 engine.load_all()
 
 # Test with real patient data
-with open('D:/FC/xhaip/packages/haip-hospital/data/patients.json', encoding='utf-8') as f:
+with open(ROOT / "packages" / "haip-hospital" / "data" / "patients.json", encoding='utf-8') as f:
     patients = json.load(f)['patients']
 
 # Match patients to rules

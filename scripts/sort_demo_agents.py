@@ -1,9 +1,13 @@
 """Sort AGENTS in demo HTML by maturity score."""
 import sys, re, json
-sys.path.insert(0, 'D:/FC/xhaip/packages/haip-core')
-sys.path.insert(0, 'D:/FC/xhaip/packages/haip-hospital')
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+
+sys.path.insert(0, str(ROOT / "packages" / "haip-core"))
+sys.path.insert(0, str(ROOT / "packages" / "haip-hospital"))
 from haip.agent import load_from_dir
-load_from_dir('D:/FC/xhaip/packages/haip-hospital/agents/definitions')
+load_from_dir(str(ROOT / "packages" / "haip-hospital" / "agents" / "definitions"))
 from haip.togaf.analysis import analyze_all_v2
 
 results = analyze_all_v2()
@@ -12,7 +16,7 @@ for r in results:
     if r.has_agent:
         scores[r.agent_name] = r.score.total
 
-with open('D:/FC/xhaip/docs/xhaip-agent-demo.html', encoding='utf-8') as f:
+with open(ROOT / "docs" / "xhaip-agent-demo.html", encoding='utf-8') as f:
     lines = f.readlines()
 
 # Find AGENTS array boundaries
@@ -74,7 +78,7 @@ for e in entries:
 new_lines.append('];\n')
 new_lines.extend(lines[end_idx+1:])
 
-with open('D:/FC/xhaip/docs/xhaip-agent-demo.html', 'w', encoding='utf-8') as f:
+with open(ROOT / "docs" / "xhaip-agent-demo.html", 'w', encoding='utf-8') as f:
     f.writelines(new_lines)
 
 print(f'Sorted {len(entries)} agents by maturity')

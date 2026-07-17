@@ -17,16 +17,18 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+ROOT = Path(__file__).resolve().parent.parent
+
 # ─── Configuration ───────────────────────────────────────────────────────────
 
-BASE = Path(r"D:\FC\haip-0705-2\data")
+BASE = ROOT.parent / "haip-0705-2" / "data"
 SYNTHETIC_PATIENTS_DIR = BASE / "patients" / "synthetic" / "patients"
 CLINICAL_PATIENTS_DIR = BASE / "patients" / "clinical" / "patients"
 BY_DEPT_DIR = BASE / "patients" / "synthetic" / "by_department"
 INDICATORS_DIR = BASE / "patients" / "indicators" / "patients"
 HIS_EXPORT_CSV = BASE / "patients" / "synthetic" / "his_export" / "patients.csv"
 
-TARGET_FILE = Path(r"D:\FC\xhaip\packages\haip-hospital\data\patients.json")
+TARGET_FILE = ROOT / "packages" / "haip-hospital" / "data" / "patients.json"
 ID_PREFIX = "V20-"
 
 # ─── Department → xhaip Agent Mapping ───────────────────────────────────────

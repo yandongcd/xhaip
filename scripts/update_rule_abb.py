@@ -1,7 +1,10 @@
 """Final fix: add data_entities and missing guideline to remaining rules."""
 import os, yaml
+from pathlib import Path
 
-RULES_DIR = 'D:/FC/xhaip/packages/haip-hospital/knowledge/rules'
+ROOT = Path(__file__).resolve().parent.parent
+
+RULES_DIR = ROOT / "packages" / "haip-hospital" / "knowledge" / "rules"
 
 DATA_DE = {
     '急诊科': ('{consumes: [de-lab-cardiac, de-lab-biochemistry, de-lab-hematology, de-lab-infection, de-patient, de-vitals], produces: [de-diagnosis-result, de-risk-assessment]}'),
