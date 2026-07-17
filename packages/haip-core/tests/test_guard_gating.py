@@ -31,8 +31,8 @@ class TestGuardNonHighRisk:
             "手术方案: THA。术后预防 DVT 使用低分子肝素。"
         )
         result = verifier.verify(agent_output=output, scenario="手术决策", agent_name="orthopedic")
-        # With no guidelines indexed and no T1 citations, should flag
-        assert len(result.flags) >= 0  # flags may include citation warnings
+        # 高危场景 + 零引文 → 必须给出引文缺失提示
+        assert any("引用" in f or "引文" in f for f in result.flags), result.flags
         assert isinstance(result.citations, list)
 
 
@@ -43,16 +43,16 @@ class TestT1T2Enforcement:
         """High-risk scenario with no T1 citations should be flagged."""
         verifier = GuardVerifier()
         output = (
-            "推荐进行急诊手术。患者为高龄股骨转子间骨折。"
+            "手术方案: 建议行 PFNA 内固定。患者为高龄股骨转子间骨折。"
             "根据院内共识，应在 48 小时内手术。"
         )
         result = verifier.verify(agent_output=output, scenario="手术决策", agent_name="orthopedic")
-        # Any output that doesn't match T1 keywords gets T2
-        # No T1 citations → flag
-        has_t1_warning = any("T1" in f for f in result.flags) or any(
-            "引用" in f or "引文" in f for f in result.flags
+        # 高危场景无 T1 引文 → 必须出现 T1/引文相关警示 (恒真断言已改实;
+        # 原测试输出不含高危触发词, 前提失效被恒真断言掩盖, 已补 '手术方案' 触发词)
+        has_t1_warning = any(
+            "T1" in f or "引用" in f or "引文" in f for f in result.flags
         )
-        assert has_t1_warning or len(result.flags) >= 0  # at minimum, it runs
+        assert has_t1_warning, result.flags
 
     def test_t1_keyword_detection(self):
         engine = CitationEngine()

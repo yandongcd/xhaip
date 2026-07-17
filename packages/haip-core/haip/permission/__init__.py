@@ -8,8 +8,11 @@ Uses audit.AuditLogger for immutable audit trails.
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 from dataclasses import dataclass, field
+
+logger = logging.getLogger(__name__)
 
 # ── Models ──────────────────────────────────────────────────
 
@@ -114,8 +117,18 @@ class PermissionManager:
 
     # ── Seed ──
 
-    def seed_defaults(self, agent_ids: list[str] | None = None) -> None:
-        """注入默认权限数据。"""
+    def seed_defaults(self, agent_ids: list[str] | None = None,
+                      include_dev_users: bool | None = None) -> None:
+        """注入默认权限数据。
+
+        Args:
+            include_dev_users: 是否播种开发默认用户 (dr_001 等)。
+                None 时读 HAIP_STRICT_SECURITY — strict 模式禁止 dev 数据入库。
+        """
+        if include_dev_users is None:
+            import os
+            include_dev_users = os.environ.get(
+                "HAIP_STRICT_SECURITY", "").strip().lower() not in ("1", "true", "yes", "on")
         # Roles
         for code, name, cat in [
             ("ROLE_PHYSICIAN", "医师", "clinical"),
@@ -129,13 +142,13 @@ class PermissionManager:
             self._db.execute(
                 "INSERT OR IGNORE INTO auth_role VALUES (?,?,?)", (code, name, cat))
 
-        # Default users (development only)
+        # Default users (development only — strict 模式跳过)
         users = [
             ("dr_001", "张医师", "主治医师", "ROLE_PHYSICIAN"),
             ("pharm_001", "李药师", "临床药师", "ROLE_PHARMACIST"),
             ("nurse_001", "王护士", "护士长", "ROLE_NURSE"),
             ("admin_001", "管理员", "系统管理员", "ROLE_ADMIN"),
-        ]
+        ] if include_dev_users else []
         for uid, real_name, title, role in users:
             self._db.execute(
                 "INSERT OR IGNORE INTO auth_user VALUES (?,?,?,?,NULL,NULL,'active')",
@@ -270,8 +283,9 @@ class PermissionManager:
             if dept_scope == "self" and patient_department and ctx.department != patient_department:
                 return False, None
             if dept_scope == "consulted":
-                # Check consultation table (simplified: allow for now)
-                pass
+                # fail-closed: 会诊范围需会诊记录支撑, 会诊表未实现前一律拒绝
+                # (原实现 "simplified: allow for now" 属权限放水, 违反商用红线)
+                return False, None
             # Field filter
             field_list = json.loads(ff) if ff and ff != "null" else None
             return True, field_list
@@ -301,6 +315,8 @@ class PermissionManager:
             )
         except ImportError:
             pass
+        except Exception:
+            logger.debug("audit.AuditLogger 写入失败", exc_info=True)
 
     # ── Helpers ──
 
@@ -350,11 +366,17 @@ def get_permission_manager(db_path: str = "") -> PermissionManager:
     """进程级单例 (D2 修复: 禁止每次调用重建 + 审计必须落盘)。
 
     路径优先级: 显式参数 > 环境变量 HAIP_PERMISSION_DB > <root>/data/permission.db。
+    HAIP_TEST_MODE=true 且未显式指定路径时使用 :memory: (保测试速度与隔离)。
     """
     global _perm
     if _perm is None:
         import os
-        path = db_path or os.environ.get("HAIP_PERMISSION_DB", "") or _default_db_path()
+        path = db_path or os.environ.get("HAIP_PERMISSION_DB", "")
+        if not path:
+            if os.environ.get("HAIP_TEST_MODE", "").strip().lower() == "true":
+                path = ":memory:"
+            else:
+                path = _default_db_path()
         _perm = PermissionManager(path)
         _perm.seed_defaults()
     return _perm
@@ -366,7 +388,7 @@ def reset_permission_manager() -> None:
     if _perm is not None:
         try:
             _perm.close()
-        except Exception:  # noqa: BLE001 — 关闭失败不应阻断重置
+        except (sqlite3.OperationalError, sqlite3.ProgrammingError, OSError):
             pass
         _perm = None
 

@@ -27,60 +27,121 @@ from haip.guard.verifier import GuardVerifier  # noqa: E402
 from haip.knowledge.runtime import get_kb  # noqa: E402
 from haip.knowledge.cases import CaseManager  # noqa: E402
 
+logger = logging.getLogger(__name__)
+
+
+def _is_production() -> bool:
+    return os.environ.get("HAIP_ENV", "development") == "production"
+
+
+def _get_cors_origins() -> list[str]:
+    """Resolve CORS allow origins: config.server.cors_origins in production, else ['*'].
+    In production, if config still says ['*'], fall back to ['http://localhost:8769'].
+    """
+    if not _is_production():
+        return ["*"]
+    try:
+        from haip.config import get_config
+        origins = get_config().get("server.cors_origins", ["http://localhost:8769"])
+        if origins == ["*"] or "*" in origins:
+            logger.warning(
+                "生产环境 CORS 仍为 ['*'], 已强制回退到 localhost (请修正 config/haip.yaml)")
+            return ["http://localhost:8769"]
+        return origins
+    except Exception:
+        logger.warning("加载 CORS 配置失败, 回退到 localhost", exc_info=True)
+        return ["http://localhost:8769"]
+
+
+def _get_rate_limit_config() -> dict:
+    """Resolve rate limit settings.
+    Production: default enabled. Development: default disabled (overridable by config key).
+    """
+    prod = _is_production()
+    try:
+        from haip.config import get_config
+        sec = get_config().get_section("security")
+        if prod:
+            enabled = True
+        else:
+            enabled = bool(sec.get("rate_limit_enabled", False))
+        return {
+            "enabled": enabled,
+            "rate": sec.get("rate_limit_per_minute", 100),
+            "burst": sec.get("rate_limit_burst", 20),
+            "window": sec.get("rate_limit_window_sec", 60),
+        }
+    except Exception:
+        return {
+            "enabled": prod,
+            "rate": 100,
+            "burst": 20,
+            "window": 60,
+        }
+
 
 def _seed_default_admin():
     """Create default admin user if no users exist."""
     from haip.auth import get_auth_service
     auth = get_auth_service()
     if not auth.list_users():
+        admin_pass = os.environ.get("HAIP_ADMIN_PASSWORD", "Admin@123456")
+        doctor_pass = os.environ.get("HAIP_DOCTOR_PASSWORD", "Doctor@123")
         try:
-            admin_pass = os.environ.get("HAIP_ADMIN_PASSWORD", "Admin@123456")
             auth.create_user(
                 username="admin",
                 password=admin_pass,
                 display_name="系统管理员",
                 roles=["admin"],
             )
+        except ValueError as e:
+            logger.warning("admin 默认用户创建失败: %s", e)
+        try:
             auth.create_user(
                 username="doctor",
-                password=os.environ.get("HAIP_DOCTOR_PASSWORD", "Doctor@123"),
+                password=doctor_pass,
                 display_name="演示医生",
                 roles=["doctor"],
             )
-        except Exception:
-            pass
+        except ValueError as e:
+            logger.warning("doctor 默认用户创建失败: %s", e)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 安全基线检查 (HAIP_STRICT_SECURITY=true 时违规阻断启动)
+    # 安全基线检查 (HAIP_ENV=production 时违规阻断启动)
     from haip.security_baseline import check_security_baseline
     check_security_baseline()
     _seed_default_admin()
+    # Seed demo identities for 12 portal roles (gated by AuthService)
+    from haip.auth import get_auth_service
+    get_auth_service().seed_demo_identities()
     # Initialize default tenant
-    try:
-        from haip.tenants import init_default_tenant
-        init_default_tenant()
-    except Exception:
-        pass
+    from haip.tenants import init_default_tenant
+    init_default_tenant()
     # Initialize database
     try:
         from haip.database import init_database, create_tables
         init_database()
         await create_tables()
     except Exception:
-        pass
+        logger.warning("数据库初始化失败 (非生产环境可忽略)", exc_info=True)
     yield
     # Shutdown
     try:
         from haip.database import close_database
         await close_database()
     except Exception:
-        pass
+        logger.debug("数据库关闭异常", exc_info=True)
 
 
-app = FastAPI(title="xhaip v1.1 API", version="1.1.0", lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app = FastAPI(title="xhaip v1.2 API", version="1.2.0", lifespan=lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_get_cors_origins(),
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Auth middleware — validates JWT on protected routes
 from haip.auth.middleware import AuthMiddleware  # noqa: E402
@@ -89,6 +150,17 @@ app.add_middleware(AuthMiddleware)
 # Audit middleware — records all API calls
 from haip.audit.middleware import AuditMiddleware  # noqa: E402
 app.add_middleware(AuditMiddleware)
+
+# Rate limit middleware — production-default enabled
+from haip.rate_limit import RateLimitMiddleware  # noqa: E402
+rl_cfg = _get_rate_limit_config()
+app.add_middleware(
+    RateLimitMiddleware,
+    rate=rl_cfg["rate"],
+    burst=rl_cfg["burst"],
+    window=rl_cfg["window"],
+    enabled=rl_cfg["enabled"],
+)
 
 # Auth API router
 from haip.auth import auth_router  # noqa: E402
@@ -147,8 +219,10 @@ setup_metrics(app)
 try:
     from haip.logging_utils import setup_logging
     setup_logging()
-except Exception:
+except ImportError:
     pass
+except Exception:
+    logger.debug("logging_utils 初始化失败", exc_info=True)
 
 YAML_DIR = PROJECT_ROOT / "packages" / "haip-hospital" / "agents" / "definitions"
 from haip.patients import PATIENTS_FILE  # noqa: E402  # 患者数据路径单一真相源
@@ -160,8 +234,10 @@ try:
     from haip.a2a.auth import init_agent_secrets
     from haip.agent import _registry as _agent_registry
     init_agent_secrets(list(_agent_registry.keys()))
+except ImportError:
+    logger.debug("A2A auth secrets 模块不可用, 跳过")
 except Exception:
-    pass
+    logger.warning("A2A auth secrets 初始化失败", exc_info=True)
 # TOGAF validation — run after all agents loaded so CHK-004 dependency graph sees full registry
 try:
     from haip.togaf.validator import validate_all  # noqa: E402
@@ -169,10 +245,12 @@ try:
     for r in reports:
         if not r.passed:
             failed = [c.id for c in r.checks if not c.passed]
-            import sys
-            print(f"  [TOGAF] ⚠ {r.agent_name}: {len(failed)} checks failed — {failed}", file=sys.stderr)
-except Exception:
+            logger.info(
+                "TOGAF ⚠ %s: %d checks failed — %s", r.agent_name, len(failed), failed)
+except ImportError:
     pass
+except Exception:
+    logger.warning("TOGAF validation 失败", exc_info=True)
 case_mgr = CaseManager()
 if PATIENTS_FILE.exists():
     case_mgr.load(PATIENTS_FILE.parent)
@@ -271,6 +349,37 @@ async def stream_get(request: Request):
 def stream_demo():
     """SSE 流式调试页面 — 实时查看 Agent 推理过程的每个 Event."""
     return (Path(__file__).parent / "templates" / "stream.html").read_text(encoding="utf-8")
+
+
+# ── API Key 配置 (web 端 DEEPSEEK_API_KEY 管理) ──
+
+@app.get("/api/config/llm")
+def llm_config_status():
+    """LLM 配置状态 (API key 是否已配置, 不暴露实际值)。"""
+    from haip.api_key_store import get_api_key
+    key = get_api_key()
+    return {
+        "configured": bool(key),
+        "provider": "deepseek",
+        "model": "deepseek-chat",
+        "masked_key": (key[:3] + "***" + key[-4:]) if len(key) > 8 else "",
+    }
+
+
+@app.post("/api/config/llm")
+async def llm_config_set(request: Request):
+    """设置 API key: {"api_key": "sk-...", "clear": false}。持久化到 data/llm_key.json。"""
+    data = await request.json()
+    from haip.api_key_store import clear_api_key, set_api_key
+    if data.get("clear"):
+        clear_api_key()
+        return {"status": "ok", "configured": False, "message": "API key 已清除"}
+    key = data.get("api_key", "").strip()
+    if not key:
+        return JSONResponse({"status": "error", "error": "api_key 不能为空"}, 400)
+    set_api_key(key)
+    return {"status": "ok", "configured": True, "masked_key": key[:3] + "***" + key[-4:],
+            "message": "API key 已保存, 下次 LLM 调用生效"}
 
 
 @app.post("/api/stream")
@@ -542,13 +651,20 @@ def signoff_by_patient(patient_id: str, limit: int = 100):
 
 @app.post("/api/signoff/{signoff_id}/decision")
 async def signoff_decide(signoff_id: str, request: Request):
-    """签核决定: {"reviewer_id": "...", "decision": "approved|rejected", "reason": "..."}"""
+    """签核决定: {"decision": "approved|rejected", "reason": "..."}
+
+    签核人身份强制取自认证上下文 (request.state.current_user), 请求体的
+    reviewer_id 仅在无认证上下文时 (AUTH_ENABLED=false 的开发模式) 生效 —
+    防止伪造签核人 (商用红线)。
+    """
     data = await request.json()
+    user = getattr(request.state, "current_user", None) or {}
+    reviewer = user.get("user_id") or data.get("reviewer_id", "")
     from haip.signoff import get_signoff_manager
     try:
         return get_signoff_manager().decide(
             signoff_id,
-            reviewer_id=data.get("reviewer_id", ""),
+            reviewer_id=reviewer,
             decision=data.get("decision", ""),
             reason=data.get("reason", ""))
     except ValueError as e:
@@ -773,6 +889,63 @@ def dashboard():
     """TOGAF 10 架构治理仪表盘 — 全院 39 科室成熟度热力图。"""
     from haip.togaf.dashboard import render_dashboard
     return HTMLResponse(render_dashboard())
+
+
+# ── Home Redirect — role-based routing (R1a) ──
+
+@app.get("/home")
+def home_redirect(request: Request):
+    """Role-based home redirect for 12 portal identities.
+
+    Priority: Bearer JWT roles > ?role= > ?identity= (mapped via PORTAL_IDENTITY_ROLES).
+    """
+    from fastapi.responses import RedirectResponse
+    from haip.auth.models import PORTAL_IDENTITY_ROLES
+
+    role: str | None = None
+
+    # Priority 1: Bearer JWT
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        try:
+            from haip.auth.jwt import decode_token
+            payload = decode_token(auth_header[7:])
+            roles = payload.get("roles", [])
+            if roles:
+                role = roles[0]
+        except Exception as e:
+            logging.getLogger(__name__).debug("/home JWT 解析失败, 回退 query 参数: %s", e)
+
+    # Priority 2: ?role= query param
+    if role is None:
+        role = request.query_params.get("role")
+
+    # Priority 3: ?identity= query param → map via PORTAL_IDENTITY_ROLES
+    if role is None:
+        identity = request.query_params.get("identity")
+        if identity and identity in PORTAL_IDENTITY_ROLES:
+            role = PORTAL_IDENTITY_ROLES[identity]
+
+    if role is None:
+        return RedirectResponse(url="/", status_code=302)
+
+    # Role → URL mapping (agent routes confirmed against agents/definitions/)
+    ROLE_ROUTES: dict[str, str] = {
+        "leadership": "/dashboard",
+        "dept_head": "/dashboard",
+        "pharmacist": "/pharmacy",
+        "head_nurse": "/agent/nurse-general",
+        "nurse": "/agent/nurse-general",
+        "anesthesiologist": "/agent/anesthesia-risk",
+        "med_tech": "/agent/lab-critical-value",
+        "intern": "/agent/education",
+        "resident": "/",
+        "doctor": "/",
+        "admin": "/",
+    }
+
+    target = ROLE_ROUTES.get(role, "/")
+    return RedirectResponse(url=target, status_code=302)
 
 
 @app.get("/api/dashboard")

@@ -54,17 +54,22 @@ class TestPermissionSingleton:
         assert any("perm-audit-test" in (r["resource_id"] or "") for r in logs), \
             "a2a 调用审计未写入持久库 (旧行为: 写入 :memory: 即弃)"
 
-    def test_default_db_path_used_when_no_env(self, monkeypatch, tmp_path):
-        """无 env 时使用默认 data/permission.db 路径 (不落在 :memory:)."""
+    def test_default_db_path_used_when_no_env(self, monkeypatch):
+        """无 env 且非 test mode 时使用默认 data/permission.db 路径."""
         monkeypatch.delenv("HAIP_PERMISSION_DB", raising=False)
-        from haip.permission import get_permission_manager, reset_permission_manager
+        monkeypatch.setenv("HAIP_TEST_MODE", "false")
         import haip.permission as perm_mod
-        monkeypatch.setattr(perm_mod, "_default_db_path", lambda: str(tmp_path / "default.db"))
-        reset_permission_manager()
-        get_permission_manager()
-        assert (tmp_path / "default.db").exists()
-        reset_permission_manager()
-
-
-def test_env_flag_documented():
-    assert "HAIP_PERMISSION_DB" in os.environ or True  # marker: env 名称契约见 get_permission_manager docstring
+        orig = perm_mod._default_db_path
+        from pathlib import Path
+        db = Path(__file__).parent / ".test_permission_tmp.db"
+        monkeypatch.setattr(perm_mod, "_default_db_path", lambda: str(db))
+        perm_mod.reset_permission_manager()
+        try:
+            perm_mod.get_permission_manager()
+            assert db.exists()
+        finally:
+            perm_mod.reset_permission_manager()
+            if db.exists():
+                db.unlink()
+            perm_mod._default_db_path = orig
+            monkeypatch.delenv("HAIP_TEST_MODE", raising=False)

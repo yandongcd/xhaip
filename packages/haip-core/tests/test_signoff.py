@@ -108,3 +108,19 @@ class TestSignoffHttp:
                          json={"reviewer_id": "dr_001", "decision": "approved"})
         assert r2.status_code == 200
         assert r2.json()["status"] == "approved"
+
+    def test_reviewer_identity_cannot_be_forged(self, signoff_db):
+        """请求体伪造的 reviewer_id 必须被认证身份覆盖 (商用红线)."""
+        import os
+        os.environ["HAIP_TEST_MODE"] = "true"
+        from fastapi.testclient import TestClient
+        from haip.signoff import get_signoff_manager
+        from haip.web_server import app
+        client = TestClient(app)
+        sid = get_signoff_manager().create(agent="a", tool="t", patient_id="P001",
+                                           output_summary="x")
+        r = client.post(f"/api/signoff/{sid}/decision",
+                        json={"reviewer_id": "FORGED_DOCTOR", "decision": "approved"})
+        assert r.status_code == 200
+        # HAIP_TEST_MODE 下认证中间件注入 current_user=test-user, 必须以其为准
+        assert r.json()["reviewer_id"] == "test-user"
