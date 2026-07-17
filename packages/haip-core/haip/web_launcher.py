@@ -60,11 +60,11 @@ def launch_agent(agent_name: str, port: int | None = None, host: str = "127.0.0.
 def launch_all(host: str = "127.0.0.1", open_portal: bool = True) -> dict[str, subprocess.Popen]:
     """启动所有 Agent 的 Web 服务。"""
     processes: dict[str, subprocess.Popen] = {}
-    for name, port in DEFAULT_PORTS.items():
+    for name in DEFAULT_PORTS:
         if name in ("medical-record", "metrics", "cardio-risk"):
             pass  # 跳过 Master Data 和 Specialist Agent (A2A only)
         else:
-            proc = launch_agent(name, port, host, open_browser=False)
+            proc = launch_agent(name, None, host, open_browser=False)
             if proc:
                 processes[name] = proc
     # 启动门户

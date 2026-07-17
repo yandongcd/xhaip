@@ -147,7 +147,7 @@ except Exception:
     pass
 
 YAML_DIR = PROJECT_ROOT / "packages" / "haip-hospital" / "agents" / "definitions"
-PATIENTS_FILE = PROJECT_ROOT / "packages" / "haip-hospital" / "data" / "patients.json"
+from haip.patients import PATIENTS_FILE  # noqa: E402  # 患者数据路径单一真相源
 
 # 启动时加载所有 Agent（含 TOGAF 校验）
 load_from_dir(str(YAML_DIR))
