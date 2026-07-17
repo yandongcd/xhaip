@@ -46,6 +46,13 @@ PREDEFINED_ROLES: dict[str, list[Permission]] = {
         Permission.ADMIN_CONFIG,
         Permission.AUDIT_READ,
     ],
+    "anesthesiologist": [
+        Permission.AGENT_LIST,
+        Permission.AGENT_READ,
+        Permission.AGENT_EXECUTE,
+        Permission.PATIENT_READ,
+        Permission.PATIENT_WRITE,
+    ],
     "doctor": [
         Permission.AGENT_LIST,
         Permission.AGENT_READ,
@@ -90,6 +97,12 @@ PREDEFINED_ROLES: dict[str, list[Permission]] = {
         Permission.AGENT_READ,
         Permission.PATIENT_READ,
     ],
+    "head_nurse": [
+        Permission.AGENT_LIST,
+        Permission.AGENT_READ,
+        Permission.PATIENT_READ,
+        Permission.AUDIT_READ,
+    ],
     "leadership": [
         Permission.AGENT_LIST,
         Permission.AGENT_READ,
@@ -106,9 +119,9 @@ PORTAL_IDENTITY_ROLES: dict[str, str] = {
     "vice-director": "leadership",
     "dept-head": "dept_head",
     "attending": "doctor",
-    "head-nurse": "nurse",
+    "head-nurse": "head_nurse",
     "pharmacist": "pharmacist",
-    "anesthesiologist": "doctor",
+    "anesthesiologist": "anesthesiologist",
     "med-tech": "med_tech",
     "admin": "admin",
     "resident": "resident",

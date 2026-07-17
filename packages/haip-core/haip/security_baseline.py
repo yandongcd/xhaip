@@ -21,6 +21,14 @@ def _is_true(v: str) -> bool:
     return v.strip().lower() in ("1", "true", "yes", "on")
 
 
+def is_production_mode() -> bool:
+    """True when HAIP_ENV=production (or HAIP_STRICT_SECURITY=true for backward compat)."""
+    return (
+        os.environ.get("HAIP_ENV", "development") == "production"
+        or _is_true(os.environ.get("HAIP_STRICT_SECURITY", ""))
+    )
+
+
 def check_security_baseline(strict: bool | None = None) -> list[str]:
     """检查安全基线, 返回违规清单。
 
@@ -30,10 +38,12 @@ def check_security_baseline(strict: bool | None = None) -> list[str]:
       3. HAIP_DOCTOR_PASSWORD 必须显式配置 (禁用 Doctor@123 默认口令)
 
     Args:
-        strict: True 时违规抛 SecurityBaselineError; None 时读 HAIP_STRICT_SECURITY。
+        strict: True 时违规抛 SecurityBaselineError。None 时:
+                - HAIP_ENV=production 或 HAIP_STRICT_SECURITY=true → strict=True
+                - 否则仅 warning。
     """
     if strict is None:
-        strict = _is_true(os.environ.get("HAIP_STRICT_SECURITY", ""))
+        strict = is_production_mode()
 
     violations: list[str] = []
     if not os.environ.get("JWT_SECRET_KEY"):
@@ -46,7 +56,7 @@ def check_security_baseline(strict: bool | None = None) -> list[str]:
     if violations:
         if strict:
             raise SecurityBaselineError(
-                "安全基线不达标, 拒绝启动 (HAIP_STRICT_SECURITY=true):\n  - "
+                "安全基线不达标, 拒绝启动 (production mode):\n  - "
                 + "\n  - ".join(violations))
         for v in violations:
             logger.warning("[security-baseline] %s", v)

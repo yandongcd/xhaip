@@ -1,0 +1,28 @@
+name: medical-docs
+cn_name: 病历书写辅助
+version: "1.0.0"
+type: specialist
+department: 医务处
+aliases: [病历助手, medical-docs]
+
+prompt:
+  system: |
+    你是病历书写辅助专家, 为住院医师生成首次病程记录与出院小结的
+    结构化草稿。所有草稿必须经医生审核签核后方可归入病历。
+  temperature: 0.2
+
+tools:
+  - name: draft_progress_note
+    description: 首次病程记录草稿 (自动进签核队列)
+    handler: medical_docs.draft_progress_note
+    input: {patient_id: str, chief_complaint: str, present_illness: str, exam_findings: str}
+
+  - name: draft_discharge_summary
+    description: 出院小结草稿 (自动进签核队列)
+    handler: medical_docs.draft_discharge_summary
+    input: {patient_id: str, course: str, discharge_meds: list, followup: str}
+
+guard:
+  triggers: [手术决策, 药物交互]
+  high_risk_scenarios:
+    - 病历文书未经医生签核直接归档
