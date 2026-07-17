@@ -7,8 +7,11 @@ from __future__ import annotations
 
 import sys
 import json
+import os
 import re
 from pathlib import Path
+
+os.environ["HAIP_TEST_MODE"] = "true"
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "packages" / "haip-core"))
@@ -96,6 +99,53 @@ class TestProcessPages:
     def test_has_role_pills(self, agent):
         resp = client.get(f"/process/{agent}")
         assert 'switchRole' in resp.text, f"{agent}: no role switching"
+
+
+# ── Workflow Pages ──
+
+class TestWorkflowPages:
+    def test_workflow_page_200(self):
+        resp = client.get("/workflow/orthopedic-surgery")
+        assert resp.status_code == 200
+
+    def test_workflow_has_patients(self):
+        """数字病人数据必须嵌入页面 (patients.json dict 格式)."""
+        resp = client.get("/workflow/orthopedic-surgery")
+        m = re.search(r"var PATIENTS=(\[.*?\]);\n", resp.text, re.DOTALL)
+        assert m, "no PATIENTS var"
+        patients = json.loads(m.group(1))
+        assert len(patients) > 0, "PATIENTS is empty"
+        assert all("patient_id" in p for p in patients)
+
+    def test_workflow_patients_compatible(self):
+        """嵌入的患者应与 agent 兼容."""
+        resp = client.get("/workflow/orthopedic-surgery")
+        m = re.search(r"var PATIENTS=(\[.*?\]);\n", resp.text, re.DOTALL)
+        assert m
+        patients = json.loads(m.group(1))
+        assert patients, "PATIENTS is empty"
+        for p in patients:
+            assert "orthopedic-surgery" in p.get("compatible_agents", []), (
+                f"{p.get('patient_id')} 与 orthopedic-surgery 不兼容"
+            )
+
+
+    def test_workflow_js_ids_exist(self):
+        """JS getElementById 引用的静态 id 必须在 HTML 中存在 (否则选患者填参会崩溃)."""
+        resp = client.get("/workflow/orthopedic-surgery")
+        html = resp.text
+        js_ids = set(re.findall(r"getElementById\('([\w-]+)'\)", html))
+        dom_ids = set(re.findall(r'id="([\w-]+)"', html))
+        missing = js_ids - dom_ids
+        assert not missing, f"JS 引用了不存在的 id: {missing}"
+
+
+    def test_workflow_agent_var_is_agent_name(self):
+        """JS AGENT 变量必须是 agent 技术名, 不能被角色名遮蔽."""
+        resp = client.get("/workflow/orthopedic-surgery")
+        m = re.search(r"var AGENT='([^']+)'", resp.text)
+        assert m, "no AGENT var"
+        assert m.group(1) == "orthopedic-surgery", f"AGENT 被污染为: {m.group(1)}"
 
 
 # ── Dashboard ──
