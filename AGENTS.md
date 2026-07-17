@@ -150,6 +150,15 @@ pytest --cov=haip --cov-fail-under=70     # 单元测试 + 覆盖率
 python scripts/validate_patients.py       # 患者数据质量 (0 FAIL 阻断)
 ```
 
+### UI 页面契约 (2026-07-17 起强制)
+
+- 新增/修改 HTML 页面必须通过 `pytest tests/test_ui_contracts.py` (C1-C7: DOM id / onclick / PATIENTS / AGENT / fetch 路由 / workflow tool 契约)
+- 新增/修改 Agent YAML 或 handler 必须通过 `pytest tests/test_handler_contracts.py` (309+ handler 模块可导入且函数存在)
+- 数字病人加载必须走 `haip.patients.load_patients()`, 禁止各 UI 自行解析 patients.json
+- 渲染函数禁止在循环中复用函数参数名 (ruff PLR1704 强制)
+- 测试环境统一由 `tests/conftest.py` 与 `packages/haip-core/tests/conftest.py` 提供 (`HAIP_TEST_MODE`), 测试文件不再各自设 env
+- 修复验证必须复现用户完整操作路径 (选患者 → 执行工具 → Guard → 结果据实), 禁止仅用手工构造输入做点验证
+
 ## 患者数据
 
 所有患者记录含 `provenance` 字段（`source` / `origin_repo` / `institution`）。修改患者数据后需运行 `python scripts/validate_patients.py`。

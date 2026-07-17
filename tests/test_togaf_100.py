@@ -486,7 +486,7 @@ class TestAuditExtended:
         from haip.togaf.audit import export_landscape
         import json
         out = tmp_path / "landscape.json"
-        path = export_landscape(str(out))
+        export_landscape(str(out))
         assert out.exists()
         data = json.loads(out.read_text(encoding='utf-8'))
         assert 'nodes' in data
@@ -673,7 +673,7 @@ class TestPatientGeneratorExtended:
         from haip.togaf.patient_generator import generate_patients
         import json
         out = tmp_path / "patients_out.json"
-        new = generate_patients(str(out))
+        generate_patients(str(out))
         assert out.exists()
         data = json.loads(out.read_text(encoding='utf-8'))
         assert 'total' in data

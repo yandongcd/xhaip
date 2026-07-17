@@ -262,7 +262,7 @@ class TestDemoPage:
             ht = html_agents[name]["type"]
             if yt != ht:
                 mismatches.append(f"{name}: YAML={yt} HTML={ht}")
-        assert not mismatches, f"type 不一致:\n  " + "\n  ".join(mismatches)
+        assert not mismatches, "type 不一致:\n  " + "\n  ".join(mismatches)
 
     def test_agent_ports_consistent(self):
         """HTML 中每 agent 的 port 与 YAML 一致 (port=0 视为可选)."""
@@ -274,7 +274,7 @@ class TestDemoPage:
             hp = html_agents[name]["port"]
             if yp != 0 and hp != 0 and yp != hp:
                 mismatches.append(f"{name}: YAML={yp} HTML={hp}")
-        assert not mismatches, f"port 不一致:\n  " + "\n  ".join(mismatches)
+        assert not mismatches, "port 不一致:\n  " + "\n  ".join(mismatches)
 
     def test_html_structure(self):
         p = ROOT / "docs" / "xhaip-agent-demo.html"
