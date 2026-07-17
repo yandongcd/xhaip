@@ -131,7 +131,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text'
       </div>
       <div class="tab-content" id="tab-guard">
         <h3>Guard 安全验证</h3>
-        <textarea id="guard-input" style="height:120px" placeholder="粘贴 Agent 输出进行安全验证...">建议进行 THA 手术, 时机 48h 内。参考: NICE NG37</textarea>
+        <textarea id="guard-input" style="height:120px" placeholder="粘贴 Agent 输出进行安全验证 (执行工具调用后自动带入最近一次结果)..."></textarea>
         <select id="guard-scenario" style="margin-top:8px">
           <option value="手术方案">手术方案</option><option value="抗凝管理">抗凝管理</option>
           <option value="麻醉评估">麻醉评估</option><option value="MDT分歧">MDT分歧</option>
@@ -223,12 +223,18 @@ async function callTool() {
   const r = await fetch('/api/call',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent:currentAgent.name,tool:tool,params:params})});
   const data = await r.json();
   document.getElementById('result-panel').textContent = JSON.stringify(data,null,2);
+  document.getElementById('guard-input').value = JSON.stringify(data,null,2);
   document.getElementById('status-left').textContent = data.status==='ok'?'调用成功':'调用失败';
 }
 
 async function guardVerify() {
+  const guardText = document.getElementById('guard-input').value.trim();
+  if (!guardText) {
+    document.getElementById('result-panel').textContent = '请先执行一次工具调用, 或在 Guard 输入框粘贴待验证的 Agent 输出。';
+    return;
+  }
   const r = await fetch('/api/guard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-    output: document.getElementById('guard-input').value,
+    output: guardText,
     scenario: document.getElementById('guard-scenario').value,
     agent: currentAgent?.name||''
   })});
