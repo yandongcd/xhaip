@@ -122,3 +122,26 @@ def test_c6_workflow_tools_exist(wf_name):
     tool_names = {t.name for t in plugin.tools}
     missing = [s["tool"] for s in wf["stages"] if s["tool"] not in tool_names]
     assert not missing, f"{wf_name}: stages 引用不存在的 tool: {missing}"
+
+
+# ── C8: 门户聊天必须走 reason 模式 (禁止盲调 tools[0]) ──
+
+def test_c8_portal_chat_uses_reason_mode():
+    html = _get("/")
+    m = re.search(r"async function sendChat\(\).*?^\}", html, re.DOTALL | re.M)
+    assert m, "portal 缺 sendChat"
+    body = m.group(0)
+    assert "'reason'" in body or '"reason"' in body, "聊天必须走 reason (ReAct AgentLoop)"
+    assert "tools[0]" not in body, "禁止把聊天消息盲发给 tools[0]"
+
+
+def test_c8_reason_mode_returns_reply_for_any_agent():
+    """任意科室 reason 聊天必须返回 reply 字段 (mock LLM 下亦然)."""
+    for agent in ("pharmacy", "medical-record"):
+        r = client.post("/api/call", json={
+            "agent": agent, "tool": "reason", "params": {"query": "你好"}})
+        assert r.status_code == 200
+        data = r.json()
+        assert data.get("status") in ("ok", "blocked"), f"{agent}: {data}"
+        assert isinstance(data.get("reply", ""), str) and data.get("reply") is not None, \
+            f"{agent}: reason 模式无 reply — 聊天链路断裂"
