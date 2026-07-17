@@ -108,6 +108,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text'
         <button class="tab" onclick="switchTab('chat')">聊天</button>
         <button class="tab" onclick="switchTab('guard')">Guard</button>
         <button class="tab" onclick="switchTab('meta')">元信息</button>
+        <button class="tab" onclick="switchTab('config')">配置</button>
       </div>
       <div class="tab-content active" id="tab-tools">
         <h3>工具调用</h3>
@@ -141,6 +142,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text'
       <div class="tab-content" id="tab-meta">
         <h3>Agent 元信息</h3>
         <div id="meta-content" style="font-size:12px;color:var(--text-secondary);line-height:1.8"></div>
+      </div>
+      <div class="tab-content" id="tab-config">
+        <h3>LLM API Key 配置</h3>
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px">配置 DeepSeek API Key 后聊天功能使用真实 LLM。Key 保存至 <code>data/llm_key.json</code>, 重启后无需重新输入。</p>
+        <input type="password" id="llm-key-input" placeholder="sk-..." style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);color:var(--text);font-family:monospace;font-size:13px">
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn-primary" style="margin-top:0" onclick="saveApiKey()">保存 API Key</button>
+          <button class="btn" style="margin-top:0;border:1px solid var(--border);border-radius:6px;padding:8px 16px;font-size:14px;cursor:pointer;background:var(--card-bg);color:var(--text)" onclick="clearApiKey()">清除</button>
+        </div>
+        <div id="llm-config-status" style="margin-top:12px;font-size:12px;color:var(--text-secondary)"></div>
       </div>
     </div>
     <div class="result-panel" id="result-panel">选择 Agent 和工具后执行调用, 结果将在此显示。</div>
@@ -257,14 +268,23 @@ async function sendChat() {
   addChatMsg('user', msg);
   document.getElementById('chat-input').value = '';
   if (!currentAgent) { addChatMsg('agent','请先选择一个 Agent'); return; }
+  addChatMsg('agent', '思考中...');
+  const thinking = document.querySelector('#chat-messages .chat-msg:last-child');
   const r = await fetch('/api/call',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
     agent: currentAgent.name,
-    tool: currentAgent.tools[0]?.name || '',
-    params: {query:msg}
+    tool: 'reason',
+    params: {query: msg}
   })});
   const data = await r.json();
-  const reply = data.status==='ok' ? JSON.stringify(data,null,2).slice(0,500) : 'Error: '+data.error;
-  addChatMsg('agent', reply);
+  let reply;
+  if (data.status === 'blocked') {
+    reply = '⚠ 输出未通过安全校验: ' + (data.error || '') + (data.reply ? '\n---\n' + data.reply : '');
+  } else if (data.status === 'ok') {
+    reply = data.reply || JSON.stringify(data, null, 2).slice(0, 500);
+  } else {
+    reply = 'Error: ' + (data.error || '未知错误');
+  }
+  if (thinking) thinking.textContent = reply; else addChatMsg('agent', reply);
 }
 
 function addChatMsg(role, text) {
@@ -274,6 +294,28 @@ function addChatMsg(role, text) {
   document.getElementById('chat-messages').appendChild(div);
   div.scrollIntoView();
 }
+
+async function loadLlmConfig() {
+  try {
+    const r = await fetch('/api/config/llm');
+    const d = await r.json();
+    const st = document.getElementById('llm-config-status');
+    st.textContent = d.configured ? `已配置 (key: ${d.masked_key}, 模型: ${d.model})` : '未配置 API Key (聊天使用离线 Mock 模式)';
+    st.style.color = d.configured ? 'var(--success)' : 'var(--warning)';
+  } catch(e) {}
+}
+async function saveApiKey() {
+  const key = document.getElementById('llm-key-input').value.trim();
+  if(!key){ return; }
+  await fetch('/api/config/llm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:key})});
+  document.getElementById('llm-key-input').value = '';
+  loadLlmConfig();
+}
+async function clearApiKey() {
+  await fetch('/api/config/llm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:'',clear:true})});
+  loadLlmConfig();
+}
+loadLlmConfig();
 
 init();
 </script>

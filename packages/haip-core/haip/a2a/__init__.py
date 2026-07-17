@@ -8,6 +8,9 @@
 from __future__ import annotations
 
 import importlib
+import logging
+import os
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -16,6 +19,8 @@ from typing import Any
 import yaml
 
 from haip.agent import get as get_agent
+
+logger = logging.getLogger(__name__)
 
 
 _agent_cache: dict[str, Any] = {}       # module cache: module_path → module_obj
@@ -117,7 +122,7 @@ def call(agent: str, tool: str, params: dict[str, Any] | None = None,
                 return err
             pm.log_access(pc, "A2A_call", f"{agent}.{tool}", "allow")
         except ImportError:
-            pass  # Permission module not available — allow all (dev mode)
+            logger.debug("Permission module not available — allow all (dev mode)")
 
     tool_def = _find_tool(plugin, tool)
     if tool_def is None:
@@ -216,8 +221,10 @@ def _record(agent: str, tool: str, status: str, error: str,
                 "ApplicationService": tool,
                 "OrganizationUnit": getattr(plugin, "department", ""),
             }
-    except Exception:
+    except ImportError:
         pass
+    except Exception:
+        logger.debug("TOGAF ABB 映射记录失败", exc_info=True)
 
     _call_history.append(entry)
     # Prune to prevent unbounded growth
@@ -234,8 +241,10 @@ def _record(agent: str, tool: str, status: str, error: str,
             status=status,
             detail={"tool": tool, "elapsed_ms": elapsed_ms, "error": error},
         )
-    except Exception:
+    except ImportError:
         pass
+    except Exception:
+        logger.debug("Audit logging 写入失败", exc_info=True)
 
 
 def get_history(limit: int = 20) -> list[dict[str, Any]]:
@@ -248,16 +257,42 @@ def clear_history() -> None:
 
 # ── ReAct Loop 集成 ──
 
+_ENV_VAR_RE = re.compile(r"\$\{([A-Za-z0-9_]+)\}")
+
+
+def _interpolate_env(value: Any) -> Any:
+    """把配置值中的 ${ENV_NAME} 替换为环境变量值 (缺失 → 空串)。"""
+    if isinstance(value, str):
+        return _ENV_VAR_RE.sub(lambda m: os.environ.get(m.group(1), ""), value)
+    return value
+
+
 def _load_llm_config() -> dict[str, Any]:
-    """加载 LLM 配置（从 config/llm.yaml）。"""
+    """加载     LLM 配置（从 config/llm.yaml, 含环境变量插值）。"""
     candidates = [
         Path(__file__).resolve().parent.parent.parent.parent / "config" / "llm.yaml",
         Path(__file__).resolve().parent.parent.parent.parent.parent / "config" / "llm.yaml",
     ]
     for p in candidates:
         if p.exists():
-            with open(p, encoding="utf-8") as f:
-                return yaml.safe_load(f).get("llm", {})
+            try:
+                with open(p, encoding="utf-8") as f:
+                    cfg = yaml.safe_load(f).get("llm", {})
+            except (OSError, yaml.YAMLError) as e:
+                logger.warning("LLM 配置读取失败: %s, 降级 MockProvider", e)
+                return {"provider": "mock", "mock_responses": True}
+            cfg = {k: _interpolate_env(v) for k, v in cfg.items()}
+            if not cfg.get("api_key"):
+                try:
+                    from haip.api_key_store import get_api_key
+                    pk = get_api_key()
+                    if pk:
+                        cfg["api_key"] = pk
+                except ImportError:
+                    pass
+                except Exception:
+                    logger.debug("api_key_store 读取失败", exc_info=True)
+            return cfg
     return {"provider": "mock", "mock_responses": True}
 
 
@@ -274,11 +309,18 @@ def _build_loop_components(agent: str):
 
     from haip.llm import LLMProvider
     llm_config = _load_llm_config()
-    try:
-        llm = LLMProvider.from_config(llm_config)
-    except Exception:
+    if llm_config.get("provider", "mock") != "mock" and not llm_config.get("api_key"):
+        # config 声明的 fallback: 无 API key 时降级 MockProvider, 聊天离线可用
+        logger.warning("LLM api_key 未配置 (检查 DEEPSEEK_API_KEY), 降级 MockProvider 离线模式")
         from haip.llm.mock import MockProvider
-        llm = MockProvider({})
+        llm: LLMProvider = MockProvider({})
+    else:
+        try:
+            llm = LLMProvider.from_config(llm_config)
+        except Exception as e:
+            logger.debug("LLM 初始化失败, 降级 MockProvider: %s", e)
+            from haip.llm.mock import MockProvider
+            llm = MockProvider({})
 
     def _a2a_executor(tool_name: str, tool_args: dict) -> dict:
         return call(agent, tool_name, tool_args)
@@ -326,8 +368,8 @@ def _run_guard(output: str, tool_calls: list, plugin) -> dict:
                         " but no T1 citations found"
                     )
                     guard_result["flags"].append(guard_result["blocked_reason"])
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Guard 验证异常, 降级通过: %s", e)
 
     return guard_result
 
