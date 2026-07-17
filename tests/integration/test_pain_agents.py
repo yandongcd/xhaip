@@ -130,13 +130,13 @@ class TestCancerPain:
 class TestInterventionalPain:
     def test_imaging_gate_fail(self):
         register(DomainPlugin(name="interventional-pain", type="specialist",
-            tools=[ToolDef(name="imaging_gate", description="", handler="interventional_pain.gate")]))
+            tools=[ToolDef(name="imaging_gate", description="", handler="interventional_pain.imaging_gate")]))
         r = call("interventional-pain", "imaging_gate", {"has_mri": False, "has_ct": False})
         assert not r["gate_passed"]
 
     def test_postop_infection(self):
         register(DomainPlugin(name="interventional-pain", type="specialist",
-            tools=[ToolDef(name="postop_safety", description="", handler="interventional_pain.postop")]))
+            tools=[ToolDef(name="postop_safety", description="", handler="interventional_pain.postop_safety")]))
         r = call("interventional-pain", "postop_safety", {"procedure": "epidural", "signs": {"temp": 38.5, "redness": True}})
         assert r["complication_detected"]
 

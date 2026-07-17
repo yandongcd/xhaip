@@ -90,7 +90,7 @@ def assess_indications(
     }
 
 
-def gate(has_mri: bool = False, has_ct: bool = False,
+def imaging_gate(has_mri: bool = False, has_ct: bool = False,
          target_procedure: str = "", completed_exams: list | None = None,
          **kwargs: Any) -> dict:
     """影像学准入检查 — 按手术类型验证."""
@@ -118,7 +118,7 @@ def gate(has_mri: bool = False, has_ct: bool = False,
     }
 
 
-def postop(procedure: str = "", signs: dict | None = None,
+def postop_safety(procedure: str = "", signs: dict | None = None,
            vital_signs: dict | None = None,
            postop_hours: int = 0, pain_nrs: int = 0,
            neurological: str = "",
