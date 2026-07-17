@@ -134,7 +134,7 @@ class TestBenchmark:
     def test_benchmark(self):
         result = benchmark_a2a(iterations=3)
         assert result["iterations"] == 3
-        assert result["avg_ms"] >= 0
+        assert result["avg_ms"] >= 0  # defensive: timing field shape check
 
 
 class TestFormatOutput:
@@ -293,7 +293,7 @@ class TestSkillSyncFunctions:
             with patch.dict("haip.operations.skill_sync.SKILL_OWNERSHIP", test_ownership, clear=True):
                 from haip.operations.skill_sync import sync
                 result = sync(dry_run=False)
-                assert result["changed"] >= 0
+                assert result["changed"] >= 0  # defensive: skill sync may report 0 changes
                 dst = rt / ".openharness" / "skills" / "xhaip-core" / "SKILL.md"
                 assert dst.exists()
                 assert dst.read_text(encoding="utf-8") == content
@@ -878,9 +878,9 @@ class TestBenchmarkExtended:
     def test_benchmark_with_few_iterations(self):
         result = benchmark_a2a(iterations=1)
         assert result["iterations"] == 1
-        assert result["avg_ms"] >= 0
-        assert result["min_ms"] >= 0
-        assert result["max_ms"] >= 0
+        assert result["avg_ms"] >= 0  # defensive: timing field shape check
+        assert result["min_ms"] >= 0  # defensive: timing field shape check
+        assert result["max_ms"] >= 0  # defensive: timing field shape check
 
     def test_benchmark_returns_p95(self):
         result = benchmark_a2a(iterations=5)

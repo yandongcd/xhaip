@@ -56,7 +56,7 @@ class TestKnowledgeRuntime:
         kb = KnowledgeRuntime(str(project_root))
         s1 = kb.sync()
         kb.resync()
-        assert s1["guidelines"] >= 0
+        assert s1["guidelines"] > 0, "知识库同步后指南数应为正 — 检查 assets/knowledge/ 数据"
         kb.close()
         reset_kb()
 
@@ -64,11 +64,11 @@ class TestKnowledgeRuntime:
 class TestCaseManager:
     def test_load_patients(self):
         from haip.knowledge.cases import CaseManager
-        patients_file = project_root / "packages" / "haip-hospital" / "data"
+        data_dir = project_root / "packages" / "haip-hospital" / "data"
+        assert data_dir.exists(), "患者数据目录缺失"
         cm = CaseManager()
-        if patients_file.exists():
-            cm.load(patients_file)
-        assert len(cm.cases) >= 0  # may be 0 if no data
+        cm.load(data_dir)
+        assert len(cm.cases) > 0, "患者数据加载为空 — 检查 patients.json 格式"
         s = cm.stats()
         assert "total" in s
 

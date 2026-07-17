@@ -160,7 +160,7 @@ class TestErrorPaths:
             yaml_path = Path(tmp) / "missing_name.yaml"
             yaml_path.write_text("type: business\nport: 8000\n", encoding="utf-8")
             count = load_from_dir(tmp)
-            assert count >= 0
+            assert count >= 0  # defensive: ensure load_from_dir doesn't crash on invalid YAML
 
 
 # ── Boundary Condition Tests ─────────────────────────────────────────

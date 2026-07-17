@@ -7,8 +7,6 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-os.environ["HAIP_TEST_MODE"] = "true"
-
 import pytest
 from fastapi.testclient import TestClient
 

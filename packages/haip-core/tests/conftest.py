@@ -1,8 +1,12 @@
-"""共享 fixtures."""
+"""共享 fixtures — fixtures + 统一 HAIP_TEST_MODE."""
+
+import os
 
 import pytest
 
 from haip.llm.mock import MockProvider
+
+os.environ.setdefault("HAIP_TEST_MODE", "true")
 
 
 @pytest.fixture

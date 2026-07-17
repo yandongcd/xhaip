@@ -174,7 +174,7 @@ class TestRollback:
         result = rm.rollback(backup_info["backup_id"])
 
         assert "success" in result
-        assert len(result.get("restored", [])) + len(result.get("errors", [])) >= 0
+        assert len(result.get("restored", [])) > 0, "回滚应恢复至少一个文件"
 
 
 class TestInfo:

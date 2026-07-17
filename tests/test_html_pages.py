@@ -7,11 +7,8 @@ from __future__ import annotations
 
 import sys
 import json
-import os
 import re
 from pathlib import Path
-
-os.environ["HAIP_TEST_MODE"] = "true"
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "packages" / "haip-core"))
