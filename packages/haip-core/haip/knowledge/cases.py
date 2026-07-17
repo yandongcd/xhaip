@@ -6,8 +6,11 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 class CaseManager:
@@ -29,8 +32,8 @@ class CaseManager:
                     self.cases.extend(data["patients"])
                 elif isinstance(data, list):
                     self.cases.extend(data)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("病例文件加载失败 %s: %s", f, e)
 
     def search(self, query: str = "", department: str = "",
                diagnosis: str = "", age_min: int = 0, age_max: int = 120,

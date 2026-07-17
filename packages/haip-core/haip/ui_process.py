@@ -7,13 +7,9 @@ CSS 和 JS 已抽取至 ui_process_css.py / ui_process_js.py。
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 from haip.ui_process_css import PROCESS_CSS
 from haip.ui_process_js import PROCESS_JS
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-PATIENTS_FILE = PROJECT_ROOT / "packages" / "haip-hospital" / "data" / "patients.json"
 
 STAGE_COLORS = ["#0969da", "#1a7f37", "#8b6914", "#cf222e", "#6e5494", "#0a84ff",
                 "#1a7f37", "#cf222e", "#0969da"]
@@ -470,18 +466,11 @@ tr:hover td{{background:var(--bg-overlay)}}
 
 def _load_patients(agent_name: str) -> list[dict]:
     """从 patients.json 加载与给定 agent 兼容的患者数据。"""
-    try:
-        with open(PATIENTS_FILE, encoding="utf-8") as f:
-            data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return _fallback_patients()
+    from haip.patients import load_patients
 
-    all_patients = data.get("patients", []) if isinstance(data, dict) else data
-    if isinstance(all_patients, list):
-        matched = [p for p in all_patients
-                   if agent_name in p.get("compatible_agents", [])]
-        if matched:
-            return _normalize_patients(matched)
+    matched = load_patients(agent_name, limit=30, only_compatible=True)
+    if matched:
+        return _normalize_patients(matched)
     return _fallback_patients()
 
 

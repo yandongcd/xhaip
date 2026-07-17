@@ -1,22 +1,10 @@
 """工作流 UI — process 同款三栏布局 + 角色 stage 筛选 + 工具执行."""
 
 from __future__ import annotations
+
 import json
-from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-PATIENTS_FILE = PROJECT_ROOT / "packages" / "haip-hospital" / "data" / "patients.json"
-
-
-def _load_patients(agent_name: str) -> list[dict]:
-    """加载与该 Agent 兼容的数字病人。"""
-    if not PATIENTS_FILE.exists():
-        return []
-    with open(PATIENTS_FILE, "r", encoding="utf-8") as f:
-        all_pts = json.load(f)
-    if not isinstance(all_pts, list):
-        return []
-    return all_pts[:8]
+from haip.patients import load_patients
 
 
 def render_workflow_ui(
@@ -30,7 +18,7 @@ def render_workflow_ui(
     guard_triggers: list[str],
 ) -> str:
     icon_map = {"business": "🏥", "specialist": "🔬", "master_data": "🗄️"}
-    patients = _load_patients(name)
+    patients = load_patients(name)
 
     wf_json = json.dumps(workflow_stages, ensure_ascii=False)
     roles_json = json.dumps(roles, ensure_ascii=False)
@@ -43,8 +31,8 @@ def render_workflow_ui(
         if first_role is None:
             first_role = rid
         icon = rcfg.get("icon", "")
-        name = rcfg.get("name", rid)
-        role_pills += f'<button class="role-pill" data-role="{rid}" onclick="switchRole(\'{rid}\')">{icon} {name}</button>\n'
+        role_label = rcfg.get("name", rid)
+        role_pills += f'<button class="role-pill" data-role="{rid}" onclick="switchRole(\'{rid}\')">{icon} {role_label}</button>\n'
 
     # ── 右侧阶段导航 ──
     sb_items = ""
@@ -199,7 +187,7 @@ body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Mic
   </div>
   <div class="header-patient" id="header-patient">
     <span class="hp-name" id="hp-name"></span>
-    <span class="hp-badge" id="hp-stage"></span>
+    <span class="hp-badge" id="hp-badge"></span>
   </div>
 </div>
 
@@ -221,6 +209,7 @@ body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Mic
 {sb_items}
     </div>
     <div class="rb-stats">
+      <div class="rb-stat"><span>当前阶段</span><span class="val" id="rb-current-stage" style="font-weight:600">1/{len(workflow_stages)}</span></div>
       <div class="rb-stat"><span>可用阶段</span><span class="val" id="rb-visible-count" style="font-weight:600">{len(workflow_stages)}/{len(workflow_stages)}</span></div>
       <div class="rb-stat"><span>已完成</span><span class="val" id="rb-done-count" style="font-weight:600">0</span></div>
     </div>
