@@ -7,6 +7,68 @@ import json
 from haip.patients import load_patients
 
 
+def _build_role_pills(roles: dict) -> tuple[str, str]:
+    """角色 Pill HTML + 首个角色 id."""
+    pills = ""
+    first_role = ""
+    for rid, rcfg in roles.items():
+        if not first_role:
+            first_role = rid
+        icon = rcfg.get("icon", "")
+        role_label = rcfg.get("name", rid)
+        pills += (
+            f'<button class="role-pill" data-role="{rid}" '
+            f'onclick="switchRole(\'{rid}\')">{icon} {role_label}</button>\n'
+        )
+    return pills, first_role
+
+
+def _build_stage_nav(stages: list[dict]) -> str:
+    """右侧阶段导航 HTML."""
+    items = ""
+    for s in stages:
+        items += (
+            f'<div class="rb-item" data-stage="{s["order"]}" onclick="clickStage({s["order"]})">'
+            f'<span class="rb-dot current"></span>'
+            f'<div class="rb-info"><div class="rb-name">{s["order"]}. {s["label"]}</div></div>'
+            f'<span class="rb-status active-s">当前</span></div>\n'
+        )
+    return items
+
+
+def _build_stage_panels(stages: list[dict]) -> str:
+    """阶段面板 HTML (带执行按钮)."""
+    panels = ""
+    for i, s in enumerate(stages):
+        act = " active" if i == 0 else ""
+        tool_name = s["tool"]
+        panels += (
+            f'<div class="stage-content{act}" id="stage-{s["order"]}">'
+            f'<div class="stage-header"><span class="stage-badge">{s["order"]}</span>'
+            f'<div><h3>{s["label"]}</h3><p>{s["description"]}</p>'
+            f'<span class="guide-ref">{s.get("guideline_ref", "")}</span></div></div>'
+            f'<div class="form-group"><label>参数</label>'
+            f'<textarea id="params-{s["id"]}">'
+            f'{{"patient_id":"P001","age":78,"weight_kg":55,"height_cm":170}}</textarea></div>'
+            f'<div class="btn-row">'
+            f'<button class="btn-exec" onclick="callStage(\'{s["id"]}\',\'{tool_name}\')">'
+            f'▶ 执行 {s["label"]}</button>'
+            f'<button class="btn-guard" onclick="showGuard(\'{s["id"]}\')">🛡 安全校验</button>'
+        )
+        if i < len(stages) - 1:
+            panels += (
+                f'<button class="btn-next" '
+                f'onclick="autoNext(\'{s["id"]}\',\'{stages[i + 1]["id"]}\')">→ 下一步</button>'
+            )
+        panels += (
+            f'</div>'
+            f'<div class="result-box" id="result-{s["id"]}">'
+            f'<span class="result-placeholder">点击「执行」开始...</span></div>'
+            f'</div>\n'
+        )
+    return panels
+
+
 def render_workflow_ui(
     name: str,
     cn_name: str,
@@ -25,49 +87,13 @@ def render_workflow_ui(
     patients_json = json.dumps(patients, ensure_ascii=False)
 
     # ── 角色 Pill ──
-    role_pills = ""
-    first_role = None
-    for rid, rcfg in roles.items():
-        if first_role is None:
-            first_role = rid
-        icon = rcfg.get("icon", "")
-        role_label = rcfg.get("name", rid)
-        role_pills += f'<button class="role-pill" data-role="{rid}" onclick="switchRole(\'{rid}\')">{icon} {role_label}</button>\n'
+    role_pills, first_role = _build_role_pills(roles)
 
     # ── 右侧阶段导航 ──
-    sb_items = ""
-    for s in workflow_stages:
-        sb_items += (
-            f'<div class="rb-item" data-stage="{s["order"]}" onclick="clickStage({s["order"]})">'
-            f'<span class="rb-dot current"></span>'
-            f'<div class="rb-info"><div class="rb-name">{s["order"]}. {s["label"]}</div></div>'
-            f'<span class="rb-status active-s">当前</span></div>\n'
-        )
+    sb_items = _build_stage_nav(workflow_stages)
 
     # ── 阶段面板 (带执行按钮) ──
-    panels = ""
-    for i, s in enumerate(workflow_stages):
-        act = ' active' if i == 0 else ''
-        tool_name = s["tool"]
-        panels += (
-            f'<div class="stage-content{act}" id="stage-{s["order"]}">'
-            f'<div class="stage-header"><span class="stage-badge">{s["order"]}</span>'
-            f'<div><h3>{s["label"]}</h3><p>{s["description"]}</p>'
-            f'<span class="guide-ref">{s.get("guideline_ref", "")}</span></div></div>'
-            f'<div class="form-group"><label>参数</label>'
-            f'<textarea id="params-{s["id"]}">{{"patient_id":"P001","age":78,"weight_kg":55,"height_cm":170}}</textarea></div>'
-            f'<div class="btn-row">'
-            f'<button class="btn-exec" onclick="callStage(\'{s["id"]}\',\'{tool_name}\')">▶ 执行 {s["label"]}</button>'
-            f'<button class="btn-guard" onclick="showGuard(\'{s["id"]}\')">🛡 安全校验</button>'
-        )
-        if i < len(workflow_stages) - 1:
-            panels += f'<button class="btn-next" onclick="autoNext(\'{s["id"]}\',\'{workflow_stages[i+1]["id"]}\')">→ 下一步</button>'
-        panels += (
-            f'</div>'
-            f'<div class="result-box" id="result-{s["id"]}">'
-            f'<span class="result-placeholder">点击「执行」开始...</span></div>'
-            f'</div>\n'
-        )
+    panels = _build_stage_panels(workflow_stages)
 
     # ── Guard ──
     guard_html = ""
