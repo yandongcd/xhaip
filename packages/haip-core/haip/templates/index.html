@@ -178,14 +178,22 @@ let agents = [];
 function toggleTheme(){var isLight=document.body.classList.toggle('light');localStorage.setItem('xhaip_theme',isLight?'light':'dark');document.getElementById('btn-theme').textContent=isLight?'☀️ 白天':'🌙 黑夜'}
 
 async function init() {
-  const r = await fetch('/api/agents');
-  agents = await r.json();
+  try {
+    const r = await fetch('/api/agents');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    agents = await r.json();
+    if (!Array.isArray(agents)) throw new Error('agents not an array');
+  } catch(e) {
+    document.getElementById('agent-list').innerHTML = '<div style=\"padding:16px;color:var(--danger);font-size:13px\">加载 Agent 失败: ' + e.message + '</div>';
+    return;
+  }
   renderSidebar();
   document.getElementById('sidebar-stats').textContent = agents.length + ' agents loaded';
   document.getElementById('status-right').textContent = 'API v1.0 | ' + agents.length + ' agents';
 }
 
 function renderSidebar() {
+  if (!Array.isArray(agents)) return;
   const groups = {business:[], specialist:[], master_data:[]};
   agents.forEach(a => groups[a.type]?.push(a));
   let html = '';

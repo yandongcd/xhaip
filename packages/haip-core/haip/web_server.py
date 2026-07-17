@@ -113,9 +113,11 @@ async def lifespan(app: FastAPI):
     from haip.security_baseline import check_security_baseline
     check_security_baseline()
     _seed_default_admin()
-    # Seed demo identities for 12 portal roles (gated by AuthService)
-    from haip.auth import get_auth_service
-    get_auth_service().seed_demo_identities()
+    try:
+        from haip.auth import get_auth_service
+        get_auth_service().seed_demo_identities()
+    except (ImportError, AttributeError):
+        pass  # seed_demo_identities 需并行会话 auth/__init__.py 合入后生效
     # Initialize default tenant
     from haip.tenants import init_default_tenant
     init_default_tenant()
@@ -246,7 +248,7 @@ try:
         if not r.passed:
             failed = [c.id for c in r.checks if not c.passed]
             logger.info(
-                "TOGAF ⚠ %s: %d checks failed — %s", r.agent_name, len(failed), failed)
+                "TOGAF [WARN] %s: %d checks failed — %s", r.agent_name, len(failed), failed)
 except ImportError:
     pass
 except Exception:
