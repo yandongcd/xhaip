@@ -12,6 +12,36 @@ from haip.guard.verifier import GuardResult, GuardVerifier, HIGH_RISK_SCENARIOS
 
 
 class TestCitationEngine:
+    def test_extract_structured_guideline_ref(self):
+        """工具 JSON 输出的 guideline_ref 字段必须被提取 (门户 Guard 自动带入场景)."""
+        engine = CitationEngine()
+        text = '{"status": "ok", "procedure": "THA", "guideline_ref": "NICE NG37 + 国家卫健委 2022"}'
+        citations = engine.extract(text)
+        assert any("NICE NG37" in c.source for c in citations)
+
+    def test_extract_structured_evidence_list(self):
+        """嵌套 evidence 列表中的引文必须被提取."""
+        engine = CitationEngine()
+        text = ('{"status": "ok", "result": {"urgency": "emergency", '
+                '"evidence": ["国家卫健委 2022 §4", "NICE NG37", "南方医院 T2 调整"]}}')
+        citations = engine.extract(text)
+        sources = [c.source for c in citations]
+        assert any("NICE NG37" in s for s in sources)
+        assert any("国家卫健委" in s for s in sources)
+
+    def test_extract_structured_strips_comment_prefix(self):
+        """evidence 中 '# ' 前缀应被清理."""
+        engine = CitationEngine()
+        text = '{"evidence": ["# NICE NG37 §1.2: Multidisciplinary management"]}'
+        citations = engine.extract(text)
+        assert citations and not citations[0].source.startswith("#")
+
+    def test_extract_non_json_unaffected(self):
+        """非 JSON 文本仍走散文模式, 不报错."""
+        engine = CitationEngine()
+        citations = engine.extract("{broken json 参考：ESPEN 2023 指南")
+        assert any("ESPEN" in c.source for c in citations)
+
     def test_extract_ref_tag(self):
         engine = CitationEngine()
         text = "依据 [ref: NICE NG37 §4.2]，建议 48 小时内手术。"

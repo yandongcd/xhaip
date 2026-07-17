@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -22,6 +23,27 @@ EXTRACT_PATTERNS = [
     re.compile(r"依据(.+?指南)[，。\n]"),
     re.compile(r"根据(.+?标准)[，。\n]"),
 ]
+
+# 工具 JSON 输出中的结构化引文字段 (门户/工作流 Guard 自动带入工具结果)
+STRUCTURED_CITATION_KEYS = {"guideline_ref", "guideline_refs", "guideline", "evidence", "references"}
+
+
+def _walk_citation_fields(node: object) -> list[str]:
+    """递归收集 JSON 结构中引文字段的字符串值。"""
+    found: list[str] = []
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if isinstance(k, str) and k.lower() in STRUCTURED_CITATION_KEYS:
+                if isinstance(v, str):
+                    found.append(v)
+                elif isinstance(v, list):
+                    found.extend(x for x in v if isinstance(x, str))
+            else:
+                found.extend(_walk_citation_fields(v))
+    elif isinstance(node, list):
+        for item in node:
+            found.extend(_walk_citation_fields(item))
+    return found
 
 
 @dataclass
@@ -55,15 +77,29 @@ class CitationEngine:
     def extract(self, text: str) -> list[Citation]:
         citations: list[Citation] = []
         seen: set[str] = set()
+
+        def _add(source: str) -> None:
+            source = source.lstrip("#").strip()
+            if source and source not in seen:
+                seen.add(source)
+                citations.append(Citation(
+                    source=source,
+                    trust_level=self._guess_trust_level(source),
+                ))
+
         for pattern in EXTRACT_PATTERNS:
             for m in pattern.finditer(text):
-                source = m.group(1).strip()
-                if source and source not in seen:
-                    seen.add(source)
-                    citations.append(Citation(
-                        source=source,
-                        trust_level=self._guess_trust_level(source),
-                    ))
+                _add(m.group(1))
+        # 结构化提取: 工具 JSON 输出的 guideline_ref/evidence 等字段
+        stripped = text.lstrip()
+        if stripped.startswith(("{", "[")):
+            try:
+                data = json.loads(stripped)
+            except (json.JSONDecodeError, ValueError):
+                data = None
+            if data is not None:
+                for src in _walk_citation_fields(data):
+                    _add(src)
         return citations
 
     def verify(self, citations: list[Citation]) -> list[Citation]:
