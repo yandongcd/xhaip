@@ -48,9 +48,9 @@ class TestValidatorEdge:
 
     def test_check_org_affiliation_empty(self):
         from haip.togaf.validator import _check_org_affiliation
-        # Test with a specialist agent that has no department
-        from haip.agent import get as get_agent
-        agent = get_agent('acute-pain')
+        # 合成无 department 的 agent (acute-pain 现已配置 department, 不能再作反例)
+        from haip.agent import DomainPlugin
+        agent = DomainPlugin(name="no-dept-test", type="specialist", department="")
         c = _check_org_affiliation(agent)
         assert not c.passed  # No department set
 

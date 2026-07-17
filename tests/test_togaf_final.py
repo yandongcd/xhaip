@@ -23,12 +23,13 @@ class TestValidator100:
         c = _check_principles(agent)
         assert c.passed
 
-    def test_principles_check_painhub(self):
+    def test_principles_check_no_department_violation(self):
         from haip.togaf.validator import _check_principles
-        from haip.agent import get
-        agent = get('pain-hub')
+        # 合成无 department 的 business agent → 违反 prin-no-hardcode
+        # (pain-hub 现已配置 department, 不能再作反例)
+        from haip.agent import DomainPlugin
+        agent = DomainPlugin(name="no-dept-biz-test", type="business", department="")
         c = _check_principles(agent)
-        # pain-hub: business agent with no department — should violate prin-no-hardcode
         assert not c.passed
         assert '无硬编码' in c.detail
 
