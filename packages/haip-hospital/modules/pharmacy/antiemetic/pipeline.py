@@ -9,7 +9,6 @@ from .scoring_engine import (
     calculate_apfel_score,
     calculate_povoc_score,
     calculate_pdnv_score,
-    classify_risk_level,
 )
 from .drug_recommend import (
     recommend_regimen_adult,
@@ -17,7 +16,7 @@ from .drug_recommend import (
     recommend_timing,
     recommend_rescue,
 )
-from .drug_controls import validate_contraindications, check_duplicate_medication
+from .drug_controls import validate_contraindications
 from .anesthesia_guide import (
     recommend_tiva,
     recommend_pnb,

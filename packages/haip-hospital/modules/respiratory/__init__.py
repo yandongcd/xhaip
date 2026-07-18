@@ -104,24 +104,42 @@ def _calc_psi_port(patient: dict) -> dict:
     pleural_eff = _get_nested(patient, "pleural_effusion", default=False)
 
     points = age_val if sex == "M" else age_val - 10
-    if nursing_home: points += 10
-    if neoplastic: points += 30
-    if liver: points += 20
-    if chf: points += 10
-    if cvd: points += 10
-    if renal: points += 10
-    if ams: points += 20
-    if rr >= 30: points += 20
-    if sbp < 90: points += 20
-    if temp < 35 or temp >= 40: points += 15
-    if hr >= 125: points += 10
-    if ph < 7.35: points += 30
-    if bun > 10.7: points += 20  # ≈ 30 mg/dL
-    if na < 130: points += 20
-    if glucose > 13.9: points += 10  # ≈ 250 mg/dL
-    if hct < 30: points += 10
-    if pao2 < 60: points += 10
-    if pleural_eff: points += 10
+    if nursing_home:
+        points += 10
+    if neoplastic:
+        points += 30
+    if liver:
+        points += 20
+    if chf:
+        points += 10
+    if cvd:
+        points += 10
+    if renal:
+        points += 10
+    if ams:
+        points += 20
+    if rr >= 30:
+        points += 20
+    if sbp < 90:
+        points += 20
+    if temp < 35 or temp >= 40:
+        points += 15
+    if hr >= 125:
+        points += 10
+    if ph < 7.35:
+        points += 30
+    if bun > 10.7:
+        points += 20  # ≈ 30 mg/dL
+    if na < 130:
+        points += 20
+    if glucose > 13.9:
+        points += 10  # ≈ 250 mg/dL
+    if hct < 30:
+        points += 10
+    if pao2 < 60:
+        points += 10
+    if pleural_eff:
+        points += 10
 
     if points <= 50:
         risk_class = "I"
@@ -188,9 +206,9 @@ def _classify_copd_gold(patient: dict) -> dict:
 
 def _gina_step(patient: dict) -> dict:
     """GINA asthma step therapy: Steps 1-5."""
-    severity = _get_nested(patient, "asthma_severity", "gina_step", default="mild")
+    _get_nested(patient, "asthma_severity", "gina_step", default="mild")
     step = int(_get_nested(patient, "gina_step", "current_step", default=2))
-    symptoms_freq = _get_nested(patient, "symptom_frequency", default="intermittent")
+    _get_nested(patient, "symptom_frequency", default="intermittent")
     exacerbations = int(_get_nested(patient, "exacerbations_per_year", "ae_per_year", default=0))
     fev1_pct = float(_get_nested(patient, "fev1_pct", "fev1_percent", default=80))
 
@@ -221,7 +239,6 @@ def _gina_step(patient: dict) -> dict:
 
 def _calc_wells_pe(patient: dict) -> dict:
     """Wells PE score (two-tier): PE likely (>4) vs unlikely (≤4)."""
-    age = int(_get_nested(patient, "age", default=50))
     clinical_dvt = _get_nested(patient, "dvt_signs", "clinical_dvt", default=False)
     pe_likely = _get_nested(patient, "pe_most_likely", default=False)
     hr = int(_get_nested(patient, "heart_rate", "hr", "pulse", default=80))
@@ -231,13 +248,20 @@ def _calc_wells_pe(patient: dict) -> dict:
     cancer = _get_nested(patient, "active_cancer", "neoplastic", default=False)
 
     score = 0
-    if clinical_dvt: score += 3
-    if pe_likely: score += 3
-    if hr > 100: score += 1.5
-    if immobilization or _get_nested(patient, "recent_surgery", default=False): score += 1.5
-    if prev_dvt_pe: score += 1.5
-    if hemoptysis: score += 1
-    if cancer: score += 1
+    if clinical_dvt:
+        score += 3
+    if pe_likely:
+        score += 3
+    if hr > 100:
+        score += 1.5
+    if immobilization or _get_nested(patient, "recent_surgery", default=False):
+        score += 1.5
+    if prev_dvt_pe:
+        score += 1.5
+    if hemoptysis:
+        score += 1
+    if cancer:
+        score += 1
 
     pe_likely_flag = score > 4
     if pe_likely_flag:
@@ -260,14 +284,22 @@ def _apply_perc(patient: dict) -> dict:
     unilateral_swelling = _get_nested(patient, "unilateral_leg_swelling", "clinical_dvt", default=False)
 
     criteria = 0
-    if age >= 50: criteria += 1
-    if hr >= 100: criteria += 1
-    if spo2 < 95: criteria += 1
-    if prev_dvt_pe: criteria += 1
-    if surgery: criteria += 1
-    if hemoptysis: criteria += 1
-    if estrogen: criteria += 1
-    if unilateral_swelling: criteria += 1
+    if age >= 50:
+        criteria += 1
+    if hr >= 100:
+        criteria += 1
+    if spo2 < 95:
+        criteria += 1
+    if prev_dvt_pe:
+        criteria += 1
+    if surgery:
+        criteria += 1
+    if hemoptysis:
+        criteria += 1
+    if estrogen:
+        criteria += 1
+    if unilateral_swelling:
+        criteria += 1
 
     rule_out = criteria == 0
     return {"perc_criteria": criteria, "rule_out": rule_out, "total": 8,
@@ -284,12 +316,18 @@ def _calc_spesi(patient: dict) -> dict:
     spo2 = float(_get_nested(patient, "spo2", "o2_saturation", default=95))
 
     points = 0
-    if age > 80: points += 1
-    if cancer: points += 1
-    if cpf: points += 1
-    if hr >= 110: points += 1
-    if sbp < 100: points += 1
-    if spo2 < 90: points += 1
+    if age > 80:
+        points += 1
+    if cancer:
+        points += 1
+    if cpf:
+        points += 1
+    if hr >= 110:
+        points += 1
+    if sbp < 100:
+        points += 1
+    if spo2 < 90:
+        points += 1
 
     low_risk = points == 0
     return {"score": points, "low_risk": low_risk,
@@ -320,7 +358,7 @@ def _tb_algorithm(patient: dict) -> dict:
     igra = _get_nested(patient, "igra", "quantiferon", default="negative")
     xpert = _get_nested(patient, "xpert_mtb", "genexpert", default="not done")
     smear = _get_nested(patient, "afb_smear", "smear", default="negative")
-    culture = _get_nested(patient, "mycobacterium_culture", default="pending")
+    _get_nested(patient, "mycobacterium_culture", default="pending")
     symptoms = _get_nested(patient, "cough_weeks", "tb_symptoms", default=0)
     cxr = _get_nested(patient, "cxr_abnormal", "chest_xray_abnormal", default=False)
 
@@ -359,7 +397,6 @@ def bp_reception(**kwargs) -> dict:
     if not p:
         return _clinical_error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
-    labs = p.get("lab_results", p.get("labs", {}))
     dx = p.get("diagnosis", "")
 
     findings = ["呼吸症状: 咳嗽 / 咳痰 / 呼吸困难 / 胸痛 — onset + duration + character",
@@ -451,7 +488,6 @@ def bp_diagnosis(**kwargs) -> dict:
     if not p:
         return _clinical_error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
-    labs = p.get("lab_results", p.get("labs", {}))
     dx = p.get("diagnosis", "")
 
     findings = []
@@ -552,7 +588,7 @@ def bp_plan(**kwargs) -> dict:
     rules = _agent.search_rules("呼吸内科")
     return _agent.clinical_result(
         patient=p, stage="plan",
-        summary=f"呼吸内科 — 治疗方案完成",
+        summary="呼吸内科 — 治疗方案完成",
         findings=findings, guidelines=guides, rules=rules,
         alerts=vitals.get("alerts", []), recommendations=recommendations,
         guideline_refs=_GUIDELINES,
@@ -603,7 +639,7 @@ def bp_followup(**kwargs) -> dict:
 
     findings = [
         "症状监测: cough/sputum/dyspnea diary, exacerbation frequency tracking",
-        f"肺功能随访: spirometry q3-12mo (COPD/asthma), DLCO if ILD",
+        "肺功能随访: spirometry q3-12mo (COPD/asthma), DLCO if ILD",
         "影像: CXR at clinical follow-up; CT at 3-6mo for pneumonia resolution / lung nodule surveillance (Fleishner criteria)",
         "康复: 肺康复 program (endurance + strength + education + nutrition) — grade 1A evidence for COPD",
     ]
@@ -625,7 +661,7 @@ def bp_followup(**kwargs) -> dict:
     if any(t in dx for t in ["肺结核", "TB"]):
         tb = _tb_algorithm(p)
         if tb["active_tb"]:
-            findings.append(f"TB treatment monitoring: monthly sputum smear/culture until 2 consecutive negative; LFTs monthly (INH/RIF/PZA hepatotoxicity)")
+            findings.append("TB treatment monitoring: monthly sputum smear/culture until 2 consecutive negative; LFTs monthly (INH/RIF/PZA hepatotoxicity)")
             recommendations.append("Directly Observed Therapy (DOT) recommended; contact tracing for household + close contacts")
 
     guides = _agent.search_guidelines(dx) or _GUIDELINES

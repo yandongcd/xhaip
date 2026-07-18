@@ -265,8 +265,8 @@ class TestUIEndpoints:
         import re
         r = client.get("/agent/orthopedic-surgery")
         labels = re.findall(r'class="tab[^"]*"[^>]*>([^<]+)', r.text)
-        for l in labels:
-            assert any('\u4e00' <= c <= '\u9fff' for c in l), f"Label not Chinese: {l}"
+        for lbl in labels:
+            assert any('\u4e00' <= c <= '\u9fff' for c in lbl), f"Label not Chinese: {lbl}"
 
     def test_agent_ui_not_found(self):
         r = client.get("/agent/nonexistent")

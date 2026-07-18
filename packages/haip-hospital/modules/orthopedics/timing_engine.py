@@ -19,9 +19,7 @@ T2 分层裁决（创伤骨科临床经验）:
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
-from typing import Any
 
 from agents.domains.haip.core.ecg_analyzer import extract_ecg_keywords_from_exam
 
@@ -66,7 +64,6 @@ def _build_evaluation_context(patient: dict) -> dict:
                         pass
         return None
 
-    labs = patient.get("lab_tests", [])
     exams = patient.get("examinations", [])
     ecg_text = " ".join([e.get("description", "") for e in exams if "心电" in e.get("name", "")])
 
@@ -93,10 +90,10 @@ def _build_evaluation_context(patient: dict) -> dict:
 
 def _rule_service_available() -> bool:
     try:
-        from agents.rules.models import EvaluationContext
-        from agents.rules.rule_registry import get_rule_set, find_rules
-        from agents.rules.arbitration_engine import evaluate_rules
-        return True
+        from importlib.util import find_spec
+        return (
+            find_spec("agents.rules.models") is not None
+        )
     except ImportError:
         return False
 
@@ -658,7 +655,7 @@ def evaluate_timing(
 def _evaluate_timing_v3(patient: dict, patient_id: str) -> dict:
     """v3.0: 通过 agents.rules 规则服务平台 + T2 分层裁决."""
     from agents.rules.models import EvaluationContext
-    from agents.rules.rule_registry import get_rule_set, find_rules
+    from agents.rules.rule_registry import find_rules
     from agents.rules.arbitration_engine import evaluate_rules as engine_evaluate
 
     ctx_values = _build_evaluation_context(patient)

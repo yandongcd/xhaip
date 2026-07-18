@@ -43,7 +43,7 @@ def bp_reception(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国糖尿病防治指南（2024版）", "ADA Standards of Care in Diabetes"]
     rules = _agent.search_rules("内分泌科")
     return _agent.clinical_result(
-        summary=f"内分泌科—内分泌初诊完成 (stage S1)",
+        summary="内分泌科—内分泌初诊完成 (stage S1)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -70,7 +70,7 @@ def bp_exam(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国糖尿病防治指南（2024版）", "ADA Standards of Care in Diabetes"]
     rules = _agent.search_rules("内分泌科")
     return _agent.clinical_result(
-        summary=f"内分泌科—内分泌检查完成 (stage S2)",
+        summary="内分泌科—内分泌检查完成 (stage S2)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -97,7 +97,7 @@ def bp_diagnosis(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国糖尿病防治指南（2024版）", "ADA Standards of Care in Diabetes"]
     rules = _agent.search_rules("内分泌科")
     return _agent.clinical_result(
-        summary=f"内分泌科—疾病诊断完成 (stage S3)",
+        summary="内分泌科—疾病诊断完成 (stage S3)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -124,7 +124,7 @@ def bp_plan(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国糖尿病防治指南（2024版）", "ADA Standards of Care in Diabetes"]
     rules = _agent.search_rules("内分泌科")
     return _agent.clinical_result(
-        summary=f"内分泌科—治疗计划完成 (stage S4a)",
+        summary="内分泌科—治疗计划完成 (stage S4a)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -151,7 +151,7 @@ def bp_treatment(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国糖尿病防治指南（2024版）", "ADA Standards of Care in Diabetes"]
     rules = _agent.search_rules("内分泌科")
     return _agent.clinical_result(
-        summary=f"内分泌科—治疗执行完成 (stage S4b)",
+        summary="内分泌科—治疗执行完成 (stage S4b)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -178,7 +178,7 @@ def bp_followup(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国糖尿病防治指南（2024版）", "ADA Standards of Care in Diabetes"]
     rules = _agent.search_rules("内分泌科")
     return _agent.clinical_result(
-        summary=f"内分泌科—慢病随访完成 (stage S5)",
+        summary="内分泌科—慢病随访完成 (stage S5)",
         patient=p,
         guidelines=guides,
         rules=rules,

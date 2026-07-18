@@ -94,16 +94,22 @@ def evaluate(
     # 简化百分位判断 (实际应查标准生长曲线表)
     weight_status = "正常"
     if age_y < 5:
-        if weight_kg < 10: weight_status = "偏低"
-        elif weight_kg > 22: weight_status = "偏高"
+        if weight_kg < 10:
+            weight_status = "偏低"
+        elif weight_kg > 22:
+            weight_status = "偏高"
     else:
-        if weight_kg < 18: weight_status = "偏低"
-        elif weight_kg > 50: weight_status = "偏高"
+        if weight_kg < 18:
+            weight_status = "偏低"
+        elif weight_kg > 50:
+            weight_status = "偏高"
 
     height_status = "正常"
     if age_y < 5:
-        if height_cm < 85: height_status = "偏低"
-        elif height_cm > 115: height_status = "偏高"
+        if height_cm < 85:
+            height_status = "偏低"
+        elif height_cm > 115:
+            height_status = "偏高"
 
     return {
         "patient_id": patient_id,

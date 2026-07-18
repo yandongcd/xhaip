@@ -140,8 +140,6 @@ def check(
     if tpn_prescription:
         total_energy = tpn_prescription.get("total_energy_kcal", 0)
         amino_acid_g = tpn_prescription.get("amino_acid_grams", 0)
-        glucose_g = tpn_prescription.get("glucose_grams", 0)
-        fat_g = tpn_prescription.get("fat_grams", 0)
 
         if total_energy:
             per_kg = total_energy / weight_kg if weight_kg > 0 else 0

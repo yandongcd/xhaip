@@ -233,11 +233,16 @@ def predict_complications(
 
     # ── DVT/PE 风险 (Caprini 简化) ──
     dvt_score = 1  # base: 大手术
-    if age >= 75: dvt_score += 2
-    if age >= 60: dvt_score += 1
-    if labs.get("bmi", 22) > 30: dvt_score += 1
-    if any(c in " ".join(conditions) for c in ["卧床", "瘫痪", "immobil"]): dvt_score += 1
-    if any(c in " ".join(conditions) for c in ["dvt史", "pe史", "血栓"]): dvt_score += 3
+    if age >= 75:
+        dvt_score += 2
+    if age >= 60:
+        dvt_score += 1
+    if labs.get("bmi", 22) > 30:
+        dvt_score += 1
+    if any(c in " ".join(conditions) for c in ["卧床", "瘫痪", "immobil"]):
+        dvt_score += 1
+    if any(c in " ".join(conditions) for c in ["dvt史", "pe史", "血栓"]):
+        dvt_score += 3
     dvt_risk = "high" if dvt_score >= 5 else "moderate" if dvt_score >= 3 else "low"
 
     # ── 感染风险 ──
@@ -267,10 +272,14 @@ def predict_complications(
 
     # ── 跌倒/谵妄风险 ──
     fall_score = 0
-    if age >= 80: fall_score += 2
-    if age >= 70: fall_score += 1
-    if any(c in " ".join(conditions) for c in ["痴呆", "认知", "dementia"]): fall_score += 2
-    if any(c in " ".join(conditions) for c in ["镇静", "sedative", "催眠"]): fall_score += 1
+    if age >= 80:
+        fall_score += 2
+    if age >= 70:
+        fall_score += 1
+    if any(c in " ".join(conditions) for c in ["痴呆", "认知", "dementia"]):
+        fall_score += 2
+    if any(c in " ".join(conditions) for c in ["镇静", "sedative", "催眠"]):
+        fall_score += 1
     fall_risk = "high" if fall_score >= 4 else "moderate" if fall_score >= 2 else "low"
 
     risks = {"dvt": dvt_risk, "infection": infection_risk, "cardiac": cardiac_risk, "fall_delirium": fall_risk}

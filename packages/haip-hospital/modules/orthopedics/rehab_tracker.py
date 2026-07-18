@@ -235,11 +235,11 @@ def print_rehab_plan(plan: dict) -> None:
         marker = "▶ " if phase.get("is_current") else ("✅ " if phase.get("is_completed") else "  ")
         print(f"{marker}{phase['phase']} ({phase['location']})")
         print(f"    目标: {', '.join(phase['goals'])}")
-        print(f"    干预措施:")
+        print("    干预措施:")
         for i in phase["interventions"]:
             print(f"      - {i}")
         if phase.get("precautions"):
-            print(f"    注意事项:")
+            print("    注意事项:")
             for p in phase["precautions"]:
                 print(f"      ! {p}")
         print()

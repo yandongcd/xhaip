@@ -24,7 +24,7 @@ def get_department_metrics(**kwargs) -> dict:
     alerts = vitals.get("alerts", [])
 
     return _agent.clinical_result(
-        summary=f"全院指标数据中心 — Get Department Metrics",
+        summary="全院指标数据中心 — Get Department Metrics",
         patient=patient,
         guidelines=guides[:3],
         alerts=alerts,
@@ -43,7 +43,7 @@ def get_quality_metrics(**kwargs) -> dict:
     alerts = vitals.get("alerts", [])
 
     return _agent.clinical_result(
-        summary=f"全院指标数据中心 — Get Quality Metrics",
+        summary="全院指标数据中心 — Get Quality Metrics",
         patient=patient,
         guidelines=guides[:3],
         alerts=alerts,
@@ -62,7 +62,7 @@ def get_efficiency_metrics(**kwargs) -> dict:
     alerts = vitals.get("alerts", [])
 
     return _agent.clinical_result(
-        summary=f"全院指标数据中心 — Get Efficiency Metrics",
+        summary="全院指标数据中心 — Get Efficiency Metrics",
         patient=patient,
         guidelines=guides[:3],
         alerts=alerts,

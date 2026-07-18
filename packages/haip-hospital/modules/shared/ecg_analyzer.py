@@ -486,7 +486,7 @@ def _extract_image_features(arr, binary, ecg_info=None) -> dict[str, Any]:
 
 def _estimate_lead_count(binary) -> int:
     """Estimate number of lead rows in ECG image."""
-    h = binary.shape[0]
+    binary.shape[0]
     row_proj = np.mean(binary, axis=1)
     gaps = 0
     in_gap = False

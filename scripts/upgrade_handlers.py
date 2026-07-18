@@ -1,5 +1,6 @@
 """Batch-upgrade all handler modules from KnowledgeAgent stubs to RuleEngine-driven."""
-import os, re
+import os
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent

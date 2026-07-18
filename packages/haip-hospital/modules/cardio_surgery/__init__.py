@@ -25,15 +25,23 @@ def evaluate(
     labs = labs or {}
     euroscore = 0
 
-    if age >= 60: euroscore += 1
-    if age >= 70: euroscore += 1
-    if gender == "F": euroscore += 1
+    if age >= 60:
+        euroscore += 1
+    if age >= 70:
+        euroscore += 1
+    if gender == "F":
+        euroscore += 1
     cr = labs.get("creatinine", 80)
-    if cr > 200: euroscore += 2
-    elif cr > 133: euroscore += 1
-    if any(c in " ".join(conditions) for c in ["copd", "慢性肺病"]): euroscore += 1
-    if any(c in " ".join(conditions) for c in ["糖尿病", "dm"]): euroscore += 1
-    if any(c in " ".join(conditions) for c in ["心衰", "chf", "nyha iii", "nyha iv"]): euroscore += 2
+    if cr > 200:
+        euroscore += 2
+    elif cr > 133:
+        euroscore += 1
+    if any(c in " ".join(conditions) for c in ["copd", "慢性肺病"]):
+        euroscore += 1
+    if any(c in " ".join(conditions) for c in ["糖尿病", "dm"]):
+        euroscore += 1
+    if any(c in " ".join(conditions) for c in ["心衰", "chf", "nyha iii", "nyha iv"]):
+        euroscore += 2
     if any(c in " ".join(conditions) for c in ["心梗", "mi"]) and "recent" in " ".join(conditions):
         euroscore += 2
 

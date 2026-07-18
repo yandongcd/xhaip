@@ -5,7 +5,7 @@ sys.path.insert(0, "packages/haip-core")
 print("=== P4: Data Integration ===")
 
 # FHIR Models
-from haip.fhir.models import FHIRPatient, FHIRObservation, FHIRBundle, FHIR_RESOURCE_CLASSES
+from haip.fhir.models import FHIRPatient, FHIR_RESOURCE_CLASSES
 p = FHIRPatient(id="P001", name=[{"text": "Zhang"}])
 print(f"FHIR Models OK: Patient id={p.id}, resources={len(FHIR_RESOURCE_CLASSES)}")
 
@@ -33,7 +33,7 @@ print(f"HIS Registry OK: tenants={registry.list_tenants()}")
 
 print("\n=== P5: Multi-Tenancy ===")
 
-from haip.tenants import TenantManager, get_tenant_manager, TenantStatus
+from haip.tenants import get_tenant_manager
 mgr = get_tenant_manager()
 t = mgr.create(name="test-hospital", hospital_name="Test Hospital")
 print(f"Tenants OK: id={t.id}, name={t.name}, status={t.status.value}")
@@ -42,7 +42,7 @@ print(f"Tenant suspend OK: status={mgr.get(t.id).status.value}")
 
 print("\n=== P6: Licensing ===")
 
-from haip.licensing import LicenseManager, generate_license, write_license_file
+from haip.licensing import LicenseManager, generate_license
 lic_data = generate_license(
     customer_name="Test Hospital",
     customer_code="TH001",
@@ -53,7 +53,8 @@ lic_data = generate_license(
 print(f"License Gen OK: customer={lic_data['customer_name']}, features={lic_data['features']}")
 
 # Write temp license and validate
-import tempfile, os
+import tempfile
+import os
 with tempfile.NamedTemporaryFile(mode="w", suffix=".key", delete=False) as f:
     import json
     json.dump(lic_data, f)
@@ -66,7 +67,7 @@ os.unlink(tmp_license)
 
 print("\n=== Data Validation ===")
 
-from haip.validation import validate_patient, validate_patients
+from haip.validation import validate_patient
 test_patient = {"patient_id": "P001", "age": 62, "gender": "M", "department": "ortho", "diagnosis": "Fracture"}
 errors = validate_patient(test_patient)
 print(f"Validate OK: errors={len(errors)}")

@@ -1,5 +1,6 @@
 """生成 ortho UI + 验证 HTML 输出。"""
-import re, sys
+import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -24,7 +25,8 @@ with open(ROOT / "packages" / "haip-core" / "haip" / "ui_ortho.html", "w", encod
 labels = re.findall(r'class="tab[^"]*"[^>]*>([^<]+)', h)
 print(f"Generated: {len(h)} chars")
 print(f"Labels ({len(labels)}): {', '.join(labels[:15])}")
-print(f"All Chinese: {all(any('\u4e00' <= c <= '\u9fff' for c in l) for l in labels)}")
+_lo, _hi = chr(0x4E00), chr(0x9FFF)
+print(f"All Chinese: {all(any(_lo <= c <= _hi for c in lbl) for lbl in labels)}")
 print(f"Has callTool JS: {'callTool' in h}")
 print(f"Has Guard JS: {'runGuard' in h}")
 print(f"Has API path: {'/api/call' in h}")

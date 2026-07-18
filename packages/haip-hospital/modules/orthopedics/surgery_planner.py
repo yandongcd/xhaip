@@ -34,12 +34,14 @@ def _load_surgery_data() -> dict[str, Any]:
     if _SURGERY_DATA_CACHE is not None:
         return _SURGERY_DATA_CACHE
     try:
-        from pathlib import Path; import yaml
+        from pathlib import Path
+        import yaml
         p = Path(__file__).resolve().parents[6] / "assets" / "rules" / "surgery_type_rules.yaml"
         if p.exists():
             _SURGERY_DATA_CACHE = yaml.safe_load(p.read_text(encoding="utf-8"))
             return _SURGERY_DATA_CACHE
-    except Exception: pass
+    except Exception:
+        pass
     _SURGERY_DATA_CACHE = {}
     return _SURGERY_DATA_CACHE
 

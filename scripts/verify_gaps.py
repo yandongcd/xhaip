@@ -3,11 +3,11 @@ import sys
 sys.path.insert(0, "packages/haip-core")
 
 print("=== G1: Hospital Data Models ===")
-from haip.data.models import ALL_MODELS, PatientInfo, LabResult, VitalSigns
+from haip.data.models import ALL_MODELS
 print(f"ORM Models OK: {len(ALL_MODELS)} tables (HIS/EMR/LIS/PACS/NIS)")
 
 print("\n=== G2: OPA Policy Engine ===")
-from haip.policy import PolicyEngine, get_policy_engine
+from haip.policy import get_policy_engine
 engine = get_policy_engine()
 
 # Test: same department
@@ -39,7 +39,6 @@ print(f"  Rules: {len(engine.list_rules())}")
 
 print("\n=== G3: Clinical Rules Engine ===")
 from haip.rules_engine import evaluate, EvaluationContext, Rule, Certainty, evaluate_rules
-from haip.rules_engine.governance import create_change_request
 from haip.rules_engine.impact import analyze_impact
 
 # Expression evaluator
@@ -65,7 +64,7 @@ impact = analyze_impact("NICE-NG37", "2022.1", "2024.2", [
 print(f"  Impact OK: {impact.source_id}, affected={len(impact.affected_rules)}, summary={impact.summary}")
 
 print("\n=== G8: LLM Gateway ===")
-from haip.llm.gateway import LLMGateway, get_llm_gateway
+from haip.llm.gateway import get_llm_gateway
 gw = get_llm_gateway()
 print(f"  LLM Gateway OK: config={gw.config.primary_provider}, cache_size={len(gw._cache)}")
 

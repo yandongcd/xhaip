@@ -44,7 +44,7 @@ def bp_reception(**kwargs) -> dict:
     ]
 
     if age >= 40:
-        findings.insert(0, f"40 岁以上: 启动四高(血压/血糖/血脂/尿酸)+肿瘤早筛+心血管风险评估")
+        findings.insert(0, "40 岁以上: 启动四高(血压/血糖/血脂/尿酸)+肿瘤早筛+心血管风险评估")
 
     guides = _agent.search_guidelines(dx) or _GUIDELINES
     rules = _agent.search_rules("健康管理")
@@ -65,8 +65,6 @@ def bp_exam(**kwargs) -> dict:
         return _clinical_error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
     dx = p.get("diagnosis", "")
-    age = int(p.get("age", 45) or 45)
-    gender = p.get("gender", "M")
 
     findings = [
         "体格检查: 身高/体重/BMI/腰围(男<85/女<80cm) + BP + 脉搏 + 视力/听力(初筛)",
@@ -74,7 +72,7 @@ def bp_exam(**kwargs) -> dict:
         "肿瘤标志物(年龄/性别/风险): CEA / AFP(肝癌 乙肝携带者) / CA19-9 / CA125(卵巢 女性) / PSA(前列腺 男性>50y)",
         "影像: 胸部低剂量CT(LDCT 50-80y+30包年吸烟史=>NLST) / 腹部超声(肝/胆/胰/脾/肾) / 乳腺超声/钼靶(女性>=40y)",
         "功能检查: 心电图(ECG) + 肺功能(spirometry 吸烟/COPD风险) + 骨密度(DXA >=65y女性/>=70y男性)",
-        f"接种疫苗评估: 流感/肺炎/带状疱疹(>=50y)/HPV(9-45y女性+男性)/乙肝(未免疫者) + Tdap(每10y)",
+        "接种疫苗评估: 流感/肺炎/带状疱疹(>=50y)/HPV(9-45y女性+男性)/乙肝(未免疫者) + Tdap(每10y)",
     ]
 
     guides = _agent.search_guidelines(dx) or _GUIDELINES
@@ -101,7 +99,6 @@ def bp_diagnosis(**kwargs) -> dict:
     sbp = float(labs.get("SBP", 130) or 130)
     tc = float(labs.get("TC", 5.0) or 5.0)
     hdl = float(labs.get("HDL", 1.2) or 1.2)
-    gender = p.get("gender", "M")
 
     findings = [
         "异常指标汇总: 重点关注(高血压/高血糖/高血脂/高尿酸/肝功能/肾功能/贫血/肿瘤标志物/影像异常)",

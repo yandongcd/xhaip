@@ -1,5 +1,6 @@
 """Sort AGENTS in demo HTML by maturity score."""
-import sys, re, json
+import sys
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent

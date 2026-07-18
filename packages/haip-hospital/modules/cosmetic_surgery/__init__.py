@@ -72,7 +72,7 @@ def bp_diag(**kwargs) -> dict:
     ]
 
     if "乳房" in dx:
-        findings.insert(0, f"乳房评估: Baker 分型 + 乳房下垂分度")
+        findings.insert(0, "乳房评估: Baker 分型 + 乳房下垂分度")
     if "面部" in dx:
         findings.insert(0, "面部年轻化评估: 上面部(额纹/眉间纹) + 中面部(法令纹/苹果肌) + 下面部(木偶纹/下颌缘)")
 

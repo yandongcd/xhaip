@@ -113,7 +113,8 @@ class TestGuardIntegration:
 
     def test_loop_result_has_guard_field(self):
         """call_with_loop result contains guard field."""
-        import haip.llm, haip.agent
+        import haip.llm
+        import haip.agent
 
         # project_root = xhaip root (4 levels up from haip-core/tests)
         root = project_root.parent  # xhaip root

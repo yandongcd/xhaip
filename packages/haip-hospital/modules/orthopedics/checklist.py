@@ -14,10 +14,8 @@ Rule items are ortho-specific (11 items based on NICE NG37 / AAOS / NHC guidelin
 
 from __future__ import annotations
 
-import sys
 
-from agents.domains.haip.core.triage_engine import evaluate_checklist, extract_keywords_from_patient
-from agents.domains.haip.rules.core.knowledge import check_range
+from agents.domains.haip.core.triage_engine import evaluate_checklist
 from agents.domains.haip.rules.core.guidelines import available_guidelines
 
 
@@ -113,7 +111,7 @@ def generate_checklist(patient_case: str) -> dict:
 
 def print_checklist(result: dict) -> None:
     """Pretty-print the checklist result to stdout."""
-    header = f"===== 分级诊疗 Checklist ====="
+    header = "===== 分级诊疗 Checklist ====="
     print(header)
     print(f"病例: {result['patient_case'][:80]}{'...' if len(result['patient_case']) > 80 else ''}")
     print()

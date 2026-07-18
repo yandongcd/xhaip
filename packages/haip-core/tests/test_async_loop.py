@@ -163,7 +163,7 @@ class TestInvocationContext:
         s = AgentSession(id="test", state={"remove_me": "bye"})
         ctx = InvocationContext(session=s, invocation_id="inv1")
         ctx.delete_state("remove_me")
-        evt = Event.assistant_message("ok", "inv1")
+        Event.assistant_message("ok", "inv1")
         ctx.session.apply_delta(ctx._pending_delta)
         assert "remove_me" not in s.state
 

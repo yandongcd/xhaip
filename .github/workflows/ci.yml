@@ -31,7 +31,7 @@ jobs:
       - name: Install dependencies
         run: pip install -e "packages/haip-core[dev]"
       - name: Ruff check
-        run: python -m ruff check packages/haip-core/haip/ tests/
+        run: python -m ruff check .
       - name: MyPy check
         run: python -m mypy packages/haip-core/haip/ --show-error-codes --no-error-summary
 

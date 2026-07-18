@@ -1,6 +1,5 @@
 """Generate docker-compose from agent YAML definitions."""
 import yaml
-import os
 from pathlib import Path
 
 DEFS_DIR = Path("packages/haip-hospital/agents/definitions")

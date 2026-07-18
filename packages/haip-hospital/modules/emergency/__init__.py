@@ -53,38 +53,55 @@ _ANTIDOTES: dict[str, dict] = {
 def _mews_pulse(hr: float) -> int:
     if hr is None or hr <= 0:
         return 0
-    if hr <= 40:   return 3
-    if hr <= 50:   return 1
-    if hr <= 100:  return 0
-    if hr <= 110:  return 1
-    if hr <= 129:  return 2
+    if hr <= 40:
+        return 3
+    if hr <= 50:
+        return 1
+    if hr <= 100:
+        return 0
+    if hr <= 110:
+        return 1
+    if hr <= 129:
+        return 2
     return 3  # >=130
 
 def _mews_sbp(sbp: float) -> int:
     if sbp is None or sbp <= 0:
         return 0
-    if sbp <= 70:   return 3
-    if sbp <= 80:   return 2
-    if sbp <= 100:  return 1
-    if sbp <= 199:  return 0
+    if sbp <= 70:
+        return 3
+    if sbp <= 80:
+        return 2
+    if sbp <= 100:
+        return 1
+    if sbp <= 199:
+        return 0
     return 2  # >=200
 
 def _mews_rr(rr: float) -> int:
     if rr is None or rr <= 0:
         return 0
-    if rr <= 8:     return 3
-    if rr <= 11:    return 1  # actually 9-11 but we simplify; <9 already handled
-    if rr <= 20:    return 0
-    if rr <= 24:    return 2
-    if rr <= 29:    return 2  # 21-29 → 2 in some scales
+    if rr <= 8:
+        return 3
+    if rr <= 11:
+        return 1  # actually 9-11 but we simplify; <9 already handled
+    if rr <= 20:
+        return 0
+    if rr <= 24:
+        return 2
+    if rr <= 29:
+        return 2  # 21-29 → 2 in some scales
     return 3  # >=30
 
 def _mews_temp(temp: float) -> int:
     if temp is None or temp <= 0:
         return 0
-    if temp <= 35.0:  return 3
-    if temp <= 36.0:  return 1
-    if temp <= 38.4:  return 0
+    if temp <= 35.0:
+        return 3
+    if temp <= 36.0:
+        return 1
+    if temp <= 38.4:
+        return 0
     return 2  # >=38.5
 
 def _mews_avpu(avpu: str) -> int:
@@ -92,10 +109,14 @@ def _mews_avpu(avpu: str) -> int:
     if not avpu:
         return 0
     a = avpu.upper().strip()
-    if a == "A": return 0
-    if a == "V": return 1
-    if a == "P": return 2
-    if a == "U": return 3
+    if a == "A":
+        return 0
+    if a == "V":
+        return 1
+    if a == "P":
+        return 2
+    if a == "U":
+        return 3
     return 0
 
 def calculate_mews(pulse: float = None, sbp: float = None, rr: float = None,
@@ -130,9 +151,12 @@ def _news2_spo2(spo2: float, on_o2: bool = False) -> int:
     if spo2 is None or spo2 <= 0:
         return 0
     # Scale 1 for COPD with target 88-92%; Scale 2 as default
-    if spo2 <= 83:   return 3
-    if spo2 <= 85:   return 2
-    if spo2 <= 87:   return 1
+    if spo2 <= 83:
+        return 3
+    if spo2 <= 85:
+        return 2
+    if spo2 <= 87:
+        return 1
     if spo2 <= 92:
         return 0 if on_o2 else 0  # on_o2 handled separately
     if spo2 <= 93:
@@ -146,40 +170,62 @@ def _news2_spo2_scale2(spo2: float) -> int:
     """NEWS2 Scale 2 — default for non-COPD."""
     if spo2 is None or spo2 <= 0:
         return 0
-    if spo2 <= 83:   return 3
-    if spo2 <= 85:   return 2
-    if spo2 <= 87:   return 1
-    if spo2 <= 92:   return 0
-    if spo2 <= 93:   return 0
-    if spo2 <= 95:   return 1
+    if spo2 <= 83:
+        return 3
+    if spo2 <= 85:
+        return 2
+    if spo2 <= 87:
+        return 1
+    if spo2 <= 92:
+        return 0
+    if spo2 <= 93:
+        return 0
+    if spo2 <= 95:
+        return 1
     return 2  # >=96 — note: ≥96 on air is 1 in some versions
 
 def _news2_o2_supplement(on_o2: bool) -> int:
     return 2 if on_o2 else 0
 
 def _news2_rr(rr: float) -> int:
-    if rr is None or rr <= 0:  return 0
-    if rr <= 8:    return 3
-    if rr <= 11:   return 1
-    if rr <= 20:   return 0
-    if rr <= 24:   return 2
+    if rr is None or rr <= 0:
+        return 0
+    if rr <= 8:
+        return 3
+    if rr <= 11:
+        return 1
+    if rr <= 20:
+        return 0
+    if rr <= 24:
+        return 2
     return 3  # >=25
 
 def _news2_sbp(sbp: float) -> int:
-    if sbp is None or sbp <= 0:  return 0
-    if sbp <= 90:   return 3
-    if sbp <= 100:  return 2
-    if sbp <= 110:  return 1
-    if sbp <= 219:  return 0
+    if sbp is None or sbp <= 0:
+        return 0
+    if sbp <= 90:
+        return 3
+    if sbp <= 100:
+        return 2
+    if sbp <= 110:
+        return 1
+    if sbp <= 219:
+        return 0
     return 3  # >=220
 
 def _news2_pulse(hr: float) -> int:
-    if hr is None or hr <= 0:    return 0
-    if hr <= 40:   return 3
-    if hr <= 50:   return 1
-    if hr <= 90:   return 0
-    if hr <= 110:  return 1
-    if hr <= 130:  return 2
+    if hr is None or hr <= 0:
+        return 0
+    if hr <= 40:
+        return 3
+    if hr <= 50:
+        return 1
+    if hr <= 90:
+        return 0
+    if hr <= 110:
+        return 1
+    if hr <= 130:
+        return 2
     return 3  # >=131
 
 def _news2_consciousness(avpu: str) -> int:
@@ -189,11 +235,16 @@ def _news2_consciousness(avpu: str) -> int:
     return 0 if avpu.upper().strip() == "A" else 3
 
 def _news2_temp(temp: float) -> int:
-    if temp is None or temp <= 0: return 0
-    if temp <= 35.0:  return 3
-    if temp <= 36.0:  return 1
-    if temp <= 38.0:  return 0
-    if temp <= 39.0:  return 1
+    if temp is None or temp <= 0:
+        return 0
+    if temp <= 35.0:
+        return 3
+    if temp <= 36.0:
+        return 1
+    if temp <= 38.0:
+        return 0
+    if temp <= 39.0:
+        return 1
     return 2  # >=39.1
 
 def calculate_news2(pulse: float = None, sbp: float = None, rr: float = None,
@@ -537,11 +588,6 @@ def bp_icu(**kwargs) -> dict:
     if icu_triggered:
         findings.insert(0, "WARNING: ICU-level scoring triggered (MEWS≥7 or NEWS2≥7)")
 
-    recommendations = [
-        "q1h vitals + MEWS/NEWS2",
-        "ABG q4h if on ventilator",
-        "Daily SBT (spontaneous breathing trial) if intubated",
-    ]
 
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or _GUIDELINES
     rules = _agent.search_rules("急诊科")
@@ -566,17 +612,7 @@ def bp_transfer(**kwargs) -> dict:
                             v["spo2"], on_o2=False, avpu=v["avpu"])
 
     stable_for_transfer = mews["mews"] <= 2 and news2["news2"] <= 2
-    findings = [
-        f"MEWS stability: {mews['mews']}/15 {'✅ stable' if mews['mews'] <= 2 else '⚠️ monitor'}",
-        f"NEWS2 stability: {news2['news2']}/20 {'✅ stable' if news2['news2'] <= 2 else '⚠️ monitor'}",
-        "转运风险评估", "接收科室对接", "家属沟通",
-    ]
 
-    recommendations = [
-        "Transfer checklist verified" if stable_for_transfer else "Defer transfer — scoring unstable",
-        "Handoff communication (SBAR)",
-        "Portable monitor + O2 + emergency kit for transfer",
-    ]
 
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or _GUIDELINES
     rules = _agent.search_rules("急诊科")
@@ -598,10 +634,6 @@ def bp_followup(**kwargs) -> dict:
 
     mews = calculate_mews(v["pulse"], v["sbp"], v["rr"], v["temp"], v["avpu"])
 
-    findings = [
-        f"MEWS baseline: {mews['mews']}/15",
-        "神经功能恢复评估", "器官功能随访", "复发风险分层", "用药依从性评估",
-    ]
 
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or _GUIDELINES
     rules = _agent.search_rules("急诊科")

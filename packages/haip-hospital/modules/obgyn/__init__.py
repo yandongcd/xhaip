@@ -57,7 +57,8 @@ def _gestational_age_calculator(lmp_date: str) -> dict:
 
 def _estimate_fetal_weight(weeks: int) -> int:
     """Hadlock formula estimated fetal weight (crude)."""
-    if weeks < 20: return 0
+    if weeks < 20:
+        return 0
     return int(1000 * (2.5 ** ((weeks - 20) / 10.0)))
 
 
@@ -65,12 +66,8 @@ def _preeclampsia_criteria(sbp: int, dbp: int, proteinuria_mg24h: float = 0,
                            upc_ratio: float = 0, weeks: int = 28, plt: float = 150,
                            ast: float = 30, creatinine: float = 0.8) -> dict:
     """ACOG criteria for preeclampsia and severity classification."""
-    bp_ok = sbp < 140 and dbp < 90
     hypertensive = sbp >= 140 or dbp >= 90
-    proteinuric = proteinuria_mg24h >= 300 or upc_ratio >= 0.3
     severe_bp = sbp >= 160 or dbp >= 110
-    hellp = plt < 100 and ast > 70
-    renal_insufficiency = creatinine > 1.1
 
     if not hypertensive or weeks < 20:
         return {
@@ -81,11 +78,16 @@ def _preeclampsia_criteria(sbp: int, dbp: int, proteinuria_mg24h: float = 0,
         }
 
     severe_features = []
-    if severe_bp: severe_features.append(f"SBP≥160 or DBP≥110 ({sbp}/{dbp})")
-    if plt < 100: severe_features.append(f"PLT<100K ({plt}K) → HELLP risk")
-    if ast > 70: severe_features.append(f"AST>70 ({ast}) → HELLP risk")
-    if creatinine > 1.1: severe_features.append(f"Cr>{1.1} ({creatinine}) → renal impairment")
-    if proteinuria_mg24h >= 5000: severe_features.append(f"Proteinuria≥5g/24h")
+    if severe_bp:
+        severe_features.append(f"SBP≥160 or DBP≥110 ({sbp}/{dbp})")
+    if plt < 100:
+        severe_features.append(f"PLT<100K ({plt}K) → HELLP risk")
+    if ast > 70:
+        severe_features.append(f"AST>70 ({ast}) → HELLP risk")
+    if creatinine > 1.1:
+        severe_features.append(f"Cr>{1.1} ({creatinine}) → renal impairment")
+    if proteinuria_mg24h >= 5000:
+        severe_features.append("Proteinuria≥5g/24h")
 
     is_hellp = plt < 100 and ast > 70
     is_severe = bool(severe_features)
@@ -132,15 +134,12 @@ def _labor_stage_assessment(cervical_dilation: float, effacement_pct: int = 0,
     """Assess labor stage based on cervical exam and contraction pattern."""
     if cervical_dilation >= 10:
         stage = "Stage 2 (Pushing)"
-        duration_estimate = "Nulliparous: ≤3h (≤4h with epidural); Multiparous: ≤2h (≤3h with epidural)"
         action = "Active pushing; monitor FHR q5-15min; prepare for delivery"
     elif cervical_dilation >= 6:
         stage = "Stage 1 — Active Phase"
-        progress = f"Dilation {cervical_dilation}cm; expected ≥1.2cm/h (nullip) or ≥1.5cm/h (multip)"
         action = "Monitor progress; amniotomy/oxytocin if arrest; pain management"
     elif cervical_dilation >= 0:
         stage = "Stage 1 — Latent Phase"
-        progress = f"Dilation {cervical_dilation}cm; effacement {effacement_pct}%"
         action = "Expectant management; may be prolonged (≤20h nullip, ≤14h multip)"
     else:
         stage = "Not in labor"
@@ -305,7 +304,7 @@ def bp_exam(**kwargs) -> dict:
         "GBS筛查 (35-37w): 阴道+直肠拭子培养",
     ]
     if "妊娠期" in dx:
-        findings.insert(0, f"妊娠期疾病专项检查方案")
+        findings.insert(0, "妊娠期疾病专项检查方案")
     recommendations = [
         bishop["recommendation"],
         f"Cervical screening: {screen['recommendation']} — {screen['interval']}",
@@ -461,7 +460,7 @@ def bp_nursing(**kwargs) -> dict:
     guides = _agent.search_guidelines(dx) or _GUIDELINES
     rules = _agent.search_rules("妇产科")
     return _agent.clinical_result(
-        summary=f"妇产科—产后护理 (stage S4b)",
+        summary="妇产科—产后护理 (stage S4b)",
         patient=p, guidelines=guides, rules=rules, alerts=vitals.get("alerts", []),
         findings=findings, recommendations=recommendations,
     )
@@ -480,7 +479,7 @@ def bp_followup(**kwargs) -> dict:
                                         labs.get("pap", "unknown"))
 
     findings = [
-        f"42天复查: 子宫复旧/伤口愈合/盆地功能评估",
+        "42天复查: 子宫复旧/伤口愈合/盆地功能评估",
         f"Cervical screening: {screen['recommendation']} ({screen['interval']})",
         "盆底康复: Kegel训练 + 电刺激/生物反馈 (POP-Q评估)",
         "避孕指导: LARC(IUD/Implant)优先; 哺乳期可用单纯孕激素",
@@ -505,7 +504,7 @@ def bp_followup(**kwargs) -> dict:
     guides = _agent.search_guidelines(dx) or _GUIDELINES
     rules = _agent.search_rules("妇产科")
     return _agent.clinical_result(
-        summary=f"妇产科—产后随访 (stage S5)",
+        summary="妇产科—产后随访 (stage S5)",
         patient=p, guidelines=guides, rules=rules, alerts=vitals.get("alerts", []),
         findings=findings, recommendations=recommendations,
     )

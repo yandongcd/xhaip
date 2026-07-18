@@ -97,7 +97,7 @@ class TestConcurrentA2ACalls:
             for r in results:
                 assert r["status"] == "error", f"Expected error for unknown tool, got {r}"
                 assert "error" in r, f"Missing error field: {list(r.keys())}"
-                assert isinstance(r.get("error", ""), str), f"Error should be string"
+                assert isinstance(r.get("error", ""), str), "Error should be string"
         finally:
             list_all().clear()
             for name, p in saved.items():

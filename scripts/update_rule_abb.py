@@ -1,5 +1,6 @@
 """Final fix: add data_entities and missing guideline to remaining rules."""
-import os, yaml
+import os
+import yaml
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -21,8 +22,10 @@ MISSING_GUIDES = {
 updated = 0
 for root, dirs, files in os.walk(RULES_DIR):
     for fname in sorted(files):
-        if not fname.endswith('.yaml'): continue
-        if 'shared' in root or 'clinical_' not in root: continue
+        if not fname.endswith('.yaml'):
+            continue
+        if 'shared' in root or 'clinical_' not in root:
+            continue
         fpath = os.path.join(root, fname)
         
         try:
@@ -34,7 +37,8 @@ for root, dirs, files in os.walk(RULES_DIR):
         
         modified = False
         for doc in docs:
-            if not isinstance(doc, dict): continue
+            if not isinstance(doc, dict):
+                continue
             dept = doc.get('department', '')
             rtype = doc.get('rule_type', '')
             
@@ -51,7 +55,8 @@ for root, dirs, files in os.walk(RULES_DIR):
         if modified:
             with open(fpath, 'w', encoding='utf-8') as f:
                 for i, doc in enumerate(docs):
-                    if i > 0: f.write('---\n')
+                    if i > 0:
+                        f.write('---\n')
                     yaml.dump(doc, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
             updated += 1
 

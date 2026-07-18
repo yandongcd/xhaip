@@ -36,8 +36,8 @@ class TestUIRender:
         html = _render("orthopedic-surgery")
         labels = re.findall(r'class="tab[^"]*"[^>]*>([^<]+)', html)
         assert len(labels) >= 5
-        for l in labels:
-            assert any('\u4e00' <= c <= '\u9fff' for c in l), f"Label not Chinese: {l}"
+        for lbl in labels:
+            assert any('\u4e00' <= c <= '\u9fff' for c in lbl), f"Label not Chinese: {lbl}"
 
     def test_contains_js_functions(self):
         html = _render("pharmacy")

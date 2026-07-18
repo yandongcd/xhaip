@@ -555,8 +555,8 @@ class TestAuditEngineExtended:
             (project_root / "f2.txt").write_text("b", encoding="utf-8")
             engine = AuditEngine(str(project_root / ".audit"))
             engine.project_root = project_root
-            s1 = engine.snapshot("f1.txt", agent="test")
-            s2 = engine.snapshot("f2.txt", agent="test")
+            engine.snapshot("f1.txt", agent="test")
+            engine.snapshot("f2.txt", agent="test")
             snaps = engine.list_snapshots(limit=10)
             assert len(snaps) >= 2
 

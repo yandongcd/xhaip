@@ -53,7 +53,6 @@ class TestA2ALoopIntegration:
     def test_multi_step_with_real_tools(self):
         """LLM calls real antiemetic tools, multi-step reasoning."""
         import pytest
-        from haip.a2a import call
         
         self._inject_mock([
             ChatResponse(tool_calls=[

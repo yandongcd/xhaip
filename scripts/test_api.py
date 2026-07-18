@@ -1,4 +1,5 @@
-import json, urllib.request
+import json
+import urllib.request
 r = urllib.request.urlopen('http://127.0.0.1:8800/agents')
 data = json.loads(r.read())
 print(f'Agents: {len(data)}')

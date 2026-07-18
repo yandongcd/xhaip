@@ -70,7 +70,6 @@ def bp_diag(**kwargs) -> dict:
         return _clinical_error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
     dx = p.get("diagnosis", "")
-    labs = p.get("lab_results", {})
 
     findings = [
         "阑尾炎: Alvarado 评分 >=7 => 手术 / 5-6 => 观察+CT / <4 => 排除",

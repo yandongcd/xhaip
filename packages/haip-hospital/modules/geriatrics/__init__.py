@@ -43,7 +43,7 @@ def bp_reception(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国老年医学临床诊疗指南（2023）", "老年髋部骨折围手术期衰弱护理管理专家共识"]
     rules = _agent.search_rules("老年病科")
     return _agent.clinical_result(
-        summary=f"老年病科—老年综合评估完成 (stage S1)",
+        summary="老年病科—老年综合评估完成 (stage S1)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -70,7 +70,7 @@ def bp_exam(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国老年医学临床诊疗指南（2023）", "老年髋部骨折围手术期衰弱护理管理专家共识"]
     rules = _agent.search_rules("老年病科")
     return _agent.clinical_result(
-        summary=f"老年病科—老年专项检查完成 (stage S2)",
+        summary="老年病科—老年专项检查完成 (stage S2)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -97,7 +97,7 @@ def bp_diagnosis(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国老年医学临床诊疗指南（2023）", "老年髋部骨折围手术期衰弱护理管理专家共识"]
     rules = _agent.search_rules("老年病科")
     return _agent.clinical_result(
-        summary=f"老年病科—老年综合征诊断完成 (stage S3)",
+        summary="老年病科—老年综合征诊断完成 (stage S3)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -124,7 +124,7 @@ def bp_plan(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国老年医学临床诊疗指南（2023）", "老年髋部骨折围手术期衰弱护理管理专家共识"]
     rules = _agent.search_rules("老年病科")
     return _agent.clinical_result(
-        summary=f"老年病科—综合干预完成 (stage S4a)",
+        summary="老年病科—综合干预完成 (stage S4a)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -151,7 +151,7 @@ def bp_treatment(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国老年医学临床诊疗指南（2023）", "老年髋部骨折围手术期衰弱护理管理专家共识"]
     rules = _agent.search_rules("老年病科")
     return _agent.clinical_result(
-        summary=f"老年病科—治疗执行完成 (stage S4b)",
+        summary="老年病科—治疗执行完成 (stage S4b)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -178,7 +178,7 @@ def bp_followup(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国老年医学临床诊疗指南（2023）", "老年髋部骨折围手术期衰弱护理管理专家共识"]
     rules = _agent.search_rules("老年病科")
     return _agent.clinical_result(
-        summary=f"老年病科—长期随访完成 (stage S5)",
+        summary="老年病科—长期随访完成 (stage S5)",
         patient=p,
         guidelines=guides,
         rules=rules,

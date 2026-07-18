@@ -39,7 +39,6 @@ def analyze_xray(
     comminution = findings.get("communition", False)
     medial_wall = findings.get("medial_wall", True)
     reverse_oblique = findings.get("reverse_oblique", False)
-    nsa = findings.get("neck_shaft_angle", 130)
 
     # Evans 分型
     evans_type = "unknown"
@@ -112,10 +111,8 @@ def parse_clinical_text(text: str) -> dict[str, Any]:
     输出: {"age": 78, "gender": "M", "diagnosis": "左股骨转子间骨折", ...}
     """
     result: dict[str, Any] = {}
-    text_lower = text.lower()
 
     # 年龄
-    import re
     m = re.search(r"(\d+)岁", text)
     if m:
         result["age"] = int(m.group(1))

@@ -10,8 +10,6 @@ immunotherapy irAE management, WHO cancer pain ladder.
 
 from __future__ import annotations
 
-from datetime import datetime
-from math import log
 
 from haip.togaf.knowledge_agent import KnowledgeAgent
 
@@ -101,18 +99,29 @@ def _fuzzy_tnm(t: str, n: str, m: str, cancer_type: str) -> str:
     t_val = int("".join(c for c in t if c.isdigit()) or "1")
     n_val = int("".join(c for c in n if c.isdigit()) or "0")
     if cancer_type == "breast":
-        if t_val <= 2 and n_val == 0: return "I"
-        if t_val <= 2 and n_val == 1: return "IIA"
-        if t_val == 3 and n_val <= 1: return "IIB"
-        if n_val == 2: return "IIIA"
-        if t_val == 4: return "IIIB"
-        if n_val == 3: return "IIIC"
+        if t_val <= 2 and n_val == 0:
+            return "I"
+        if t_val <= 2 and n_val == 1:
+            return "IIA"
+        if t_val == 3 and n_val <= 1:
+            return "IIB"
+        if n_val == 2:
+            return "IIIA"
+        if t_val == 4:
+            return "IIIB"
+        if n_val == 3:
+            return "IIIC"
     else:
-        if t_val <= 1 and n_val == 0: return "I"
-        if t_val <= 2 and n_val == 0: return "II"
-        if n_val == 1: return "IIIA"
-        if n_val == 2: return "IIIB"
-        if t_val == 4: return "IIIA"
+        if t_val <= 1 and n_val == 0:
+            return "I"
+        if t_val <= 2 and n_val == 0:
+            return "II"
+        if n_val == 1:
+            return "IIIA"
+        if n_val == 2:
+            return "IIIB"
+        if t_val == 4:
+            return "IIIA"
     return "Unknown"
 
 
@@ -180,7 +189,7 @@ def _ctcae_toxicity(tox_type: str, grade: int, anc: float = None, plt: float = N
         detail = {1: f"PLT {plt}K (75-<LLN)", 2: f"PLT {plt}K (50-<75)", 3: f"PLT {plt}K (25-<50)",
                   4: f"PLT {plt}K (<25 — SEVERE)"}.get(grade, "Unknown")
         if grade >= 3:
-            emergencies.append(f"PLT<50K → 出血风险, 备血小板; PLT<10K → 预防性输注")
+            emergencies.append("PLT<50K → 出血风险, 备血小板; PLT<10K → 预防性输注")
     elif tox_type == "febrile_neutropenia" and anc is not None and temp is not None:
         if anc < 500 and temp >= 38.3:
             detail = f"FEBRILE NEUTROPENIA: ANC {anc}, Temp {temp}°C — EMERGENCY"
@@ -241,7 +250,8 @@ def bp_reception(**kwargs) -> dict:
     cancer_type = "lung"
     for ct in ["liver", "breast", "colorectal", "lung"]:
         if ct in dx.lower():
-            cancer_type = ct; break
+            cancer_type = ct
+            break
     tnm_data = p.get("tnm", p.get("staging", {}))
     tnm = _tnm_stage(tnm_data.get("t", "T2"), tnm_data.get("n", "N0"),
                      tnm_data.get("m", "M0"), cancer_type)
@@ -291,7 +301,9 @@ def bp_exam(**kwargs) -> dict:
     dx = p.get("diagnosis", "")
     cancer_type = "lung"
     for ct in ["liver", "breast", "colorectal", "lung"]:
-        if ct in dx.lower(): cancer_type = ct; break
+        if ct in dx.lower():
+            cancer_type = ct
+            break
 
     # ── Injected RECIST baseline ──
     baseline = labs.get("target_sum_baseline", 0)
@@ -338,7 +350,9 @@ def bp_diagnosis(**kwargs) -> dict:
     dx = p.get("diagnosis", "")
     cancer_type = "lung"
     for ct in ["liver", "breast", "colorectal", "lung"]:
-        if ct in dx.lower(): cancer_type = ct; break
+        if ct in dx.lower():
+            cancer_type = ct
+            break
     tnm_data = p.get("tnm", p.get("staging", {}))
     tnm = _tnm_stage(tnm_data.get("t", "T2"), tnm_data.get("n", "N0"),
                      tnm_data.get("m", "M0"), cancer_type)
@@ -350,14 +364,19 @@ def bp_diagnosis(**kwargs) -> dict:
         her2 = labs.get("her2", p.get("her2", "negative"))
         er = labs.get("er", p.get("er", "positive"))
         pr = labs.get("pr", p.get("pr", "positive"))
-        if her2 == "positive": mol.append("HER2+")
-        if er == "positive" or pr == "positive": mol.append("HR+")
-        if not mol: mol.append("TNBC (三阴性)")
+        if her2 == "positive":
+            mol.append("HER2+")
+        if er == "positive" or pr == "positive":
+            mol.append("HR+")
+        if not mol:
+            mol.append("TNBC (三阴性)")
     elif cancer_type == "lung":
         egfr = labs.get("egfr", p.get("egfr_mutation", "wild-type"))
         alk = labs.get("alk", p.get("alk", "negative"))
-        if egfr != "wild-type": mol.append(f"EGFR mut ({egfr})")
-        if alk == "positive": mol.append("ALK+")
+        if egfr != "wild-type":
+            mol.append(f"EGFR mut ({egfr})")
+        if alk == "positive":
+            mol.append("ALK+")
     mol_str = " + ".join(mol) if mol else "未明确"
 
     findings = [
@@ -393,7 +412,9 @@ def bp_plan(**kwargs) -> dict:
     dx = p.get("diagnosis", "")
     cancer_type = "lung"
     for ct in ["liver", "breast", "colorectal", "lung"]:
-        if ct in dx.lower(): cancer_type = ct; break
+        if ct in dx.lower():
+            cancer_type = ct
+            break
     tnm_data = p.get("tnm", p.get("staging", {}))
     tnm = _tnm_stage(tnm_data.get("t", "T2"), tnm_data.get("n", "N0"),
                      tnm_data.get("m", "M0"), cancer_type)
@@ -402,9 +423,9 @@ def bp_plan(**kwargs) -> dict:
     # Stage-specific treatment
     if tnm["stage_group"] == "I-III":
         if tnm["resectable"]:
-            surgery_plan = f"根治性手术 + 纵隔淋巴结清扫" if cancer_type == "lung" else \
-                           f"保乳术+前哨淋巴结活检" if cancer_type == "breast" else \
-                           f"根治性切除术 + 区域淋巴结清扫"
+            surgery_plan = "根治性手术 + 纵隔淋巴结清扫" if cancer_type == "lung" else \
+                           "保乳术+前哨淋巴结活检" if cancer_type == "breast" else \
+                           "根治性切除术 + 区域淋巴结清扫"
             plan = f"{surgery_plan} → {'辅助化疗' if tnm['stage'] not in ('I','IA1','IA2','IA3') else '术后观察'}"
         else:
             plan = "新辅助化疗/放疗 → 再评估手术可能性"
@@ -451,9 +472,9 @@ def bp_treatment(**kwargs) -> dict:
     vitals = _agent.assess_vitals(p)
     labs = p.get("lab_results", {})
     dx = p.get("diagnosis", "")
-    cancer_type = "lung"
     for ct in ["liver", "breast", "colorectal", "lung"]:
-        if ct in dx.lower(): cancer_type = ct; break
+        if ct in dx.lower():
+            break
 
     # ── Injected toxicity assessments ──
     anc = float(labs.get("anc", 2000))
@@ -472,7 +493,8 @@ def bp_treatment(**kwargs) -> dict:
     if anc < 500 and temp >= 38.3:
         findings.append(f"⚠ 粒缺伴发热 EMERGENCY: ANC {anc} + Temp {temp}°C")
     if iraes:
-        findings.append(f"免疫相关AE: {', '.join(f'{i['organ']}(G{i['grade']})' for i in iraes)}")
+        _irae_items = [f"{i['organ']}(G{i['grade']})" for i in iraes]
+        findings.append(f"免疫相关AE: {', '.join(_irae_items)}")
     findings.extend(["RECIST评估: 每2-3周期", "靶向药血药浓度监测", "化疗累积剂量监测(阿霉素≤450mg/m²)"])
 
     recommendations = []

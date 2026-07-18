@@ -255,7 +255,7 @@ def enrich_from_by_department(
             continue
 
         files_processed += 1
-        dept_cn = bd_data.get("dept_name", "")
+        bd_data.get("dept_name", "")
 
         for bp in bd_data.get("patients", []):
             mrn = bp.get("mrn", "")
@@ -453,7 +453,7 @@ def migrate() -> dict[str, Any]:
 
     # 8. Report
     print(f"\n{'='*60}")
-    print(f"  Migration Complete")
+    print("  Migration Complete")
     print(f"{'='*60}")
     print(f"  Final patient count   : {total}")
     print(f"  Output file size      : {file_size_mb:.1f} MB")
@@ -462,12 +462,12 @@ def migrate() -> dict[str, Any]:
     print(f"  Patients w/ lab_tests_full: {sum(1 for p in all_patients if p.get('lab_tests_full'))}")
 
     if dept_stats:
-        print(f"\n  New patients by department:")
+        print("\n  New patients by department:")
         for dept, count in dept_stats.most_common():
             print(f"    {dept}: {count}")
 
     if dir_errors:
-        print(f"\n  Migration errors:")
+        print("\n  Migration errors:")
         for e in dir_errors:
             print(f"    - {e}")
 

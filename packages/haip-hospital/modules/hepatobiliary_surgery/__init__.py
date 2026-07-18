@@ -27,15 +27,24 @@ def _child_pugh(bil: float = 12, alb: float = 35, pt_ext: float = 1.5,
                 ascites: str = "none", encephalopathy: str = "none") -> dict:
     """Child-Pugh score for liver function reserve."""
     pts = 0
-    if bil < 34: pts += 1
-    elif bil <= 50: pts += 2
-    else: pts += 3
-    if alb > 35: pts += 1
-    elif alb >= 28: pts += 2
-    else: pts += 3
-    if pt_ext < 1.3: pts += 1
-    elif pt_ext <= 1.5: pts += 2
-    else: pts += 3
+    if bil < 34:
+        pts += 1
+    elif bil <= 50:
+        pts += 2
+    else:
+        pts += 3
+    if alb > 35:
+        pts += 1
+    elif alb >= 28:
+        pts += 2
+    else:
+        pts += 3
+    if pt_ext < 1.3:
+        pts += 1
+    elif pt_ext <= 1.5:
+        pts += 2
+    else:
+        pts += 3
     ascites_map = {"none": 1, "mild": 2, "moderate": 3}
     pts += ascites_map.get(ascites.lower(), 2)
     enc_map = {"none": 1, "grade_i_ii": 2, "grade_iii_iv": 3}
@@ -102,7 +111,7 @@ def bp_diag(**kwargs) -> dict:
     ]
 
     if "肝癌" in dx:
-        findings.insert(0, f"肝癌 BCLC 分期: 单发<2cm=>0期(消融/切除); 多发=>B期(TACE); 门脉侵犯=>C期(系统治疗)")
+        findings.insert(0, "肝癌 BCLC 分期: 单发<2cm=>0期(消融/切除); 多发=>B期(TACE); 门脉侵犯=>C期(系统治疗)")
     if "胆道" in dx:
         findings.insert(0, "胆道结石: MRCP + EUS — 胆总管结石(>=8mm) + 扩张(>10mm) => ERCP/腹腔镜胆道探查")
 

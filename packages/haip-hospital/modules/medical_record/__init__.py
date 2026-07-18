@@ -46,7 +46,7 @@ def get_labs(**kwargs) -> dict:
     alerts = vitals.get("alerts", [])
 
     return _agent.clinical_result(
-        summary=f"患者数据中心 — Get Labs",
+        summary="患者数据中心 — Get Labs",
         patient=patient,
         guidelines=guides[:3],
         alerts=alerts,
@@ -65,7 +65,7 @@ def get_exams(**kwargs) -> dict:
     alerts = vitals.get("alerts", [])
 
     return _agent.clinical_result(
-        summary=f"患者数据中心 — Get Exams",
+        summary="患者数据中心 — Get Exams",
         patient=patient,
         guidelines=guides[:3],
         alerts=alerts,

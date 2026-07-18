@@ -125,15 +125,20 @@ def palliative(cancer_stage: str = "", ecog: int = 0,
     refer, reasons = False, []
     if "IV" in stage:
         if ecog >= 3:
-            refer = True; reasons.append(f"Stage IV + ECOG={ecog}")
+            refer = True
+            reasons.append(f"Stage IV + ECOG={ecog}")
         if le <= 6 and le > 0:
-            refer = True; reasons.append(f"预估生存≤{le}月")
+            refer = True
+            reasons.append(f"预估生存≤{le}月")
         if uncontrolled_pain:
-            refer = True; reasons.append("顽固性癌痛")
+            refer = True
+            reasons.append("顽固性癌痛")
         if "对症" in tx or "姑息" in tx:
-            refer = True; reasons.append("已转对症支持")
+            refer = True
+            reasons.append("已转对症支持")
     elif cancer_stage in ("III",) and (ecog >= 3 or le <= 6):
-        refer = True; reasons.append(f"Stage III + ECOG={ecog}")
+        refer = True
+        reasons.append(f"Stage III + ECOG={ecog}")
 
     if le > 0:
         care_level = "临终关怀" if le <= 3 else ("安宁疗护" if le <= 12 else ("姑息治疗" if refer else "常规治疗"))

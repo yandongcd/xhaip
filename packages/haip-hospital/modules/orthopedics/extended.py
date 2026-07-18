@@ -712,23 +712,32 @@ def osteoporosis_mgmt(
     factors: list[str] = []
 
     if "骨质疏松" in combined or "骨松" in combined:
-        score += 3; factors.append("确诊骨质疏松")
+        score += 3
+        factors.append("确诊骨质疏松")
     if any(c in combined for c in ["脆性骨折", "fragility", "骨折"]):
-        score += 2; factors.append("既往骨折史")
+        score += 2
+        factors.append("既往骨折史")
     if gender == "F" and age >= 65:
-        score += 2; factors.append(f"女性≥65岁 ({age}岁)")
+        score += 2
+        factors.append(f"女性≥65岁 ({age}岁)")
     elif gender == "M" and age >= 70:
-        score += 2; factors.append(f"男性≥70岁 ({age}岁)")
+        score += 2
+        factors.append(f"男性≥70岁 ({age}岁)")
     if any(c in combined for c in ["类固醇", "steroid", "激素"]):
-        score += 2; factors.append("长期糖皮质激素使用")
+        score += 2
+        factors.append("长期糖皮质激素使用")
     if any(c in combined for c in ["吸烟", "抽烟", "smoking"]):
-        score += 1; factors.append("吸烟")
+        score += 1
+        factors.append("吸烟")
     if any(c in combined for c in ["饮酒", "酗酒", "alcohol"]):
-        score += 1; factors.append("过量饮酒")
+        score += 1
+        factors.append("过量饮酒")
     if any(c in combined for c in ["类风湿", "rheumatoid"]):
-        score += 1; factors.append("类风湿关节炎")
+        score += 1
+        factors.append("类风湿关节炎")
     if any(c in combined for c in ["低体重", "weight"]):
-        score += 1; factors.append("低体重")
+        score += 1
+        factors.append("低体重")
 
     risk = "high" if score >= 5 else "moderate" if score >= 3 else "low"
 

@@ -8,9 +8,7 @@ clinical logic at two quality tiers.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from typing import Any
 
 import yaml
 
@@ -603,51 +601,51 @@ def _func_body_tier_b(tool_name: str, stage_info: dict, dept: dict) -> str:
     guide_str = ", ".join(f'"{g}"' for g in guide_names[:3])
 
     lines = []
-    I = "    "  # 4-space indent
+    ind = "    "  # 4-space indent
 
-    lines.append(f'{I}pid = kwargs.get("patient_id", "")')
-    lines.append(f"{I}p = _agent.get_patient(pid)")
-    lines.append(f"{I}if not p:")
-    lines.append(f'{I}{I}return _clinical_error(f"Patient {{pid}} not found")')
-    lines.append(f"{I}vitals = _agent.assess_vitals(p)")
+    lines.append(f'{ind}pid = kwargs.get("patient_id", "")')
+    lines.append(f"{ind}p = _agent.get_patient(pid)")
+    lines.append(f"{ind}if not p:")
+    lines.append(f'{ind}{ind}return _clinical_error(f"Patient {{pid}} not found")')
+    lines.append(f"{ind}vitals = _agent.assess_vitals(p)")
 
     # Findings
     finding_items_str = ", ".join(f'"{item}"' for item in items)
     if finding_items_str:
-        lines.append(f"{I}findings = [{finding_items_str}]")
+        lines.append(f"{ind}findings = [{finding_items_str}]")
     else:
-        lines.append(f'{I}findings = ["{desc}完成"]')
+        lines.append(f'{ind}findings = ["{desc}完成"]')
 
     if conditions and len(conditions) >= 2:
         c0, c1 = conditions[0], conditions[1]
-        lines.append(f'{I}dx = p.get("diagnosis", "")')
-        lines.append(f'{I}if "{c0[:3]}" in dx or "{c1[:3]}" in dx:')
-        lines.append(f'{I}{I}findings.insert(0, "{c0}/{c1} 疾病匹配")')
+        lines.append(f'{ind}dx = p.get("diagnosis", "")')
+        lines.append(f'{ind}if "{c0[:3]}" in dx or "{c1[:3]}" in dx:')
+        lines.append(f'{ind}{ind}findings.insert(0, "{c0}/{c1} 疾病匹配")')
 
     if alerts:
         alert_vals = ", ".join(f'"{a}"' for a in alerts[:5])
-        lines.append(f"{I}checklist = [{alert_vals}]")
-        lines.append(f'{I}findings.append(f"高危审核: {{len(checklist)}} 项")')
+        lines.append(f"{ind}checklist = [{alert_vals}]")
+        lines.append(f'{ind}findings.append(f"高危审核: {{len(checklist)}} 项")')
 
     if lab_focus:
         lab_str = ", ".join(lab_focus[:4])
-        lines.append(f"{I}# 专科检验关注: {lab_str}")
-        lines.append(f'{I}if vitals.get("alerts"):')
-        lines.append(f'{I}{I}findings.append("检验异常需关注")')
+        lines.append(f"{ind}# 专科检验关注: {lab_str}")
+        lines.append(f'{ind}if vitals.get("alerts"):')
+        lines.append(f'{ind}{ind}findings.append("检验异常需关注")')
 
-    lines.append(f'{I}guides = _agent.search_guidelines(p.get("diagnosis", "")) or [{guide_str}]')
-    lines.append(f'{I}rules = _agent.search_rules("{cn}")')
+    lines.append(f'{ind}guides = _agent.search_guidelines(p.get("diagnosis", "")) or [{guide_str}]')
+    lines.append(f'{ind}rules = _agent.search_rules("{cn}")')
 
     if scoring:
-        lines.append(f"{I}# Scoring: {scoring}")
+        lines.append(f"{ind}# Scoring: {scoring}")
 
-    lines.append(f'{I}return _agent.clinical_result(')
-    lines.append(f'{I}{I}summary=f"{cn}—{desc}完成 (stage {stage})",')
-    lines.append(f"{I}{I}patient=p,")
-    lines.append(f"{I}{I}guidelines=guides,")
-    lines.append(f"{I}{I}rules=rules,")
-    lines.append(f'{I}{I}alerts=vitals.get("alerts", []),')
-    lines.append(f"{I})")
+    lines.append(f'{ind}return _agent.clinical_result(')
+    lines.append(f'{ind}{ind}summary=f"{cn}—{desc}完成 (stage {stage})",')
+    lines.append(f"{ind}{ind}patient=p,")
+    lines.append(f"{ind}{ind}guidelines=guides,")
+    lines.append(f"{ind}{ind}rules=rules,")
+    lines.append(f'{ind}{ind}alerts=vitals.get("alerts", []),')
+    lines.append(f"{ind})")
 
     return "\n".join(lines)
 
@@ -670,46 +668,29 @@ def _func_body_tier_c(tool_name: str, stage_info: dict, dept: dict) -> str:
     guide_str = ", ".join(f'"{g}"' for g in guide_names[:2])
 
     lines = []
-    I = "    "
-    lines.append(f'{I}pid = kwargs.get("patient_id", "")')
-    lines.append(f"{I}p = _agent.get_patient(pid)")
-    lines.append(f"{I}if not p:")
-    lines.append(f'{I}{I}return _clinical_error(f"Patient {{pid}} not found")')
-    lines.append(f"{I}vitals = _agent.assess_vitals(p)")
-    lines.append(f'{I}guides = _agent.search_guidelines(p.get("diagnosis", "")) or [{guide_str}]')
+    ind = "    "
+    lines.append(f'{ind}pid = kwargs.get("patient_id", "")')
+    lines.append(f"{ind}p = _agent.get_patient(pid)")
+    lines.append(f"{ind}if not p:")
+    lines.append(f'{ind}{ind}return _clinical_error(f"Patient {{pid}} not found")')
+    lines.append(f"{ind}vitals = _agent.assess_vitals(p)")
+    lines.append(f'{ind}guides = _agent.search_guidelines(p.get("diagnosis", "")) or [{guide_str}]')
 
     if items:
         items_str = ", ".join(f'"{item}"' for item in items[:4])
-        lines.append(f"{I}findings = [{items_str}]")
+        lines.append(f"{ind}findings = [{items_str}]")
     else:
-        lines.append(f'{I}findings = ["{desc}完成"]')
+        lines.append(f'{ind}findings = ["{desc}完成"]')
 
-    lines.append(f"{I}pipeline = _agent.run_clinical_pipeline(p)")
-    lines.append(f"{I}result = _agent.clinical_result_from_pipeline(p, pipeline)")
-    lines.append(f"{I}result[\"guideline_refs\"] = guides")
-    lines.append(f"{I}result[\"stage\"] = \"{stage}\"")
-    lines.append(f'{I}if vitals.get("alerts"):')
-    lines.append(f'{I}{I}result["alerts"] = vitals["alerts"]')
-    lines.append(f"{I}return result")
+    lines.append(f"{ind}pipeline = _agent.run_clinical_pipeline(p)")
+    lines.append(f"{ind}result = _agent.clinical_result_from_pipeline(p, pipeline)")
+    lines.append(f"{ind}result[\"guideline_refs\"] = guides")
+    lines.append(f"{ind}result[\"stage\"] = \"{stage}\"")
+    lines.append(f'{ind}if vitals.get("alerts"):')
+    lines.append(f'{ind}{ind}result["alerts"] = vitals["alerts"]')
+    lines.append(f"{ind}return result")
     return "\n".join(lines)
 
-
-def inject_error_helper(code: str) -> str:
-    """Insert _clinical_error helper before the first tool function."""
-    lines = code.split("\n")
-    out = []
-    inserted = False
-    for i, line in enumerate(lines):
-        if not inserted and line.strip().startswith("def bp_") or line.strip().startswith("def bp-"):
-            out.append("")
-            out.append("")
-            out.append("def _clinical_error(msg: str) -> dict:")
-            out.append('    return {"status": "error", "agent": _agent.agent_name, "error": msg}')
-            inserted = True
-        out.append(line)
-    code = "\n".join(out)
-    code = code.replace("_agent.clinical_error(", "_clinical_error(")
-    return code
 
 
 def generate_module(agent_name: str) -> str:
@@ -775,7 +756,7 @@ def generate_module(agent_name: str) -> str:
     first = True
     for tool in tools:
         tool_name = tool["name"]
-        handler = tool.get("handler", "")
+        tool.get("handler", "")
         desc = tool.get("description", f"{tool_name} 业务处理")
 
         if not first:

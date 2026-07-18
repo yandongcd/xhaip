@@ -1,5 +1,6 @@
 """Expand patient data with specialty lab fields for RuleEngine matching."""
-import json, random, os
+import json
+import random
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent

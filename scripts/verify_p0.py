@@ -3,7 +3,6 @@ import sys
 sys.path.insert(0, "packages/haip-core")
 
 # Test auth models
-from haip.auth.models import UserCreateRequest, UserLoginRequest, UserInfo
 print("Auth models OK")
 
 # Test password hashing
@@ -13,13 +12,13 @@ is_strong, msg = validate_password_strength("Test@123")
 print(f"Password: hash={h[:20]}..., verify={verify_password('Test@123', h)}, strength={is_strong}")
 
 # Test JWT
-from haip.auth.jwt import create_access_token, create_refresh_token, decode_token
+from haip.auth.jwt import create_access_token, decode_token
 t, exp = create_access_token("user1", "test", ["doctor"], ["agent:read"])
 p = decode_token(t)
 print(f"JWT: sub={p['sub']}, roles={p['roles']}, expires={exp}s")
 
 # Test RBAC
-from haip.auth.rbac import get_permissions_for_roles, has_permission, list_roles
+from haip.auth.rbac import get_permissions_for_roles, has_permission
 from haip.auth.models import Permission
 perms = get_permissions_for_roles(["doctor"])
 print(f"RBAC: doctor perms count={len(perms)}, has agent:execute={has_permission(['doctor'], Permission.AGENT_EXECUTE)}")

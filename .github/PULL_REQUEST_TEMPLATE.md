@@ -24,7 +24,7 @@
 - [ ] `xhaip list` 新 Agent 可见
 - [ ] `python -m pytest packages/haip-core/tests/ -q` 全部通过
 - [ ] `python -m pytest tests/integration/ -v` 全部通过
-- [ ] `ruff check packages/ tests/` 0 errors
+- [ ] `ruff check .` 0 errors
 - [ ] 覆盖率 ≥ 70%（haip-core）
 
 ### 描述

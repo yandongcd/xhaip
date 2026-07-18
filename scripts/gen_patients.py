@@ -1,5 +1,6 @@
 """Generate 200+ additional digital patients across all departments."""
-import json, random, os
+import json
+import random
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent

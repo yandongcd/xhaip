@@ -66,7 +66,6 @@ def bp_diag(**kwargs) -> dict:
         return _clinical_error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
     dx = p.get("diagnosis", "")
-    labs = p.get("lab_results", {})
 
     findings = [
         "Rutherford PAD: 0(无症状)/1(轻度跛行>/=200m)/2(中度<200m)/3(重度<50m)/4(静息痛)/5(小溃疡)/6(大溃疡/坏疽)",

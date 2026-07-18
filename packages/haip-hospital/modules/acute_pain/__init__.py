@@ -79,7 +79,6 @@ def crisis(symptoms: list | None = None,
 
     # Fallback for backward-compatible simple symptoms list
     if not crisis_type:
-        syms_str = " ".join(symptoms).lower() if symptoms else ""
         if any("calf" in s.lower() or "肿胀" in s for s in symptoms):
             crisis_type = "dvt"
             urgency = "urgent"

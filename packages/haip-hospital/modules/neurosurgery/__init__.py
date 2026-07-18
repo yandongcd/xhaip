@@ -253,7 +253,7 @@ def bp_reg(**kwargs) -> dict:
     if coag[2] < 80:
         alerts.append(f"PLT {coag[2]} — 凝血异常 (出血风险)")
     if coag[0] > 15 or coag[1] > 40:
-        alerts.append(f"PT/APTT 延长 — 凝血障碍")
+        alerts.append("PT/APTT 延长 — 凝血障碍")
 
     checklist = [
         f"GCS ≥ 2 下降 (current: {gcs['total']})",
@@ -286,7 +286,6 @@ def bp_diag(**kwargs) -> dict:
     if not p:
         return _clinical_error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
-    labs = p.get("lab_results", p.get("labs", {}))
     dx = p.get("diagnosis", "")
     is_sah = any(t in dx for t in ["蛛网膜", "SAH", "动脉瘤", "脑出血"])
 
@@ -365,7 +364,7 @@ def bp_preop(**kwargs) -> dict:
 
     cushing = _check_cushing_triad(vitals)
     if cushing["emergency"]:
-        findings.insert(0, f"⚠️ PREOP EMERGENCY: Cushing's triad active — neurosurgical decompression may need to precede full preop workup")
+        findings.insert(0, "⚠️ PREOP EMERGENCY: Cushing's triad active — neurosurgical decompression may need to precede full preop workup")
 
     # ICP optimization
     icp_rx = _icp_management(gcs, p)
@@ -509,7 +508,7 @@ def bp_surgery(**kwargs) -> dict:
 
     cushing = _check_cushing_triad(vitals)
     if cushing["emergency"]:
-        findings.insert(0, f"⚠ INTRAOP: Cushing's triad persists — rapid decompression required")
+        findings.insert(0, "⚠ INTRAOP: Cushing's triad persists — rapid decompression required")
 
     recommendations = [
         "术中 ABG q1h: PaCO₂ 30-35 mmHg (mild hyperventilation), PaO₂ > 100 mmHg",

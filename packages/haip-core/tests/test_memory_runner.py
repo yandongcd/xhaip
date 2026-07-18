@@ -228,7 +228,7 @@ class TestWorkflowRunner:
         svc = SessionService(":memory:")
         ctx = InvocationContext(session=svc.create_session(), invocation_id="wf1", session_service=svc)
 
-        events = run_workflow_sync(wf, ctx)
+        run_workflow_sync(wf, ctx)
         # A 和 B 都执行了
         assert "A" in results
         assert "B" in results

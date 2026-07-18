@@ -262,6 +262,6 @@ def print_complication_report(result: dict) -> None:
         for f in dim.get("factors", []):
             print(f"  • {f}")
         if dim.get("recommendations"):
-            print(f"  建议:")
+            print("  建议:")
             for r in dim["recommendations"]:
                 print(f"    - {r}")

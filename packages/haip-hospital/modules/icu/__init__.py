@@ -54,35 +54,51 @@ def calculate_qsofa(rr: float = 0, sbp: float = 0, gcs: float = 15) -> dict:
 # ── SOFA ─────────────────────────────────────────────────────────────────
 
 def _sofa_resp(pao2: float, fio2: float = 0.21) -> tuple[int, str]:
-    if pao2 <= 0: return (0, "PaO2 unknown")
+    if pao2 <= 0:
+        return (0, "PaO2 unknown")
     pf = pao2 / max(fio2, 0.001)
-    if pf >= 400: return (0, f"P/F={pf:.0f} (normal)")
-    if pf >= 300: return (1, f"P/F={pf:.0f} (mild)")
-    if pf >= 200: return (2, f"P/F={pf:.0f} (moderate)")
-    if pf >= 100: return (3, f"P/F={pf:.0f} (severe)")
+    if pf >= 400:
+        return (0, f"P/F={pf:.0f} (normal)")
+    if pf >= 300:
+        return (1, f"P/F={pf:.0f} (mild)")
+    if pf >= 200:
+        return (2, f"P/F={pf:.0f} (moderate)")
+    if pf >= 100:
+        return (3, f"P/F={pf:.0f} (severe)")
     return (4, f"P/F={pf:.0f} (critical)")
 
 def _sofa_coag(plt: float) -> tuple[int, str]:
-    if plt <= 0: return (0, "PLT unknown")
-    if plt >= 150: return (0, f"PLT={plt:.0f}")
-    if plt >= 100: return (1, f"PLT={plt:.0f}")
-    if plt >= 50:  return (2, f"PLT={plt:.0f}")
-    if plt >= 20:  return (3, f"PLT={plt:.0f}")
+    if plt <= 0:
+        return (0, "PLT unknown")
+    if plt >= 150:
+        return (0, f"PLT={plt:.0f}")
+    if plt >= 100:
+        return (1, f"PLT={plt:.0f}")
+    if plt >= 50:
+        return (2, f"PLT={plt:.0f}")
+    if plt >= 20:
+        return (3, f"PLT={plt:.0f}")
     return (4, f"PLT={plt:.0f}")
 
 def _sofa_liver(bil: float) -> tuple[int, str]:
-    if bil < 0: return (0, "bilirubin unknown")
+    if bil < 0:
+        return (0, "bilirubin unknown")
     # bilirubin in umol/L; SOFA uses mg/dL (divide by 17.1)
     bil_mg = bil / 17.1
-    if bil_mg < 1.2:  return (0, f"Bil={bil:.1f}umol/L ({bil_mg:.1f}mg/dL)")
-    if bil_mg < 2.0:  return (1, f"Bil={bil:.1f}umol/L ({bil_mg:.1f}mg/dL)")
-    if bil_mg < 6.0:  return (2, f"Bil={bil:.1f}umol/L ({bil_mg:.1f}mg/dL)")
-    if bil_mg < 12.0: return (3, f"Bil={bil:.1f}umol/L ({bil_mg:.1f}mg/dL)")
+    if bil_mg < 1.2:
+        return (0, f"Bil={bil:.1f}umol/L ({bil_mg:.1f}mg/dL)")
+    if bil_mg < 2.0:
+        return (1, f"Bil={bil:.1f}umol/L ({bil_mg:.1f}mg/dL)")
+    if bil_mg < 6.0:
+        return (2, f"Bil={bil:.1f}umol/L ({bil_mg:.1f}mg/dL)")
+    if bil_mg < 12.0:
+        return (3, f"Bil={bil:.1f}umol/L ({bil_mg:.1f}mg/dL)")
     return (4, f"Bil={bil:.1f}umol/L ({bil_mg:.1f}mg/dL)")
 
 def _sofa_cv(map_val: float, on_vasopressor: str = "", vasopressor_dose: float = 0) -> tuple[int, str]:
     """SOFA CV score. Dose in mcg/kg/min. Agents: DA=dopamine, NE=norepi, EPI=epi, DOB=dobutamine."""
-    if map_val <= 0: return (0, "MAP unknown")
+    if map_val <= 0:
+        return (0, "MAP unknown")
     if map_val >= 70 and not on_vasopressor:
         return (0, f"MAP={map_val:.0f} (no vasopressor)")
     agent = (on_vasopressor or "").upper().strip()
@@ -98,16 +114,22 @@ def _sofa_cv(map_val: float, on_vasopressor: str = "", vasopressor_dose: float =
     return (2, f"MAP={map_val:.0f} on vasopressor")
 
 def _sofa_cns(gcs: float) -> tuple[int, str]:
-    if gcs <= 0: return (0, "GCS unknown")
-    if gcs >= 15: return (0, f"GCS={gcs:.0f}")
-    if gcs >= 13: return (1, f"GCS={gcs:.0f}")
-    if gcs >= 10: return (2, f"GCS={gcs:.0f}")
-    if gcs >= 6:  return (3, f"GCS={gcs:.0f}")
+    if gcs <= 0:
+        return (0, "GCS unknown")
+    if gcs >= 15:
+        return (0, f"GCS={gcs:.0f}")
+    if gcs >= 13:
+        return (1, f"GCS={gcs:.0f}")
+    if gcs >= 10:
+        return (2, f"GCS={gcs:.0f}")
+    if gcs >= 6:
+        return (3, f"GCS={gcs:.0f}")
     return (4, f"GCS={gcs:.0f}")
 
 def _sofa_renal(cr: float, urine_ml_day: float = 0) -> tuple[int, str]:
     """Creatinine in umol/L; SOFA uses mg/dL. Urine in mL/day."""
-    if cr < 0: return (0, "Cr unknown")
+    if cr < 0:
+        return (0, "Cr unknown")
     cr_mg = cr / 88.4  # umol/L to mg/dL
     if cr_mg < 1.2 and (urine_ml_day <= 0 or urine_ml_day >= 500):
         return (0, f"Cr={cr:.0f}umol/L ({cr_mg:.2f}mg/dL)")
@@ -146,10 +168,14 @@ def calculate_sofa(pao2: float = 0, fio2: float = 0.21, plt: float = 0,
 # ── APACHE II ────────────────────────────────────────────────────────────
 
 def _apache_age_points(age: int) -> int:
-    if age <= 44: return 0
-    if age <= 54: return 2
-    if age <= 64: return 3
-    if age <= 74: return 5
+    if age <= 44:
+        return 0
+    if age <= 54:
+        return 2
+    if age <= 64:
+        return 3
+    if age <= 74:
+        return 5
     return 6
 
 def _apache_chronic_health(chronic_conditions: list[str]) -> int:
@@ -493,11 +519,15 @@ def crrt_indications(pH: float = 7.40, k: float = 4.0, bun: float = 15,
 def extract_vitals(patient: dict) -> dict:
     labs = patient.get("lab_results", {}) if patient else {}
     def _f(key, default=0):
-        try: return float(labs.get(key, default) or default)
-        except (ValueError, TypeError): return default
+        try:
+            return float(labs.get(key, default) or default)
+        except (ValueError, TypeError):
+            return default
     def _i(key, default=0):
-        try: return int(_f(key, default))
-        except: return default
+        try:
+            return int(_f(key, default))
+        except Exception:
+            return default
     return {
         "pulse":  _f("pulse", _f("HR", 0)),
         "sbp":    _f("sbp", _f("sBP", _f("SBP", 0))),
@@ -545,13 +575,6 @@ def bp_triage(**kwargs) -> dict:
     )
     sepsis_bundle = sepsis_1h_bundle(qsofa_score=qsofa["qsofa"], lactate=v["lactate"])
 
-    findings = [
-        f"qSOFA: {qsofa['qsofa']}/3 {'⚠️ SEPSIS SUSPICION' if qsofa['sepsis_suspicion'] else 'negative'}",
-        f"SOFA: {sofa['sofa']}/24 (mortality ~{sofa['mortality_estimate']})",
-        f"APACHE II: {apache['apache2']} — {apache['severity']} severity, {apache['mortality_estimate']} mortality",
-        f"Sepsis 1h bundle: {'ACTIVATED' if sepsis_bundle['bundle_activated'] else 'standby'}",
-        f"Organ dysfunction: SOFA trend baseline established",
-    ]
 
     recommendations = [f"qSOFA={qsofa['qsofa']} → {qsofa['action']}"]
     if sepsis_bundle["bundle_activated"]:
@@ -592,13 +615,6 @@ def bp_rescue(**kwargs) -> dict:
     qsofa = calculate_qsofa(v["rr"], v["sbp"], v["gcs"])
     s1h = sepsis_1h_bundle(qsofa_score=qsofa["qsofa"], lactate=v["lactate"])
 
-    findings = [
-        f"ARDS: {ards['severity']} — {ards['action']}" if ards["ards"] else "ARDS: not meeting Berlin criteria",
-        f"Lung-protective: Vt target {lpv['target_vt_ml']}mL, PBW={lpv['pbw_kg']}kg",
-        f"CRRT: {'INDICATED — ' + crrt['action'] if crrt['crrt_indicated'] else 'not indicated'}",
-        f"Sepsis 1h: {'ACTIVE' if s1h['bundle_activated'] else 'standby'}",
-        "Mechanical ventilation assessment", "Vasopressor optimization", "Fluid balance",
-    ]
 
     recommendations = []
     if ards["ards"]:
@@ -606,6 +622,8 @@ def bp_rescue(**kwargs) -> dict:
     recommendations.extend(lpv["recommendations"])
     if crrt["crrt_indicated"]:
         recommendations.append(f"CRRT: {crrt['modality']} — {crrt['anticoagulation']}")
+    if s1h["bundle_activated"]:
+        recommendations.append("SEPSIS 1-HOUR BUNDLE — start immediately")
 
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or _GUIDELINES
     rules = _agent.search_rules("重症医学科")
@@ -669,14 +687,6 @@ def bp_transfer(**kwargs) -> dict:
     stable = qsofa["qsofa"] < 2
     ready = sofa_improving and stable
 
-    findings = [
-        f"SOFA: {sofa['sofa']}/24 {'✅ improving' if sofa_improving else '⚠️ unstable'}",
-        f"qSOFA: {qsofa['qsofa']}/3 {'✅ stable' if stable else '⚠️ active sepsis'}",
-        f"Transfer: {'READY' if ready else 'DEFER — continue ICU'}",
-        "脱机评估 — SBT (spontaneous breathing trial) result",
-        "器官功能恢复 — daily SOFA trend assessment",
-        "转科风险评估 — SBAR handoff preparation",
-    ]
 
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or _GUIDELINES
     rules = _agent.search_rules("重症医学科")
@@ -694,18 +704,8 @@ def bp_followup(**kwargs) -> dict:
     if not p:
         return _clinical_error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
-    v = extract_vitals(p)
 
     # PICS = Post-Intensive Care Syndrome
-    findings = [
-        "PICS (Post-Intensive Care Syndrome) 评估",
-        "认知功能: MoCA or MMSE screening",
-        "身体功能: 6-minute walk test, MRC sum score",
-        "精神心理: HADS anxiety/depression screening",
-        f"ICU-acquired weakness: MRC assessment",
-        "生活质量: EQ-5D-5L survey at 3 and 6 months",
-        "营养状态: NRS 2002 re-assessment",
-    ]
 
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or _GUIDELINES
     rules = _agent.search_rules("重症医学科")

@@ -67,8 +67,10 @@ def _rome_iv_fd(postprandial_fullness: bool, early_satiety: bool,
     pds = postprandial_fullness or early_satiety
     fd = months_duration >= 3 and (eps or pds)
     subtype_str = []
-    if eps: subtype_str.append("EPS (Epigastric Pain Syndrome)")
-    if pds: subtype_str.append("PDS (Postprandial Distress Syndrome)")
+    if eps:
+        subtype_str.append("EPS (Epigastric Pain Syndrome)")
+    if pds:
+        subtype_str.append("PDS (Postprandial Distress Syndrome)")
     return {
         "functional_dyspepsia": fd, "eps": eps, "pds": pds,
         "subtype": " + ".join(subtype_str) if subtype_str else "None",
@@ -110,23 +112,40 @@ def _glasgow_blatchford(hb: float, bun: float, sbp: int = 120, pulse: int = 80,
                          liver_disease: bool = False, cardiac_failure: bool = False) -> dict:
     """Glasgow-Blatchford score for UGIB — predicts need for intervention."""
     score = 0
-    if hb < 10: score += 6
-    elif 10 <= hb < 12: score += 3
-    elif 12 <= hb < 13: score += 1
-    if bun >= 25: score += 6
-    elif bun >= 22.4: score += 5
-    elif bun >= 18.2: score += 4
-    elif bun >= 14: score += 3
-    elif bun >= 10: score += 2
-    elif bun >= 8: score += 1
-    if sbp < 90: score += 3
-    elif sbp < 100: score += 2
-    elif sbp < 110: score += 1
-    if pulse >= 100: score += 1
-    if melena: score += 1
-    if syncope: score += 2
-    if liver_disease: score += 2
-    if cardiac_failure: score += 2
+    if hb < 10:
+        score += 6
+    elif 10 <= hb < 12:
+        score += 3
+    elif 12 <= hb < 13:
+        score += 1
+    if bun >= 25:
+        score += 6
+    elif bun >= 22.4:
+        score += 5
+    elif bun >= 18.2:
+        score += 4
+    elif bun >= 14:
+        score += 3
+    elif bun >= 10:
+        score += 2
+    elif bun >= 8:
+        score += 1
+    if sbp < 90:
+        score += 3
+    elif sbp < 100:
+        score += 2
+    elif sbp < 110:
+        score += 1
+    if pulse >= 100:
+        score += 1
+    if melena:
+        score += 1
+    if syncope:
+        score += 2
+    if liver_disease:
+        score += 2
+    if cardiac_failure:
+        score += 2
 
     risk = "Low" if score <= 1 else "High"
     recommendation = (
@@ -193,13 +212,20 @@ def _ibd_classification(diarrhea_type: str = "bloody", endoscopic_pattern: str =
     """IBD differentiation: Crohn's Disease vs Ulcerative Colitis."""
     uc_features = 0
     cd_features = 0
-    if diarrhea_type == "bloody": uc_features += 1
-    if endoscopic_pattern == "continuous": uc_features += 1
-    else: cd_features += 1
-    if histology == "crypt_abscess": uc_features += 1
-    if skip_lesions: cd_features += 2
-    if transmural: cd_features += 2
-    if granulomas: cd_features += 3
+    if diarrhea_type == "bloody":
+        uc_features += 1
+    if endoscopic_pattern == "continuous":
+        uc_features += 1
+    else:
+        cd_features += 1
+    if histology == "crypt_abscess":
+        uc_features += 1
+    if skip_lesions:
+        cd_features += 2
+    if transmural:
+        cd_features += 2
+    if granulomas:
+        cd_features += 3
 
     diagnosis = ("Crohn's Disease" if cd_features > uc_features
                  else ("Ulcerative Colitis" if uc_features > cd_features
@@ -231,25 +257,43 @@ def _child_pugh(bilirubin: float, albumin: float, inr: float, ascites: str = "no
                 encephalopathy: str = "none") -> dict:
     """Child-Pugh classification for liver cirrhosis severity."""
     score = 0
-    if bilirubin < 2: score += 1
-    elif bilirubin <= 3: score += 2
-    else: score += 3
-    if albumin > 3.5: score += 1
-    elif albumin >= 2.8: score += 2
-    else: score += 3
-    if inr < 1.7: score += 1
-    elif inr <= 2.3: score += 2
-    else: score += 3
-    if ascites == "none": score += 1
-    elif ascites == "mild": score += 2
-    else: score += 3
-    if encephalopathy == "none": score += 1
-    elif "grade 1" in encephalopathy.lower() or "grade 2" in encephalopathy.lower(): score += 2
-    else: score += 3
+    if bilirubin < 2:
+        score += 1
+    elif bilirubin <= 3:
+        score += 2
+    else:
+        score += 3
+    if albumin > 3.5:
+        score += 1
+    elif albumin >= 2.8:
+        score += 2
+    else:
+        score += 3
+    if inr < 1.7:
+        score += 1
+    elif inr <= 2.3:
+        score += 2
+    else:
+        score += 3
+    if ascites == "none":
+        score += 1
+    elif ascites == "mild":
+        score += 2
+    else:
+        score += 3
+    if encephalopathy == "none":
+        score += 1
+    elif "grade 1" in encephalopathy.lower() or "grade 2" in encephalopathy.lower():
+        score += 2
+    else:
+        score += 3
 
-    if score <= 6: child_class = "A"
-    elif score <= 9: child_class = "B"
-    else: child_class = "C"
+    if score <= 6:
+        child_class = "A"
+    elif score <= 9:
+        child_class = "B"
+    else:
+        child_class = "C"
 
     prognosis = {
         "A": "Compensated; 1-year survival ~100%; elective surgery safe",
@@ -284,13 +328,20 @@ def _meld_score(bilirubin: float, creatinine: float, inr: float, dialysis: bool 
                  range(30, 40): "~53%", range(40, 100): "~71%"}
     mort = "Unknown"
     for r, m in mortality.items():
-        if meld in r: mort = m; break
+        if meld in r:
+            mort = m
+            break
     if mort == "Unknown":
-        if meld <= 9: mort = "~2%"
-        elif meld <= 19: mort = "~6%"
-        elif meld <= 29: mort = "~20%"
-        elif meld <= 39: mort = "~53%"
-        else: mort = "~71%"
+        if meld <= 9:
+            mort = "~2%"
+        elif meld <= 19:
+            mort = "~6%"
+        elif meld <= 29:
+            mort = "~20%"
+        elif meld <= 39:
+            mort = "~53%"
+        else:
+            mort = "~71%"
 
     return {
         "meld": meld, "meld_na": meld_na,
@@ -307,7 +358,8 @@ def bp_reception(**kwargs) -> dict:
     """接诊与初步评估 — Rome IV + Glasgow-Blatchford + Child-Pugh screening."""
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid)
-    if not p: return _clinical_error(f"Patient {pid} not found")
+    if not p:
+        return _clinical_error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
     labs = p.get("lab_results", {})
     dx = p.get("diagnosis", "")
@@ -346,16 +398,20 @@ def bp_reception(**kwargs) -> dict:
         findings.append(f"Child-Pugh: {child['child_pugh_score']} -> Class {child['class']} ({child['prognosis']})")
 
     recommendations = []
-    if gb["gb_score"] > 0: recommendations.append(gb["recommendation"])
-    if rome_ibs["ibs"]: recommendations.append(rome_ibs["management"])
-    if rome_fd["functional_dyspepsia"]: recommendations.append(rome_fd["management"])
+    if gb["gb_score"] > 0:
+        recommendations.append(gb["recommendation"])
+    if rome_ibs["ibs"]:
+        recommendations.append(rome_ibs["management"])
+    if rome_fd["functional_dyspepsia"]:
+        recommendations.append(rome_fd["management"])
     if child and child["class"] == "C":
         recommendations.append("Child-Pugh C -> Transplant evaluation; HCC screening q6mo")
     if "消化性" in dx or "IBD" in dx:
         findings.insert(0, f"{'消化性溃疡' if '消化性' in dx else 'IBD'} 疾病匹配")
     checklist = ["呕血/黑便", "急性腹痛", "黄疸加重", "腹水增加", "肝性脑病"]
     findings.append(f"高危审核: {len(checklist)} 项")
-    if vitals.get("alerts"): recommendations.append("检验异常需关注: ALT/AST/TBIL/ALB")
+    if vitals.get("alerts"):
+        recommendations.append("检验异常需关注: ALT/AST/TBIL/ALB")
     guides = _agent.search_guidelines(dx) or _GUIDELINES
     rules = _agent.search_rules("消化内科")
     return _agent.clinical_result(
@@ -369,7 +425,8 @@ def bp_exam(**kwargs) -> dict:
     """辅助检查 — Endoscopy urgency + FLI + Fib-4."""
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid)
-    if not p: return _clinical_error(f"Patient {pid} not found")
+    if not p:
+        return _clinical_error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
     labs = p.get("lab_results", {})
     dx = p.get("diagnosis", "")
@@ -400,7 +457,8 @@ def bp_exam(**kwargs) -> dict:
         findings.insert(0, f"{'消化性溃疡' if '消化性' in dx else 'IBD'} 检查方案")
     checklist = ["呕血/黑便", "急性腹痛", "黄疸加重", "腹水增加", "肝性脑病"]
     findings.append(f"高危审核: {len(checklist)} 项")
-    if vitals.get("alerts"): recommendations.append("检验异常需关注")
+    if vitals.get("alerts"):
+        recommendations.append("检验异常需关注")
     guides = _agent.search_guidelines(dx) or _GUIDELINES
     rules = _agent.search_rules("消化内科")
     return _agent.clinical_result(
@@ -414,7 +472,8 @@ def bp_diagnosis(**kwargs) -> dict:
     """确诊与分型分期 — IBD classification + Child-Pugh + MELD."""
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid)
-    if not p: return _clinical_error(f"Patient {pid} not found")
+    if not p:
+        return _clinical_error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
     labs = p.get("lab_results", {})
     dx = p.get("diagnosis", "")
@@ -455,7 +514,8 @@ def bp_diagnosis(**kwargs) -> dict:
         findings.insert(0, f"{'消化性溃疡' if '消化性' in dx else 'IBD'} 确诊")
     checklist = ["呕血/黑便", "急性腹痛", "黄疸加重", "腹水增加", "肝性脑病"]
     findings.append(f"高危审核: {len(checklist)} 项")
-    if vitals.get("alerts"): recommendations.append("检验异常需关注")
+    if vitals.get("alerts"):
+        recommendations.append("检验异常需关注")
     guides = _agent.search_guidelines(dx) or _GUIDELINES
     rules = _agent.search_rules("消化内科")
     return _agent.clinical_result(
@@ -469,7 +529,8 @@ def bp_plan(**kwargs) -> dict:
     """治疗方案制定 — HP eradication + IBD biologics + cirrhosis management."""
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid)
-    if not p: return _clinical_error(f"Patient {pid} not found")
+    if not p:
+        return _clinical_error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
     labs = p.get("lab_results", {})
     dx = p.get("diagnosis", "")
@@ -484,7 +545,7 @@ def bp_plan(**kwargs) -> dict:
 
     findings = [
         f"HP Eradication: {hp['regimen']} ({hp['duration']}); efficacy {hp['efficacy']}",
-        f"IBD Biologics: Anti-TNF (inflix/adalim) 1st-line; vedo/ustekinumab 2nd-line; JAKi (tofacitinib) for UC",
+        "IBD Biologics: Anti-TNF (inflix/adalim) 1st-line; vedo/ustekinumab 2nd-line; JAKi (tofacitinib) for UC",
         "PPI: Omeprazole 20mg BID / Esomeprazole 40mg QD for GERD/PUD",
     ]
     if child:
@@ -510,7 +571,8 @@ def bp_plan(**kwargs) -> dict:
         findings.insert(0, f"{'消化性溃疡' if '消化性' in dx else 'IBD'} 治疗路径")
     checklist = ["呕血/黑便", "急性腹痛", "黄疸加重", "腹水增加", "肝性脑病"]
     findings.append(f"高危审核: {len(checklist)} 项")
-    if vitals.get("alerts"): recommendations.append("检验异常需关注")
+    if vitals.get("alerts"):
+        recommendations.append("检验异常需关注")
     guides = _agent.search_guidelines(dx) or _GUIDELINES
     rules = _agent.search_rules("消化内科")
     return _agent.clinical_result(
@@ -524,7 +586,8 @@ def bp_treatment(**kwargs) -> dict:
     """治疗执行与监测 — Endoscopic therapy + bleeding management + decompensation."""
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid)
-    if not p: return _clinical_error(f"Patient {pid} not found")
+    if not p:
+        return _clinical_error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
     labs = p.get("lab_results", {})
     dx = p.get("diagnosis", "")
@@ -556,7 +619,8 @@ def bp_treatment(**kwargs) -> dict:
         findings.insert(0, f"{'消化性溃疡' if '消化性' in dx else 'IBD'} 治疗执行")
     checklist = ["呕血/黑便", "急性腹痛", "黄疸加重", "腹水增加", "肝性脑病"]
     findings.append(f"高危审核: {len(checklist)} 项")
-    if vitals.get("alerts"): recommendations.append("检验异常需关注")
+    if vitals.get("alerts"):
+        recommendations.append("检验异常需关注")
     guides = _agent.search_guidelines(dx) or _GUIDELINES
     rules = _agent.search_rules("消化内科")
     return _agent.clinical_result(
@@ -570,7 +634,8 @@ def bp_followup(**kwargs) -> dict:
     """随访与长期管理 — Endoscopic surveillance + HP confirmation + HCC screening."""
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid)
-    if not p: return _clinical_error(f"Patient {pid} not found")
+    if not p:
+        return _clinical_error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
     labs = p.get("lab_results", {})
     dx = p.get("diagnosis", "")
@@ -603,7 +668,8 @@ def bp_followup(**kwargs) -> dict:
         findings.insert(0, f"{'消化性溃疡' if '消化性' in dx else 'IBD'} 长期随访")
     checklist = ["呕血/黑便", "急性腹痛", "黄疸加重", "腹水增加", "肝性脑病"]
     findings.append(f"高危审核: {len(checklist)} 项")
-    if vitals.get("alerts"): recommendations.append("检验异常需关注")
+    if vitals.get("alerts"):
+        recommendations.append("检验异常需关注")
     guides = _agent.search_guidelines(dx) or _GUIDELINES
     rules = _agent.search_rules("消化内科")
     return _agent.clinical_result(

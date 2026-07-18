@@ -11,7 +11,6 @@ Electrolyte emergencies (K+ / Na+).
 
 from __future__ import annotations
 
-from math import exp, log
 
 from haip.togaf.knowledge_agent import KnowledgeAgent
 
@@ -34,9 +33,9 @@ def _clinical_error(msg: str) -> dict:
 def _ckd_epi_egfr(age: int, sex: str, creatinine_mgdl: float) -> dict:
     """CKD-EPI 2021 eGFR calculator (creatinine-based)."""
     if sex == "female":
-        k, alpha, sc_ratio = 0.7, -0.241, creatinine_mgdl / 0.7
+        _k, alpha, sc_ratio = 0.7, -0.241, creatinine_mgdl / 0.7
     else:
-        k, alpha, sc_ratio = 0.9, -0.302, creatinine_mgdl / 0.9
+        _k, alpha, sc_ratio = 0.9, -0.302, creatinine_mgdl / 0.9
 
     if sc_ratio <= 1:
         egfr = 142 * (sc_ratio ** alpha) * (0.9938 ** age)
@@ -284,7 +283,6 @@ def bp_exam(**kwargs) -> dict:
     sex = p.get("sex", "male")
     cr = float(labs.get("creatinine", 1.0))
     egfr_result = _ckd_epi_egfr(age, sex, cr)
-    alb = labs.get("albuminuria_stage", "A1")
     heatmap = _kdigo_heatmap(egfr_result["stage"], labs.get("albuminuria_stage", "A1"))
 
     findings = [
@@ -340,7 +338,7 @@ def bp_diagnosis(**kwargs) -> dict:
         f"AKI Status: {'Stage ' + str(aki['stage']) if aki['aki'] else 'No AKI'} (Cr {cr}, ratio {aki['cr_ratio']}×)",
         f"病理类型: {labs.get('pathology', '待活检')}",
         f"原发病因: {dx or '待明确'}",
-        f"并发症评估: Anemia(Hb<13♂/<12♀) / MBD(Ca/P/PTH) / Metabolic acidosis(HCO3<22)",
+        "并发症评估: Anemia(Hb<13♂/<12♀) / MBD(Ca/P/PTH) / Metabolic acidosis(HCO3<22)",
     ]
     recommendations = [
         f"Staging: CKD {egfr_result['stage']}{alb} → {heatmap['risk']} risk → {heatmap['monitoring_frequency']}",
@@ -453,8 +451,8 @@ def bp_treatment(**kwargs) -> dict:
         recommendations.append(elytes["ecg_recommendation"])
     else:
         recommendations.extend([
-            f"BP target <130/80; SGLT2i if eGFR≥20",
-            f"K⁺ diet <2g/d; Na⁺ <2g/d; Phosphate <800mg/d",
+            "BP target <130/80; SGLT2i if eGFR≥20",
+            "K⁺ diet <2g/d; Na⁺ <2g/d; Phosphate <800mg/d",
         ])
     if aki["aki"]:
         recommendations.append(aki["management"])

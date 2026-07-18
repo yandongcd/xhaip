@@ -43,7 +43,7 @@ def bp_reception(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国风湿免疫病诊疗指南（2022）", "EULAR Recommendations for Rheumatic Diseases (2023)"]
     rules = _agent.search_rules("风湿免疫科")
     return _agent.clinical_result(
-        summary=f"风湿免疫科—风湿科初诊完成 (stage S1)",
+        summary="风湿免疫科—风湿科初诊完成 (stage S1)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -70,7 +70,7 @@ def bp_exam(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国风湿免疫病诊疗指南（2022）", "EULAR Recommendations for Rheumatic Diseases (2023)"]
     rules = _agent.search_rules("风湿免疫科")
     return _agent.clinical_result(
-        summary=f"风湿免疫科—免疫学检查完成 (stage S2)",
+        summary="风湿免疫科—免疫学检查完成 (stage S2)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -97,7 +97,7 @@ def bp_diagnosis(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国风湿免疫病诊疗指南（2022）", "EULAR Recommendations for Rheumatic Diseases (2023)"]
     rules = _agent.search_rules("风湿免疫科")
     return _agent.clinical_result(
-        summary=f"风湿免疫科—确诊分型完成 (stage S3)",
+        summary="风湿免疫科—确诊分型完成 (stage S3)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -124,7 +124,7 @@ def bp_plan(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国风湿免疫病诊疗指南（2022）", "EULAR Recommendations for Rheumatic Diseases (2023)"]
     rules = _agent.search_rules("风湿免疫科")
     return _agent.clinical_result(
-        summary=f"风湿免疫科—治疗计划完成 (stage S4a)",
+        summary="风湿免疫科—治疗计划完成 (stage S4a)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -151,7 +151,7 @@ def bp_treatment(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国风湿免疫病诊疗指南（2022）", "EULAR Recommendations for Rheumatic Diseases (2023)"]
     rules = _agent.search_rules("风湿免疫科")
     return _agent.clinical_result(
-        summary=f"风湿免疫科—治疗执行完成 (stage S4b)",
+        summary="风湿免疫科—治疗执行完成 (stage S4b)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -178,7 +178,7 @@ def bp_followup(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国风湿免疫病诊疗指南（2022）", "EULAR Recommendations for Rheumatic Diseases (2023)"]
     rules = _agent.search_rules("风湿免疫科")
     return _agent.clinical_result(
-        summary=f"风湿免疫科—慢病管理完成 (stage S5)",
+        summary="风湿免疫科—慢病管理完成 (stage S5)",
         patient=p,
         guidelines=guides,
         rules=rules,

@@ -74,7 +74,7 @@ def bp_diag(**kwargs) -> dict:
 
     findings = [
         "TNM 第8版: T(肿瘤大小+侵犯) + N(淋巴结 N0/N1/N2/N3) + M(远处转移 0/1a/1b/1c)",
-        f"肺切除可行性: 术后预计 FEV1%(ppoFEV1)=FEV1%*剩余肺段% — ppoFEV1>40%/DLCO>40% => 安全",
+        "肺切除可行性: 术后预计 FEV1%(ppoFEV1)=FEV1%*剩余肺段% — ppoFEV1>40%/DLCO>40% => 安全",
         f"当前: FEV1%={fev1} / DLCO%={dlco}",
         "食管癌分期: 超声内镜(EUS) T分期 + EBUS-TBNA N分期 + PET-CT M分期",
         "纵隔肿瘤: CT/MRI — 位置(前/中/后纵隔) + 囊性/实性 + 钙化 => 鉴别诊断(胸腺瘤/淋巴瘤/畸胎瘤)",
@@ -82,7 +82,7 @@ def bp_diag(**kwargs) -> dict:
     ]
 
     if "肺癌" in dx:
-        findings.insert(0, f"肺癌 TNM 分期: 完善 EBUS/EUS 纵隔淋巴结分期(>=cN1/中央型肿瘤/>=3cm N0)")
+        findings.insert(0, "肺癌 TNM 分期: 完善 EBUS/EUS 纵隔淋巴结分期(>=cN1/中央型肿瘤/>=3cm N0)")
     if "气胸" in dx:
         findings.insert(0, "气胸: 肺压缩 > 30% => 胸腔闭式引流(锁骨中线第2肋间) / 复发 => VATS胸膜固定术")
 

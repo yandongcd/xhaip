@@ -160,8 +160,6 @@ def _osteoporosis_recommendation(risk: str, age: int, gender: str) -> str:
 def _suggest_medication(risk: str, patient: dict) -> list[dict]:
     if risk == "低危":
         return []
-    age = patient.get("age", 0)
-    gender = patient.get("gender", "")
     past = (patient.get("past_history", "") or "").lower()
 
     suggestions = []

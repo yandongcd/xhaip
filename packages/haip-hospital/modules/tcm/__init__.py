@@ -41,7 +41,7 @@ def bp_reception(**kwargs) -> dict:
     ]
 
     if "虚" in dx or "气血" in dx:
-        findings.insert(0, f"气血辨证初步: 气虚(神疲乏力+面色白+脉弱) / 血虚(面色苍白+眩晕+爪甲不荣+脉细)")
+        findings.insert(0, "气血辨证初步: 气虚(神疲乏力+面色白+脉弱) / 血虚(面色苍白+眩晕+爪甲不荣+脉细)")
 
     guides = _agent.search_guidelines(dx) or _GUIDELINES
     rules = _agent.search_rules("中医")

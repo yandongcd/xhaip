@@ -54,7 +54,6 @@ def _anemia_workup(patient: dict) -> dict:
     folate = float(_get(patient, "folate", default=10))
     reticulocyte = float(_get(patient, "reticulocyte", "retic", default=1.5))
     ldh = float(_get(patient, "ldh", "LDH", default=200))
-    haptoglobin = float(_get(patient, "haptoglobin", default=100))
     anemia = hb < 13 if _get(patient, "sex", "gender", default="M") == "M" else hb < 12
     tsat = (iron / tibc * 100) if tibc > 0 else 25
     if not anemia:
@@ -106,18 +105,36 @@ def _calc_isth_dic(patient: dict) -> dict:
     d_dimer = float(_get(patient, "d_dimer", "D-dimer", "ddimer", default=0.5))
     score = 0
     comp = {}
-    if plt > 100: comp["plt"] = 0
-    elif plt >= 50: score += 1; comp["plt"] = 1
-    else: score += 2; comp["plt"] = 2
+    if plt > 100:
+        comp["plt"] = 0
+    elif plt >= 50:
+        score += 1
+        comp["plt"] = 1
+    else:
+        score += 2
+        comp["plt"] = 2
     pt_ratio = pt / pt_control if pt_control else 1
-    if pt_ratio < 1.25: comp["pt"] = 0
-    elif pt_ratio <= 1.66: score += 1; comp["pt"] = 1
-    else: score += 2; comp["pt"] = 2
-    if fibrinogen > 1.0: comp["fibrinogen"] = 0
-    else: score += 1; comp["fibrinogen"] = 1
-    if d_dimer < 0.5: comp["d_dimer"] = 0
-    elif d_dimer <= 5: score += 1; comp["d_dimer"] = 1
-    else: score += 2; comp["d_dimer"] = 2
+    if pt_ratio < 1.25:
+        comp["pt"] = 0
+    elif pt_ratio <= 1.66:
+        score += 1
+        comp["pt"] = 1
+    else:
+        score += 2
+        comp["pt"] = 2
+    if fibrinogen > 1.0:
+        comp["fibrinogen"] = 0
+    else:
+        score += 1
+        comp["fibrinogen"] = 1
+    if d_dimer < 0.5:
+        comp["d_dimer"] = 0
+    elif d_dimer <= 5:
+        score += 1
+        comp["d_dimer"] = 1
+    else:
+        score += 2
+        comp["d_dimer"] = 2
     overt = score >= 5
     return {"score": score, "overt_dic": overt, "components": comp,
             "action": "Treat cause + PLT/FFP/cryo support" if overt else "Monitor, recheck if deteriorates"}
@@ -181,11 +198,16 @@ def _lymphoma_staging(patient: dict) -> dict:
     extranodal = int(_get(patient, "extranodal_sites", default=0))
     stage_desc = {1: "I - single node region", 2: "II - >=2 regions same side", 3: "III - both sides diaphragm", 4: "IV - disseminated extranodal"}
     ipi = 0
-    if age > 60: ipi += 1
-    if ldh > ldh_uln: ipi += 1
-    if ecog >= 2: ipi += 1
-    if stage >= 3: ipi += 1
-    if extranodal > 1: ipi += 1
+    if age > 60:
+        ipi += 1
+    if ldh > ldh_uln:
+        ipi += 1
+    if ecog >= 2:
+        ipi += 1
+    if stage >= 3:
+        ipi += 1
+    if extranodal > 1:
+        ipi += 1
     risk = {0: "low (0)", 1: "low-intermediate (1)", 2: "low-intermediate (2)", 3: "high-intermediate (3)", 4: "high (4)", 5: "high (5)"}
     return {"stage": stage, "stage_desc": stage_desc.get(stage, "?"), "b_symptoms": b_symptoms,
             "ipi": ipi, "ipi_risk": risk.get(ipi, "?"), "ldh": ldh, "age": age, "ecog": ecog}
@@ -201,13 +223,20 @@ def _myeloma_crab(patient: dict) -> dict:
     mri_lesion = _get(patient, "mri_focal_lesion", default=False)
     crab = []
     slim = []
-    if calcium > 11: crab.append("HyperCalcemia")
-    if creatinine > 2 or _get(patient, "renal_insufficiency", default=False): crab.append("Renal")
-    if hb < 10: crab.append("Anemia")
-    if bone_lesions: crab.append("Bone lesions")
-    if plasma_pct >= 60: slim.append("SLiM: marrow plasma >=60%")
-    if sflc_ratio >= 100: slim.append("SLiM: involved/uninvolved FLC ratio >=100")
-    if mri_lesion: slim.append("SLiM: >1 focal lesion on MRI")
+    if calcium > 11:
+        crab.append("HyperCalcemia")
+    if creatinine > 2 or _get(patient, "renal_insufficiency", default=False):
+        crab.append("Renal")
+    if hb < 10:
+        crab.append("Anemia")
+    if bone_lesions:
+        crab.append("Bone lesions")
+    if plasma_pct >= 60:
+        slim.append("SLiM: marrow plasma >=60%")
+    if sflc_ratio >= 100:
+        slim.append("SLiM: involved/uninvolved FLC ratio >=100")
+    if mri_lesion:
+        slim.append("SLiM: >1 focal lesion on MRI")
     mm_defining = len(crab) >= 1 or len(slim) >= 1
     return {"mm_defining": mm_defining, "crab": crab, "slim": slim,
             "action": "Treat active MM" if mm_defining else "Smoldering MM - observe or trial"}
@@ -244,17 +273,28 @@ def _vte_wells(patient: dict) -> dict:
     collaterals = _get(patient, "collateral_veins", default=False)
     alt_dx = _get(patient, "alternative_diagnosis_likely", default=True)
     score = 0
-    if cancer: score += 1
-    if immobile: score += 1
-    if prev_vte: score += 1
-    if unilateral: score += 1
-    if calf_swelling: score += 1
-    if pitting: score += 1
-    if collaterals: score += 1
-    if not alt_dx: score -= 2
-    if score <= 0: prob = "unlikely"
-    elif score <= 2: prob = "moderate"
-    else: prob = "likely"
+    if cancer:
+        score += 1
+    if immobile:
+        score += 1
+    if prev_vte:
+        score += 1
+    if unilateral:
+        score += 1
+    if calf_swelling:
+        score += 1
+    if pitting:
+        score += 1
+    if collaterals:
+        score += 1
+    if not alt_dx:
+        score -= 2
+    if score <= 0:
+        prob = "unlikely"
+    elif score <= 2:
+        prob = "moderate"
+    else:
+        prob = "likely"
     return {"score": score, "probability": prob,
             "action": "US if likely; D-dimer if unlikely then US if elevated" if prob == "unlikely" else "Venous US (proximal compression)"}
 
@@ -262,7 +302,8 @@ def _vte_wells(patient: dict) -> dict:
 def bp_reception(**kwargs) -> dict:
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid)
-    if not p: return _clinical_error(f"Patient {pid} not found")
+    if not p:
+        return _clinical_error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
     dx = p.get("diagnosis", "")
     anemia = _anemia_workup(p)
@@ -274,8 +315,11 @@ def bp_reception(**kwargs) -> dict:
     if any(t in dx for t in ["急性白", "leukemia"]):
         la = _leukemia_alert(p)
         findings.insert(0, f"{'LEUKOSTASIS ALERT' if la['leukostasis'] else 'Leukemia'} WBC={la['wbc']}K blasts={la['blasts_pct']}%")
-        if la["leukostasis"]: findings.insert(0, la["action"]); recommendations.append(la["action"])
-    if anemia["anemic"] and anemia.get("treatment"): recommendations.append(anemia["treatment"])
+        if la["leukostasis"]:
+            findings.insert(0, la["action"])
+            recommendations.append(la["action"])
+    if anemia["anemic"] and anemia.get("treatment"):
+        recommendations.append(anemia["treatment"])
     guides = _agent.search_guidelines(dx) or _GUIDELINES
     rules = _agent.search_rules("血液内科")
     return _agent.clinical_result(patient=p, stage="triage", summary=f"血液内科 - 初诊完成 (Hb={anemia['hb']}, MCV={anemia['mcv']})", findings=findings, guidelines=guides, rules=rules, alerts=vitals.get("alerts",[]), recommendations=recommendations, guideline_refs=_GUIDELINES)
@@ -284,13 +328,16 @@ def bp_reception(**kwargs) -> dict:
 def bp_exam(**kwargs) -> dict:
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid)
-    if not p: return _clinical_error(f"Patient {pid} not found")
+    if not p:
+        return _clinical_error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
     dx = p.get("diagnosis", "")
     findings = ["CBC + diff + reticulocyte: Hb/PLT/WBC/ANC/AMC/blasts", "外周血涂片: morphology, blasts, schistocytes, spherocytes", "骨髓穿刺+活检: cellularity, blasts%, dysplasia, fibrosis, iron stain", "流式细胞术: immunophenotype - CD markers for lineage", "细胞遗传学+分子: karyotype, FISH, NGS panel (NPM1/FLT3/TP53/IDH)"]
     recommendations = ["Bone marrow: aspirate + biopsy + flow + cyto + molecular (all 5 modalities)"]
-    if any(t in dx for t in ["淋巴瘤"]): findings.insert(0, "Lymphoma: excisional LN biopsy + IHC + flow + FISH for MYC/BCL2/BCL6")
-    if any(t in dx for t in ["骨髓瘤"]): findings.insert(0, "Myeloma: SPEP/IFE/sFLC/24h urine + skeletal survey (or PET-CT) + BMAT")
+    if any(t in dx for t in ["淋巴瘤"]):
+        findings.insert(0, "Lymphoma: excisional LN biopsy + IHC + flow + FISH for MYC/BCL2/BCL6")
+    if any(t in dx for t in ["骨髓瘤"]):
+        findings.insert(0, "Myeloma: SPEP/IFE/sFLC/24h urine + skeletal survey (or PET-CT) + BMAT")
     guides = _agent.search_guidelines(dx) or _GUIDELINES
     rules = _agent.search_rules("血液内科")
     return _agent.clinical_result(patient=p, stage="exam", summary="血液内科 - 血液学检查完成", findings=findings, guidelines=guides, rules=rules, alerts=vitals.get("alerts",[]), recommendations=recommendations, guideline_refs=_GUIDELINES)
@@ -299,7 +346,8 @@ def bp_exam(**kwargs) -> dict:
 def bp_diagnosis(**kwargs) -> dict:
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid)
-    if not p: return _clinical_error(f"Patient {pid} not found")
+    if not p:
+        return _clinical_error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
     dx = p.get("diagnosis", "")
     findings = ["WHO分型: 2022 WHO/ICC classification", "危险分层: ELN 2022 (AML), IPSS-R (MDS), R-ISS (myeloma)", "基因突变: NPM1, FLT3-ITD, CEBPA, TP53, IDH1/2, ASXL1, RUNX1", "预后评分: IPI (DLBCL), CLL-IPI, R-ISS (myeloma), IPSS-R (MDS)"]
@@ -307,19 +355,23 @@ def bp_diagnosis(**kwargs) -> dict:
     anemia = _anemia_workup(p)
     findings.append(f"贫血: Hb={anemia['hb']}, MCV={anemia['mcv']} - {anemia.get('category','')}: {anemia.get('subtype','')[:50]}...")
     dic = _calc_isth_dic(p)
-    if dic["overt_dic"]: findings.insert(0, f"ISTH DIC score={dic['score']}: OVERT DIC - {dic['action']}"); recommendations.append(dic["action"])
+    if dic["overt_dic"]:
+        findings.insert(0, f"ISTH DIC score={dic['score']}: OVERT DIC - {dic['action']}")
+        recommendations.append(dic["action"])
 
     if any(t in dx for t in ["急性白", "leukemia"]):
         la = _leukemia_alert(p)
         findings.insert(0, f"Leukemia: WBC={la['wbc']}K blasts={la['blasts_pct']}% {'HYPERLEUKOCYTOSIS' if la['hyperleukocytosis'] else ''}")
-        if la["tls_risk"]: recommendations.append("TLS prophylaxis: allopurinol + IV hydration + rasburicase prn")
+        if la["tls_risk"]:
+            recommendations.append("TLS prophylaxis: allopurinol + IV hydration + rasburicase prn")
     if any(t in dx for t in ["淋巴瘤"]):
         ls = _lymphoma_staging(p)
         findings.insert(0, f"Lymphoma: Ann Arbor {ls['stage_desc']}, {'B sx+' if ls['b_symptoms'] else 'B sx-'}, IPI={ls['ipi']} ({ls['ipi_risk']})")
     if any(t in dx for t in ["骨髓瘤"]):
         mm = _myeloma_crab(p)
         findings.insert(0, f"Myeloma: {'MM-defining' if mm['mm_defining'] else 'Smoldering'} - CRAB: {', '.join(mm['crab']) if mm['crab'] else 'none'}; {'SLiM: '+', '.join(mm['slim']) if mm['slim'] else ''}")
-        if mm["mm_defining"]: recommendations.append(mm["action"])
+        if mm["mm_defining"]:
+            recommendations.append(mm["action"])
     if any(t in dx for t in ["DVT", "PE", "肺栓塞", "深静脉"]):
         vte = _vte_wells(p)
         findings.insert(0, f"VTE: Wells score={vte['score']} ({vte['probability']}) - {vte['action']}")
@@ -336,7 +388,8 @@ def bp_diagnosis(**kwargs) -> dict:
 def bp_plan(**kwargs) -> dict:
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid)
-    if not p: return _clinical_error(f"Patient {pid} not found")
+    if not p:
+        return _clinical_error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
     dx = p.get("diagnosis", "")
     findings = ["化疗方案: induction/consolidation/maintenance per ELN/NCCN", "靶向药物: FLT3/IDH/BCL2/BCR-ABL inhibitors based on mutations", "移植评估: allo-HSCT timing (CR1 for high-risk AML), auto-HSCT (myeloma)", "支持治疗: transfusion, G-CSF, infection prophylaxis, TLS prevention"]
@@ -344,7 +397,8 @@ def bp_plan(**kwargs) -> dict:
     if any(t in dx for t in ["急性白"]):
         findings.insert(0, "AML induction: 7+3 (cytarabine+daunorubicin) or CPX-351 (secondary AML) or Ven+Aza (elderly/unfit)")
         la = _leukemia_alert(p)
-        if la["tls_risk"]: recommendations.append(la.get("tls_prophylaxis", "Allopurinol + IV fluids"))
+        if la["tls_risk"]:
+            recommendations.append(la.get("tls_prophylaxis", "Allopurinol + IV fluids"))
     if any(t in dx for t in ["淋巴瘤"]):
         ls = _lymphoma_staging(p)
         findings.insert(0, f"DLBCL: R-CHOP x6 ({'R-miniCHOP if frail' if ls['age']>80 else 'full dose R-CHOP'}), IPI={ls['ipi']}")
@@ -365,7 +419,8 @@ def bp_plan(**kwargs) -> dict:
 def bp_treatment(**kwargs) -> dict:
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid)
-    if not p: return _clinical_error(f"Patient {pid} not found")
+    if not p:
+        return _clinical_error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
     dx = p.get("diagnosis", "")
     findings = ["化疗毒副反应: myelosuppression (ANC nadir D7-10), mucositis, nausea/vomiting (CINV prophylaxis), cardiotoxicity (anthracycline echo)", "输血支持: per thresholds - leukoreduced, irradiated if HSCT candidate", "感染防控: neutropenic fever protocol (ANC<500+temp>38.3) - cefepime/pip-tazo/meropenem + vancomycin if indicated", "GVHD 管理: tacrolimus + MTX (CNI+MTX for allo-HSCT); aGVHD grading (Glucksberg); cGVHD (NIH criteria)"]
@@ -380,13 +435,16 @@ def bp_treatment(**kwargs) -> dict:
 def bp_followup(**kwargs) -> dict:
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid)
-    if not p: return _clinical_error(f"Patient {pid} not found")
+    if not p:
+        return _clinical_error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
     dx = p.get("diagnosis", "")
     findings = ["MRD 监测: flow cytometry (10^-4) or NGS (10^-6) - q3mo for AML/ALL; MRD+ = preemptive intervention", "复发评估: monthly CBC, symptoms (B sx, bone pain, cytopenias)", "远期并发症: t-MDS/AML (alkylators/topoisomerase), cardiotoxicity (anthracyclines >250mg/m^2), infertility (cryopreservation pre-treatment)", "移植后随访: chimerism (STR) q3mo x1yr then q6mo, GVHD evaluation, vaccinations (inactivated only until immune reconstitution)"]
     recommendations = ["CBC q1-3mo (first 2 years) then q6mo", "BMAT at 1mo/3mo/6mo/12mo post-induction (AML); MRD-guided preemptive therapy",
                       "Iron overload (ferritin >1000 or >20 RBC units): cardiac/liver MRI T2*, chelation if indicated", "Survivorship: annual echo, endocrine (thyroid/gonadal), second malignancy screening (skin/breast/colorectal per age)"]
-    if any(t in dx for t in ["DVT", "PE"]): recommendations.append("Anticoagulation: continue 3-6mo if provoked, indefinite if unprovoked/recurrent/thrombophilia"); findings.append("Post-thrombotic syndrome prevention: compression stockings 30-40mmHg x2yr")
+    if any(t in dx for t in ["DVT", "PE"]):
+        recommendations.append("Anticoagulation: continue 3-6mo if provoked, indefinite if unprovoked/recurrent/thrombophilia")
+        findings.append("Post-thrombotic syndrome prevention: compression stockings 30-40mmHg x2yr")
     guides = _agent.search_guidelines(dx) or _GUIDELINES
     rules = _agent.search_rules("血液内科")
     return _agent.clinical_result(patient=p, stage="followup", summary="血液内科 - 随访管理完成", findings=findings, guidelines=guides, rules=rules, alerts=vitals.get("alerts",[]), recommendations=recommendations, guideline_refs=_GUIDELINES)

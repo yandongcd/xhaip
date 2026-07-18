@@ -240,7 +240,7 @@ class TestDeepSeekProvider:
         mock_resp.__exit__ = mocker.MagicMock(return_value=False)
         mock_resp.iter_lines.return_value = fake_lines()
         mock_resp.raise_for_status = mocker.MagicMock()
-        mock_stream = mocker.patch("httpx.stream", return_value=mock_resp)
+        mocker.patch("httpx.stream", return_value=mock_resp)
 
         p = DeepSeekProvider(api_key="sk-test")
         chunks = list(p.chat_stream([{"role": "user", "content": "Hi"}]))

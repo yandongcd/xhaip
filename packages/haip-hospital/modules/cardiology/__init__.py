@@ -315,7 +315,7 @@ def hfref_gdmt_recommendation(ef_pct: float = 25, systolic_bp: float = 120,
         return {
             "gdmt_applicable": False,
             "ef": ef_pct,
-            "type": f"HFpEF (EF>{40}%)" if ef_pct > 50 else f"HFmrEF (EF 41-49%)",
+            "type": f"HFpEF (EF>{40}%)" if ef_pct > 50 else "HFmrEF (EF 41-49%)",
             "recommendation": "SGLT2i (EMPEROR-Preserved, DELIVER) + diuretics, treat underlying cause",
         }
 
@@ -368,11 +368,15 @@ def hfref_gdmt_recommendation(ef_pct: float = 25, systolic_bp: float = 120,
 def extract_vitals(patient: dict) -> dict:
     labs = patient.get("lab_results", {}) if patient else {}
     def _f(key, default=0):
-        try: return float(labs.get(key, default) or default)
-        except (ValueError, TypeError): return default
+        try:
+            return float(labs.get(key, default) or default)
+        except (ValueError, TypeError):
+            return default
     def _i(key, default=0):
-        try: return int(_f(key, default))
-        except: return default
+        try:
+            return int(_f(key, default))
+        except Exception:
+            return default
     return {
         "pulse":  _f("pulse", _f("HR", 0)),
         "sbp":    _f("sbp", _f("sBP", _f("SBP", 0))),
@@ -425,14 +429,6 @@ def bp_reception(**kwargs) -> dict:
         ef_pct=ef, systolic_bp=v["sbp"], egfr=v["egfr"], k=v["k"], nyha=nyha["nyha_class"],
     )
 
-    findings = [
-        f"CHA₂DS₂-VASc: {chads['chads2_vasc']} → {chads['recommendation']}",
-        f"HAS-BLED: {has_bled['has_bled']} → {has_bled['recommendation'][:60]}",
-        f"NYHA: {nyha['name']} — {nyha['description'][:50]}",
-        f"EF: {ef}% → {'HFrEF 四联疗法' if ef <= 40 else 'HFmrEF/HFpEF management'}",
-        "风险因素筛查: 吸烟/饮酒/家族史/血脂/糖化血红蛋白",
-        "体格检查: BP双侧/心界叩诊/颈静脉充盈/踝部水肿",
-    ]
     recommendations = [
         f"CHA₂DS₂-VASc={chads['chads2_vasc']}: {chads['recommendation']}",
         f"HAS-BLED={has_bled['has_bled']}: monitor modifiable factors",
@@ -458,7 +454,6 @@ def bp_exam(**kwargs) -> dict:
 
     dx = p.get("diagnosis", "")
     age = int(p.get("age", 60) or 60)
-    v = extract_vitals(p)
 
     chads = calculate_chads2_vasc(
         chf=("心衰" in dx), age=age,
@@ -513,12 +508,6 @@ def bp_diagnosis(**kwargs) -> dict:
     # NYHA
     nyha = classify_nyha(3 if ("心衰" in dx and v["sbp"] < 100) else 2)
 
-    findings = [
-        f"Killip: {killip['name']} — in-hospital mortality {killip['in_hospital_mortality']}",
-        f"TIMI: {timi['timi_score']}/7 ({timi['risk_stratum']} risk) — 14d event {timi['event_rate_14d']}",
-        f"NYHA: {nyha['name']} ({nyha['prognosis']})",
-        f"Troponin: {'positive (>0.04)' if trop_positive else 'negative'}",
-    ]
 
     guides = _agent.search_guidelines(dx) or _GUIDELINES
     rules = _agent.search_rules("心血管内科")
@@ -667,14 +656,15 @@ def bp_followup(**kwargs) -> dict:
                                  "Cancer screening age-appropriate"]},
     ]
 
-    chads_baseline = f"CHA₂DS₂-VASc baseline: {chads['chads2_vasc']} (re-score at 3mo)"
-    hasbled_baseline = f"HAS-BLED baseline: {has_bled['has_bled']} (re-score q3mo on OAC)"
-    hf_pillars = f"HF target doses: {gdmt['total_pillars']}/4 pillars applicable"
 
     guides = _agent.search_guidelines(dx) or _GUIDELINES
     rules = _agent.search_rules("心血管内科")
     return _agent.clinical_result(
-        summary=f"慢病随访 — {len(followup_schedule)} visits (1/3/6/12mo) CHA₂DS₂-VASc={chads['chads2_vasc']}",
+        summary=(
+            f"慢病随访 — {len(followup_schedule)} visits (1/3/6/12mo) "
+            f"CHA₂DS₂-VASc={chads['chads2_vasc']} "
+            f"({'HFrEF GDMT titration' if gdmt['gdmt_applicable'] else 'CV risk management'})"
+        ),
         patient=p, guidelines=guides, rules=rules,
         alerts=vitals.get("alerts", []),
     )

@@ -93,7 +93,6 @@ def _antibiotic_timeout(patient: dict) -> dict:
     abx_day = int(_vn(patient, "antibiotic_day", "abx_day", default=1))
     cultures = _vn(patient, "culture_results", "cultures", default="pending")
     pct = float(_vn(patient, "procalcitonin", "pct", default=2))
-    wbc = float(_vn(patient, "wbc", default=8))
     afebrile_hours = float(_vn(patient, "afebrile_hours", default=24))
 
     timeout_due = abx_day >= 3
@@ -153,7 +152,8 @@ def _interpret_hbv_serology(patient: dict) -> dict:
     hbv_dna = float(_vn(patient, "hbv_dna", "HBV-DNA", "viral_load", default=0))
     alt = float(_vn(patient, "alt", "ALT", "alanine_transferase", default=30))
 
-    pos = lambda s: s in ("positive", "reactive", "+", True, 1)
+    def pos(s):
+        return s in ("positive", "reactive", "+", True, 1)
 
     if pos(hbsag) and pos(hbeag) and pos(hbcab) and not pos(hbsab):
         interpretation = "HBeAg-positive chronic HBV (immune-active) — high viral load, active hepatitis"
@@ -248,8 +248,7 @@ def _covid_severity(patient: dict) -> dict:
     """COVID-19 severity classification and treatment."""
     spo2 = float(_vn(patient, "spo2", "o2_saturation", default=95))
     rr = int(_vn(patient, "respiratory_rate", "rr", default=18))
-    cxr = _vn(patient, "cxr_infiltrate", "cxr", default="normal")
-    crp = float(_vn(patient, "crp", default=20))
+    _vn(patient, "cxr_infiltrate", "cxr", default="normal")
     d_dimer = float(_vn(patient, "d_dimer", default=0.5))
 
     if spo2 >= 94 and rr < 24:
@@ -468,7 +467,7 @@ def bp_plan(**kwargs) -> dict:
     rules = _agent.search_rules("感染内科")
     return _agent.clinical_result(
         patient=p, stage="plan",
-        summary=f"感染内科 — 抗感染方案完成",
+        summary="感染内科 — 抗感染方案完成",
         findings=findings, guidelines=guides, rules=rules,
         alerts=vitals.get("alerts", []), recommendations=recommendations,
         guideline_refs=_GUIDELINES,
@@ -505,7 +504,7 @@ def bp_treatment(**kwargs) -> dict:
     rules = _agent.search_rules("感染内科")
     return _agent.clinical_result(
         patient=p, stage="treatment",
-        summary=f"感染内科 — 治疗执行完成",
+        summary="感染内科 — 治疗执行完成",
         findings=findings, guidelines=guides, rules=rules,
         alerts=vitals.get("alerts", []), recommendations=recommendations,
         guideline_refs=_GUIDELINES,

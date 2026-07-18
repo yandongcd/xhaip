@@ -43,7 +43,7 @@ def bp_reception(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国新生儿临床诊疗指南（2022）", "ESPEN Guidelines on Clinical Nutrition"]
     rules = _agent.search_rules("新生儿科")
     return _agent.clinical_result(
-        summary=f"新生儿科—新生儿入院评估完成 (stage S1)",
+        summary="新生儿科—新生儿入院评估完成 (stage S1)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -70,7 +70,7 @@ def bp_exam(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国新生儿临床诊疗指南（2022）", "ESPEN Guidelines on Clinical Nutrition"]
     rules = _agent.search_rules("新生儿科")
     return _agent.clinical_result(
-        summary=f"新生儿科—新生儿专项检查完成 (stage S2)",
+        summary="新生儿科—新生儿专项检查完成 (stage S2)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -97,7 +97,7 @@ def bp_diagnosis(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国新生儿临床诊疗指南（2022）", "ESPEN Guidelines on Clinical Nutrition"]
     rules = _agent.search_rules("新生儿科")
     return _agent.clinical_result(
-        summary=f"新生儿科—疾病诊断完成 (stage S3)",
+        summary="新生儿科—疾病诊断完成 (stage S3)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -124,7 +124,7 @@ def bp_treatment(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国新生儿临床诊疗指南（2022）", "ESPEN Guidelines on Clinical Nutrition"]
     rules = _agent.search_rules("新生儿科")
     return _agent.clinical_result(
-        summary=f"新生儿科—新生儿治疗完成 (stage S4)",
+        summary="新生儿科—新生儿治疗完成 (stage S4)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -151,7 +151,7 @@ def bp_nursing(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国新生儿临床诊疗指南（2022）", "ESPEN Guidelines on Clinical Nutrition"]
     rules = _agent.search_rules("新生儿科")
     return _agent.clinical_result(
-        summary=f"新生儿科—产后/儿科护理完成 (stage S1)",
+        summary="新生儿科—产后/儿科护理完成 (stage S1)",
         patient=p,
         guidelines=guides,
         rules=rules,
@@ -178,7 +178,7 @@ def bp_followup(**kwargs) -> dict:
     guides = _agent.search_guidelines(p.get("diagnosis", "")) or ["中国新生儿临床诊疗指南（2022）", "ESPEN Guidelines on Clinical Nutrition"]
     rules = _agent.search_rules("新生儿科")
     return _agent.clinical_result(
-        summary=f"新生儿科—新生儿随访完成 (stage S5)",
+        summary="新生儿科—新生儿随访完成 (stage S5)",
         patient=p,
         guidelines=guides,
         rules=rules,

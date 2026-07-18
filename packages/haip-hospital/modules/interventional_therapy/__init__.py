@@ -41,7 +41,7 @@ def bp_reg(**kwargs) -> dict:
     ]
 
     if "肝癌T" in dx or "TACE" in dx.upper():
-        findings.insert(0, f"TACE 适应症: BCLC B 期 + Child-Pugh A/B + 无门静脉主干完全闭塞")
+        findings.insert(0, "TACE 适应症: BCLC B 期 + Child-Pugh A/B + 无门静脉主干完全闭塞")
     if "胆道梗" in dx:
         findings.insert(0, "胆道梗阻: TBIL > 50umol/L + 胆管扩张 => PTCD/ERBD 胆道引流")
 
@@ -133,7 +133,7 @@ def bp_risk(**kwargs) -> dict:
 
     checklist = ["穿刺点出血", "异位栓塞", "造影剂肾病", "感染", "肝功能衰竭"]
     findings = [
-        f"穿刺点出血: 腹膜后血肿(股动脉后壁) — 腹股沟疼痛+低血压 => 急诊CT+压迫/介入封堵",
+        "穿刺点出血: 腹膜后血肿(股动脉后壁) — 腹股沟疼痛+低血压 => 急诊CT+压迫/介入封堵",
         "异位栓塞: 脑梗/截瘫(脊髓动脉栓塞)/肺栓塞 — 选择性插管 + 微导管减少风险",
         f"造影剂肾病(CIN): Cr={cr} PT={pt} — 术后 Cr 升高>=25%/44umol/L, 发生率 2-25%",
         "造影剂过敏: 速发型(<1h荨麻疹/支气管痉挛/过敏性休克)/迟发型(皮肤反应) — 激素+苯海拉明预防",
