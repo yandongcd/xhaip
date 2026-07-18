@@ -1,0 +1,189 @@
+﻿diff --git a/packages/haip-core/haip/ui_workflow.py b/packages/haip-core/haip/ui_workflow.py
+index 34a93b5..ed2700e 100644
+--- a/packages/haip-core/haip/ui_workflow.py
++++ b/packages/haip-core/haip/ui_workflow.py
+@@ -1,80 +1,106 @@
+ """宸ヤ綔娴?UI 鈥?process 鍚屾涓夋爮甯冨眬 + 瑙掕壊 stage 绛涢€?+ 宸ュ叿鎵ц."""
+ 
+ from __future__ import annotations
+ 
+ import json
+ 
+ from haip.patients import load_patients
+ 
+ 
+-def render_workflow_ui(
+-    name: str,
+-    cn_name: str,
+-    agent_type: str,
+-    port: int,
+-    tools: list[dict],
+-    workflow_stages: list[dict],
+-    roles: dict,
+-    guard_triggers: list[str],
+-) -> str:
+-    icon_map = {"business": "馃彞", "specialist": "馃敩", "master_data": "馃梽锔?}
+-    patients = load_patients(name)
+-
+-    wf_json = json.dumps(workflow_stages, ensure_ascii=False)
+-    roles_json = json.dumps(roles, ensure_ascii=False)
+-    patients_json = json.dumps(patients, ensure_ascii=False)
+-
+-    # 鈹€鈹€ 瑙掕壊 Pill 鈹€鈹€
+-    role_pills = ""
+-    first_role = None
++def _build_role_pills(roles: dict) -> tuple[str, str]:
++    """瑙掕壊 Pill HTML + 棣栦釜瑙掕壊 id."""
++    pills = ""
++    first_role = ""
+     for rid, rcfg in roles.items():
+-        if first_role is None:
++        if not first_role:
+             first_role = rid
+         icon = rcfg.get("icon", "")
+         role_label = rcfg.get("name", rid)
+-        role_pills += f'<button class="role-pill" data-role="{rid}" onclick="switchRole(\'{rid}\')">{icon} {role_label}</button>\n'
++        pills += (
++            f'<button class="role-pill" data-role="{rid}" '
++            f'onclick="switchRole(\'{rid}\')">{icon} {role_label}</button>\n'
++        )
++    return pills, first_role
+ 
+-    # 鈹€鈹€ 鍙充晶闃舵瀵艰埅 鈹€鈹€
+-    sb_items = ""
+-    for s in workflow_stages:
+-        sb_items += (
++
++def _build_stage_nav(stages: list[dict]) -> str:
++    """鍙充晶闃舵瀵艰埅 HTML."""
++    items = ""
++    for s in stages:
++        items += (
+             f'<div class="rb-item" data-stage="{s["order"]}" onclick="clickStage({s["order"]})">'
+             f'<span class="rb-dot current"></span>'
+             f'<div class="rb-info"><div class="rb-name">{s["order"]}. {s["label"]}</div></div>'
+             f'<span class="rb-status active-s">褰撳墠</span></div>\n'
+         )
++    return items
+ 
+-    # 鈹€鈹€ 闃舵闈㈡澘 (甯︽墽琛屾寜閽? 鈹€鈹€
++
++def _build_stage_panels(stages: list[dict]) -> str:
++    """闃舵闈㈡澘 HTML (甯︽墽琛屾寜閽?."""
+     panels = ""
+-    for i, s in enumerate(workflow_stages):
+-        act = ' active' if i == 0 else ''
++    for i, s in enumerate(stages):
++        act = " active" if i == 0 else ""
+         tool_name = s["tool"]
+         panels += (
+             f'<div class="stage-content{act}" id="stage-{s["order"]}">'
+             f'<div class="stage-header"><span class="stage-badge">{s["order"]}</span>'
+             f'<div><h3>{s["label"]}</h3><p>{s["description"]}</p>'
+             f'<span class="guide-ref">{s.get("guideline_ref", "")}</span></div></div>'
+             f'<div class="form-group"><label>鍙傛暟</label>'
+-            f'<textarea id="params-{s["id"]}">{{"patient_id":"P001","age":78,"weight_kg":55,"height_cm":170}}</textarea></div>'
++            f'<textarea id="params-{s["id"]}">'
++            f'{{"patient_id":"P001","age":78,"weight_kg":55,"height_cm":170}}</textarea></div>'
+             f'<div class="btn-row">'
+-            f'<button class="btn-exec" onclick="callStage(\'{s["id"]}\',\'{tool_name}\')">鈻?鎵ц {s["label"]}</button>'
++            f'<button class="btn-exec" onclick="callStage(\'{s["id"]}\',\'{tool_name}\')">'
++            f'鈻?鎵ц {s["label"]}</button>'
+             f'<button class="btn-guard" onclick="showGuard(\'{s["id"]}\')">馃洝 瀹夊叏鏍￠獙</button>'
+         )
+-        if i < len(workflow_stages) - 1:
+-            panels += f'<button class="btn-next" onclick="autoNext(\'{s["id"]}\',\'{workflow_stages[i+1]["id"]}\')">鈫?涓嬩竴姝?/button>'
++        if i < len(stages) - 1:
++            panels += (
++                f'<button class="btn-next" '
++                f'onclick="autoNext(\'{s["id"]}\',\'{stages[i + 1]["id"]}\')">鈫?涓嬩竴姝?/button>'
++            )
+         panels += (
+             f'</div>'
+             f'<div class="result-box" id="result-{s["id"]}">'
+             f'<span class="result-placeholder">鐐瑰嚮銆屾墽琛屻€嶅紑濮?..</span></div>'
+             f'</div>\n'
+         )
++    return panels
++
++
++def render_workflow_ui(
++    name: str,
++    cn_name: str,
++    agent_type: str,
++    port: int,
++    tools: list[dict],
++    workflow_stages: list[dict],
++    roles: dict,
++    guard_triggers: list[str],
++) -> str:
++    icon_map = {"business": "馃彞", "specialist": "馃敩", "master_data": "馃梽锔?}
++    patients = load_patients(name)
++
++    wf_json = json.dumps(workflow_stages, ensure_ascii=False)
++    roles_json = json.dumps(roles, ensure_ascii=False)
++    patients_json = json.dumps(patients, ensure_ascii=False)
++
++    # 鈹€鈹€ 瑙掕壊 Pill 鈹€鈹€
++    role_pills, first_role = _build_role_pills(roles)
++
++    # 鈹€鈹€ 鍙充晶闃舵瀵艰埅 鈹€鈹€
++    sb_items = _build_stage_nav(workflow_stages)
++
++    # 鈹€鈹€ 闃舵闈㈡澘 (甯︽墽琛屾寜閽? 鈹€鈹€
++    panels = _build_stage_panels(workflow_stages)
+ 
+     # 鈹€鈹€ Guard 鈹€鈹€
+     guard_html = ""
+     if guard_triggers:
+         tags = " ".join(f'<span class="tag red">{t}</span>' for t in guard_triggers)
+         guard_html = (
+             '<div class="rb-stats"><div class="rb-stat"><span>鈿?楂樺嵄瑙﹀彂</span></div>'
+             f'<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px">{tags}</div></div>'
+         )
+ 
+diff --git a/packages/haip-core/pyproject.toml b/packages/haip-core/pyproject.toml
+index 3c3190e..3a011ce 100644
+--- a/packages/haip-core/pyproject.toml
++++ b/packages/haip-core/pyproject.toml
+@@ -20,20 +20,21 @@ dev = [
+     "pytest>=8.0",
+     "pytest-cov>=5.0",
+     "ruff>=0.5",
+     "mypy>=1.10",
+ ]
+ 
+ [tool.ruff]
+ line-length = 100
+ 
+ [tool.ruff.lint]
++extend-select = ["PLR1704"]
+ ignore = ["E402"]
+ 
+ [tool.ruff.lint.per-file-ignores]
+ "tests/**" = ["F401"]
+ 
+ [tool.mypy]
+ python_version = "3.10"
+ strict = false
+ ignore_missing_imports = true
+ warn_return_any = false
+diff --git a/pyproject.toml b/pyproject.toml
+index 6683e71..0a69e2f 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,13 +1,14 @@
+ [project]
+ name = "xhaip"
+ version = "1.2.0"
+ description = "HAIP v1.2 鈥?Hospital AI Platform PROD-READY"
+ 
+ [tool.ruff]
+ line-length = 100
+ 
+ [tool.ruff.lint]
++extend-select = ["PLR1704"]
+ ignore = ["E402"]
+ 
+ [tool.ruff.lint.per-file-ignores]
+ "tests/**" = ["E402", "F401"]

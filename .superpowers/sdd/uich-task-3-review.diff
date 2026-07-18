@@ -1,0 +1,300 @@
+﻿diff --git a/packages/haip-core/tests/conftest.py b/packages/haip-core/tests/conftest.py
+index 9ec7d28..ac0bcc0 100644
+--- a/packages/haip-core/tests/conftest.py
++++ b/packages/haip-core/tests/conftest.py
+@@ -1,16 +1,20 @@
+-"""鍏变韩 fixtures."""
++"""鍏变韩 fixtures 鈥?fixtures + 缁熶竴 HAIP_TEST_MODE."""
++
++import os
+ 
+ import pytest
+ 
+ from haip.llm.mock import MockProvider
+ 
++os.environ.setdefault("HAIP_TEST_MODE", "true")
++
+ 
+ @pytest.fixture
+ def mock_llm() -> MockProvider:
+     return MockProvider({
+         "nutrition": {
+             "content": "鍩轰簬 NRS2002 璇勫垎锛岃鎮ｈ€呰惀鍏婚闄╄瘎鍒嗕负 4 鍒嗭紝灞炰簬楂橀闄╋紝寤鸿鍚姩鑲犲唴钀ュ吇鏀寔銆?,
+             "input_tokens": 150,
+             "output_tokens": 80,
+         },
+         "tpn": {
+diff --git a/packages/haip-core/tests/test_agent.py b/packages/haip-core/tests/test_agent.py
+index 47cefe4..a4bb539 100644
+--- a/packages/haip-core/tests/test_agent.py
++++ b/packages/haip-core/tests/test_agent.py
+@@ -153,21 +153,21 @@ class TestErrorPaths:
+         register(DomainPlugin(name="dup", type="specialist"))
+         plugin = get("dup")
+         assert plugin is not None
+         assert plugin.type == "specialist"
+ 
+     def test_missing_required_field(self):
+         with tempfile.TemporaryDirectory() as tmp:
+             yaml_path = Path(tmp) / "missing_name.yaml"
+             yaml_path.write_text("type: business\nport: 8000\n", encoding="utf-8")
+             count = load_from_dir(tmp)
+-            assert count >= 0
++            assert count >= 0  # defensive: ensure load_from_dir doesn't crash on invalid YAML
+ 
+ 
+ # 鈹€鈹€ Boundary Condition Tests 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+ 
+ class TestBoundaryConditions:
+     def setup_method(self):
+         list_all().clear()
+ 
+     def test_agent_name_with_chinese_characters(self):
+         plugin = DomainPlugin(name="娴嬭瘯鏅鸿兘浣?, cn_name="娴嬭瘯涓枃鍚嶇О", type="business")
+diff --git a/packages/haip-core/tests/test_auth.py b/packages/haip-core/tests/test_auth.py
+index 16b7b69..44f3322 100644
+--- a/packages/haip-core/tests/test_auth.py
++++ b/packages/haip-core/tests/test_auth.py
+@@ -1,21 +1,19 @@
+ """Tests for the auth module 鈥?models, password, JWT, RBAC, and API."""
+ 
+ from __future__ import annotations
+ 
+ import os
+ import sys
+ 
+ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+ 
+-os.environ["HAIP_TEST_MODE"] = "true"
+-
+ import pytest
+ from fastapi.testclient import TestClient
+ 
+ from haip.auth.models import (
+     UserCreateRequest,
+     UserLoginRequest,
+     UserInfo,
+     LoginResponse,
+     TokenRefreshRequest,
+     Permission,
+diff --git a/packages/haip-core/tests/test_operations.py b/packages/haip-core/tests/test_operations.py
+index f7a1f21..d4488c1 100644
+--- a/packages/haip-core/tests/test_operations.py
++++ b/packages/haip-core/tests/test_operations.py
+@@ -127,21 +127,21 @@ class TestSystemChecks:
+     def test_system_checks(self):
+         result = system_checks()
+         assert "python" in result
+         assert result["python"]["ok"]
+ 
+ 
+ class TestBenchmark:
+     def test_benchmark(self):
+         result = benchmark_a2a(iterations=3)
+         assert result["iterations"] == 3
+-        assert result["avg_ms"] >= 0
++        assert result["avg_ms"] >= 0  # defensive: timing field shape check
+ 
+ 
+ class TestFormatOutput:
+     def test_json_format(self):
+         data = {"status": "ok", "score": 10}
+         out = format_output(data, "json")
+         assert "ok" in out
+ 
+     def test_text_format(self):
+         data = {"status": "ok", "list": ["a", "b"]}
+@@ -286,21 +286,21 @@ class TestSkillSyncFunctions:
+         skill_dir.mkdir(parents=True)
+         content = "---\ntitle: Apply Test\n---\n# Apply test content\n"
+         (skill_dir / "SKILL.md").write_text(content, encoding="utf-8")
+ 
+         test_ownership = {"packages/haip-core": "xhaip-core"}
+ 
+         with p1, p2:
+             with patch.dict("haip.operations.skill_sync.SKILL_OWNERSHIP", test_ownership, clear=True):
+                 from haip.operations.skill_sync import sync
+                 result = sync(dry_run=False)
+-                assert result["changed"] >= 0
++                assert result["changed"] >= 0  # defensive: skill sync may report 0 changes
+                 dst = rt / ".openharness" / "skills" / "xhaip-core" / "SKILL.md"
+                 assert dst.exists()
+                 assert dst.read_text(encoding="utf-8") == content
+ 
+     def test_sync_missing_source_reported(self):
+         p1, p2, src, rt = self._patch_constants()
+         test_ownership = {"packages/nonexistent-module": "xhaip-nonexistent"}
+ 
+         with p1, p2:
+             with patch.dict("haip.operations.skill_sync.SKILL_OWNERSHIP", test_ownership, clear=True):
+@@ -871,23 +871,23 @@ class TestSkillSyncExtended:
+ 
+ 
+ # 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺? # Benchmark edge cases
+ # 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺? 
+ class TestBenchmarkExtended:
+     def test_benchmark_with_few_iterations(self):
+         result = benchmark_a2a(iterations=1)
+         assert result["iterations"] == 1
+-        assert result["avg_ms"] >= 0
+-        assert result["min_ms"] >= 0
+-        assert result["max_ms"] >= 0
++        assert result["avg_ms"] >= 0  # defensive: timing field shape check
++        assert result["min_ms"] >= 0  # defensive: timing field shape check
++        assert result["max_ms"] >= 0  # defensive: timing field shape check
+ 
+     def test_benchmark_returns_p95(self):
+         result = benchmark_a2a(iterations=5)
+         assert "p95_ms" in result
+ 
+ 
+ # 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺? # AuditEngine more edge cases
+ # 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺? 
+diff --git a/packages/haip-core/tests/test_p4.py b/packages/haip-core/tests/test_p4.py
+index b924d2e..05047c6 100644
+--- a/packages/haip-core/tests/test_p4.py
++++ b/packages/haip-core/tests/test_p4.py
+@@ -49,33 +49,33 @@ class TestKnowledgeRuntime:
+         assert isinstance(rules, list)
+         kb.close()
+         reset_kb()
+ 
+     def test_resync(self):
+         from haip.knowledge.runtime import KnowledgeRuntime, reset_kb
+         reset_kb()
+         kb = KnowledgeRuntime(str(project_root))
+         s1 = kb.sync()
+         kb.resync()
+-        assert s1["guidelines"] >= 0
++        assert s1["guidelines"] > 0, "鐭ヨ瘑搴撳悓姝ュ悗鎸囧崡鏁板簲涓烘 鈥?妫€鏌?assets/knowledge/ 鏁版嵁"
+         kb.close()
+         reset_kb()
+ 
+ 
+ class TestCaseManager:
+     def test_load_patients(self):
+         from haip.knowledge.cases import CaseManager
+-        patients_file = project_root / "packages" / "haip-hospital" / "data"
++        data_dir = project_root / "packages" / "haip-hospital" / "data"
++        assert data_dir.exists(), "鎮ｈ€呮暟鎹洰褰曠己澶?
+         cm = CaseManager()
+-        if patients_file.exists():
+-            cm.load(patients_file)
+-        assert len(cm.cases) >= 0  # may be 0 if no data
++        cm.load(data_dir)
++        assert len(cm.cases) > 0, "鎮ｈ€呮暟鎹姞杞戒负绌?鈥?妫€鏌?patients.json 鏍煎紡"
+         s = cm.stats()
+         assert "total" in s
+ 
+     def test_search(self):
+         from haip.knowledge.cases import CaseManager
+         cm = CaseManager()
+         patients_file = project_root / "packages" / "haip-hospital" / "data"
+         if patients_file.exists():
+             cm.load(patients_file)
+         results = cm.search(department="orthopedic_surgery")
+diff --git a/packages/haip-core/tests/test_release.py b/packages/haip-core/tests/test_release.py
+index 4d60972..48c6d29 100644
+--- a/packages/haip-core/tests/test_release.py
++++ b/packages/haip-core/tests/test_release.py
+@@ -167,21 +167,21 @@ class TestRollback:
+ 
+         rm = ReleaseManager(releases_dir=str(root / "releases"))
+         backup_info = rm.create_backup(label="rollback-test")
+ 
+         test_file.write_text("name: test-agent\nversion: '2.0-changed'\n", encoding="utf-8")
+ 
+         mock_git.reset_mock()
+         result = rm.rollback(backup_info["backup_id"])
+ 
+         assert "success" in result
+-        assert len(result.get("restored", [])) + len(result.get("errors", [])) >= 0
++        assert len(result.get("restored", [])) > 0, "鍥炴粴搴旀仮澶嶈嚦灏戜竴涓枃浠?
+ 
+ 
+ class TestInfo:
+     @pytest.fixture(autouse=True)
+     def setup(self):
+         self.tmpdir = tempfile.TemporaryDirectory()
+         yield
+         self.tmpdir.cleanup()
+ 
+     def test_info_nonexistent_backup_returns_none(self):
+diff --git a/tests/conftest.py b/tests/conftest.py
+new file mode 100644
+index 0000000..b3a3281
+--- /dev/null
++++ b/tests/conftest.py
+@@ -0,0 +1,17 @@
++"""tests/ 缁熶竴娴嬭瘯鐜 鈥?env + sys.path, 娑堥櫎娴嬭瘯鏂囦欢闂撮殣寮忎緷璧?"""
++
++from __future__ import annotations
++
++import os
++import sys
++from pathlib import Path
++
++ROOT = Path(__file__).resolve().parent.parent
++
++for p in (ROOT / "packages" / "haip-core", ROOT / "packages" / "haip-hospital",
++          ROOT / "packages" / "haip-hospital" / "modules"):
++    sp = str(p)
++    if sp not in sys.path:
++        sys.path.insert(0, sp)
++
++os.environ.setdefault("HAIP_TEST_MODE", "true")
+diff --git a/tests/integration/test_ortho_portal.py b/tests/integration/test_ortho_portal.py
+index d987fde..c6edaac 100644
+--- a/tests/integration/test_ortho_portal.py
++++ b/tests/integration/test_ortho_portal.py
+@@ -1,20 +1,17 @@
+ """鍒涗激楠ㄧ璇婄枟闂ㄦ埛 (/ortho-portal) 闆嗘垚娴嬭瘯."""
+ 
+ from __future__ import annotations
+ 
+-import os
+ import sys
+ from pathlib import Path
+ 
+-os.environ["HAIP_TEST_MODE"] = "true"
+-
+ ROOT = Path(__file__).resolve().parent.parent.parent
+ sys.path.insert(0, str(ROOT / "packages" / "haip-core"))
+ sys.path.insert(0, str(ROOT / "packages" / "haip-hospital"))
+ sys.path.insert(0, str(ROOT / "packages" / "haip-hospital" / "modules"))
+ 
+ from fastapi.testclient import TestClient  # noqa: E402
+ from haip.agent import load_from_dir  # noqa: E402
+ 
+ load_from_dir(str(ROOT / "packages" / "haip-hospital" / "agents" / "definitions"))
+ from haip.web_server import app  # noqa: E402
+diff --git a/tests/test_html_pages.py b/tests/test_html_pages.py
+index 3043691..5db91f0 100644
+--- a/tests/test_html_pages.py
++++ b/tests/test_html_pages.py
+@@ -1,25 +1,22 @@
+ """HTML Page Tests (FastAPI TestClient 鈥?no live server needed).
+ 
+ Covers: portal, dashboard, process pages, demo page, department matrix.
+ """
+ 
+ from __future__ import annotations
+ 
+ import sys
+ import json
+-import os
+ import re
+ from pathlib import Path
+ 
+-os.environ["HAIP_TEST_MODE"] = "true"
+-
+ ROOT = Path(__file__).resolve().parent.parent
+ sys.path.insert(0, str(ROOT / "packages" / "haip-core"))
+ sys.path.insert(0, str(ROOT / "packages" / "haip-hospital"))
+ 
+ import pytest
+ from fastapi.testclient import TestClient
+ from haip.agent import load_from_dir
+ 
+ # Load agents once
+ load_from_dir(str(ROOT / "packages" / "haip-hospital" / "agents" / "definitions"))

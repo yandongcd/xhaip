@@ -10,7 +10,7 @@
 cd xhaip
 pip install -e "packages/haip-core[dev]"
 pytest packages/haip-core/tests/ tests/integration/ -v
-ruff check packages/haip-core/ tests/
+ruff check .
 mypy packages/haip-core/haip/
 ```
 
@@ -32,13 +32,13 @@ xhaip/
 │       └── cli.py       Typer CLI
 │
 ├── haip-hospital/
-│   ├── agents/definitions/      48 个 YAML Agent 定义 (39 临床科室 + 7 专家 + 2 主数据)
-│   ├── modules/                 52 个 Handler 模块 (KnowledgeAgent + RuleEngine 驱动)
-│   ├── knowledge/               50 BP YAML + 36 指南 + 38 规则组 (314 条) + 数据实体目录
-│   └── data/                    384 位数字病人 (含专科检验字段)
+│   ├── agents/definitions/      58 个 YAML Agent 定义
+│   ├── modules/                 58 个 Handler 模块 (KnowledgeAgent + RuleEngine 驱动)
+│   ├── knowledge/               19 BP YAML + 70 指南 + 21 规则组 (237 条)
+│   └── data/                    498 位数字病人 (含专科检验字段)
 │
 ├── config/                      YAML 配置 (llm.yaml, haip.yaml)
-├── tests/                       ~300 测试 (216 haip-core + 75 integration + 18 HTML)
+├── tests/                       1759 测试 (806 haip-core + 953 root)
 └── .github/workflows/ci.yml    CI: ruff + mypy + pytest + 70% cov
 
 ## 新增 Agent
@@ -144,7 +144,7 @@ xhaip tools list --agent pharmacy                       # 列出 Agent 工具
 ## 质量门禁
 
 ```bash
-ruff check packages/haip-core/ tests/     # 代码风格
+ruff check .                               # 代码风格 (2026-07-18 起全仓 ruff 清零, 扩大至全仓)
 mypy packages/haip-core/haip/             # 类型检查
 pytest --cov=haip --cov-fail-under=70     # 单元测试 + 覆盖率
 python scripts/validate_patients.py       # 患者数据质量 (0 FAIL 阻断)

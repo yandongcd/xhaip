@@ -2,7 +2,7 @@
   "version": "2.0",
   "project": "xhaip",
   "project_name": "HAIP v1.0 Hospital AI Platform",
-  "project_root": "D:\\FC\\xhaip",
+  "project_root": "D:\\projects\\xhaip",
   "skills_dir": ".openharness\\skills",
   "runtime_dir": ".openharness\\runtime",
   "snapshots_dir": ".openharness\\runtime\\snapshots",

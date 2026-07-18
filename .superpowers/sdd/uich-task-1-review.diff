@@ -1,0 +1,351 @@
+﻿diff --git a/packages/haip-core/haip/knowledge/cases.py b/packages/haip-core/haip/knowledge/cases.py
+index fe36ffa..27a1eba 100644
+--- a/packages/haip-core/haip/knowledge/cases.py
++++ b/packages/haip-core/haip/knowledge/cases.py
+@@ -1,43 +1,46 @@
+ """涓村簥鐥呬緥鏁版嵁绠＄悊 鈥?鍔犺浇 + 鎼滅储 + 缁熻.
+ 
+ 鏁村悎 data/patients.json (100 鏁板瓧鐥呬汉) 鎻愪緵杩愯鏃剁梾渚嬫煡璇€? """
+ 
+ from __future__ import annotations
+ 
+ import json
++import logging
+ from pathlib import Path
+ from typing import Any
+ 
++logger = logging.getLogger(__name__)
++
+ 
+ class CaseManager:
+     """涓村簥鐥呬緥绠＄悊: 鍔犺浇 + 鎼滅储 + 缁熻銆?""
+ 
+     def __init__(self, data_dir: str | Path = ""):
+         self.cases: list[dict[str, Any]] = []
+         if data_dir:
+             self.load(Path(data_dir))
+ 
+     def load(self, directory: Path):
+         """浠庣洰褰曞姞杞芥偅鑰呮暟鎹?(JSON/YAML)銆?""
+         if not directory.exists():
+             return
+         for f in directory.glob("*.json"):
+             try:
+                 data = json.loads(f.read_text(encoding="utf-8"))
+                 if isinstance(data, dict) and "patients" in data:
+                     self.cases.extend(data["patients"])
+                 elif isinstance(data, list):
+                     self.cases.extend(data)
+-            except Exception:
+-                pass
++            except Exception as e:
++                logger.warning("鐥呬緥鏂囦欢鍔犺浇澶辫触 %s: %s", f, e)
+ 
+     def search(self, query: str = "", department: str = "",
+                diagnosis: str = "", age_min: int = 0, age_max: int = 120,
+                limit: int = 50) -> list[dict[str, Any]]:
+         """澶氭潯浠舵悳绱㈢梾渚嬨€?""
+         results = []
+         q = query.lower()
+         for c in self.cases:
+             if q and q not in json.dumps(c, ensure_ascii=False).lower():
+                 continue
+diff --git a/packages/haip-core/haip/patients.py b/packages/haip-core/haip/patients.py
+new file mode 100644
+index 0000000..4cee310
+--- /dev/null
++++ b/packages/haip-core/haip/patients.py
+@@ -0,0 +1,45 @@
++"""鏁板瓧鐥呬汉缁熶竴鍔犺浇 鈥?鍏ㄩ儴 UI 娓叉煋鍣ㄥ叡鐢ㄧ殑鍞竴鍏ュ彛.
++
++patients.json 鏀寔涓ょ椤跺眰鏍煎紡:
++  - dict: {"total": N, "patients": [...]}
++  - list: [...]
++"""
++
++from __future__ import annotations
++
++import json
++import logging
++from pathlib import Path
++
++logger = logging.getLogger(__name__)
++
++PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
++PATIENTS_FILE = PROJECT_ROOT / "packages" / "haip-hospital" / "data" / "patients.json"
++
++
++def load_patients(agent_name: str, limit: int = 8, only_compatible: bool = False) -> list[dict]:
++    """鍔犺浇涓?agent 鍏煎鐨勬暟瀛楃梾浜?
++
++    Args:
++        agent_name: Agent 鎶€鏈悕, 鍖归厤 patient["compatible_agents"].
++        limit: 杩斿洖鏉℃暟涓婇檺.
++        only_compatible: True 鏃舵棤鍏煎鎮ｈ€呰繑鍥?[] (涓嶅洖閫€鍏ㄩ噺).
++    """
++    if not PATIENTS_FILE.exists():
++        logger.warning("patients.json 涓嶅瓨鍦? %s", PATIENTS_FILE)
++        return []
++    try:
++        data = json.loads(PATIENTS_FILE.read_text(encoding="utf-8"))
++    except (OSError, json.JSONDecodeError) as e:
++        logger.warning("patients.json 鍔犺浇澶辫触: %s", e)
++        return []
++    all_pts = data.get("patients", []) if isinstance(data, dict) else data
++    if not isinstance(all_pts, list):
++        logger.warning("patients.json 椤跺眰缁撴瀯寮傚父: %s", type(all_pts).__name__)
++        return []
++    matched = [p for p in all_pts if agent_name in p.get("compatible_agents", [])]
++    if matched:
++        return matched[:limit]
++    if only_compatible:
++        return []
++    return all_pts[:limit]
+diff --git a/packages/haip-core/haip/ui_process.py b/packages/haip-core/haip/ui_process.py
+index e6bf07f..0db4962 100644
+--- a/packages/haip-core/haip/ui_process.py
++++ b/packages/haip-core/haip/ui_process.py
+@@ -1,27 +1,23 @@
+ """璇婄枟娴佺▼ UI 娓叉煋鍣?鈥?鍔ㄦ€侀樁娈?+ 瑙掕壊鍒囨崲 + 鏁板瓧鐥呬汉 (Gold Standard Design System).
+ 
+ 姣忎釜 Agent 閫氳繃 YAML 瀹氫箟 workflows / roles / stages锛? CSS 鍜?JS 宸叉娊鍙栬嚦 ui_process_css.py / ui_process_js.py銆? """
+ 
+ from __future__ import annotations
+ 
+ import json
+-from pathlib import Path
+ 
+ from haip.ui_process_css import PROCESS_CSS
+ from haip.ui_process_js import PROCESS_JS
+ 
+-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+-PATIENTS_FILE = PROJECT_ROOT / "packages" / "haip-hospital" / "data" / "patients.json"
+-
+ STAGE_COLORS = ["#0969da", "#1a7f37", "#8b6914", "#cf222e", "#6e5494", "#0a84ff",
+                 "#1a7f37", "#cf222e", "#0969da"]
+ 
+ 
+ def render_process_ui(
+     name: str,
+     cn_name: str,
+     department: str = "",
+     agent_type: str = "business",
+     roles: list[dict] | None = None,
+@@ -463,32 +459,25 @@ tr:hover td{{background:var(--bg-overlay)}}
+ 
+ <script>
+ {resolved_js}
+ </script>
+ </body>
+ </html>"""
+ 
+ 
+ def _load_patients(agent_name: str) -> list[dict]:
+     """浠?patients.json 鍔犺浇涓庣粰瀹?agent 鍏煎鐨勬偅鑰呮暟鎹€?""
+-    try:
+-        with open(PATIENTS_FILE, encoding="utf-8") as f:
+-            data = json.load(f)
+-    except (FileNotFoundError, json.JSONDecodeError):
+-        return _fallback_patients()
+-
+-    all_patients = data.get("patients", []) if isinstance(data, dict) else data
+-    if isinstance(all_patients, list):
+-        matched = [p for p in all_patients
+-                   if agent_name in p.get("compatible_agents", [])]
+-        if matched:
+-            return _normalize_patients(matched)
++    from haip.patients import load_patients
++
++    matched = load_patients(agent_name, limit=30, only_compatible=True)
++    if matched:
++        return _normalize_patients(matched)
+     return _fallback_patients()
+ 
+ 
+ def _normalize_patients(patients: list[dict]) -> list[dict]:
+     """鏍囧噯鍖栨偅鑰呮暟鎹瓧娈靛悕锛岀‘淇濇ā鏉?JS 鑳芥纭秷璐广€?""
+     out = []
+     for p in patients[:30]:
+         age_val = p.get("age", 0) or p.get("age_months", 0)
+         out.append({
+             "patient_id": p.get("patient_id", ""),
+diff --git a/packages/haip-core/haip/ui_workflow.py b/packages/haip-core/haip/ui_workflow.py
+index cfd825a..34a93b5 100644
+--- a/packages/haip-core/haip/ui_workflow.py
++++ b/packages/haip-core/haip/ui_workflow.py
+@@ -1,57 +1,45 @@
+ """宸ヤ綔娴?UI 鈥?process 鍚屾涓夋爮甯冨眬 + 瑙掕壊 stage 绛涢€?+ 宸ュ叿鎵ц."""
+ 
+ from __future__ import annotations
+-import json
+-from pathlib import Path
+-
+-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+-PATIENTS_FILE = PROJECT_ROOT / "packages" / "haip-hospital" / "data" / "patients.json"
+ 
++import json
+ 
+-def _load_patients(agent_name: str) -> list[dict]:
+-    """鍔犺浇涓庤 Agent 鍏煎鐨勬暟瀛楃梾浜恒€?""
+-    if not PATIENTS_FILE.exists():
+-        return []
+-    with open(PATIENTS_FILE, "r", encoding="utf-8") as f:
+-        all_pts = json.load(f)
+-    if not isinstance(all_pts, list):
+-        return []
+-    return all_pts[:8]
++from haip.patients import load_patients
+ 
+ 
+ def render_workflow_ui(
+     name: str,
+     cn_name: str,
+     agent_type: str,
+     port: int,
+     tools: list[dict],
+     workflow_stages: list[dict],
+     roles: dict,
+     guard_triggers: list[str],
+ ) -> str:
+     icon_map = {"business": "馃彞", "specialist": "馃敩", "master_data": "馃梽锔?}
+-    patients = _load_patients(name)
++    patients = load_patients(name)
+ 
+     wf_json = json.dumps(workflow_stages, ensure_ascii=False)
+     roles_json = json.dumps(roles, ensure_ascii=False)
+     patients_json = json.dumps(patients, ensure_ascii=False)
+ 
+     # 鈹€鈹€ 瑙掕壊 Pill 鈹€鈹€
+     role_pills = ""
+     first_role = None
+     for rid, rcfg in roles.items():
+         if first_role is None:
+             first_role = rid
+         icon = rcfg.get("icon", "")
+-        name = rcfg.get("name", rid)
+-        role_pills += f'<button class="role-pill" data-role="{rid}" onclick="switchRole(\'{rid}\')">{icon} {name}</button>\n'
++        role_label = rcfg.get("name", rid)
++        role_pills += f'<button class="role-pill" data-role="{rid}" onclick="switchRole(\'{rid}\')">{icon} {role_label}</button>\n'
+ 
+     # 鈹€鈹€ 鍙充晶闃舵瀵艰埅 鈹€鈹€
+     sb_items = ""
+     for s in workflow_stages:
+         sb_items += (
+             f'<div class="rb-item" data-stage="{s["order"]}" onclick="clickStage({s["order"]})">'
+             f'<span class="rb-dot current"></span>'
+             f'<div class="rb-info"><div class="rb-name">{s["order"]}. {s["label"]}</div></div>'
+             f'<span class="rb-status active-s">褰撳墠</span></div>\n'
+         )
+@@ -192,21 +180,21 @@ body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Mic
+ <body>
+ 
+ <div class="header">
+   <h1>{icon_map.get(agent_type, '馃彞')} {cn_name} 宸ヤ綔鍙?/h1>
+   <div class="header-role">
+     <span style="font-size:11px;color:var(--text3);padding:3px 4px 3px 0">瑙掕壊:</span>
+ {role_pills}
+   </div>
+   <div class="header-patient" id="header-patient">
+     <span class="hp-name" id="hp-name"></span>
+-    <span class="hp-badge" id="hp-stage"></span>
++    <span class="hp-badge" id="hp-badge"></span>
+   </div>
+ </div>
+ 
+ <div class="app">
+   <div class="leftbar">
+     <div class="lb-search"><input type="text" id="patient-search" placeholder="鎼滅储鎮ｈ€?.." oninput="searchPatients()"></div>
+     <div class="lb-header">鏁板瓧鐥呬汉 路 {cn_name}</div>
+     <div class="patient-list" id="patient-list"></div>
+     <div class="lb-footer">鍏?<strong id="lb-count">0</strong> 浣嶆偅鑰?/div>
+   </div>
+@@ -214,20 +202,21 @@ body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Mic
+   <div class="center" id="center-content">
+ {panels}
+   </div>
+ 
+   <div class="rightbar">
+     <div class="rb-title">璇婄枟闃舵</div>
+     <div class="rb-list" id="rb-stages">
+ {sb_items}
+     </div>
+     <div class="rb-stats">
++      <div class="rb-stat"><span>褰撳墠闃舵</span><span class="val" id="rb-current-stage" style="font-weight:600">1/{len(workflow_stages)}</span></div>
+       <div class="rb-stat"><span>鍙敤闃舵</span><span class="val" id="rb-visible-count" style="font-weight:600">{len(workflow_stages)}/{len(workflow_stages)}</span></div>
+       <div class="rb-stat"><span>宸插畬鎴?/span><span class="val" id="rb-done-count" style="font-weight:600">0</span></div>
+     </div>
+ {guard_html}
+   </div>
+ </div>
+ 
+ <div class="toast" id="toast"></div>
+ 
+ <script>
+diff --git a/packages/haip-core/tests/test_patients_loader.py b/packages/haip-core/tests/test_patients_loader.py
+new file mode 100644
+index 0000000..bd59a9d
+--- /dev/null
++++ b/packages/haip-core/tests/test_patients_loader.py
+@@ -0,0 +1,62 @@
++"""鍏变韩鎮ｈ€呭姞杞藉櫒娴嬭瘯 鈥?dict/list 鏍煎紡銆佸吋瀹硅繃婊ゃ€佸紓甯稿洖閫€."""
++
++from __future__ import annotations
++
++import json
++
++import haip.patients as patients_mod
++from haip.patients import load_patients
++
++
++def _write(tmp_path, payload) -> None:
++    f = tmp_path / "patients.json"
++    f.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
++    return f
++
++
++PTS = [
++    {"patient_id": "P001", "name": "寮犱笁", "compatible_agents": ["orthopedic-surgery"]},
++    {"patient_id": "P002", "name": "鏉庡洓", "compatible_agents": ["pharmacy"]},
++    {"patient_id": "P003", "name": "鐜嬩簲", "compatible_agents": ["orthopedic-surgery"]},
++]
++
++
++class TestLoadPatients:
++    def test_dict_format(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", _write(tmp_path, {"total": 3, "patients": PTS}))
++        result = load_patients("orthopedic-surgery")
++        assert [p["patient_id"] for p in result] == ["P001", "P003"]
++
++    def test_list_format(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", _write(tmp_path, PTS))
++        result = load_patients("pharmacy")
++        assert [p["patient_id"] for p in result] == ["P002"]
++
++    def test_no_match_falls_back_to_all(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", _write(tmp_path, {"patients": PTS}))
++        result = load_patients("no-such-agent", limit=2)
++        assert len(result) == 2
++
++    def test_only_compatible_no_fallback(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", _write(tmp_path, {"patients": PTS}))
++        assert load_patients("no-such-agent", only_compatible=True) == []
++
++    def test_limit(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", _write(tmp_path, {"patients": PTS}))
++        assert len(load_patients("orthopedic-surgery", limit=1)) == 1
++
++    def test_missing_file(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", tmp_path / "nope.json")
++        assert load_patients("orthopedic-surgery") == []
++
++    def test_corrupt_json_warns(self, tmp_path, monkeypatch, caplog):
++        f = tmp_path / "patients.json"
++        f.write_text("{not json", encoding="utf-8")
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", f)
++        with caplog.at_level("WARNING"):
++            assert load_patients("orthopedic-surgery") == []
++        assert "patients.json" in caplog.text
++
++    def test_unexpected_structure(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", _write(tmp_path, "just a string"))
++        assert load_patients("orthopedic-surgery") == []

@@ -45,6 +45,52 @@
 
 ---
 
+## 第一部分补编: R 系列债务 (来源: 2026-07-18 全院 174 角色审视)
+
+> 方法: 以南方医院 14 类 174 角色逐一扮演审视 (5 批次并行), 报告见 `D:\FC\productions\xhaip-role-audit\`。
+> 与既有债务映射: 与 D1-D7 / P0-P3 / C1-C12 重叠项不重复登记, 仅登记新增或升级项。
+> 状态: ⬜ 未消减 / 🔨 消减中 / ✅ 已消减 (标注日期与提交)
+
+| ID | 债务 | 证据 (角色审视) | 等级 | 与既有项关系 | 消减策略 | 状态 |
+|----|------|----------------|------|-------------|---------|------|
+| R1 | **角色化断裂: 174 角色 1 种 UI** — 12 门户身份→6 RBAC 角色→登录后同一 Agent 侧边栏; 无角色工作台/待办/数据边界; 护士长靠 403 才知道权限不够 | 批次 E 全部 33 角色; 批次 A 24/34 | P0 | 升级 C5 (交互) | R1a: RBAC 补管理/医技/护理细分角色 + 12 身份种子账户 + `/home` 按角色分流; R1b: 角色工作台框架 (中期) | ✅ R1a (07-18) / ⬜ R1b |
+| R2 | **危急值/推送通道缺失** — 全系统"拉"模式, 无危急值→科室→确认→升级闭环 | 批次 B 检验/急诊/ICU; 批次 C 值班医生 | P0 | = C3 具体化 | R2a: `lab-critical-value` 桥接 agent (20 项 WS/T 405 阈值 + 分级 + 推荐科室路由), 先打通 mock 链路, M3 接 LIS 订阅 | ✅ R2a (07-18, 32 项阈值) / ⬜ LIS 订阅 |
+| R3 | **护理体系空白** — 8 护理角色除护士长视角外无 Agent/入口; 无给药 MAR/交班/护理文书; 强能力 (Braden/Morse/DVT/围术期方案) 埋在骨科模块 | 批次 D 护理 8 角色 | P0 | 新增 | R3a: `nurse-general` agent 聚合已建成护理能力 (评估五件套+围术期方案); R3b: 护理文书/排班 (远期, 属 HIS 域) | ✅ R3a (07-18) / ⬜ R3b |
+| R4 | **医技 7 科室零 agent** — 影像/超声/核医学/检验/病理/输血/组织配型无任何定义; 全院诊断信息链断裂, 肿瘤 MDT 断链 | 批次 B 医技 7 主任; 批次 C 超声医生; 批次 D 医技 8 角色 | P0 | 新增 (最大缺口) | R4a: 先建 `lab-medicine` (含危急值, 与 R2a 合并交付); R4b: 影像/超声/病理报告结构化 agent (需 PACS/RIS 对接, 排 M3 后) | ✅ R4a 首能力 (=R2a) / ⬜ R4b 其余 6 科室 |
+| R5 | **骨科三科室仅覆盖其一** — 脊柱骨科/关节与骨病外科零 agent, 创伤骨科 4133 行不能代表 (南方医院骨科为重点学科群) | 批次 B: 脊柱/关节主任 (C 档) | P0 | 新增 | R5a: 复用创伤骨科基座 bootstrap `spine-surgery` (ASIA/Cobb/椎管狭窄路径) + `joint-surgery` (Harris/KSS/PJI-MSIS/THA-TKA ERAS) | ✅ R5a (07-18) |
+| R6 | **MDT 仅骨科骨架** — mdt_aggregate 只收 4 个 dict; 肿瘤/胸痛等 10+ MDT 场景零覆盖; 无组织流程 (申请→排期→纪要→签名) | 批次 C MDT 11 角色 | P1 | 升级 C4 | R6a: MDTSession 通用框架 + 各科 `participate_mdt` 契约 (第二个 90 天) | ⬜ |
+| R7 | **能力埋没: 有功能无入口** — ESI 分诊 (分诊护士够不着)/营养评估 (营养师无独立入口)/围术期护理 (手术室护士够不着)/4 个 view_patient_as_* 视角无 UI 触发 | 批次 D 汇总表 11 项 | P1 | 新增 | R7a: `dietitian` agent 从 pharmacy 拆分独立入口; R7b: 角色-能力映射矩阵页 (/dashboard 扩展) | ✅ R7a (07-18) / ⬜ R7b |
+| R8 | **管理域整体空白** — 医保 DRG/财务成本/HR/院感/传染病直报/科研/教学住培/后勤设备 28/34 管理角色无业务功能 | 批次 A 全部 | P2 (定位问题) | 新增 | 定位收敛: xhaip=临床 AI 辅助系统, 管理域明确"不做", 文档与售前口径固化 (本次在 PRD/README 标注边界) | ⬜ 决策已给出 |
+| R9 | **患者/家属/社区端零入口** — 无患者门户/随访触达/双向转诊单; AI 决策无法传递给服务对象 | 批次 E 患者侧 5 角色 | P1 | 升级 C9 | 随访触达与转诊单排 M4 试点后; SaaS 形态再评估患者端 | ⬜ |
+| R10 | **知识运维权责不清** — 97 份指南多为静态硬编码, 无过期预警/科室自主维护/审核链 | 批次 B 48 主任共性 #4 | P1 | 关联 C8/P2 | knowledge-maintainer 门户 (编辑→医务处审核→生效+版本快照), 与 D4 文档生成化合并处理 | ⬜ |
+| R11 | **值班/交接班场景缺失** — 夜班医生跨 5 系统查数; 无交班模板/夜间应急通讯/危急值夜间闭环 | 批次 C 值班医生; 批次 D 护士 | P1 | 关联 C1/C3 | 查房前患者一览 API + 交班摘要生成 (依赖 R2a 推送通道), 排近期第二批 | ⬜ |
+| R12 | **专科评分"提及而非可算"** — B 档 30 科室大量评分是文本描述 (Barthel 不能逐项算/DAS28 无结构化/PHQ-9 缺失/TBSA-Parkland 缺失) | 批次 B/C/D 多角色 | P1 | 新增 | 评分器标准化: `ScoreDef` 声明式量表框架, 按科室分批补 (先烧伤 Parkland/精神 PHQ-9/康复 Barthel) | ⬜ |
+
+### R 系列消减看板 (第一轮 2026-07-18)
+
+| 批次 | 内容 | 出口标准 | 结果 |
+|------|------|---------|------|
+| 本轮 (今日) | R1a + R2a + R3a + R5a + R7a | 新增 5 agent + RBAC/种子账户/角色分流; ruff/mypy 0; 契约测试通过; 每个新 agent ≥3 A2A 测试 | ✅ 完成 (见下) |
+| 近期第二批 | R11 (查房一览+交班) + R12 首批 3 个评分器 | 值班医生/护士长可用视图 | ⬜ |
+| 90 天对齐 | R2 接真实 LIS 订阅 (M3), R6 MDTSession (M4 后), R10 与 D4 合并 | 见第三部分排期 | ⬜ |
+
+### 第一轮消减记录 (2026-07-18, 未提交待 review)
+
+| 项 | 交付物 | 验证 |
+|----|--------|------|
+| ✅ R5a | `spine-surgery` (710 行/6 工具: ASIA/Cobb/椎管狭窄/ODI/术式路径/红旗征) + `joint-surgery` (834 行/6 工具: Harris/KSS/PJI-MSIS/THA-TKA 规划/ERAS/翻修) | tests/test_spine_joint_a2a.py 24 passed |
+| ✅ R2a (兼 R4 首子项) | `lab-critical-value` (847 行/4 工具: 32 项危急值阈值表/科室路由+升级链/批量筛查/闭环记录, HL7-ORU 预留) | tests/test_lab_critical_value.py 39 passed |
+| ✅ R3a | `nurse-general` (743 行/6 工具: Braden/Morse/Caprini/围术期 4 阶段 27 项/SBAR 交班/EWS 生命体征预警) | tests/test_nurse_dietitian_a2a.py 内 |
+| ✅ R7a | `dietitian` (522 行/6 工具: NRS2002/GLIM/EN-PN 途径/能量蛋白目标/再喂养风险/营养报告) 从 pharmacy 独立 | 同上合计 43 passed |
+| ✅ R1a | RBAC 11 角色 (新增 anesthesiologist/head_nurse/leadership/intern/med_tech 补齐) + PORTAL_IDENTITY_ROLES 12 身份映射 + seed_demo_identities() 幂等种子账户 (HAIP_SEED_DEMO_USERS/HAIP_TEST_MODE 门控) + GET /home 按角色 302 分流 (护士→nurse-general, 医技→lab-critical-value, 领导→/dashboard, 药师→/pharmacy…) | packages/haip-core/tests/test_role_home.py 13 passed; auth/permission/security 回归 98 passed |
+| 附带 | docs/xhaip-agent-demo.html 同步 5 个新 agent (契约测试 test_html_pages 要求) | tests/test_html_pages.py 55 passed |
+
+全量回归: `pytest packages/haip-core/tests tests -q` → **1735 passed / 0 failed / 13 skipped**; `mypy haip/auth/` 0 error; 新增文件 ruff 0。
+已知遗留: packages/haip-core/tests 存量 11 处 ruff 风格违规 (F841/E741 等, 均为本轮之前旧文件, 归入 D1/D7 治理)。
+Agent 总数 53 → **58** (YAML source-of-truth)。C 档零覆盖科室 11 → **8** (脊柱/关节/检验首能力已建, 影像/超声/核医学/病理/输血/配型/肛肠/营养科室级工作流仍缺——营养已有 dietitian 但订餐/会诊派单未落)。
+
+---
+
 ## 第二部分: 商用缺失盘点
 
 ### P0 — 准入门槛 (缺一进不了医院)

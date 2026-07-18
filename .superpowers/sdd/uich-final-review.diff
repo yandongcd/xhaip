@@ -1,0 +1,2659 @@
+﻿ AGENTS.md                                          |   9 +
+ .../plans/2026-07-17-ui-contract-hardening.md      | 639 +++++++++++++++++++++
+ .../2026-07-17-ui-contract-hardening-design.md     |  91 +++
+ packages/haip-core/haip/auth/jwt.py                |   9 +-
+ packages/haip-core/haip/guard/citation.py          |  50 +-
+ packages/haip-core/haip/knowledge/cases.py         |   7 +-
+ packages/haip-core/haip/patients.py                |  45 ++
+ packages/haip-core/haip/templates/index.html       |  10 +-
+ packages/haip-core/haip/togaf/patient_generator.py |   4 +-
+ packages/haip-core/haip/ui_ortho_portal.html       |   7 +-
+ packages/haip-core/haip/ui_ortho_workflow.html     | 445 --------------
+ .../haip-core/haip/ui_orthopedic_surgery_wf.html   | 252 --------
+ packages/haip-core/haip/ui_pharmacy.py             |  25 +-
+ packages/haip-core/haip/ui_pharmacy_wf.html        | 255 --------
+ packages/haip-core/haip/ui_process.py              |  21 +-
+ packages/haip-core/haip/ui_workflow.py             | 120 ++--
+ packages/haip-core/haip/web_launcher.py            |  14 +-
+ packages/haip-core/haip/web_server.py              |  29 +-
+ packages/haip-core/pyproject.toml                  |  11 +
+ packages/haip-core/tests/conftest.py               |   6 +-
+ packages/haip-core/tests/test_agent.py             |   2 +-
+ packages/haip-core/tests/test_auth.py              |   2 -
+ packages/haip-core/tests/test_guard.py             |  30 +
+ packages/haip-core/tests/test_http.py              |  12 +
+ packages/haip-core/tests/test_operations.py        |  10 +-
+ packages/haip-core/tests/test_p4.py                |  10 +-
+ packages/haip-core/tests/test_patients_loader.py   |  62 ++
+ packages/haip-core/tests/test_release.py           |   2 +-
+ .../agents/definitions/orthopedic-surgery.yaml     |   5 +
+ .../modules/interventional_pain/__init__.py        |   4 +-
+ .../modules/orthopedics/his_adapter.py             |  11 +
+ pyproject.toml                                     |   1 +
+ tests/conftest.py                                  |  17 +
+ tests/integration/test_ortho_portal.py             |   3 -
+ tests/integration/test_pain_agents.py              |   4 +-
+ tests/test_handler_contracts.py                    |  50 ++
+ tests/test_html_pages.py                           |  44 +-
+ tests/test_togaf_100.py                            |   4 +-
+ tests/test_ui_contracts.py                         | 124 ++++
+ 39 files changed, 1379 insertions(+), 1067 deletions(-)
+14ce1ee docs+chore: AGENTS.md UI 濂戠害闂ㄧ + 娓呯悊 CI 鑼冨洿 ruff 瀛橀噺 (F541/F841)
+8ee4279 test: 鍏ㄧ珯 UI 濂戠害娴嬭瘯 C1-C7 (DOM/JS/API 涓€鑷存€у厹搴?
+7c4472b test: conftest 缁熶竴 HAIP_TEST_MODE + 娓呯悊鎭掔湡鏂█
+5dfe5a9 fix(pain): interventional_pain 鍑芥暟鍚嶅榻?YAML handler + 鍏ㄤ粨 309 handler 濂戠害娴嬭瘯
+f4b7977 fix: 纭紪鐮佸璁?#1/#2/#4 (workflow鑷姩閫夋偅/pharmacy鐪熷疄鎮ｈ€呮敞鍏?portal鎮ｈ€匢D鍔ㄦ€佸寲+his_patient_list宸ュ叿)
+5a0e0d0 fix: 纭紪鐮佸璁?#7-#10 (缁濆璺緞/Doctor鍙ｄ护env/JWT榛樿secret鍛婅/绔彛浠AML涓哄噯)
+9415cc5 feat(guard): CitationEngine 鏀寔宸ュ叿 JSON 缁撴瀯鍖栧紩鏂囨彁鍙?(guideline_ref/evidence)
+5caf535 chore: 鍒犻櫎鏃犺矾鐢卞紩鐢ㄧ殑姝绘枃浠?(纭紪鐮佸璁?#6)
+0a00183 fix(portal): Guard 杈撳叆鍘婚櫎纭紪鐮佹牱渚? 鑷姩甯﹀叆鏈€杩戜竴娆″伐鍏疯皟鐢ㄧ粨鏋?a4e3bce refactor: ui_workflow 娓叉煋鎷嗗垎 + ruff PLR1704 鎷︽埅鍙傛暟閬斀 (B3 鍏辨€т慨澶?
+8e253cf chore(build): haip-core 琛?build-system/package-data 閰嶇疆 (瀛橀噺 WIP)
+773d517 test: workflow 椤甸潰 B1/B2/B3 鍥炲綊娴嬭瘯 + UI 濂戠害鍔犲浐瀹炴柦璁″垝
+052ddbb refactor: 缁熶竴鏁板瓧鐥呬汉鍔犺浇鍣?haip.patients (B1 鍏辨€т慨澶?
+aaff010 fix(guard): /api/guard 鎺ョ嚎鎸囧崡璧勪骇搴撶储寮? 寮曟枃鍙湡瀹?verified (B4)
+cbe88ca docs: UI 濂戠害鍔犲浐璁捐鏂囨。 (workflow 涓夎繛 bug 澶嶇洏)
+diff --git a/AGENTS.md b/AGENTS.md
+index c09156f..83add41 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -143,20 +143,29 @@ xhaip tools list --agent pharmacy                       # 鍒楀嚭 Agent 宸ュ叿
+ 
+ ## 璐ㄩ噺闂ㄧ
+ 
+ ```bash
+ ruff check packages/haip-core/ tests/     # 浠ｇ爜椋庢牸
+ mypy packages/haip-core/haip/             # 绫诲瀷妫€鏌? pytest --cov=haip --cov-fail-under=70     # 鍗曞厓娴嬭瘯 + 瑕嗙洊鐜? python scripts/validate_patients.py       # 鎮ｈ€呮暟鎹川閲?(0 FAIL 闃绘柇)
+ ```
+ 
++### UI 椤甸潰濂戠害 (2026-07-17 璧峰己鍒?
++
++- 鏂板/淇敼 HTML 椤甸潰蹇呴』閫氳繃 `pytest tests/test_ui_contracts.py` (C1-C7: DOM id / onclick / PATIENTS / AGENT / fetch 璺敱 / workflow tool 濂戠害)
++- 鏂板/淇敼 Agent YAML 鎴?handler 蹇呴』閫氳繃 `pytest tests/test_handler_contracts.py` (309+ handler 妯″潡鍙鍏ヤ笖鍑芥暟瀛樺湪)
++- 鏁板瓧鐥呬汉鍔犺浇蹇呴』璧?`haip.patients.load_patients()`, 绂佹鍚?UI 鑷瑙ｆ瀽 patients.json
++- 娓叉煋鍑芥暟绂佹鍦ㄥ惊鐜腑澶嶇敤鍑芥暟鍙傛暟鍚?(ruff PLR1704 寮哄埗)
++- 娴嬭瘯鐜缁熶竴鐢?`tests/conftest.py` 涓?`packages/haip-core/tests/conftest.py` 鎻愪緵 (`HAIP_TEST_MODE`), 娴嬭瘯鏂囦欢涓嶅啀鍚勮嚜璁?env
++- 淇楠岃瘉蹇呴』澶嶇幇鐢ㄦ埛瀹屾暣鎿嶄綔璺緞 (閫夋偅鑰?鈫?鎵ц宸ュ叿 鈫?Guard 鈫?缁撴灉鎹疄), 绂佹浠呯敤鎵嬪伐鏋勯€犺緭鍏ュ仛鐐归獙璇?+
+ ## 鎮ｈ€呮暟鎹? 
+ 鎵€鏈夋偅鑰呰褰曞惈 `provenance` 瀛楁锛坄source` / `origin_repo` / `institution`锛夈€備慨鏀规偅鑰呮暟鎹悗闇€杩愯 `python scripts/validate_patients.py`銆? 
+ ## 涓?v0.2.0 鐨勫叧閿樊寮? 
+ | 鍦烘櫙 | v0.2.0 鍋氭硶 | v1.0 鍋氭硶 |
+ |------|-----------|----------|
+ | 鏂板 Agent | 鍒涘缓 Python 瀛愬寘 + 鍐?620 琛岃兌姘翠唬鐮?+ 鏀?3 涓紩鎿庢枃浠?| 鍐?30 琛?YAML + 鍐欑函涓氬姟閫昏緫 |
+ | A2A 璺敱 | 鎵嬪姩鏀?`A2A_AGENTS` 瀛楀吀 | 鑷姩浠?YAML 鐨?`handler` 瀛楁鐢熸垚 |
+diff --git a/docs/superpowers/plans/2026-07-17-ui-contract-hardening.md b/docs/superpowers/plans/2026-07-17-ui-contract-hardening.md
+new file mode 100644
+index 0000000..dafbdde
+--- /dev/null
++++ b/docs/superpowers/plans/2026-07-17-ui-contract-hardening.md
+@@ -0,0 +1,639 @@
++# UI 濂戠害鍔犲浐瀹炴柦璁″垝
++
++> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
++
++**Goal:** 娑堥櫎 workflow 涓夎繛 bug 鐨勫叡鎬ф牴鍥?鈥?缁熶竴鎮ｈ€呭姞杞藉櫒銆佸叏绔?UI 濂戠害娴嬭瘯銆丳LR1704 lint銆佹祴璇曞熀纭€璁炬柦娌荤悊銆?+
++**Architecture:** 鏂板缓 `haip/patients.py` 浣滀负鎮ｈ€呮暟鎹敮涓€鍔犺浇鍏ュ彛,ui_workflow/ui_process 钖勫皝瑁呰皟鐢?鏂板缓 `tests/test_ui_contracts.py` 鍙傛暟鍖栨牎楠屾墍鏈?HTML 璺敱鐨?7 椤?DOM/JS/API 濂戠害;`tests/conftest.py` 缁熶竴娴嬭瘯鐜;ruff 鍚敤 PLR1704 鎷︽埅鍙傛暟閬斀銆?+
++**Tech Stack:** Python 3.10+ / FastAPI TestClient / pytest / ruff 0.15 / mypy
++
++**Spec:** `docs/superpowers/specs/2026-07-17-ui-contract-hardening-design.md`
++
++## Global Constraints
++
++- ruff line-length=100, `ignore=["E402"]` 淇濇寔涓嶅彉, 鏂板 `extend-select=["PLR1704"]`
++- mypy strict=false, 淇敼鏂囦欢蹇呴』 0 閿欒
++- 涓嶅紩鍏ユ柊绗笁鏂逛緷璧?+- 涓嶄慨鏀?ui_render.py / ui_ortho*.html / ui_pharmacy*.html 鐨勫疄鐜?(濂戠害娴嬭瘯鍏滃簳)
++- 鎵€鏈夊懡浠ゅ湪 `D:\FC\xhaip` 鎵ц
++
++---
++
++### Task 1: 鍏变韩鎮ｈ€呭姞杞藉櫒 haip/patients.py
++
++**Files:**
++- Create: `packages/haip-core/haip/patients.py`
++- Create: `packages/haip-core/tests/test_patients_loader.py`
++- Modify: `packages/haip-core/haip/ui_workflow.py:1-24` (鍒犻櫎鏈湴 `_load_patients`)
++- Modify: `packages/haip-core/haip/ui_process.py:471-485` (`_load_patients` 鏀逛负钖勫皝瑁?
++- Modify: `packages/haip-core/haip/knowledge/cases.py:32` (闈欓粯 except 鈫?logger.warning)
++
++**Interfaces:**
++- Produces: `haip.patients.load_patients(agent_name: str, limit: int = 8, only_compatible: bool = False) -> list[dict]`
++- Produces: `haip.patients.PATIENTS_FILE: Path` (渚涙祴璇?monkeypatch)
++
++- [ ] **Step 1: 鍐欏け璐ユ祴璇?*
++
++```python
++# packages/haip-core/tests/test_patients_loader.py
++"""鍏变韩鎮ｈ€呭姞杞藉櫒娴嬭瘯 鈥?dict/list 鏍煎紡銆佸吋瀹硅繃婊ゃ€佸紓甯稿洖閫€."""
++
++from __future__ import annotations
++
++import json
++
++import haip.patients as patients_mod
++from haip.patients import load_patients
++
++
++def _write(tmp_path, payload) -> None:
++    f = tmp_path / "patients.json"
++    f.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
++    return f
++
++
++PTS = [
++    {"patient_id": "P001", "name": "寮犱笁", "compatible_agents": ["orthopedic-surgery"]},
++    {"patient_id": "P002", "name": "鏉庡洓", "compatible_agents": ["pharmacy"]},
++    {"patient_id": "P003", "name": "鐜嬩簲", "compatible_agents": ["orthopedic-surgery"]},
++]
++
++
++class TestLoadPatients:
++    def test_dict_format(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", _write(tmp_path, {"total": 3, "patients": PTS}))
++        result = load_patients("orthopedic-surgery")
++        assert [p["patient_id"] for p in result] == ["P001", "P003"]
++
++    def test_list_format(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", _write(tmp_path, PTS))
++        result = load_patients("pharmacy")
++        assert [p["patient_id"] for p in result] == ["P002"]
++
++    def test_no_match_falls_back_to_all(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", _write(tmp_path, {"patients": PTS}))
++        result = load_patients("no-such-agent", limit=2)
++        assert len(result) == 2
++
++    def test_only_compatible_no_fallback(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", _write(tmp_path, {"patients": PTS}))
++        assert load_patients("no-such-agent", only_compatible=True) == []
++
++    def test_limit(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", _write(tmp_path, {"patients": PTS}))
++        assert len(load_patients("orthopedic-surgery", limit=1)) == 1
++
++    def test_missing_file(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", tmp_path / "nope.json")
++        assert load_patients("orthopedic-surgery") == []
++
++    def test_corrupt_json_warns(self, tmp_path, monkeypatch, caplog):
++        f = tmp_path / "patients.json"
++        f.write_text("{not json", encoding="utf-8")
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", f)
++        with caplog.at_level("WARNING"):
++            assert load_patients("orthopedic-surgery") == []
++        assert "patients.json" in caplog.text
++
++    def test_unexpected_structure(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", _write(tmp_path, "just a string"))
++        assert load_patients("orthopedic-surgery") == []
++```
++
++- [ ] **Step 2: 杩愯纭澶辫触**
++
++Run: `python -m pytest packages/haip-core/tests/test_patients_loader.py -q`
++Expected: FAIL 鈥?`ModuleNotFoundError: No module named 'haip.patients'`
++
++- [ ] **Step 3: 瀹炵幇 haip/patients.py**
++
++```python
++# packages/haip-core/haip/patients.py
++"""鏁板瓧鐥呬汉缁熶竴鍔犺浇 鈥?鍏ㄩ儴 UI 娓叉煋鍣ㄥ叡鐢ㄧ殑鍞竴鍏ュ彛.
++
++patients.json 鏀寔涓ょ椤跺眰鏍煎紡:
++  - dict: {"total": N, "patients": [...]}
++  - list: [...]
++"""
++
++from __future__ import annotations
++
++import json
++import logging
++from pathlib import Path
++
++logger = logging.getLogger(__name__)
++
++PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
++PATIENTS_FILE = PROJECT_ROOT / "packages" / "haip-hospital" / "data" / "patients.json"
++
++
++def load_patients(agent_name: str, limit: int = 8, only_compatible: bool = False) -> list[dict]:
++    """鍔犺浇涓?agent 鍏煎鐨勬暟瀛楃梾浜?
++
++    Args:
++        agent_name: Agent 鎶€鏈悕, 鍖归厤 patient["compatible_agents"].
++        limit: 杩斿洖鏉℃暟涓婇檺.
++        only_compatible: True 鏃舵棤鍏煎鎮ｈ€呰繑鍥?[] (涓嶅洖閫€鍏ㄩ噺).
++    """
++    if not PATIENTS_FILE.exists():
++        logger.warning("patients.json 涓嶅瓨鍦? %s", PATIENTS_FILE)
++        return []
++    try:
++        data = json.loads(PATIENTS_FILE.read_text(encoding="utf-8"))
++    except (OSError, json.JSONDecodeError) as e:
++        logger.warning("patients.json 鍔犺浇澶辫触: %s", e)
++        return []
++    all_pts = data.get("patients", []) if isinstance(data, dict) else data
++    if not isinstance(all_pts, list):
++        logger.warning("patients.json 椤跺眰缁撴瀯寮傚父: %s", type(all_pts).__name__)
++        return []
++    matched = [p for p in all_pts if agent_name in p.get("compatible_agents", [])]
++    if matched:
++        return matched[:limit]
++    if only_compatible:
++        return []
++    return all_pts[:limit]
++```
++
++- [ ] **Step 4: 杩愯纭閫氳繃**
++
++Run: `python -m pytest packages/haip-core/tests/test_patients_loader.py -q`
++Expected: 8 passed
++
++- [ ] **Step 5: ui_workflow.py 鏀圭敤鍏变韩鍔犺浇鍣?*
++
++`packages/haip-core/haip/ui_workflow.py` 澶撮儴 (1-24 琛? 鏇挎崲涓?
++
++```python
++"""宸ヤ綔娴?UI 鈥?process 鍚屾涓夋爮甯冨眬 + 瑙掕壊 stage 绛涢€?+ 宸ュ叿鎵ц."""
++
++from __future__ import annotations
++
++import json
++
++from haip.patients import load_patients
++```
++
++鍑芥暟鍐?`patients = _load_patients(name)` 鏀逛负 `patients = load_patients(name)`銆?+鍒犻櫎鏈湴 `_load_patients`銆乣PROJECT_ROOT`銆乣PATIENTS_FILE`銆乣from pathlib import Path`銆?+
++- [ ] **Step 6: ui_process.py 鏀圭敤鍏变韩鍔犺浇鍣?*
++
++`packages/haip-core/haip/ui_process.py:471-485` 鐨?`_load_patients` 鏇挎崲涓?
++
++```python
++def _load_patients(agent_name: str) -> list[dict]:
++    """浠?patients.json 鍔犺浇涓庣粰瀹?agent 鍏煎鐨勬偅鑰呮暟鎹€?""
++    from haip.patients import load_patients
++
++    matched = load_patients(agent_name, limit=30, only_compatible=True)
++    if matched:
++        return _normalize_patients(matched)
++    return _fallback_patients()
++```
++
++鍚屾椂鍒犻櫎鏂囦欢澶撮儴涓嶅啀浣跨敤鐨?`PATIENTS_FILE` 甯搁噺 (鑻?`json`/`Path` 浠嶈浠栧浣跨敤鍒欎繚鐣?import)銆?+
++- [ ] **Step 7: cases.py 闈欓粯澶辫触娌荤悊**
++
++`packages/haip-core/haip/knowledge/cases.py` 椤堕儴鍔?
++
++```python
++import logging
++
++logger = logging.getLogger(__name__)
++```
++
++`load()` 涓?
++
++```python
++            except Exception as e:
++                logger.warning("鐥呬緥鏂囦欢鍔犺浇澶辫触 %s: %s", f, e)
++```
++
++- [ ] **Step 8: 鍥炲綊楠岃瘉**
++
++Run: `python -m pytest packages/haip-core/tests/test_patients_loader.py tests/test_html_pages.py packages/haip-core/tests/test_p4.py -q`
++Expected: 鍏ㄩ儴 passed (鍚?TestWorkflowPages 5 椤?
++
++Run: `python -m ruff check packages/haip-core/haip/patients.py packages/haip-core/haip/ui_workflow.py packages/haip-core/haip/ui_process.py packages/haip-core/haip/knowledge/cases.py; python -m mypy packages/haip-core/haip/patients.py packages/haip-core/haip/ui_workflow.py packages/haip-core/haip/ui_process.py`
++Expected: 0 errors
++
++- [ ] **Step 9: Commit**
++
++```bash
++git add packages/haip-core/haip/patients.py packages/haip-core/tests/test_patients_loader.py packages/haip-core/haip/ui_workflow.py packages/haip-core/haip/ui_process.py packages/haip-core/haip/knowledge/cases.py
++git commit -m "refactor: 缁熶竴鏁板瓧鐥呬汉鍔犺浇鍣?haip.patients (B1 鍏辨€т慨澶?"
++```
++
++---
++
++### Task 2: ruff PLR1704 + ui_workflow 娓叉煋鍑芥暟鎷嗗垎
++
++**Files:**
++- Modify: `pyproject.toml:9-10`
++- Modify: `packages/haip-core/pyproject.toml:29-30`
++- Modify: `packages/haip-core/haip/ui_workflow.py` (render_workflow_ui 鎷嗗垎)
++
++**Interfaces:**
++- Produces: `_build_role_pills(roles: dict) -> tuple[str, str]` (杩斿洖 pills_html, first_role)
++- Produces: `_build_stage_nav(stages: list[dict]) -> str`
++- Produces: `_build_stage_panels(stages: list[dict]) -> str`
++- 鍧囦负 ui_workflow.py 妯″潡绉佹湁, `render_workflow_ui` 绛惧悕涓嶅彉
++
++- [ ] **Step 1: 楠岃瘉 PLR1704 鑳芥嫤鎴?B3 绫荤己闄?*
++
++```bash
++@'
++def render(name: str, roles: dict) -> str:
++    out = ""
++    for rid, cfg in roles.items():
++        name = cfg.get("name", rid)
++        out += name
++    return f"var AGENT='{name}'" + out
++'@ | Set-Content -Encoding utf8 C:\Users\12362\AppData\Local\Temp\opencode\shadow_check.py
++python -m ruff check --select PLR1704 C:\Users\12362\AppData\Local\Temp\opencode\shadow_check.py
++```
++
++Expected: 鎶?`PLR1704 Redefining argument with the local name 'name'` (璇佹槑瑙勫垯鏈夋晥, 涔嬪悗鍒犻櫎涓存椂鏂囦欢)
++
++- [ ] **Step 2: 涓ゅ pyproject.toml 鍚敤 PLR1704**
++
++鏍?`pyproject.toml`:
++
++```toml
++[tool.ruff.lint]
++extend-select = ["PLR1704"]
++ignore = ["E402"]
++```
++
++`packages/haip-core/pyproject.toml` 鐨?`[tool.ruff.lint]` 鍚屾牱鍔?`extend-select = ["PLR1704"]`銆?+
++- [ ] **Step 3: 鍏ㄤ粨璺?PLR1704 纭鏃犲瓨閲忚繚渚?*
++
++Run: `python -m ruff check packages/haip-core/ tests/`
++Expected: 0 errors (鑻ユ湁瀛橀噺杩濅緥, 閫愪釜鐢ㄩ潪閬斀鍚嶄慨澶?
++
++- [ ] **Step 4: 鎷嗗垎 render_workflow_ui**
++
++`packages/haip-core/haip/ui_workflow.py` 涓笁娈靛唴鑱斿惊鐜?(瑙掕壊 Pill / 鍙充晶闃舵瀵艰埅 / 闃舵闈㈡澘) 鎻愬彇涓烘ā鍧楃骇鍑芥暟, 缃簬 `render_workflow_ui` 涔嬪墠:
++
++```python
++def _build_role_pills(roles: dict) -> tuple[str, str]:
++    """瑙掕壊 Pill HTML + 棣栦釜瑙掕壊 id."""
++    pills = ""
++    first_role = ""
++    for rid, rcfg in roles.items():
++        if not first_role:
++            first_role = rid
++        icon = rcfg.get("icon", "")
++        label = rcfg.get("name", rid)
++        pills += (
++            f'<button class="role-pill" data-role="{rid}" '
++            f'onclick="switchRole(\'{rid}\')">{icon} {label}</button>\n'
++        )
++    return pills, first_role
++
++
++def _build_stage_nav(stages: list[dict]) -> str:
++    """鍙充晶闃舵瀵艰埅 HTML."""
++    items = ""
++    for s in stages:
++        items += (
++            f'<div class="rb-item" data-stage="{s["order"]}" onclick="clickStage({s["order"]})">'
++            f'<span class="rb-dot current"></span>'
++            f'<div class="rb-info"><div class="rb-name">{s["order"]}. {s["label"]}</div></div>'
++            f'<span class="rb-status active-s">褰撳墠</span></div>\n'
++        )
++    return items
++
++
++def _build_stage_panels(stages: list[dict]) -> str:
++    """闃舵闈㈡澘 HTML (甯︽墽琛屾寜閽?."""
++    panels = ""
++    for i, s in enumerate(stages):
++        act = " active" if i == 0 else ""
++        tool_name = s["tool"]
++        panels += (
++            f'<div class="stage-content{act}" id="stage-{s["order"]}">'
++            f'<div class="stage-header"><span class="stage-badge">{s["order"]}</span>'
++            f'<div><h3>{s["label"]}</h3><p>{s["description"]}</p>'
++            f'<span class="guide-ref">{s.get("guideline_ref", "")}</span></div></div>'
++            f'<div class="form-group"><label>鍙傛暟</label>'
++            f'<textarea id="params-{s["id"]}">'
++            f'{{"patient_id":"P001","age":78,"weight_kg":55,"height_cm":170}}</textarea></div>'
++            f'<div class="btn-row">'
++            f'<button class="btn-exec" onclick="callStage(\'{s["id"]}\',\'{tool_name}\')">'
++            f'鈻?鎵ц {s["label"]}</button>'
++            f'<button class="btn-guard" onclick="showGuard(\'{s["id"]}\')">馃洝 瀹夊叏鏍￠獙</button>'
++        )
++        if i < len(stages) - 1:
++            panels += (
++                f'<button class="btn-next" '
++                f'onclick="autoNext(\'{s["id"]}\',\'{stages[i + 1]["id"]}\')">鈫?涓嬩竴姝?/button>'
++            )
++        panels += (
++            f'</div>'
++            f'<div class="result-box" id="result-{s["id"]}">'
++            f'<span class="result-placeholder">鐐瑰嚮銆屾墽琛屻€嶅紑濮?..</span></div>'
++            f'</div>\n'
++        )
++    return panels
++```
++
++`render_workflow_ui` 涓搴斾笁娈垫浛鎹负:
++
++```python
++    role_pills, first_role = _build_role_pills(roles)
++    sb_items = _build_stage_nav(workflow_stages)
++    panels = _build_stage_panels(workflow_stages)
++```
++
++娉ㄦ剰: 鍘?`first_role = None` 璇箟鏀逛负绌哄瓧绗︿覆, 妯℃澘涓?`{first_role or "attending"}` 琛屼负涓嶅彉銆?+
++- [ ] **Step 5: 鍥炲綊楠岃瘉**
++
++Run: `python -m pytest tests/test_html_pages.py -q; python -m ruff check packages/haip-core/haip/ui_workflow.py; python -m mypy packages/haip-core/haip/ui_workflow.py`
++Expected: TestWorkflowPages 5 椤瑰惈 AGENT/patients 鏂█鍏ㄨ繃, lint/type 0 errors
++
++- [ ] **Step 6: Commit**
++
++```bash
++git add pyproject.toml packages/haip-core/pyproject.toml packages/haip-core/haip/ui_workflow.py
++git commit -m "refactor: ui_workflow 娓叉煋鎷嗗垎 + ruff PLR1704 鎷︽埅鍙傛暟閬斀 (B3 鍏辨€т慨澶?"
++```
++
++---
++
++### Task 3: tests/conftest.py + 鎭掔湡鏂█娓呯悊
++
++**Files:**
++- Create: `tests/conftest.py`
++- Modify: `tests/test_html_pages.py:14-20` (env 璁剧疆绉诲叆 conftest)
++- Modify: `packages/haip-core/tests/test_p4.py:65-73`
++
++**Interfaces:**
++- Produces: conftest 鑷姩鐢熸晥鐨?`HAIP_TEST_MODE=true` + sys.path 娉ㄥ叆 (tests/ 鐩綍涓嬫墍鏈夋祴璇曟枃浠跺彲鐩存帴 `from haip.web_server import app`)
++
++- [ ] **Step 1: 鍐?conftest.py**
++
++```python
++# tests/conftest.py
++"""tests/ 缁熶竴娴嬭瘯鐜 鈥?env + sys.path, 娑堥櫎娴嬭瘯鏂囦欢闂撮殣寮忎緷璧?"""
++
++from __future__ import annotations
++
++import os
++import sys
++from pathlib import Path
++
++ROOT = Path(__file__).resolve().parent.parent
++
++for p in (ROOT / "packages" / "haip-core", ROOT / "packages" / "haip-hospital",
++          ROOT / "packages" / "haip-hospital" / "modules"):
++    sp = str(p)
++    if sp not in sys.path:
++        sys.path.insert(0, sp)
++
++os.environ.setdefault("HAIP_TEST_MODE", "true")
++```
++
++- [ ] **Step 2: test_html_pages.py 绉婚櫎鏈湴 env 璁剧疆**
++
++鍒犻櫎 `os.environ["HAIP_TEST_MODE"] = "true"` 琛屼笌 `import os` (鑻ユ棤浠栫敤)銆俿ys.path 涓よ淇濈暀 (鍗曟枃浠剁洿璺戝吋瀹?銆?+
++- [ ] **Step 3: 淇 test_p4.py 鎭掔湡鏂█**
++
++```python
++    def test_load_patients(self):
++        from haip.knowledge.cases import CaseManager
++        data_dir = project_root / "packages" / "haip-hospital" / "data"
++        assert data_dir.exists(), "鎮ｈ€呮暟鎹洰褰曠己澶?
++        cm = CaseManager()
++        cm.load(data_dir)
++        assert len(cm.cases) > 0, "鎮ｈ€呮暟鎹姞杞戒负绌?鈥?妫€鏌?patients.json 鏍煎紡"
++        s = cm.stats()
++        assert "total" in s
++```
++
++- [ ] **Step 4: 鍏ㄤ粨鎵弿鍏朵粬鎭掔湡鏂█**
++
++Run: `python -m pytest --collect-only -q tests/ packages/haip-core/tests/ | Out-Null; Select-String -Path tests\*.py,packages\haip-core\tests\*.py -Pattern "assert.*(>= 0|len\(.*\) >= 0)"`
++姣忎釜鍛戒腑閫愪竴鍒ゆ柇: 鏈夋暟鎹墠缃潯浠剁殑鏀?`> 0`, 绾槻寰℃€х殑淇濈暀骞舵敞鏄庡師鍥犮€?+
++- [ ] **Step 5: 楠岃瘉**
++
++Run: `python -m pytest tests/test_html_pages.py packages/haip-core/tests/test_p4.py -q`
++Expected: 鍏ㄩ儴 passed (鍗曟枃浠剁嫭绔嬭窇, 涓嶄緷璧栧叾浠栨祴璇?
++
++- [ ] **Step 6: Commit**
++
++```bash
++git add tests/conftest.py tests/test_html_pages.py packages/haip-core/tests/test_p4.py
++git commit -m "test: conftest 缁熶竴 HAIP_TEST_MODE + 娓呯悊鎭掔湡鏂█"
++```
++
++---
++
++### Task 4: 鍏ㄧ珯 UI 濂戠害娴嬭瘯 tests/test_ui_contracts.py
++
++**Files:**
++- Create: `tests/test_ui_contracts.py`
++
++**Interfaces:**
++- Consumes: conftest.py 鐨?env/sys.path (Task 3); `haip.workflow.WORKFLOWS`; `haip.agent.get_agent`
++- Produces: 7 椤瑰绾︽祴璇?(C1-C7), 鍚庣画鏂板 UI 椤甸潰鑷姩绾冲叆
++
++- [ ] **Step 1: 鍐欏绾︽祴璇?*
++
++```python
++# tests/test_ui_contracts.py
++"""鍏ㄧ珯 UI 濂戠害娴嬭瘯 鈥?DOM/JS/API 涓€鑷存€?(婧愯嚜 2026-07-17 workflow 涓夎繛 bug 澶嶇洏).
++
++C1: getElementById 闈欐€?id 蹇呴』瀛樺湪浜?DOM
++C2: onclick 寮曠敤鍑芥暟蹇呴』宸插畾涔?+C3: 宓屽叆 PATIENTS 鐨勯〉闈㈡暟鎹潪绌轰笖鍚?patient_id
++C4: 宓屽叆 AGENT 鐨勯〉闈㈠叾鍊?== 璺敱 agent 鍚?+C5: fetch 闈欐€佽矾寰勫繀椤诲湪 FastAPI 璺敱琛ㄦ敞鍐?+C6: workflow STAGES[].tool 蹇呴』瀛樺湪浜?agent tools
++C7: querySelector('#x') 闈欐€?id 鍚?C1
++"""
++
++from __future__ import annotations
++
++import json
++import re
++from pathlib import Path
++
++import pytest
++from fastapi.testclient import TestClient
++
++from haip.agent import get_agent, load_from_dir
++
++ROOT = Path(__file__).resolve().parent.parent
++load_from_dir(str(ROOT / "packages" / "haip-hospital" / "agents" / "definitions"))
++
++from haip.web_server import app  # noqa: E402
++from haip.workflow import WORKFLOWS  # noqa: E402
++
++client = TestClient(app)
++
++GETELEM_RE = re.compile(r"getElementById\('([\w-]+)'\)")
++QS_ID_RE = re.compile(r"querySelector\('#([\w-]+)'\)")
++DOM_ID_RE = re.compile(r'id="([\w-]+)"')
++ONCLICK_RE = re.compile(r'onclick="(\w+)\s*\(')
++FUNC_DEF_RE = re.compile(r'(?:function\s+(\w+)\s*\(|(?:var|let|const)\s+(\w+)\s*=\s*(?:async\s+)?function)')
++PATIENTS_RE = re.compile(r'var PATIENTS\s*=\s*(\[.*?\]);', re.DOTALL)
++AGENT_RE = re.compile(r"var AGENT\s*=\s*'([^']*)'")
++FETCH_RE = re.compile(r"""fetch\(\s*['"](/[^'"$]*)['"]\s*[,)]""")
++
++
++def _html_pages() -> list[str]:
++    pages = ["/", "/ortho", "/ortho-portal", "/pharmacy", "/stream-demo", "/dashboard"]
++    pages += [f"/workflow/{n}" for n in WORKFLOWS]
++    pages += ["/process/orthopedic-surgery", "/process/respiratory", "/process/cardiology"]
++    pages += ["/agent/orthopedic-surgery", "/agent/pharmacy"]
++    return pages
++
++
++PAGES = _html_pages()
++
++
++def _get(path: str) -> str:
++    resp = client.get(path)
++    assert resp.status_code == 200, f"{path}: {resp.status_code}"
++    return resp.text
++
++
++@pytest.mark.parametrize("path", PAGES)
++def test_c1_c7_js_dom_ids(path):
++    html = _get(path)
++    js_ids = set(GETELEM_RE.findall(html)) | set(QS_ID_RE.findall(html))
++    dom_ids = set(DOM_ID_RE.findall(html))
++    missing = js_ids - dom_ids
++    assert not missing, f"{path}: JS 寮曠敤浜嗕笉瀛樺湪鐨?id: {sorted(missing)}"
++
++
++@pytest.mark.parametrize("path", PAGES)
++def test_c2_onclick_functions_defined(path):
++    html = _get(path)
++    called = set(ONCLICK_RE.findall(html))
++    defined = {a or b for a, b in FUNC_DEF_RE.findall(html)}
++    missing = called - defined
++    assert not missing, f"{path}: onclick 寮曠敤浜嗘湭瀹氫箟鍑芥暟: {sorted(missing)}"
++
++
++@pytest.mark.parametrize("path", PAGES)
++def test_c3_patients_not_empty(path):
++    html = _get(path)
++    m = PATIENTS_RE.search(html)
++    if not m:
++        pytest.skip(f"{path} 鏃犲祵鍏?PATIENTS")
++    patients = json.loads(m.group(1))
++    assert patients, f"{path}: PATIENTS 涓虹┖ 鈥?妫€鏌?haip.patients 鍔犺浇閾捐矾"
++    assert all("patient_id" in p for p in patients), f"{path}: 鎮ｈ€呰褰曠己 patient_id"
++
++
++@pytest.mark.parametrize("path", [p for p in PAGES if p.startswith(("/workflow/", "/agent/"))])
++def test_c4_agent_var_matches_route(path):
++    html = _get(path)
++    m = AGENT_RE.search(html)
++    assert m, f"{path}: 鏃?AGENT 鍙橀噺"
++    expected = path.rsplit("/", 1)[-1]
++    assert m.group(1) == expected, f"{path}: AGENT 琚薄鏌撲负 {m.group(1)!r}"
++
++
++@pytest.mark.parametrize("path", PAGES)
++def test_c5_fetch_paths_registered(path):
++    html = _get(path)
++    static_fetches = {p for p in FETCH_RE.findall(html) if "'" not in p and "+" not in p}
++    if not static_fetches:
++        pytest.skip(f"{path} 鏃犻潤鎬?fetch")
++    unmatched = []
++    for fp in static_fetches:
++        fp_clean = fp.split("?")[0]
++        ok = any(
++            getattr(r, "path", None) == fp_clean
++            or (hasattr(r, "path_regex") and r.path_regex.match(fp_clean))
++            for r in app.routes
++        )
++        if not ok:
++            unmatched.append(fp)
++    assert not unmatched, f"{path}: fetch 浜嗘湭娉ㄥ唽璺敱: {unmatched}"
++
++
++@pytest.mark.parametrize("wf_name", sorted(WORKFLOWS))
++def test_c6_workflow_tools_exist(wf_name):
++    wf = WORKFLOWS[wf_name]
++    plugin = get_agent(wf["agent"])
++    assert plugin is not None, f"workflow 寮曠敤鏈敞鍐?agent: {wf['agent']}"
++    tool_names = {t.name for t in plugin.tools}
++    missing = [s["tool"] for s in wf["stages"] if s["tool"] not in tool_names]
++    assert not missing, f"{wf_name}: stages 寮曠敤涓嶅瓨鍦ㄧ殑 tool: {missing}"
++```
++
++- [ ] **Step 2: 杩愯**
++
++Run: `python -m pytest tests/test_ui_contracts.py -q`
++Expected: 鍏ㄩ儴 passed 鎴?skip (褰撳墠鍏ㄧ珯宸蹭慨澶? 鑻ユ湁澶辫触鍗充负瀛橀噺缂洪櫡, 閫愪竴淇鍚庡啀杩?
++
++- [ ] **Step 3: 璇佹槑濂戠害娴嬭瘯鏈夋晥 (娉ㄥ叆-鍙樼孩-杩樺師)**
++
++1. 涓存椂鎶?`ui_workflow.py` 涓?`id="hp-badge"` 鏀瑰洖 `id="hp-stage"` 鈫?`python -m pytest tests/test_ui_contracts.py -k c1 -q` Expected: FAIL (鎷︽埅 B2)
++2. 杩樺師鍚? 涓存椂鎶?`_build_role_pills` 杩斿洖鐨?pills 鍙橀噺鍦?`render_workflow_ui` 涓祴缁?`name` 鍙傛暟妯℃嫙閬斀 鈫?`-k c4` Expected: FAIL (鎷︽埅 B3)
++3. `git checkout -- packages/haip-core/haip/ui_workflow.py` 绂佺敤 鈥?鎵嬪伐杩樺師涓ゅ (瀹夊叏瑙勭害绂佹 checkout --)
++4. 杩樺師鍚庡叏閲? `python -m pytest tests/test_ui_contracts.py -q` Expected: 鍏?passed
++
++- [ ] **Step 4: 鏀舵暃 test_html_pages.py 涓噸澶嶇殑 workflow 鏂█**
++
++`TestWorkflowPages` 涓?`test_workflow_js_ids_exist` 宸茶 C1 鍏ㄧ珯瑕嗙洊 鈫?鍒犻櫎璇ユ柟娉? 淇濈暀 patients/AGENT/200 涓夐」 (璇箟涓庡绾︿簰琛? 淇濈暀鍙屼繚闄╀害鍙?鈥?鍐崇瓥: 鍒犻櫎閲嶅椤? 娉ㄩ噴鎸囧悜 test_ui_contracts.py)銆?+
++- [ ] **Step 5: Commit**
++
++```bash
++git add tests/test_ui_contracts.py tests/test_html_pages.py
++git commit -m "test: 鍏ㄧ珯 UI 濂戠害娴嬭瘯 C1-C7 (DOM/JS/API 涓€鑷存€у厹搴?"
++```
++
++---
++
++### Task 5: AGENTS.md 澧炶ˉ + 鍏ㄩ噺楠岃瘉
++
++**Files:**
++- Modify: `AGENTS.md` (璐ㄩ噺闂ㄧ绔犺妭)
++
++**Interfaces:**
++- Consumes: Task 1-4 鍏ㄩ儴浜х墿
++
++- [ ] **Step 1: AGENTS.md 璐ㄩ噺闂ㄧ绔犺妭澧炶ˉ**
++
++鍦?"## 璐ㄩ噺闂ㄧ" 浠ｇ爜鍧楀悗杩藉姞:
++
++```markdown
++### UI 椤甸潰濂戠害 (2026-07-17 璧峰己鍒?
++
++- 鏂板/淇敼 HTML 椤甸潰蹇呴』閫氳繃 `pytest tests/test_ui_contracts.py` (C1-C7: DOM id / onclick / PATIENTS / AGENT / fetch 璺敱 / workflow tool 濂戠害)
++- 鏁板瓧鐥呬汉鍔犺浇蹇呴』璧?`haip.patients.load_patients()`, 绂佹鍚?UI 鑷瑙ｆ瀽 patients.json
++- 娓叉煋鍑芥暟绂佹鍦ㄥ惊鐜腑澶嶇敤鍑芥暟鍙傛暟鍚?(ruff PLR1704 寮哄埗)
++```
++
++- [ ] **Step 2: 鍏ㄩ噺鍥炲綊**
++
++Run: `python -m pytest packages/haip-core/tests/ tests/ -q`
++Expected: 鍏ㄩ儴 passed (鍚?integration; TestDemoPage 6 椤规棦鏈夊け璐ヤ笌鏈鏃犲叧, 璁板綍涓嶉樆鏂?
++
++Run: `python -m ruff check packages/haip-core/ tests/; python -m mypy packages/haip-core/haip/`
++Expected: 0 errors
++
++- [ ] **Step 3: 鎵嬪伐鍐掔儫**
++
++閲嶅惎 8769 鏈嶅姟, 娴忚鍣ㄩ獙璇?`/workflow/orthopedic-surgery`: 閫夋偅鑰?鈫?鍙傛暟鑱斿姩 鈫?鎵ц checklist 鈫?status ok銆?+
++- [ ] **Step 4: Commit**
++
++```bash
++git add AGENTS.md
++git commit -m "docs: AGENTS.md 澧炶ˉ UI 濂戠害闂ㄧ"
++```
+diff --git a/docs/superpowers/specs/2026-07-17-ui-contract-hardening-design.md b/docs/superpowers/specs/2026-07-17-ui-contract-hardening-design.md
+new file mode 100644
+index 0000000..b9cf7d7
+--- /dev/null
++++ b/docs/superpowers/specs/2026-07-17-ui-contract-hardening-design.md
+@@ -0,0 +1,91 @@
++# UI 濂戠害鍔犲浐涓庡叡鎬х己闄锋不鐞?鈥?璁捐鏂囨。
++
++鏃ユ湡: 2026-07-17
++鐘舵€? 宸叉壒鍑?+鏉ユ簮: /workflow 椤甸潰涓夎繛 bug 澶嶇洏 (B1 鎮ｈ€呮暟鎹┖ / B2 JS id 缂哄け宕╂簝 / B3 鍙橀噺閬斀 AGENT 姹℃煋)
++
++## 鑳屾櫙
++
++2026-07-17 session 鍦?`/workflow/orthopedic-surgery` 椤甸潰杩炵画鍙戠幇 3 涓己闄?
++
++| Bug | 鐜拌薄 | 鏍瑰洜 | 鏍瑰洜绫诲埆 |
++|-----|------|------|---------|
++| B1 | 鏁板瓧鐥呬汉鍒楄〃涓虹┖ | `ui_workflow._load_patients` 鍙帴鍙?list 鏍煎紡, patients.json 瀹炰负 `{"total","patients"}` dict | 鎮ｈ€呭姞杞介€昏緫閲嶅 4+ 澶? 鏍煎紡鍋囪鍚勫紓, 闈欓粯鍥為€€ `[]` |
++| B2 | 閫夋偅鑰呭悗鍙傛暟涓嶆洿鏂?| JS 寮曠敤 `hp-badge`/`rb-current-stage`, DOM 涓笉瀛樺湪 鈫?TypeError 涓柇 | f-string 鎷?HTML+JS 鏃犲绾︽牎楠?|
++| B3 | 鎵€鏈夊伐鍏疯皟鐢ㄦ姤 `Unknown agent: 鎶ゅ＋闀縛 | 寰幆鍙橀噺 `name` 閬斀鍑芥暟鍙傛暟 `name` | 300+ 琛屾覆鏌撳ぇ鍑芥暟浣滅敤鍩熸薄鏌?|
++| B4 | Guard 寮曟枃鎭?`verified:false` (NICE NG37 鍦ㄥ簱浠嶆湭楠岃瘉) | `/api/guard` 瑁告瀯閫?`GuardVerifier()`, CitationEngine 浠庢湭绱㈠紩鎸囧崡鐩綍 | 缁勪欢鏀寔娉ㄥ叆浣嗚皟鐢ㄧ偣鏈帴绾? 娴嬭瘯鍙湁缁撴瀯鏂█ |
++
++### 娴嬭瘯鏈嫤鎴殑鍘熷洜
++
++1. `/workflow/*` 璺敱闆舵祴璇曡鐩?+2. 鏃㈡湁娴嬭瘯鍙仛缁撴瀯鏂█ (鏍囩瀛樺湪), 鏃犺涔夋柇瑷€ (鏁版嵁闈炵┖銆丄GENT 姝ｇ‘)
++3. 鎭掔湡鏂█ (test_p4.py `assert len(cm.cases) >= 0`)
++4. 闈欓粯澶辫触璁捐 (`_load_patients` 寮傚父杩斿洖 `[]` 鏃犲憡璀?
++5. 娴嬭瘯闂撮殣寮忎緷璧?(`HAIP_TEST_MODE` 闈犲叾浠栨祴璇曟枃浠跺厛璁剧疆)
++
++## 璁捐 (鏂规 A + 琛ュ厖)
++
++### 1. 鍏变韩鎮ｈ€呭姞杞藉櫒
++
++- 鏂板缓 `packages/haip-core/haip/patients.py`:
++  `load_patients(agent_name: str, limit: int = 8) -> list[dict]`
++  - 缁熶竴澶勭悊 dict (`data["patients"]`) / list 涓ょ鏍煎紡
++  - 鎸?`compatible_agents` 杩囨护, 鏃犲尮閰嶆椂鍥為€€鍏ㄩ噺鍓?N
++  - 鏂囦欢缂哄け/瑙ｆ瀽澶辫触鏃?`logger.warning`, 杩斿洖 `[]`
++- `ui_workflow._load_patients` 涓?`ui_process._load_patients` 鏀逛负钖勫皝瑁?
++  - ui_process 淇濈暀 `_normalize_patients` / `_fallback_patients` 琛屼负涓嶅彉
++
++### 2. 鍏ㄧ珯 UI 濂戠害娴嬭瘯
++
++鏂板缓 `tests/test_ui_contracts.py`, 鍙傛暟鍖栬鐩栨墍鏈?HTML 璺敱
++(`/`, `/workflow/*`, `/process/*`, `/agent/*`, `/ortho`, `/ortho-portal`, `/pharmacy`, `/stream-demo`, `/dashboard`):
++
++| 濂戠害 | 鏍￠獙鍐呭 | 鎷︽埅缂洪櫡绫?|
++|------|---------|-----------|
++| C1 | `getElementById('x')` 闈欐€?id 蹇呴』瀛樺湪浜?DOM | B2 |
++| C2 | `onclick="fn()"` 寮曠敤鍑芥暟蹇呴』鏈?`function fn` 瀹氫箟 | B2 |
++| C3 | 宓屽叆 `PATIENTS` 鐨勯〉闈㈡暟鎹潪绌轰笖鍚?`patient_id` | B1 |
++| C4 | 宓屽叆 `AGENT` 鐨勯〉闈㈠叾鍊?== 璺敱 agent 鍚?| B3 |
++| C5 | 椤甸潰 `fetch('/api/xxx')` 璺緞蹇呴』鍦?`app.routes` 娉ㄥ唽 | 鍓嶅悗绔紓绉?|
++| C6 | workflow.py `STAGES[].tool` 蹇呴』瀛樺湪浜?agent YAML tools | Unknown tool |
++| C7 | `querySelector('#xxx')` 闈欐€?id 寮曠敤鍚?C1 | B2 |
++
++### 3. Lint 寮哄寲
++
++- pyproject.toml ruff 鍚敤 `PLR1704` (redefined-argument-from-local)
++- 瀹炴柦鏃跺厛鍦?B3 淇鍓嶄唬鐮佷笂楠岃瘉璇ヨ鍒欑‘瀹炴姤閿?+
++### 4. 娓叉煋鍑芥暟鎷嗗垎 (浠?ui_workflow.py)
++
++- `render_workflow_ui` 鍐呰仈寰幆鎷嗕负 `_build_role_pills(roles)` /
++  `_build_stage_nav(stages)` / `_build_stage_panels(stages)`
++- 涓诲嚱鏁板彧鍋氱粍瑁? 鍑芥暟鍙傛暟涓嶅啀鏆撮湶浜庡惊鐜綔鐢ㄥ煙
++
++### 5. 娴嬭瘯鍩虹璁炬柦
++
++- 鏂板缓 `tests/conftest.py`: 缁熶竴 `HAIP_TEST_MODE=true` + 鍏变韩 TestClient fixture
++- 鍏ㄤ粨鎵弿骞舵竻鐞嗘亽鐪熸柇瑷€ (`assert len(...) >= 0` 绛夋ā寮?
++
++### 6. 闈欓粯澶辫触娌荤悊 (鏈€灏忚寖鍥?
++
++- `CaseManager.load` 鐨?`except Exception: pass` 鈫?`logger.warning`
++- 鍏变韩鍔犺浇鍣ㄧ粺涓€ warning 鍑哄彛
++
++### 7. 鏂囨。娌夋穩
++
++- AGENTS.md 澧炶ˉ:
++  - 鏂板 UI 椤甸潰蹇呴』閫氳繃 `tests/test_ui_contracts.py`
++  - 娓叉煋鍑芥暟绂佹鍦ㄥ惊鐜腑澶嶇敤鍙傛暟鍚?(PLR1704 寮哄埗)
++
++## 涓嶅仛鐨勪簨 (YAGNI)
++
++- 涓嶅紩鍏?Jinja2 绛夋ā鏉垮紩鎿?(鏂规 B, 鏀瑰姩闈㈠ぇ)
++- 涓嶉噸鏋?a2a/鍏朵粬妯″潡鐨?try/except (瓒呭嚭鏈鑼冨洿)
++- 涓嶆敼 ui_render.py / ui_ortho*.html 绛夐〉闈㈢殑瀹炵幇 (濂戠害娴嬭瘯鍏滃簳鍗冲彲)
++
++## 楠岃瘉鏍囧噯
++
++1. 濂戠害娴嬭瘯鍏堣瘉鏄庢湁鏁? 涓存椂娉ㄥ叆 B2/B3 绫婚敊璇? 娴嬭瘯蹇呴』鍙樼孩
++2. `pytest tests/ packages/haip-core/tests/` 鍏ㄩ噺閫氳繃
++3. `ruff check` (鍚?PLR1704) + `mypy packages/haip-core/haip/` 0 閿欒
++4. 鎵嬪伐鍐掔儫: `/workflow/orthopedic-surgery` 閫夋偅鑰?鈫?鍙傛暟鑱斿姩 鈫?鎵ц宸ュ叿 鈫?status ok
+diff --git a/packages/haip-core/haip/auth/jwt.py b/packages/haip-core/haip/auth/jwt.py
+index fdd5214..40ec39b 100644
+--- a/packages/haip-core/haip/auth/jwt.py
++++ b/packages/haip-core/haip/auth/jwt.py
+@@ -1,21 +1,28 @@
+ """JWT token creation, validation, and refresh."""
+ 
+ from __future__ import annotations
+ 
++import logging
+ import os
+ import time
+ from typing import Any
+ 
+ import jwt
+ 
+-_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "xhaip-dev-secret-change-in-production")
++logger = logging.getLogger(__name__)
++
++_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "")
++if not _SECRET_KEY:
++    _SECRET_KEY = "xhaip-dev-secret-change-in-production"
++    if os.environ.get("HAIP_TEST_MODE") != "true" and os.environ.get("AUTH_ENABLED") != "false":
++        logger.warning("JWT_SECRET_KEY 鏈缃? 姝ｅ湪浣跨敤寮€鍙戦粯璁ゅ瘑閽?鈥?鐢熶骇鐜蹇呴』閫氳繃鐜鍙橀噺閰嶇疆")
+ _ALGORITHM = "HS256"
+ _ACCESS_TOKEN_EXPIRE = int(os.environ.get("JWT_ACCESS_EXPIRE", "900"))  # 15 minutes
+ _REFRESH_TOKEN_EXPIRE = int(os.environ.get("JWT_REFRESH_EXPIRE", "604800"))  # 7 days
+ 
+ # In-memory refresh token blacklist (PostgreSQL-backed in P1)
+ _revoked_refresh_tokens: set[str] = set()
+ 
+ 
+ def create_access_token(
+     user_id: str,
+diff --git a/packages/haip-core/haip/guard/citation.py b/packages/haip-core/haip/guard/citation.py
+index effba9c..3083d34 100644
+--- a/packages/haip-core/haip/guard/citation.py
++++ b/packages/haip-core/haip/guard/citation.py
+@@ -1,14 +1,15 @@
+ """Citation Engine 鈥?寮曟枃鎻愬彇銆佷俊浠荤瓑绾ф帹鏂€佹寚鍗楅獙璇?"""
+ 
+ from __future__ import annotations
+ 
++import json
+ import re
+ from dataclasses import dataclass
+ from pathlib import Path
+ 
+ # 鈹€鈹€ Trust Level 鍏抽敭璇?鈹€鈹€
+ 
+ T1_KEYWORDS = [
+     "鍥介檯", "WHO", "NICE", "AAOS", "ACCP", "AHA", "ACC", "ESC",
+     "WS/T", "鍥藉鏍囧噯", "鍏ㄥ浗涓村簥妫€楠屾搷浣滆绋?, "grade 1", "level 1",
+     "KDIGO", "ADA", "ESPEN", "CSPEN", "ASPN", "CSCO",
+@@ -16,20 +17,41 @@ T1_KEYWORDS = [
+ 
+ T2_KEYWORDS = ["鍏辫瘑", "涓撳", "闄㈠唴", "鍗楁柟鍖婚櫌", "骞夸笢鐪?, "绉戝", "涓崕鍖诲浼?]
+ 
+ EXTRACT_PATTERNS = [
+     re.compile(r"\[ref:\s*(.+?)\]"),
+     re.compile(r"鍙傝€僛:锛歖\s*(.+?)(?:[銆俓n]|$)"),
+     re.compile(r"渚濇嵁(.+?鎸囧崡)[锛屻€俓n]"),
+     re.compile(r"鏍规嵁(.+?鏍囧噯)[锛屻€俓n]"),
+ ]
+ 
++# 宸ュ叿 JSON 杈撳嚭涓殑缁撴瀯鍖栧紩鏂囧瓧娈?(闂ㄦ埛/宸ヤ綔娴?Guard 鑷姩甯﹀叆宸ュ叿缁撴灉)
++STRUCTURED_CITATION_KEYS = {"guideline_ref", "guideline_refs", "guideline", "evidence", "references"}
++
++
++def _walk_citation_fields(node: object) -> list[str]:
++    """閫掑綊鏀堕泦 JSON 缁撴瀯涓紩鏂囧瓧娈电殑瀛楃涓插€笺€?""
++    found: list[str] = []
++    if isinstance(node, dict):
++        for k, v in node.items():
++            if isinstance(k, str) and k.lower() in STRUCTURED_CITATION_KEYS:
++                if isinstance(v, str):
++                    found.append(v)
++                elif isinstance(v, list):
++                    found.extend(x for x in v if isinstance(x, str))
++            else:
++                found.extend(_walk_citation_fields(v))
++    elif isinstance(node, list):
++        for item in node:
++            found.extend(_walk_citation_fields(item))
++    return found
++
+ 
+ @dataclass
+ class Citation:
+     claim: str = ""
+     source: str = ""
+     trust_level: str = "T2"
+     verified: bool = False
+     guideline_file: str = ""
+     warning: str = ""
+ 
+@@ -48,29 +70,43 @@ class CitationEngine:
+                 stem = path.stem.lower()
+                 self._index[stem] = path
+                 parts = stem.replace("-", " ").replace("_", " ").split()
+                 for p in parts:
+                     if len(p) >= 3:
+                         self._index.setdefault(p, path)
+ 
+     def extract(self, text: str) -> list[Citation]:
+         citations: list[Citation] = []
+         seen: set[str] = set()
++
++        def _add(source: str) -> None:
++            source = source.lstrip("#").strip()
++            if source and source not in seen:
++                seen.add(source)
++                citations.append(Citation(
++                    source=source,
++                    trust_level=self._guess_trust_level(source),
++                ))
++
+         for pattern in EXTRACT_PATTERNS:
+             for m in pattern.finditer(text):
+-                source = m.group(1).strip()
+-                if source and source not in seen:
+-                    seen.add(source)
+-                    citations.append(Citation(
+-                        source=source,
+-                        trust_level=self._guess_trust_level(source),
+-                    ))
++                _add(m.group(1))
++        # 缁撴瀯鍖栨彁鍙? 宸ュ叿 JSON 杈撳嚭鐨?guideline_ref/evidence 绛夊瓧娈?+        stripped = text.lstrip()
++        if stripped.startswith(("{", "[")):
++            try:
++                data = json.loads(stripped)
++            except (json.JSONDecodeError, ValueError):
++                data = None
++            if data is not None:
++                for src in _walk_citation_fields(data):
++                    _add(src)
+         return citations
+ 
+     def verify(self, citations: list[Citation]) -> list[Citation]:
+         for c in citations:
+             if not self._index:
+                 c.warning = "no guidelines indexed"
+                 continue
+             key = c.source.lower().replace(" ", "_").replace("-", "_")
+             if key in self._index:
+                 c.verified = True
+diff --git a/packages/haip-core/haip/knowledge/cases.py b/packages/haip-core/haip/knowledge/cases.py
+index fe36ffa..27a1eba 100644
+--- a/packages/haip-core/haip/knowledge/cases.py
++++ b/packages/haip-core/haip/knowledge/cases.py
+@@ -1,43 +1,46 @@
+ """涓村簥鐥呬緥鏁版嵁绠＄悊 鈥?鍔犺浇 + 鎼滅储 + 缁熻.
+ 
+ 鏁村悎 data/patients.json (100 鏁板瓧鐥呬汉) 鎻愪緵杩愯鏃剁梾渚嬫煡璇€? """
+ 
+ from __future__ import annotations
+ 
+ import json
++import logging
+ from pathlib import Path
+ from typing import Any
+ 
++logger = logging.getLogger(__name__)
++
+ 
+ class CaseManager:
+     """涓村簥鐥呬緥绠＄悊: 鍔犺浇 + 鎼滅储 + 缁熻銆?""
+ 
+     def __init__(self, data_dir: str | Path = ""):
+         self.cases: list[dict[str, Any]] = []
+         if data_dir:
+             self.load(Path(data_dir))
+ 
+     def load(self, directory: Path):
+         """浠庣洰褰曞姞杞芥偅鑰呮暟鎹?(JSON/YAML)銆?""
+         if not directory.exists():
+             return
+         for f in directory.glob("*.json"):
+             try:
+                 data = json.loads(f.read_text(encoding="utf-8"))
+                 if isinstance(data, dict) and "patients" in data:
+                     self.cases.extend(data["patients"])
+                 elif isinstance(data, list):
+                     self.cases.extend(data)
+-            except Exception:
+-                pass
++            except Exception as e:
++                logger.warning("鐥呬緥鏂囦欢鍔犺浇澶辫触 %s: %s", f, e)
+ 
+     def search(self, query: str = "", department: str = "",
+                diagnosis: str = "", age_min: int = 0, age_max: int = 120,
+                limit: int = 50) -> list[dict[str, Any]]:
+         """澶氭潯浠舵悳绱㈢梾渚嬨€?""
+         results = []
+         q = query.lower()
+         for c in self.cases:
+             if q and q not in json.dumps(c, ensure_ascii=False).lower():
+                 continue
+diff --git a/packages/haip-core/haip/patients.py b/packages/haip-core/haip/patients.py
+new file mode 100644
+index 0000000..4cee310
+--- /dev/null
++++ b/packages/haip-core/haip/patients.py
+@@ -0,0 +1,45 @@
++"""鏁板瓧鐥呬汉缁熶竴鍔犺浇 鈥?鍏ㄩ儴 UI 娓叉煋鍣ㄥ叡鐢ㄧ殑鍞竴鍏ュ彛.
++
++patients.json 鏀寔涓ょ椤跺眰鏍煎紡:
++  - dict: {"total": N, "patients": [...]}
++  - list: [...]
++"""
++
++from __future__ import annotations
++
++import json
++import logging
++from pathlib import Path
++
++logger = logging.getLogger(__name__)
++
++PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
++PATIENTS_FILE = PROJECT_ROOT / "packages" / "haip-hospital" / "data" / "patients.json"
++
++
++def load_patients(agent_name: str, limit: int = 8, only_compatible: bool = False) -> list[dict]:
++    """鍔犺浇涓?agent 鍏煎鐨勬暟瀛楃梾浜?
++
++    Args:
++        agent_name: Agent 鎶€鏈悕, 鍖归厤 patient["compatible_agents"].
++        limit: 杩斿洖鏉℃暟涓婇檺.
++        only_compatible: True 鏃舵棤鍏煎鎮ｈ€呰繑鍥?[] (涓嶅洖閫€鍏ㄩ噺).
++    """
++    if not PATIENTS_FILE.exists():
++        logger.warning("patients.json 涓嶅瓨鍦? %s", PATIENTS_FILE)
++        return []
++    try:
++        data = json.loads(PATIENTS_FILE.read_text(encoding="utf-8"))
++    except (OSError, json.JSONDecodeError) as e:
++        logger.warning("patients.json 鍔犺浇澶辫触: %s", e)
++        return []
++    all_pts = data.get("patients", []) if isinstance(data, dict) else data
++    if not isinstance(all_pts, list):
++        logger.warning("patients.json 椤跺眰缁撴瀯寮傚父: %s", type(all_pts).__name__)
++        return []
++    matched = [p for p in all_pts if agent_name in p.get("compatible_agents", [])]
++    if matched:
++        return matched[:limit]
++    if only_compatible:
++        return []
++    return all_pts[:limit]
+diff --git a/packages/haip-core/haip/togaf/patient_generator.py b/packages/haip-core/haip/togaf/patient_generator.py
+index ffd4d77..473fe09 100644
+--- a/packages/haip-core/haip/togaf/patient_generator.py
++++ b/packages/haip-core/haip/togaf/patient_generator.py
+@@ -1,21 +1,20 @@
+ """Patient Data Generator 鈥?Auto-generate digital patients for all departments.
+ 
+ Maps department types to common diseases and lab patterns.
+ Extends existing patients.json with department-specific patients.
+ """
+ 
+ from __future__ import annotations
+ 
+ import json
+ import random
+-from pathlib import Path
+ 
+ random.seed(42)
+ 
+ # 绉戝 鈫?甯歌璇婃柇鍒楄〃
+ _DIAGNOSES: dict[str, list[str]] = {
+     "respiratory": ["COPD鎬ユ€у姞閲?, "鏀皵绠″摦鍠?, "绀惧尯鑾峰緱鎬ц偤鐐?, "鑲烘爴濉?, "闂磋川鎬ц偤鐐?, "鎱㈡€у挸鍡?],
+     "gastroenterology": ["鑳冮绠″弽娴佺梾", "鎱㈡€ц儍鐐?, "鑲濈‖鍖?, "鑳拌吅鐐?, "缁撶洿鑲犳伅鑲?, "娑堝寲閬撳嚭琛€"],
+     "nephrology": ["鎱㈡€ц偩鑴忕梾3鏈?, "鑲剧梾缁煎悎寰?, "IgA鑲剧梾", "鎬ユ€ц偩鎹熶激", "绯栧翱鐥呰偩鐥?, "鑲炬€ц传琛€"],
+     "hematology": ["缂洪搧鎬ц传琛€", "鎬ユ€х櫧琛€鐥?, "娣嬪反鐦?, "澶氬彂鎬ч楂撶槫", "楠ㄩ珦澧炵敓寮傚父缁煎悎寰?, "琛€灏忔澘鍑忓皯"],
+     "endocrinology": ["2鍨嬬硸灏跨梾", "鐢茬姸鑵哄姛鑳戒孩杩?, "鐢茬姸鑵虹粨鑺?, "楠ㄨ川鐤忔澗鐥?, "楂樿剛琛€鐥?, "鑲ヨ儢鐥?],
+@@ -94,21 +93,22 @@ def _random_lab(diagnosis: str, dept_keys: list[str]) -> dict:
+ 
+ def generate_patients(output_path: str = "") -> list[dict]:
+     """Generate 5-8 patients per department with realistic data."""
+     from haip.togaf.organization import list_orgs
+     import yaml
+ 
+     all_orgs = list_orgs()
+     clinical = [o for o in all_orgs if o.type == "clinical" and o.parent]
+ 
+     # Read existing patients to avoid duplicates
+-    patients_file = Path("D:/FC/xhaip/packages/haip-hospital/data/patients.json")
++    from haip.patients import PATIENTS_FILE
++    patients_file = PATIENTS_FILE
+     existing_patients: list[dict] = []
+     existing_ids: set[str] = set()
+     existing_depts: set[str] = set()
+     if patients_file.exists():
+         with open(patients_file, encoding="utf-8") as f:
+             data = yaml.safe_load(f) or {}
+             existing = data.get("patients", [])
+             for p in existing:
+                 existing_ids.add(p["patient_id"])
+                 dept = p.get("department", "")
+diff --git a/packages/haip-core/haip/ui_pharmacy.py b/packages/haip-core/haip/ui_pharmacy.py
+index 0fd577c..ef1a1e4 100644
+--- a/packages/haip-core/haip/ui_pharmacy.py
++++ b/packages/haip-core/haip/ui_pharmacy.py
+@@ -63,22 +63,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text'
+   <div class="tab-link" onclick="showTab('review')">馃搵 澶勬柟瀹℃牳 (17瑙勫垯)</div>
+   <div class="tab-link" onclick="showTab('drugs')">馃攳 鑽搧鏌ヨ</div>
+   <div class="tab-link" onclick="showTab('route')">馃攧 钀ュ吇閫斿緞</div>
+   <div class="tab-link" onclick="showTab('guard')">馃洝 Guard</div>
+   <div style="padding:8px 14px;font-size:10px;color:rgba(255,255,255,.3);border-top:1px solid rgba(255,255,255,.1);margin-top:auto">馃拪 231 tests | 93%</div>
+ </div>
+ <div class="main">
+   <div class="main-h"><span id="panel-title">馃 NRS2002 钀ュ吇椋庨櫓璇勪及</span><div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--text-secondary)">鑽閮ㄤ复搴婂伐浣滃彴</span><button class="header-btn" onclick="toggleTheme()" id="btn-theme">馃寵 榛戝</button></div></div>
+   <div class="content">
+     <div class="left">
+-      <div class="panel active" id="panel-nutrition"><h3>鎮ｈ€呭熀鏈俊鎭?/h3><div class="row"><div class="form-group" style="flex:1"><label>鎮ｈ€匢D</label><input id="f-id" value="P001"></div><div class="form-group" style="flex:1"><label>骞撮緞</label><input id="f-age" value="75" type="number"></div><div class="form-group" style="flex:1"><label>浣撻噸(kg)</label><input id="f-wt" value="55" type="number"></div><div class="form-group" style="flex:1"><label>韬珮(cm)</label><input id="f-ht" value="170" type="number"></div></div><div class="form-group"><label>瀹為獙瀹?(JSON)</label><textarea id="f-labs">{"albumin":28,"crp":80,"na":135,"k":3.2,"ca":2.0,"mg":0.7,"bun":12,"glucose":8.5}</textarea></div><button class="btn btn-primary" onclick="callTool('assess_nutrition')">璇勪及钀ュ吇椋庨櫓</button><div class="result-box" id="result-nutrition"></div></div>
+-      <div class="panel" id="panel-tpn"><h3>TPN 閰嶆瘮璁＄畻</h3><div class="row"><div class="form-group" style="flex:1"><label>浣撻噸(kg)</label><input id="f-wt2" value="55" type="number"></div><div class="form-group" style="flex:1"><label>鑳介噺(kcal)</label><input id="f-ene" value="1800" type="number"></div></div><button class="btn btn-primary" onclick="callTool('calculate_tpn')">璁＄畻 TPN</button><div class="result-box" id="result-tpn"></div></div>
++      <div class="panel active" id="panel-nutrition"><h3>鎮ｈ€呭熀鏈俊鎭?/h3><div class="row"><div class="form-group" style="flex:1"><label>鎮ｈ€匢D</label><input id="f-id" value="__PID__"></div><div class="form-group" style="flex:1"><label>骞撮緞</label><input id="f-age" value="__AGE__" type="number"></div><div class="form-group" style="flex:1"><label>浣撻噸(kg)</label><input id="f-wt" value="__WT__" type="number"></div><div class="form-group" style="flex:1"><label>韬珮(cm)</label><input id="f-ht" value="__HT__" type="number"></div></div><div class="form-group"><label>瀹為獙瀹?(JSON)</label><textarea id="f-labs">__LABS__</textarea></div><button class="btn btn-primary" onclick="callTool('assess_nutrition')">璇勪及钀ュ吇椋庨櫓</button><div class="result-box" id="result-nutrition"></div></div>
++      <div class="panel" id="panel-tpn"><h3>TPN 閰嶆瘮璁＄畻</h3><div class="row"><div class="form-group" style="flex:1"><label>浣撻噸(kg)</label><input id="f-wt2" value="__WT__" type="number"></div><div class="form-group" style="flex:1"><label>鑳介噺(kcal)</label><input id="f-ene" value="1800" type="number"></div></div><button class="btn btn-primary" onclick="callTool('calculate_tpn')">璁＄畻 TPN</button><div class="result-box" id="result-tpn"></div></div>
+       <div class="panel" id="panel-review"><h3>澶勬柟瀹℃牳 鈥?17鏉¤嵂鐗╀氦浜掕鍒?/h3><div class="form-group"><label>澶勬柟椤圭洰 (JSON鏁扮粍)</label><textarea id="f-rx" style="height:100px">[{"name":"鍗庢硶鏋?,"dose":"2.5mg qd"},{"name":"浣庡垎瀛愯倽绱?,"dose":"4000IU q12h"},{"name":"甯冩礇鑺?,"dose":"400mg tid"},{"name":"搴嗗ぇ闇夌礌","dose":"80mg q8h"},{"name":"鍛嬪绫?,"dose":"20mg qd"}]</textarea></div><button class="btn btn-primary" onclick="callTool('full_prescription_review')">瀹屾暣瀹℃牳 (17瑙勫垯)</button><button class="btn" style="background:var(--warning);color:#000;margin-left:4px" onclick="callTool('review_prescription')">鍩虹瀹℃牳</button><div class="result-box" id="result-review"></div></div>
+       <div class="panel" id="panel-drugs"><h3>鑽搧鏌ヨ</h3><div class="row"><div class="form-group" style="flex:1"><label>鍏抽敭璇?/label><input id="f-drug" value="鍗庢硶鏋?></div></div><button class="btn btn-primary" onclick="callTool('list_medications')">鏌ヨ</button><div class="result-box" id="result-drugs"></div></div>
+       <div class="panel" id="panel-route"><h3>钀ュ吇閫斿緞鎺ㄨ崘</h3><div class="form-group"><label>鑳冭偁鍔熻兘</label><select id="f-gi"><option>normal</option><option>impaired</option></select></div><button class="btn btn-primary" onclick="callTool('recommend_nutrition_route')">鎺ㄨ崘</button><div class="result-box" id="result-route"></div></div>
+       <div class="panel" id="panel-guard"><h3>Guard 楠岃瘉</h3><div class="form-group"><label>澶勬柟瀹℃牳杈撳嚭</label><textarea id="f-guard" style="height:80px">鍗庢硶鏋椾笌浣庡垎瀛愯倽绱犺仈鐢紝闇€鐩戞祴INR銆傚弬鑰? ACCP 鎶楄鏍撴不鐤楁寚鍗椼€?/textarea></div><button class="btn btn-primary" onclick="runGuard()">Guard</button><div class="result-box" id="result-guard"></div></div>
+     </div>
+     <div class="right">
+       <div id="drug-rules"><h3 style="font-size:12px;margin-bottom:8px;color:var(--text)">馃搵 鍐呯疆鑽墿浜や簰瑙勫垯 (17鏉?</h3>
+         <table class="drug-table"><tr><th>瑙勫垯</th><th>鑽墿</th><th>浜や簰鑽墿</th><th>椋庨櫓</th></tr>
+           <tr><td>D01</td><td>鍗庢硶鏋?/td><td>鑲濈礌/LMWH</td><td><span class="tag tag-high">HIGH</span></td></tr>
+           <tr><td>D02</td><td>鍗庢硶鏋?/td><td>闃垮徃鍖规灄/姘悺鏍奸浄</td><td><span class="tag tag-high">HIGH</span></td></tr>
+@@ -108,10 +108,31 @@ async function callTool(tool){
+   else if(tool==='review_prescription')params={patient_id:g('f-id'),prescription_items:JSON.parse(g('f-rx')||'[]')};
+   else if(tool==='list_medications')params={keyword:g('f-drug')};
+   else if(tool==='recommend_nutrition_route')params={patient_id:g('f-id'),gi_function:g('f-gi')};
+   const el=document.getElementById('result-'+currentTab);el.textContent='鎵ц涓?..';
+   try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent:'pharmacy',tool,params})});const d=await r.json();el.textContent=JSON.stringify(d,null,2)}catch(e){el.textContent='Error: '+e.message}
+ }
+ async function runGuard(){const r=await fetch('/api/guard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({output:g('f-guard'),scenario:'鑽墿浜や簰',agent:'pharmacy'})});const d=await r.json();document.getElementById('result-guard').textContent=JSON.stringify(d,null,2)}
+ </script>
+ </body>
+ </html>"""
++
++
++_DEFAULT_LABS = {"albumin": 28, "crp": 80, "na": 135, "k": 3.2, "ca": 2.0,
++                 "mg": 0.7, "bun": 12, "glucose": 8.5}
++
++
++def render_pharmacy_ui() -> str:
++    """娓叉煋鑽墏绉?UI 鈥?鎮ｈ€呬俊鎭彇鑷暟瀛楃梾浜哄簱棣栦綅鍏煎鎮ｈ€? 鏃犲垯鐢ㄦ紨绀洪粯璁ゅ€笺€?""
++    import json
++
++    from haip.patients import load_patients
++
++    pts = load_patients("pharmacy", limit=1, only_compatible=True)
++    p = pts[0] if pts else {}
++    labs = p.get("lab_results") or _DEFAULT_LABS
++    return (PHARMACY_TEMPLATE
++            .replace("__PID__", str(p.get("patient_id", "P001")))
++            .replace("__AGE__", str(p.get("age", 75)))
++            .replace("__WT__", str(p.get("weight_kg", 55)))
++            .replace("__HT__", str(p.get("height_cm", 170)))
++            .replace("__LABS__", json.dumps(labs, ensure_ascii=False)))
+diff --git a/packages/haip-core/haip/ui_process.py b/packages/haip-core/haip/ui_process.py
+index e6bf07f..0db4962 100644
+--- a/packages/haip-core/haip/ui_process.py
++++ b/packages/haip-core/haip/ui_process.py
+@@ -1,27 +1,23 @@
+ """璇婄枟娴佺▼ UI 娓叉煋鍣?鈥?鍔ㄦ€侀樁娈?+ 瑙掕壊鍒囨崲 + 鏁板瓧鐥呬汉 (Gold Standard Design System).
+ 
+ 姣忎釜 Agent 閫氳繃 YAML 瀹氫箟 workflows / roles / stages锛? CSS 鍜?JS 宸叉娊鍙栬嚦 ui_process_css.py / ui_process_js.py銆? """
+ 
+ from __future__ import annotations
+ 
+ import json
+-from pathlib import Path
+ 
+ from haip.ui_process_css import PROCESS_CSS
+ from haip.ui_process_js import PROCESS_JS
+ 
+-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+-PATIENTS_FILE = PROJECT_ROOT / "packages" / "haip-hospital" / "data" / "patients.json"
+-
+ STAGE_COLORS = ["#0969da", "#1a7f37", "#8b6914", "#cf222e", "#6e5494", "#0a84ff",
+                 "#1a7f37", "#cf222e", "#0969da"]
+ 
+ 
+ def render_process_ui(
+     name: str,
+     cn_name: str,
+     department: str = "",
+     agent_type: str = "business",
+     roles: list[dict] | None = None,
+@@ -463,32 +459,25 @@ tr:hover td{{background:var(--bg-overlay)}}
+ 
+ <script>
+ {resolved_js}
+ </script>
+ </body>
+ </html>"""
+ 
+ 
+ def _load_patients(agent_name: str) -> list[dict]:
+     """浠?patients.json 鍔犺浇涓庣粰瀹?agent 鍏煎鐨勬偅鑰呮暟鎹€?""
+-    try:
+-        with open(PATIENTS_FILE, encoding="utf-8") as f:
+-            data = json.load(f)
+-    except (FileNotFoundError, json.JSONDecodeError):
+-        return _fallback_patients()
+-
+-    all_patients = data.get("patients", []) if isinstance(data, dict) else data
+-    if isinstance(all_patients, list):
+-        matched = [p for p in all_patients
+-                   if agent_name in p.get("compatible_agents", [])]
+-        if matched:
+-            return _normalize_patients(matched)
++    from haip.patients import load_patients
++
++    matched = load_patients(agent_name, limit=30, only_compatible=True)
++    if matched:
++        return _normalize_patients(matched)
+     return _fallback_patients()
+ 
+ 
+ def _normalize_patients(patients: list[dict]) -> list[dict]:
+     """鏍囧噯鍖栨偅鑰呮暟鎹瓧娈靛悕锛岀‘淇濇ā鏉?JS 鑳芥纭秷璐广€?""
+     out = []
+     for p in patients[:30]:
+         age_val = p.get("age", 0) or p.get("age_months", 0)
+         out.append({
+             "patient_id": p.get("patient_id", ""),
+diff --git a/packages/haip-core/haip/ui_workflow.py b/packages/haip-core/haip/ui_workflow.py
+index cfd825a..5670d45 100644
+--- a/packages/haip-core/haip/ui_workflow.py
++++ b/packages/haip-core/haip/ui_workflow.py
+@@ -1,92 +1,106 @@
+ """宸ヤ綔娴?UI 鈥?process 鍚屾涓夋爮甯冨眬 + 瑙掕壊 stage 绛涢€?+ 宸ュ叿鎵ц."""
+ 
+ from __future__ import annotations
+-import json
+-from pathlib import Path
+-
+-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+-PATIENTS_FILE = PROJECT_ROOT / "packages" / "haip-hospital" / "data" / "patients.json"
+-
+-
+-def _load_patients(agent_name: str) -> list[dict]:
+-    """鍔犺浇涓庤 Agent 鍏煎鐨勬暟瀛楃梾浜恒€?""
+-    if not PATIENTS_FILE.exists():
+-        return []
+-    with open(PATIENTS_FILE, "r", encoding="utf-8") as f:
+-        all_pts = json.load(f)
+-    if not isinstance(all_pts, list):
+-        return []
+-    return all_pts[:8]
+ 
++import json
+ 
+-def render_workflow_ui(
+-    name: str,
+-    cn_name: str,
+-    agent_type: str,
+-    port: int,
+-    tools: list[dict],
+-    workflow_stages: list[dict],
+-    roles: dict,
+-    guard_triggers: list[str],
+-) -> str:
+-    icon_map = {"business": "馃彞", "specialist": "馃敩", "master_data": "馃梽锔?}
+-    patients = _load_patients(name)
++from haip.patients import load_patients
+ 
+-    wf_json = json.dumps(workflow_stages, ensure_ascii=False)
+-    roles_json = json.dumps(roles, ensure_ascii=False)
+-    patients_json = json.dumps(patients, ensure_ascii=False)
+ 
+-    # 鈹€鈹€ 瑙掕壊 Pill 鈹€鈹€
+-    role_pills = ""
+-    first_role = None
++def _build_role_pills(roles: dict) -> tuple[str, str]:
++    """瑙掕壊 Pill HTML + 棣栦釜瑙掕壊 id."""
++    pills = ""
++    first_role = ""
+     for rid, rcfg in roles.items():
+-        if first_role is None:
++        if not first_role:
+             first_role = rid
+         icon = rcfg.get("icon", "")
+-        name = rcfg.get("name", rid)
+-        role_pills += f'<button class="role-pill" data-role="{rid}" onclick="switchRole(\'{rid}\')">{icon} {name}</button>\n'
++        role_label = rcfg.get("name", rid)
++        pills += (
++            f'<button class="role-pill" data-role="{rid}" '
++            f'onclick="switchRole(\'{rid}\')">{icon} {role_label}</button>\n'
++        )
++    return pills, first_role
+ 
+-    # 鈹€鈹€ 鍙充晶闃舵瀵艰埅 鈹€鈹€
+-    sb_items = ""
+-    for s in workflow_stages:
+-        sb_items += (
++
++def _build_stage_nav(stages: list[dict]) -> str:
++    """鍙充晶闃舵瀵艰埅 HTML."""
++    items = ""
++    for s in stages:
++        items += (
+             f'<div class="rb-item" data-stage="{s["order"]}" onclick="clickStage({s["order"]})">'
+             f'<span class="rb-dot current"></span>'
+             f'<div class="rb-info"><div class="rb-name">{s["order"]}. {s["label"]}</div></div>'
+             f'<span class="rb-status active-s">褰撳墠</span></div>\n'
+         )
++    return items
+ 
+-    # 鈹€鈹€ 闃舵闈㈡澘 (甯︽墽琛屾寜閽? 鈹€鈹€
++
++def _build_stage_panels(stages: list[dict]) -> str:
++    """闃舵闈㈡澘 HTML (甯︽墽琛屾寜閽?."""
+     panels = ""
+-    for i, s in enumerate(workflow_stages):
+-        act = ' active' if i == 0 else ''
++    for i, s in enumerate(stages):
++        act = " active" if i == 0 else ""
+         tool_name = s["tool"]
+         panels += (
+             f'<div class="stage-content{act}" id="stage-{s["order"]}">'
+             f'<div class="stage-header"><span class="stage-badge">{s["order"]}</span>'
+             f'<div><h3>{s["label"]}</h3><p>{s["description"]}</p>'
+             f'<span class="guide-ref">{s.get("guideline_ref", "")}</span></div></div>'
+             f'<div class="form-group"><label>鍙傛暟</label>'
+-            f'<textarea id="params-{s["id"]}">{{"patient_id":"P001","age":78,"weight_kg":55,"height_cm":170}}</textarea></div>'
++            f'<textarea id="params-{s["id"]}" '
++            f'placeholder="璇峰厛鍦ㄥ乏渚ч€夋嫨鏁板瓧鐥呬汉, 鍙傛暟灏嗚嚜鍔ㄥ～鍏?></textarea></div>'
+             f'<div class="btn-row">'
+-            f'<button class="btn-exec" onclick="callStage(\'{s["id"]}\',\'{tool_name}\')">鈻?鎵ц {s["label"]}</button>'
++            f'<button class="btn-exec" onclick="callStage(\'{s["id"]}\',\'{tool_name}\')">'
++            f'鈻?鎵ц {s["label"]}</button>'
+             f'<button class="btn-guard" onclick="showGuard(\'{s["id"]}\')">馃洝 瀹夊叏鏍￠獙</button>'
+         )
+-        if i < len(workflow_stages) - 1:
+-            panels += f'<button class="btn-next" onclick="autoNext(\'{s["id"]}\',\'{workflow_stages[i+1]["id"]}\')">鈫?涓嬩竴姝?/button>'
++        if i < len(stages) - 1:
++            panels += (
++                f'<button class="btn-next" '
++                f'onclick="autoNext(\'{s["id"]}\',\'{stages[i + 1]["id"]}\')">鈫?涓嬩竴姝?/button>'
++            )
+         panels += (
+             f'</div>'
+             f'<div class="result-box" id="result-{s["id"]}">'
+             f'<span class="result-placeholder">鐐瑰嚮銆屾墽琛屻€嶅紑濮?..</span></div>'
+             f'</div>\n'
+         )
++    return panels
++
++
++def render_workflow_ui(
++    name: str,
++    cn_name: str,
++    agent_type: str,
++    port: int,
++    tools: list[dict],
++    workflow_stages: list[dict],
++    roles: dict,
++    guard_triggers: list[str],
++) -> str:
++    icon_map = {"business": "馃彞", "specialist": "馃敩", "master_data": "馃梽锔?}
++    patients = load_patients(name)
++
++    wf_json = json.dumps(workflow_stages, ensure_ascii=False)
++    roles_json = json.dumps(roles, ensure_ascii=False)
++    patients_json = json.dumps(patients, ensure_ascii=False)
++
++    # 鈹€鈹€ 瑙掕壊 Pill 鈹€鈹€
++    role_pills, first_role = _build_role_pills(roles)
++
++    # 鈹€鈹€ 鍙充晶闃舵瀵艰埅 鈹€鈹€
++    sb_items = _build_stage_nav(workflow_stages)
++
++    # 鈹€鈹€ 闃舵闈㈡澘 (甯︽墽琛屾寜閽? 鈹€鈹€
++    panels = _build_stage_panels(workflow_stages)
+ 
+     # 鈹€鈹€ Guard 鈹€鈹€
+     guard_html = ""
+     if guard_triggers:
+         tags = " ".join(f'<span class="tag red">{t}</span>' for t in guard_triggers)
+         guard_html = (
+             '<div class="rb-stats"><div class="rb-stat"><span>鈿?楂樺嵄瑙﹀彂</span></div>'
+             f'<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px">{tags}</div></div>'
+         )
+ 
+@@ -192,21 +206,21 @@ body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Mic
+ <body>
+ 
+ <div class="header">
+   <h1>{icon_map.get(agent_type, '馃彞')} {cn_name} 宸ヤ綔鍙?/h1>
+   <div class="header-role">
+     <span style="font-size:11px;color:var(--text3);padding:3px 4px 3px 0">瑙掕壊:</span>
+ {role_pills}
+   </div>
+   <div class="header-patient" id="header-patient">
+     <span class="hp-name" id="hp-name"></span>
+-    <span class="hp-badge" id="hp-stage"></span>
++    <span class="hp-badge" id="hp-badge"></span>
+   </div>
+ </div>
+ 
+ <div class="app">
+   <div class="leftbar">
+     <div class="lb-search"><input type="text" id="patient-search" placeholder="鎼滅储鎮ｈ€?.." oninput="searchPatients()"></div>
+     <div class="lb-header">鏁板瓧鐥呬汉 路 {cn_name}</div>
+     <div class="patient-list" id="patient-list"></div>
+     <div class="lb-footer">鍏?<strong id="lb-count">0</strong> 浣嶆偅鑰?/div>
+   </div>
+@@ -214,41 +228,43 @@ body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Mic
+   <div class="center" id="center-content">
+ {panels}
+   </div>
+ 
+   <div class="rightbar">
+     <div class="rb-title">璇婄枟闃舵</div>
+     <div class="rb-list" id="rb-stages">
+ {sb_items}
+     </div>
+     <div class="rb-stats">
++      <div class="rb-stat"><span>褰撳墠闃舵</span><span class="val" id="rb-current-stage" style="font-weight:600">1/{len(workflow_stages)}</span></div>
+       <div class="rb-stat"><span>鍙敤闃舵</span><span class="val" id="rb-visible-count" style="font-weight:600">{len(workflow_stages)}/{len(workflow_stages)}</span></div>
+       <div class="rb-stat"><span>宸插畬鎴?/span><span class="val" id="rb-done-count" style="font-weight:600">0</span></div>
+     </div>
+ {guard_html}
+   </div>
+ </div>
+ 
+ <div class="toast" id="toast"></div>
+ 
+ <script>
+ var AGENT='{name}';var STAGES={wf_json};var ROLES={roles_json};
+ var PATIENTS={patients_json};
+ var CURRENT_ROLE='{first_role or "attending"}';
+-var WORKFLOW_DATA={{patient_id:'P001',age:78,weight_kg:55,height_cm:170}};
++var WORKFLOW_DATA={{}};
+ var COMPLETED_STAGES=new Set();var STAGE_RESULTS={{}};
+ var currentPatient=null;var currentStage=1;
+ 
+ function init(){{
+   renderPatientList();
+   clickStage(1);
+   switchRole(CURRENT_ROLE);
++  if(PATIENTS.length)selectPatient(PATIENTS[0].patient_id);
+ }}
+ 
+ function switchRole(rid){{
+   CURRENT_ROLE=rid;
+   document.querySelectorAll('.role-pill').forEach(function(e){{e.classList.remove('active')}});
+   var btn=document.querySelector('.role-pill[data-role="'+rid+'"]');
+   if(btn)btn.classList.add('active');
+   // 绛涢€夊彸渚ч樁娈靛垪琛?   var rc=ROLES[rid];var allowed=rc?rc.stages:null;var visCount=0;
+   document.querySelectorAll('.rb-item').forEach(function(el){{
+@@ -274,22 +290,24 @@ function clickStage(n){{
+   document.querySelectorAll('.rb-item').forEach(function(e){{e.classList.remove('active');e.querySelector('.rb-status').textContent='';e.querySelector('.rb-status').classList.remove('active-s','done')}});
+   var el=document.querySelector('.rb-item[data-stage="'+n+'"]');
+   if(el){{el.classList.add('active');el.querySelector('.rb-status').textContent='褰撳墠';el.querySelector('.rb-status').classList.add('active-s')}}
+   document.querySelectorAll('.stage-content').forEach(function(e){{e.classList.remove('active')}});
+   var p=document.getElementById('stage-'+n);if(p)p.classList.add('active');
+   document.getElementById('rb-current-stage').textContent=n+'/'+STAGES.length;
+   fillCurrentParams();
+ }}
+ 
+ async function callStage(sid,tool){{
+-  var el=document.getElementById('result-'+sid);el.textContent='鈴?鎵ц涓?..';
++  var el=document.getElementById('result-'+sid);
+   var pe=document.getElementById('params-'+sid),params=WORKFLOW_DATA;
++  if(!currentPatient&&(!pe||!pe.value.trim())){{el.textContent='鈿?璇峰厛鍦ㄥ乏渚ч€夋嫨鏁板瓧鐥呬汉';return}}
++  el.textContent='鈴?鎵ц涓?..';
+   if(pe){{try{{Object.assign(params,JSON.parse(pe.value))}}catch(e){{}}}}
+   try{{
+     var r=await fetch('/api/call',{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{agent:AGENT,tool:tool,params:params}})}});
+     var d=await r.json();el.textContent=JSON.stringify(d,null,2);
+     if(d.status==='ok'){{
+       COMPLETED_STAGES.add(sid);STAGE_RESULTS[sid]=d;
+       var s=STAGES.find(function(x){{return x.id===sid}});
+       if(s)WORKFLOW_DATA[s.key_output]=d[s.key_output]||d;
+       updateProgress();
+     }}
+diff --git a/packages/haip-core/haip/web_launcher.py b/packages/haip-core/haip/web_launcher.py
+index a7c2bb6..15d47d3 100644
+--- a/packages/haip-core/haip/web_launcher.py
++++ b/packages/haip-core/haip/web_launcher.py
+@@ -18,25 +18,37 @@ import webbrowser
+ from typing import Any
+ 
+ 
+ DEFAULT_PORTS: dict[str, int] = {
+     "pharmacy": 8770, "orthopedic-surgery": 8765, "cardio-surgery": 8768,
+     "pediatrics": 8820, "pain-hub": 8840, "acute-pain": 8841,
+     "cardio-risk": 8801, "medical-record": 8766, "metrics": 8767, "haip": 8769,
+ }
+ 
+ 
++def _resolve_port(agent_name: str) -> int:
++    """绔彛瑙ｆ瀽: agent YAML 鐨?port 瀛楁浼樺厛, DEFAULT_PORTS 浠呬綔鍥為€€銆?""
++    try:
++        from haip.agent import get as get_agent
++        plugin = get_agent(agent_name)
++        if plugin and plugin.port:
++            return plugin.port
++    except Exception:
++        pass
++    return DEFAULT_PORTS.get(agent_name, 8700)
++
++
+ def launch_agent(agent_name: str, port: int | None = None, host: str = "127.0.0.1",
+                  open_browser: bool = True) -> subprocess.Popen | None:
+     """鍚姩鍗曚釜 Agent 鐨?Web 鏈嶅姟銆?""
+     if port is None:
+-        port = DEFAULT_PORTS.get(agent_name, 8700)
++        port = _resolve_port(agent_name)
+ 
+     if _port_in_use(host, port):
+         print(f"  鈿?绔彛 {port} 宸茶鍗犵敤, Agent '{agent_name}' 鍙兘宸插湪杩愯")
+         return None
+ 
+     cmd = [sys.executable, "-m", "uvicorn", "haip.web_server:app",
+            "--host", host, "--port", str(port)]
+     env = os.environ.copy()
+     env["XHAIP_AGENT"] = agent_name  # 鍗?Agent 妯″紡
+ 
+diff --git a/packages/haip-core/haip/web_server.py b/packages/haip-core/haip/web_server.py
+index b262abd..bd76ee7 100644
+--- a/packages/haip-core/haip/web_server.py
++++ b/packages/haip-core/haip/web_server.py
+@@ -35,21 +35,21 @@ def _seed_default_admin():
+         try:
+             admin_pass = os.environ.get("HAIP_ADMIN_PASSWORD", "Admin@123456")
+             auth.create_user(
+                 username="admin",
+                 password=admin_pass,
+                 display_name="绯荤粺绠＄悊鍛?,
+                 roles=["admin"],
+             )
+             auth.create_user(
+                 username="doctor",
+-                password="Doctor@123",
++                password=os.environ.get("HAIP_DOCTOR_PASSWORD", "Doctor@123"),
+                 display_name="婕旂ず鍖荤敓",
+                 roles=["doctor"],
+             )
+         except Exception:
+             pass
+ 
+ 
+ @asynccontextmanager
+ async def lifespan(app: FastAPI):
+     _seed_default_admin()
+@@ -458,29 +458,50 @@ async def loop_demo(request: Request):
+                 "\u591a\u6b65\u81ea\u4e3b\u89c4\u5212: LLM \u81ea\u884c\u51b3\u5b9a\u8c03\u7528\u54ea\u4e9b\u5de5\u5177\u3001\u4ec0\u4e48\u987a\u5e8f",
+                 "\u5de5\u5177\u7ed3\u679c\u63a8\u7406: \u6bcf\u6b65 tool result \u56de\u9988\u7ed9 LLM \u4f5c\u4e3a\u4e0b\u4e00\u6b65\u51b3\u7b56\u4f9d\u636e",
+                 "\u6e29\u5ea6\u9000\u706b: step1=0.3 \u2192 step2=0.4 \u2192 step3+=0.5 \u8d8a\u6df1\u5165\u8d8a\u5141\u8bb8\u63a2\u7d22",
+                 "Token \u9884\u7b97: \u8d85\u8fc7 32000 tokens \u81ea\u52a8\u4e2d\u6b62",
+                 "\u7ed3\u679c\u6458\u8981\u5316: tool \u8f93\u51fa\u622a\u65ad\u81f3 500 \u5b57\u7b26\uff0c\u53bb\u9664\u5143\u6570\u636e",
+             ],
+         },
+     }
+ 
+ 
++GUIDELINE_DIRS = [
++    PROJECT_ROOT / "packages" / "haip-hospital" / "knowledge" / "guidelines",
++    PROJECT_ROOT / "knowledge" / "guidelines",
++]
++
++_citation_engine = None
++
++
++def _get_citation_engine():
++    """妯″潡绾у崟渚?鈥?绱㈠紩鎸囧崡璧勪骇搴? 渚?/api/guard 寮曟枃楠岃瘉銆?""
++    global _citation_engine
++    if _citation_engine is None:
++        from haip.guard.citation import CitationEngine
++        engine = CitationEngine()
++        for d in GUIDELINE_DIRS:
++            if d.exists():
++                engine.index_guidelines(d)
++        _citation_engine = engine
++    return _citation_engine
++
++
+ @app.post("/api/guard")
+ async def guard_verify(request: Request):
+     """瀵?Agent 杈撳嚭鎵ц Guard 瀹夊叏楠岃瘉銆?""
+     data = await request.json()
+     output = data.get("output", "")
+     scenario = data.get("scenario", "")
+     agent_name = data.get("agent", "")
+     cross = data.get("cross_agent_outputs", [])
+-    v = GuardVerifier()
++    v = GuardVerifier(citation_engine=_get_citation_engine())
+     result = v.verify(output, scenario=scenario, agent_name=agent_name,
+                       cross_agent_outputs=cross if cross else None)
+     return {
+         "passed": result.passed,
+         "flags": result.flags,
+         "citations": [{"source": c.source, "trust_level": c.trust_level, "verified": c.verified}
+                      for c in result.citations],
+         "confidence": result.confidence.value if result.confidence else None,
+         "requires_human_review": result.requires_human_review,
+         "cross_validation_conflict": result.cross_validation_conflict,
+@@ -587,22 +608,22 @@ def ortho_ui():
+ @app.get("/ortho-portal", response_class=HTMLResponse)
+ def ortho_portal_ui():
+     """鍒涗激楠ㄧ璇婄枟闂ㄦ埛 鈥?KPI 鐪嬫澘 + AI 璇婄枟鑳藉姏鍗?+ 鎮ｈ€呴槦鍒?+ 娴佺▼鏃堕棿杞淬€?""
+     with open(Path(__file__).parent / "ui_ortho_portal.html", encoding="utf-8") as f:
+         return f.read()
+ 
+ 
+ @app.get("/pharmacy", response_class=HTMLResponse)
+ def pharmacy_ui():
+     """鑽墏绉戜笓涓氱晫闈?鈥?澶勬柟瀹℃牳 + 鑽墿浜や簰鍙鍖栥€?""
+-    from haip.ui_pharmacy import PHARMACY_TEMPLATE
+-    return PHARMACY_TEMPLATE
++    from haip.ui_pharmacy import render_pharmacy_ui
++    return render_pharmacy_ui()
+ 
+ 
+ @app.get("/api/agent-ui/{agent_name}")
+ def agent_ui_config(agent_name: str):
+     """蹇€?UI 鐢熸垚鍣?鈥?鏍规嵁 YAML 瀹氫箟杩斿洖 UI 閰嶇疆銆?""
+     p = get_agent(agent_name)
+     if not p:
+         return JSONResponse({"error": "not found"}, 404)
+     tabs = []
+     for tool in p.tools:
+diff --git a/packages/haip-core/pyproject.toml b/packages/haip-core/pyproject.toml
+index 46f01a8..3a011ce 100644
+--- a/packages/haip-core/pyproject.toml
++++ b/packages/haip-core/pyproject.toml
+@@ -20,25 +20,36 @@ dev = [
+     "pytest>=8.0",
+     "pytest-cov>=5.0",
+     "ruff>=0.5",
+     "mypy>=1.10",
+ ]
+ 
+ [tool.ruff]
+ line-length = 100
+ 
+ [tool.ruff.lint]
++extend-select = ["PLR1704"]
+ ignore = ["E402"]
+ 
+ [tool.ruff.lint.per-file-ignores]
+ "tests/**" = ["F401"]
+ 
+ [tool.mypy]
+ python_version = "3.10"
+ strict = false
+ ignore_missing_imports = true
+ warn_return_any = false
+ warn_unused_ignores = false
+ 
++[build-system]
++requires = ["setuptools>=64"]
++build-backend = "setuptools.build_meta"
++
++[tool.setuptools.packages.find]
++include = ["haip*"]
++
++[tool.setuptools.package-data]
++haip = ["templates/**"]
++
+ [tool.pytest.ini_options]
+ testpaths = ["tests"]
+ addopts = ["--tb=short", "-v"]
+diff --git a/packages/haip-core/tests/conftest.py b/packages/haip-core/tests/conftest.py
+index 9ec7d28..ac0bcc0 100644
+--- a/packages/haip-core/tests/conftest.py
++++ b/packages/haip-core/tests/conftest.py
+@@ -1,16 +1,20 @@
+-"""鍏变韩 fixtures."""
++"""鍏变韩 fixtures 鈥?fixtures + 缁熶竴 HAIP_TEST_MODE."""
++
++import os
+ 
+ import pytest
+ 
+ from haip.llm.mock import MockProvider
+ 
++os.environ.setdefault("HAIP_TEST_MODE", "true")
++
+ 
+ @pytest.fixture
+ def mock_llm() -> MockProvider:
+     return MockProvider({
+         "nutrition": {
+             "content": "鍩轰簬 NRS2002 璇勫垎锛岃鎮ｈ€呰惀鍏婚闄╄瘎鍒嗕负 4 鍒嗭紝灞炰簬楂橀闄╋紝寤鸿鍚姩鑲犲唴钀ュ吇鏀寔銆?,
+             "input_tokens": 150,
+             "output_tokens": 80,
+         },
+         "tpn": {
+diff --git a/packages/haip-core/tests/test_agent.py b/packages/haip-core/tests/test_agent.py
+index 47cefe4..a4bb539 100644
+--- a/packages/haip-core/tests/test_agent.py
++++ b/packages/haip-core/tests/test_agent.py
+@@ -153,21 +153,21 @@ class TestErrorPaths:
+         register(DomainPlugin(name="dup", type="specialist"))
+         plugin = get("dup")
+         assert plugin is not None
+         assert plugin.type == "specialist"
+ 
+     def test_missing_required_field(self):
+         with tempfile.TemporaryDirectory() as tmp:
+             yaml_path = Path(tmp) / "missing_name.yaml"
+             yaml_path.write_text("type: business\nport: 8000\n", encoding="utf-8")
+             count = load_from_dir(tmp)
+-            assert count >= 0
++            assert count >= 0  # defensive: ensure load_from_dir doesn't crash on invalid YAML
+ 
+ 
+ # 鈹€鈹€ Boundary Condition Tests 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+ 
+ class TestBoundaryConditions:
+     def setup_method(self):
+         list_all().clear()
+ 
+     def test_agent_name_with_chinese_characters(self):
+         plugin = DomainPlugin(name="娴嬭瘯鏅鸿兘浣?, cn_name="娴嬭瘯涓枃鍚嶇О", type="business")
+diff --git a/packages/haip-core/tests/test_auth.py b/packages/haip-core/tests/test_auth.py
+index 16b7b69..44f3322 100644
+--- a/packages/haip-core/tests/test_auth.py
++++ b/packages/haip-core/tests/test_auth.py
+@@ -1,21 +1,19 @@
+ """Tests for the auth module 鈥?models, password, JWT, RBAC, and API."""
+ 
+ from __future__ import annotations
+ 
+ import os
+ import sys
+ 
+ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+ 
+-os.environ["HAIP_TEST_MODE"] = "true"
+-
+ import pytest
+ from fastapi.testclient import TestClient
+ 
+ from haip.auth.models import (
+     UserCreateRequest,
+     UserLoginRequest,
+     UserInfo,
+     LoginResponse,
+     TokenRefreshRequest,
+     Permission,
+diff --git a/packages/haip-core/tests/test_guard.py b/packages/haip-core/tests/test_guard.py
+index 652a44b..6082ec9 100644
+--- a/packages/haip-core/tests/test_guard.py
++++ b/packages/haip-core/tests/test_guard.py
+@@ -5,20 +5,50 @@ from pathlib import Path
+ 
+ project_root = Path(__file__).resolve().parent.parent.parent
+ sys.path.insert(0, str(project_root / "packages" / "haip-core"))
+ 
+ from haip.guard.citation import Citation, CitationEngine, T1_KEYWORDS, T2_KEYWORDS
+ from haip.guard.confidence import ConfidenceScore, ConfidenceScorer
+ from haip.guard.verifier import GuardResult, GuardVerifier, HIGH_RISK_SCENARIOS
+ 
+ 
+ class TestCitationEngine:
++    def test_extract_structured_guideline_ref(self):
++        """宸ュ叿 JSON 杈撳嚭鐨?guideline_ref 瀛楁蹇呴』琚彁鍙?(闂ㄦ埛 Guard 鑷姩甯﹀叆鍦烘櫙)."""
++        engine = CitationEngine()
++        text = '{"status": "ok", "procedure": "THA", "guideline_ref": "NICE NG37 + 鍥藉鍗仴濮?2022"}'
++        citations = engine.extract(text)
++        assert any("NICE NG37" in c.source for c in citations)
++
++    def test_extract_structured_evidence_list(self):
++        """宓屽 evidence 鍒楄〃涓殑寮曟枃蹇呴』琚彁鍙?"""
++        engine = CitationEngine()
++        text = ('{"status": "ok", "result": {"urgency": "emergency", '
++                '"evidence": ["鍥藉鍗仴濮?2022 搂4", "NICE NG37", "鍗楁柟鍖婚櫌 T2 璋冩暣"]}}')
++        citations = engine.extract(text)
++        sources = [c.source for c in citations]
++        assert any("NICE NG37" in s for s in sources)
++        assert any("鍥藉鍗仴濮? in s for s in sources)
++
++    def test_extract_structured_strips_comment_prefix(self):
++        """evidence 涓?'# ' 鍓嶇紑搴旇娓呯悊."""
++        engine = CitationEngine()
++        text = '{"evidence": ["# NICE NG37 搂1.2: Multidisciplinary management"]}'
++        citations = engine.extract(text)
++        assert citations and not citations[0].source.startswith("#")
++
++    def test_extract_non_json_unaffected(self):
++        """闈?JSON 鏂囨湰浠嶈蛋鏁ｆ枃妯″紡, 涓嶆姤閿?"""
++        engine = CitationEngine()
++        citations = engine.extract("{broken json 鍙傝€冿細ESPEN 2023 鎸囧崡")
++        assert any("ESPEN" in c.source for c in citations)
++
+     def test_extract_ref_tag(self):
+         engine = CitationEngine()
+         text = "渚濇嵁 [ref: NICE NG37 搂4.2]锛屽缓璁?48 灏忔椂鍐呮墜鏈€?
+         citations = engine.extract(text)
+         assert len(citations) >= 1
+         assert any("NICE NG37" in c.source for c in citations)
+ 
+     def test_extract_chinese_ref(self):
+         engine = CitationEngine()
+         text = "鍙傝€冿細ESPEN 2023 鑲犲钀ュ吇鎸囧崡锛屽缓璁娇鐢ㄥ叏鍚堜竴閰嶆柟銆?
+diff --git a/packages/haip-core/tests/test_http.py b/packages/haip-core/tests/test_http.py
+index 8b35561..ce94e93 100644
+--- a/packages/haip-core/tests/test_http.py
++++ b/packages/haip-core/tests/test_http.py
+@@ -188,20 +188,32 @@ class TestGuardEndpoint:
+     def test_guard_verify(self):
+         r = client.post("/api/guard", json={
+             "output": "寤鸿 THA 鎵嬫湳, 鏃舵満 48h銆傚弬鑰? NICE NG37",
+             "scenario": "鎵嬫湳鍐崇瓥", "agent": "orthopedic-surgery",
+         })
+         assert r.status_code == 200
+         data = r.json()
+         assert "passed" in data
+         assert "citations" in data
+ 
++    def test_guard_verifies_known_guideline(self):
++        """鎸囧崡璧勪骇搴撲腑瀛樺湪鐨勫紩鐢?(nice-ng37.yaml) 蹇呴』 verified=true."""
++        r = client.post("/api/guard", json={
++            "output": "寤鸿 THA 鎵嬫湳, 鏃舵満 48h銆傚弬鑰? NICE NG37",
++            "scenario": "鎵嬫湳鍐崇瓥", "agent": "orthopedic-surgery",
++        })
++        data = r.json()
++        ng37 = [c for c in data["citations"] if "NG37" in c["source"].upper()]
++        assert ng37, "鏈彁鍙栧埌 NICE NG37 寮曠敤"
++        assert ng37[0]["verified"] is True, "nice-ng37.yaml 鍦ㄨ祫浜у簱涓? 寮曠敤搴?verified"
++        assert "瀛樺湪鏈獙璇佺殑鎸囧崡寮曠敤" not in data["flags"]
++
+     def test_guard_cross_validation(self):
+         r = client.post("/api/guard", json={
+             "output": "ASA III, 寤鸿寤惰繜鎵嬫湳",
+             "scenario": "楹婚唹璇勪及",
+             "cross_agent_outputs": ["ASA II, 鍙墜鏈?],
+         })
+         assert r.status_code == 200
+         data = r.json()
+         assert "cross_validation_conflict" in data
+ 
+diff --git a/packages/haip-core/tests/test_operations.py b/packages/haip-core/tests/test_operations.py
+index f7a1f21..d4488c1 100644
+--- a/packages/haip-core/tests/test_operations.py
++++ b/packages/haip-core/tests/test_operations.py
+@@ -127,21 +127,21 @@ class TestSystemChecks:
+     def test_system_checks(self):
+         result = system_checks()
+         assert "python" in result
+         assert result["python"]["ok"]
+ 
+ 
+ class TestBenchmark:
+     def test_benchmark(self):
+         result = benchmark_a2a(iterations=3)
+         assert result["iterations"] == 3
+-        assert result["avg_ms"] >= 0
++        assert result["avg_ms"] >= 0  # defensive: timing field shape check
+ 
+ 
+ class TestFormatOutput:
+     def test_json_format(self):
+         data = {"status": "ok", "score": 10}
+         out = format_output(data, "json")
+         assert "ok" in out
+ 
+     def test_text_format(self):
+         data = {"status": "ok", "list": ["a", "b"]}
+@@ -286,21 +286,21 @@ class TestSkillSyncFunctions:
+         skill_dir.mkdir(parents=True)
+         content = "---\ntitle: Apply Test\n---\n# Apply test content\n"
+         (skill_dir / "SKILL.md").write_text(content, encoding="utf-8")
+ 
+         test_ownership = {"packages/haip-core": "xhaip-core"}
+ 
+         with p1, p2:
+             with patch.dict("haip.operations.skill_sync.SKILL_OWNERSHIP", test_ownership, clear=True):
+                 from haip.operations.skill_sync import sync
+                 result = sync(dry_run=False)
+-                assert result["changed"] >= 0
++                assert result["changed"] >= 0  # defensive: skill sync may report 0 changes
+                 dst = rt / ".openharness" / "skills" / "xhaip-core" / "SKILL.md"
+                 assert dst.exists()
+                 assert dst.read_text(encoding="utf-8") == content
+ 
+     def test_sync_missing_source_reported(self):
+         p1, p2, src, rt = self._patch_constants()
+         test_ownership = {"packages/nonexistent-module": "xhaip-nonexistent"}
+ 
+         with p1, p2:
+             with patch.dict("haip.operations.skill_sync.SKILL_OWNERSHIP", test_ownership, clear=True):
+@@ -871,23 +871,23 @@ class TestSkillSyncExtended:
+ 
+ 
+ # 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺? # Benchmark edge cases
+ # 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺? 
+ class TestBenchmarkExtended:
+     def test_benchmark_with_few_iterations(self):
+         result = benchmark_a2a(iterations=1)
+         assert result["iterations"] == 1
+-        assert result["avg_ms"] >= 0
+-        assert result["min_ms"] >= 0
+-        assert result["max_ms"] >= 0
++        assert result["avg_ms"] >= 0  # defensive: timing field shape check
++        assert result["min_ms"] >= 0  # defensive: timing field shape check
++        assert result["max_ms"] >= 0  # defensive: timing field shape check
+ 
+     def test_benchmark_returns_p95(self):
+         result = benchmark_a2a(iterations=5)
+         assert "p95_ms" in result
+ 
+ 
+ # 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺? # AuditEngine more edge cases
+ # 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺? 
+diff --git a/packages/haip-core/tests/test_p4.py b/packages/haip-core/tests/test_p4.py
+index b924d2e..05047c6 100644
+--- a/packages/haip-core/tests/test_p4.py
++++ b/packages/haip-core/tests/test_p4.py
+@@ -49,33 +49,33 @@ class TestKnowledgeRuntime:
+         assert isinstance(rules, list)
+         kb.close()
+         reset_kb()
+ 
+     def test_resync(self):
+         from haip.knowledge.runtime import KnowledgeRuntime, reset_kb
+         reset_kb()
+         kb = KnowledgeRuntime(str(project_root))
+         s1 = kb.sync()
+         kb.resync()
+-        assert s1["guidelines"] >= 0
++        assert s1["guidelines"] > 0, "鐭ヨ瘑搴撳悓姝ュ悗鎸囧崡鏁板簲涓烘 鈥?妫€鏌?assets/knowledge/ 鏁版嵁"
+         kb.close()
+         reset_kb()
+ 
+ 
+ class TestCaseManager:
+     def test_load_patients(self):
+         from haip.knowledge.cases import CaseManager
+-        patients_file = project_root / "packages" / "haip-hospital" / "data"
++        data_dir = project_root / "packages" / "haip-hospital" / "data"
++        assert data_dir.exists(), "鎮ｈ€呮暟鎹洰褰曠己澶?
+         cm = CaseManager()
+-        if patients_file.exists():
+-            cm.load(patients_file)
+-        assert len(cm.cases) >= 0  # may be 0 if no data
++        cm.load(data_dir)
++        assert len(cm.cases) > 0, "鎮ｈ€呮暟鎹姞杞戒负绌?鈥?妫€鏌?patients.json 鏍煎紡"
+         s = cm.stats()
+         assert "total" in s
+ 
+     def test_search(self):
+         from haip.knowledge.cases import CaseManager
+         cm = CaseManager()
+         patients_file = project_root / "packages" / "haip-hospital" / "data"
+         if patients_file.exists():
+             cm.load(patients_file)
+         results = cm.search(department="orthopedic_surgery")
+diff --git a/packages/haip-core/tests/test_patients_loader.py b/packages/haip-core/tests/test_patients_loader.py
+new file mode 100644
+index 0000000..bd59a9d
+--- /dev/null
++++ b/packages/haip-core/tests/test_patients_loader.py
+@@ -0,0 +1,62 @@
++"""鍏变韩鎮ｈ€呭姞杞藉櫒娴嬭瘯 鈥?dict/list 鏍煎紡銆佸吋瀹硅繃婊ゃ€佸紓甯稿洖閫€."""
++
++from __future__ import annotations
++
++import json
++
++import haip.patients as patients_mod
++from haip.patients import load_patients
++
++
++def _write(tmp_path, payload) -> None:
++    f = tmp_path / "patients.json"
++    f.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
++    return f
++
++
++PTS = [
++    {"patient_id": "P001", "name": "寮犱笁", "compatible_agents": ["orthopedic-surgery"]},
++    {"patient_id": "P002", "name": "鏉庡洓", "compatible_agents": ["pharmacy"]},
++    {"patient_id": "P003", "name": "鐜嬩簲", "compatible_agents": ["orthopedic-surgery"]},
++]
++
++
++class TestLoadPatients:
++    def test_dict_format(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", _write(tmp_path, {"total": 3, "patients": PTS}))
++        result = load_patients("orthopedic-surgery")
++        assert [p["patient_id"] for p in result] == ["P001", "P003"]
++
++    def test_list_format(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", _write(tmp_path, PTS))
++        result = load_patients("pharmacy")
++        assert [p["patient_id"] for p in result] == ["P002"]
++
++    def test_no_match_falls_back_to_all(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", _write(tmp_path, {"patients": PTS}))
++        result = load_patients("no-such-agent", limit=2)
++        assert len(result) == 2
++
++    def test_only_compatible_no_fallback(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", _write(tmp_path, {"patients": PTS}))
++        assert load_patients("no-such-agent", only_compatible=True) == []
++
++    def test_limit(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", _write(tmp_path, {"patients": PTS}))
++        assert len(load_patients("orthopedic-surgery", limit=1)) == 1
++
++    def test_missing_file(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", tmp_path / "nope.json")
++        assert load_patients("orthopedic-surgery") == []
++
++    def test_corrupt_json_warns(self, tmp_path, monkeypatch, caplog):
++        f = tmp_path / "patients.json"
++        f.write_text("{not json", encoding="utf-8")
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", f)
++        with caplog.at_level("WARNING"):
++            assert load_patients("orthopedic-surgery") == []
++        assert "patients.json" in caplog.text
++
++    def test_unexpected_structure(self, tmp_path, monkeypatch):
++        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", _write(tmp_path, "just a string"))
++        assert load_patients("orthopedic-surgery") == []
+diff --git a/packages/haip-core/tests/test_release.py b/packages/haip-core/tests/test_release.py
+index 4d60972..48c6d29 100644
+--- a/packages/haip-core/tests/test_release.py
++++ b/packages/haip-core/tests/test_release.py
+@@ -167,21 +167,21 @@ class TestRollback:
+ 
+         rm = ReleaseManager(releases_dir=str(root / "releases"))
+         backup_info = rm.create_backup(label="rollback-test")
+ 
+         test_file.write_text("name: test-agent\nversion: '2.0-changed'\n", encoding="utf-8")
+ 
+         mock_git.reset_mock()
+         result = rm.rollback(backup_info["backup_id"])
+ 
+         assert "success" in result
+-        assert len(result.get("restored", [])) + len(result.get("errors", [])) >= 0
++        assert len(result.get("restored", [])) > 0, "鍥炴粴搴旀仮澶嶈嚦灏戜竴涓枃浠?
+ 
+ 
+ class TestInfo:
+     @pytest.fixture(autouse=True)
+     def setup(self):
+         self.tmpdir = tempfile.TemporaryDirectory()
+         yield
+         self.tmpdir.cleanup()
+ 
+     def test_info_nonexistent_backup_returns_none(self):
+diff --git a/packages/haip-hospital/agents/definitions/orthopedic-surgery.yaml b/packages/haip-hospital/agents/definitions/orthopedic-surgery.yaml
+index a3f3eef..71b440d 100644
+--- a/packages/haip-hospital/agents/definitions/orthopedic-surgery.yaml
++++ b/packages/haip-hospital/agents/definitions/orthopedic-surgery.yaml
+@@ -140,20 +140,25 @@ tools:
+   - name: his_labs
+     description: 妯℃嫙 LIS 妫€楠屾暟鎹煡璇?     handler: orthopedics.his_adapter.query_labs
+     input: {patient_id: str, lab_items: list}
+ 
+   - name: his_patient
+     description: 妯℃嫙 HIS 鎮ｈ€呯梾鍘嗘煡璇?     handler: orthopedics.his_adapter.query_patient
+     input: {patient_id: str}
+ 
++  - name: his_patient_list
++    description: 妯℃嫙 HIS 鍦ㄥ唽鎮ｈ€?ID 鍒楄〃
++    handler: orthopedics.his_adapter.list_patient_ids
++    input: {}
++
+   - name: his_image
+     description: 妯℃嫙 PACS 褰卞儚鏌ヨ
+     handler: orthopedics.his_adapter.query_imaging
+     input: {patient_id: str, modality: str}
+ 
+   - name: idata_search
+     description: 妯℃嫙 iData 鐭ヨ瘑搴撴绱?     handler: orthopedics.idata_adapter.search_knowledge
+     input: {query: str, category: str}
+ 
+diff --git a/packages/haip-hospital/modules/interventional_pain/__init__.py b/packages/haip-hospital/modules/interventional_pain/__init__.py
+index f0b54ae..ba8e469 100644
+--- a/packages/haip-hospital/modules/interventional_pain/__init__.py
++++ b/packages/haip-hospital/modules/interventional_pain/__init__.py
+@@ -83,21 +83,21 @@ def assess_indications(
+ 
+     return {
+         "status": "ok",
+         "indicated": indicated,
+         "patient_id": patient_id,
+         "eligible_procedures": eligible,
+         "summary": f"浠嬪叆娌荤枟璇勪及: 棣栭€?{top} ({len(eligible)}椤瑰彲閫?",
+     }
+ 
+ 
+-def gate(has_mri: bool = False, has_ct: bool = False,
++def imaging_gate(has_mri: bool = False, has_ct: bool = False,
+          target_procedure: str = "", completed_exams: list | None = None,
+          **kwargs: Any) -> dict:
+     """褰卞儚瀛﹀噯鍏ユ鏌?鈥?鎸夋墜鏈被鍨嬮獙璇?"""
+     gate_passed = has_mri or has_ct
+     missing: list[str] = []
+ 
+     if target_procedure and completed_exams:
+         required = IMAGING_REQUIREMENTS.get(target_procedure, [])
+         _MODALITIES = {"MRI", "CT", "C鑷?, "瓒呭０", "X绾?}
+         for req in required:
+@@ -111,21 +111,21 @@ def gate(has_mri: bool = False, has_ct: bool = False,
+ 
+     return {
+         "status": "ok",
+         "gate_passed": gate_passed,
+         "has_mri": has_mri, "has_ct": has_ct,
+         "missing_exams": missing if missing else (["鏃?] if gate_passed else ["缂哄け蹇呴渶褰卞儚"]),
+         "summary": f"褰卞儚瀛﹀噯鍏? {'PASS' if gate_passed else f'FAIL-缂簕len(missing)}椤?}",
+     }
+ 
+ 
+-def postop(procedure: str = "", signs: dict | None = None,
++def postop_safety(procedure: str = "", signs: dict | None = None,
+            vital_signs: dict | None = None,
+            postop_hours: int = 0, pain_nrs: int = 0,
+            neurological: str = "",
+            **kwargs: Any) -> dict:
+     """鏈悗瀹夊叏鐩戞祴 鈥?鎰熸煋/绁炵粡鎹熶激/鍑鸿/琛€鑲?"""
+     signs = signs or {}
+     vs = vital_signs or signs
+     temp = float(vs.get("temp", 37))
+     hr = float(vs.get("hr", 72))
+     neuro = (neurological or "").lower()
+diff --git a/packages/haip-hospital/modules/orthopedics/his_adapter.py b/packages/haip-hospital/modules/orthopedics/his_adapter.py
+index 4fb6ee2..2069441 100644
+--- a/packages/haip-hospital/modules/orthopedics/his_adapter.py
++++ b/packages/haip-hospital/modules/orthopedics/his_adapter.py
+@@ -143,20 +143,31 @@ def query_patient(*, patient_id: str, **kwargs: Any) -> dict[str, Any]:
+ 
+     return {
+         **patient,
+         "patient_id": patient_id,
+         "source": "HIS",
+         "_mock": True,
+         "_mock_note": "妯℃嫙 HIS 鐥呭巻鏁版嵁锛岄潪鐪熷疄鎮ｈ€呬俊鎭?,
+     }
+ 
+ 
++def list_patient_ids(**kwargs: Any) -> dict[str, Any]:
++    """Mock HIS 鍦ㄥ唽鎮ｈ€?ID 鍒楄〃 鈥?鍓嶇鎮ｈ€呴潰鏉跨殑鍞竴 ID 鏉ユ簮."""
++    return {
++        "patient_ids": sorted(MOCK_PATIENT_DB.keys()),
++        "total": len(MOCK_PATIENT_DB),
++        "source": "HIS",
++        "_mock": True,
++        "_mock_note": "妯℃嫙 HIS 鍦ㄥ唽鎮ｈ€呯储寮?,
++    }
++
++
+ def query_imaging(*, patient_id: str, modality: str = "pelvis_xray",
+                   **kwargs: Any) -> dict[str, Any]:
+     """妯℃嫙 PACS 褰卞儚鏌ヨ.
+ 
+     Args:
+         patient_id: 鎮ｈ€?ID
+         modality: 褰卞儚绫诲瀷 (pelvis_xray / hip_ct)
+ 
+     Returns:
+         褰卞儚鎻忚堪锛屾爣娉?_mock: true
+diff --git a/pyproject.toml b/pyproject.toml
+index 6683e71..0a69e2f 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,13 +1,14 @@
+ [project]
+ name = "xhaip"
+ version = "1.2.0"
+ description = "HAIP v1.2 鈥?Hospital AI Platform PROD-READY"
+ 
+ [tool.ruff]
+ line-length = 100
+ 
+ [tool.ruff.lint]
++extend-select = ["PLR1704"]
+ ignore = ["E402"]
+ 
+ [tool.ruff.lint.per-file-ignores]
+ "tests/**" = ["E402", "F401"]
+diff --git a/tests/conftest.py b/tests/conftest.py
+new file mode 100644
+index 0000000..b3a3281
+--- /dev/null
++++ b/tests/conftest.py
+@@ -0,0 +1,17 @@
++"""tests/ 缁熶竴娴嬭瘯鐜 鈥?env + sys.path, 娑堥櫎娴嬭瘯鏂囦欢闂撮殣寮忎緷璧?"""
++
++from __future__ import annotations
++
++import os
++import sys
++from pathlib import Path
++
++ROOT = Path(__file__).resolve().parent.parent
++
++for p in (ROOT / "packages" / "haip-core", ROOT / "packages" / "haip-hospital",
++          ROOT / "packages" / "haip-hospital" / "modules"):
++    sp = str(p)
++    if sp not in sys.path:
++        sys.path.insert(0, sp)
++
++os.environ.setdefault("HAIP_TEST_MODE", "true")
+diff --git a/tests/integration/test_ortho_portal.py b/tests/integration/test_ortho_portal.py
+index d987fde..c6edaac 100644
+--- a/tests/integration/test_ortho_portal.py
++++ b/tests/integration/test_ortho_portal.py
+@@ -1,20 +1,17 @@
+ """鍒涗激楠ㄧ璇婄枟闂ㄦ埛 (/ortho-portal) 闆嗘垚娴嬭瘯."""
+ 
+ from __future__ import annotations
+ 
+-import os
+ import sys
+ from pathlib import Path
+ 
+-os.environ["HAIP_TEST_MODE"] = "true"
+-
+ ROOT = Path(__file__).resolve().parent.parent.parent
+ sys.path.insert(0, str(ROOT / "packages" / "haip-core"))
+ sys.path.insert(0, str(ROOT / "packages" / "haip-hospital"))
+ sys.path.insert(0, str(ROOT / "packages" / "haip-hospital" / "modules"))
+ 
+ from fastapi.testclient import TestClient  # noqa: E402
+ from haip.agent import load_from_dir  # noqa: E402
+ 
+ load_from_dir(str(ROOT / "packages" / "haip-hospital" / "agents" / "definitions"))
+ from haip.web_server import app  # noqa: E402
+diff --git a/tests/integration/test_pain_agents.py b/tests/integration/test_pain_agents.py
+index 90c13d5..5fa5509 100644
+--- a/tests/integration/test_pain_agents.py
++++ b/tests/integration/test_pain_agents.py
+@@ -123,27 +123,27 @@ class TestCancerPain:
+     def test_palliative_refer_terminal(self):
+         register(DomainPlugin(name="cancer-pain", type="specialist",
+             tools=[ToolDef(name="palliative_refer", description="", handler="cancer_pain.palliative")]))
+         r = call("cancer-pain", "palliative_refer", {"cancer_stage": "IV", "ecog": 4, "prognosis_months": 2})
+         assert r["refer_recommended"]
+ 
+ 
+ class TestInterventionalPain:
+     def test_imaging_gate_fail(self):
+         register(DomainPlugin(name="interventional-pain", type="specialist",
+-            tools=[ToolDef(name="imaging_gate", description="", handler="interventional_pain.gate")]))
++            tools=[ToolDef(name="imaging_gate", description="", handler="interventional_pain.imaging_gate")]))
+         r = call("interventional-pain", "imaging_gate", {"has_mri": False, "has_ct": False})
+         assert not r["gate_passed"]
+ 
+     def test_postop_infection(self):
+         register(DomainPlugin(name="interventional-pain", type="specialist",
+-            tools=[ToolDef(name="postop_safety", description="", handler="interventional_pain.postop")]))
++            tools=[ToolDef(name="postop_safety", description="", handler="interventional_pain.postop_safety")]))
+         r = call("interventional-pain", "postop_safety", {"procedure": "epidural", "signs": {"temp": 38.5, "redness": True}})
+         assert r["complication_detected"]
+ 
+ 
+ class TestPainRehab:
+     def test_severe_odi_limited(self):
+         register(DomainPlugin(name="pain-rehab", type="specialist",
+             tools=[ToolDef(name="exercise_rx", description="", handler="pain_rehab.exercise")]))
+         r = call("pain-rehab", "exercise_rx", {"pain_location": "lumbar", "odi_score": 65})
+         assert r["intensity"] == "low"
+diff --git a/tests/test_handler_contracts.py b/tests/test_handler_contracts.py
+new file mode 100644
+index 0000000..fd51ebe
+--- /dev/null
++++ b/tests/test_handler_contracts.py
+@@ -0,0 +1,50 @@
++"""Agent YAML handler 濂戠害娴嬭瘯 鈥?姣忎釜 tool 鐨?handler 蹇呴』鍙鍏ヤ笖鍑芥暟瀛樺湪.
++
++婧愯嚜 2026-07-17 interventional_pain.imaging_gate 婕傜Щ bug:
++YAML 澹版槑鐨?handler 涓庢ā鍧楀疄闄呭嚱鏁板悕涓嶄竴鑷? 闆嗘垚娴嬭瘯鑷缓 ToolDef 缁曡繃 YAML 鏈兘鎷︽埅銆?+"""
++
++from __future__ import annotations
++
++import importlib
++from pathlib import Path
++
++import pytest
++import yaml
++
++ROOT = Path(__file__).resolve().parent.parent
++DEFINITIONS_DIR = ROOT / "packages" / "haip-hospital" / "agents" / "definitions"
++
++
++def _all_handlers() -> list[tuple[str, str, str]]:
++    """(agent_name, tool_name, handler) 鍏ㄩ噺娓呭崟."""
++    out = []
++    for f in sorted(DEFINITIONS_DIR.glob("*.yaml")):
++        data = yaml.safe_load(f.read_text(encoding="utf-8"))
++        for t in data.get("tools", []):
++            handler = t.get("handler", "")
++            if handler:
++                out.append((data["name"], t["name"], handler))
++    return out
++
++
++HANDLERS = _all_handlers()
++
++
++def test_definitions_found():
++    assert len(HANDLERS) > 50, f"handler 娓呭崟寮傚父: {len(HANDLERS)}"
++
++
++@pytest.mark.parametrize("agent,tool,handler", HANDLERS,
++                         ids=[f"{a}.{t}" for a, t, _ in HANDLERS])
++def test_handler_resolves(agent, tool, handler):
++    """handler 妯″潡鍙鍏ヤ笖鍑芥暟瀛樺湪."""
++    module_name, func_name = handler.rsplit(".", 1)
++    try:
++        mod = importlib.import_module(module_name)
++    except ModuleNotFoundError as e:
++        pytest.fail(f"{agent}.{tool}: 妯″潡涓嶅彲瀵煎叆 {module_name} ({e})")
++    fn = getattr(mod, func_name, None)
++    assert callable(fn), (
++        f"{agent}.{tool}: 鍑芥暟 {func_name} 涓嶅瓨鍦ㄤ簬 {module_name} 鈥?YAML 涓庢ā鍧楁紓绉?
++    )
+diff --git a/tests/test_html_pages.py b/tests/test_html_pages.py
+index e3dcb5a..12db067 100644
+--- a/tests/test_html_pages.py
++++ b/tests/test_html_pages.py
+@@ -91,20 +91,60 @@ class TestProcessPages:
+         resp = client.get(f"/process/{agent}")
+         # STAGES data embedded as JS variable
+         assert 'STAGES' in resp.text, f"{agent}: no STAGES var"
+ 
+     @pytest.mark.parametrize("agent", agents)
+     def test_has_role_pills(self, agent):
+         resp = client.get(f"/process/{agent}")
+         assert 'switchRole' in resp.text, f"{agent}: no role switching"
+ 
+ 
++# 鈹€鈹€ Workflow Pages 鈹€鈹€
++
++class TestWorkflowPages:
++    def test_workflow_page_200(self):
++        resp = client.get("/workflow/orthopedic-surgery")
++        assert resp.status_code == 200
++
++    def test_workflow_has_patients(self):
++        """鏁板瓧鐥呬汉鏁版嵁蹇呴』宓屽叆椤甸潰 (patients.json dict 鏍煎紡)."""
++        resp = client.get("/workflow/orthopedic-surgery")
++        m = re.search(r"var PATIENTS=(\[.*?\]);\n", resp.text, re.DOTALL)
++        assert m, "no PATIENTS var"
++        patients = json.loads(m.group(1))
++        assert len(patients) > 0, "PATIENTS is empty"
++        assert all("patient_id" in p for p in patients)
++
++    def test_workflow_patients_compatible(self):
++        """宓屽叆鐨勬偅鑰呭簲涓?agent 鍏煎."""
++        resp = client.get("/workflow/orthopedic-surgery")
++        m = re.search(r"var PATIENTS=(\[.*?\]);\n", resp.text, re.DOTALL)
++        assert m
++        patients = json.loads(m.group(1))
++        assert patients, "PATIENTS is empty"
++        for p in patients:
++            assert "orthopedic-surgery" in p.get("compatible_agents", []), (
++                f"{p.get('patient_id')} 涓?orthopedic-surgery 涓嶅吋瀹?
++            )
++
++
++    # JS id 濂戠害宸茬敱 test_ui_contracts.py C1 鍏ㄧ珯瑕嗙洊
++
++
++    def test_workflow_agent_var_is_agent_name(self):
++        """JS AGENT 鍙橀噺蹇呴』鏄?agent 鎶€鏈悕, 涓嶈兘琚鑹插悕閬斀."""
++        resp = client.get("/workflow/orthopedic-surgery")
++        m = re.search(r"var AGENT='([^']+)'", resp.text)
++        assert m, "no AGENT var"
++        assert m.group(1) == "orthopedic-surgery", f"AGENT 琚薄鏌撲负: {m.group(1)}"
++
++
+ # 鈹€鈹€ Dashboard 鈹€鈹€
+ 
+ class TestDashboard:
+     def test_dashboard_html(self):
+         resp = client.get("/dashboard")
+         assert resp.status_code == 200
+         assert 'dept-card' in resp.text
+         assert 'tier-bar' in resp.text
+ 
+     def test_dashboard_api(self):
+@@ -215,33 +255,33 @@ class TestDemoPage:
+     def test_agent_types_consistent(self):
+         """HTML 涓瘡 agent 鐨?type 涓?YAML 涓€鑷?"""
+         yaml_agents = _load_yaml_agents()
+         html_agents = _parse_html_agents()
+         mismatches = []
+         for name in set(yaml_agents) & set(html_agents):
+             yt = yaml_agents[name]["type"]
+             ht = html_agents[name]["type"]
+             if yt != ht:
+                 mismatches.append(f"{name}: YAML={yt} HTML={ht}")
+-        assert not mismatches, f"type 涓嶄竴鑷?\n  " + "\n  ".join(mismatches)
++        assert not mismatches, "type 涓嶄竴鑷?\n  " + "\n  ".join(mismatches)
+ 
+     def test_agent_ports_consistent(self):
+         """HTML 涓瘡 agent 鐨?port 涓?YAML 涓€鑷?(port=0 瑙嗕负鍙€?."""
+         yaml_agents = _load_yaml_agents()
+         html_agents = _parse_html_agents()
+         mismatches = []
+         for name in set(yaml_agents) & set(html_agents):
+             yp = yaml_agents[name]["port"]
+             hp = html_agents[name]["port"]
+             if yp != 0 and hp != 0 and yp != hp:
+                 mismatches.append(f"{name}: YAML={yp} HTML={hp}")
+-        assert not mismatches, f"port 涓嶄竴鑷?\n  " + "\n  ".join(mismatches)
++        assert not mismatches, "port 涓嶄竴鑷?\n  " + "\n  ".join(mismatches)
+ 
+     def test_html_structure(self):
+         p = ROOT / "docs" / "xhaip-agent-demo.html"
+         content = p.read_text(encoding="utf-8")
+         for tag in ['<!DOCTYPE', '<html', '<body', '<script>']:
+             assert tag in content, f"Missing {tag}"
+ 
+     def test_js_structure(self):
+         p = ROOT / "docs" / "xhaip-agent-demo.html"
+         content = p.read_text(encoding="utf-8")
+diff --git a/tests/test_togaf_100.py b/tests/test_togaf_100.py
+index 7ec92e0..0686eba 100644
+--- a/tests/test_togaf_100.py
++++ b/tests/test_togaf_100.py
+@@ -479,21 +479,21 @@ class TestAgentGeneratorExtended:
+ 
+ # 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺? # Audit extended coverage
+ # 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺? 
+ class TestAuditExtended:
+     def test_export_landscape_to_temp(self, tmp_path):
+         from haip.togaf.audit import export_landscape
+         import json
+         out = tmp_path / "landscape.json"
+-        path = export_landscape(str(out))
++        export_landscape(str(out))
+         assert out.exists()
+         data = json.loads(out.read_text(encoding='utf-8'))
+         assert 'nodes' in data
+         assert 'edges' in data
+ 
+     def test_audit_environment_stats(self):
+         from haip.togaf.audit import audit_environment
+         result = audit_environment()
+         assert 'stats' in result
+         assert 'nodes_total' in result
+@@ -666,21 +666,21 @@ class TestPatientGeneratorExtended:
+             assert 'patient_id' in p
+             assert 'department' in p
+             assert 'diagnosis' in p
+             assert 'lab_results' in p
+             assert 'compatible_agents' in p
+ 
+     def test_generate_patients_with_output(self, tmp_path):
+         from haip.togaf.patient_generator import generate_patients
+         import json
+         out = tmp_path / "patients_out.json"
+-        new = generate_patients(str(out))
++        generate_patients(str(out))
+         assert out.exists()
+         data = json.loads(out.read_text(encoding='utf-8'))
+         assert 'total' in data
+ 
+ 
+ # 鈹€鈹€ templates_dept 鈥?edge 鈹€鈹€
+ 
+ class TestTemplatesDeptEdge:
+     def test_get_dept_template(self):
+         from haip.togaf.templates_dept import get_dept_template
+diff --git a/tests/test_ui_contracts.py b/tests/test_ui_contracts.py
+new file mode 100644
+index 0000000..2701e1f
+--- /dev/null
++++ b/tests/test_ui_contracts.py
+@@ -0,0 +1,124 @@
++"""鍏ㄧ珯 UI 濂戠害娴嬭瘯 鈥?DOM/JS/API 涓€鑷存€?(婧愯嚜 2026-07-17 workflow 涓夎繛 bug 澶嶇洏).
++
++C1: getElementById 闈欐€?id 蹇呴』瀛樺湪浜?DOM
++C2: onclick 寮曠敤鍑芥暟蹇呴』宸插畾涔?+C3: 宓屽叆 PATIENTS 鐨勯〉闈㈡暟鎹潪绌轰笖鍚?patient_id
++C4: 宓屽叆 AGENT 鐨勯〉闈㈠叾鍊?== 璺敱 agent 鍚?+C5: fetch 闈欐€佽矾寰勫繀椤诲湪 FastAPI 璺敱琛ㄦ敞鍐?+C6: workflow STAGES[].tool 蹇呴』瀛樺湪浜?agent tools
++C7: querySelector('#x') 闈欐€?id 鍚?C1
++"""
++
++from __future__ import annotations
++
++import json
++import re
++from pathlib import Path
++
++import pytest
++from fastapi.testclient import TestClient
++
++from haip.agent import get as get_agent, load_from_dir
++
++ROOT = Path(__file__).resolve().parent.parent
++load_from_dir(str(ROOT / "packages" / "haip-hospital" / "agents" / "definitions"))
++
++from haip.web_server import app  # noqa: E402
++from haip.workflow import WORKFLOWS  # noqa: E402
++
++client = TestClient(app)
++
++GETELEM_RE = re.compile(r"getElementById\('([\w-]+)'\)")
++QS_ID_RE = re.compile(r"querySelector\('#([\w-]+)'\)")
++DOM_ID_RE = re.compile(r'id="([\w-]+)"')
++ONCLICK_RE = re.compile(r'onclick="(\w+)\s*\(')
++FUNC_DEF_RE = re.compile(
++    r'(?:function\s+(\w+)\s*\(|(?:var|let|const)\s+(\w+)\s*=\s*(?:async\s+)?function)'
++)
++PATIENTS_RE = re.compile(r"var PATIENTS\s*=\s*(\[.*?\]);", re.DOTALL)
++AGENT_RE = re.compile(r"var AGENT\s*=\s*'([^']*)'")
++FETCH_RE = re.compile(r"""fetch\(\s*['"](/[^'"$]*)['"]\s*[,)]""")
++
++
++def _html_pages() -> list[str]:
++    pages = ["/", "/ortho", "/ortho-portal", "/pharmacy", "/stream-demo", "/dashboard"]
++    pages += [f"/workflow/{n}" for n in WORKFLOWS]
++    pages += ["/process/orthopedic-surgery", "/process/respiratory", "/process/cardiology"]
++    pages += ["/agent/orthopedic-surgery", "/agent/pharmacy"]
++    return pages
++
++
++PAGES = _html_pages()
++
++
++def _get(path: str) -> str:
++    resp = client.get(path)
++    assert resp.status_code == 200, f"{path}: {resp.status_code}"
++    return resp.text
++
++
++@pytest.mark.parametrize("path", PAGES)
++def test_c1_c7_js_dom_ids(path):
++    html = _get(path)
++    js_ids = set(GETELEM_RE.findall(html)) | set(QS_ID_RE.findall(html))
++    dom_ids = set(DOM_ID_RE.findall(html))
++    missing = js_ids - dom_ids
++    assert not missing, f"{path}: JS 寮曠敤浜嗕笉瀛樺湪鐨?id: {sorted(missing)}"
++
++
++@pytest.mark.parametrize("path", PAGES)
++def test_c2_onclick_functions_defined(path):
++    html = _get(path)
++    called = set(ONCLICK_RE.findall(html))
++    defined = {a or b for a, b in FUNC_DEF_RE.findall(html)}
++    missing = called - defined
++    assert not missing, f"{path}: onclick 寮曠敤浜嗘湭瀹氫箟鍑芥暟: {sorted(missing)}"
++
++
++@pytest.mark.parametrize("path", PAGES)
++def test_c3_patients_not_empty(path):
++    html = _get(path)
++    m = PATIENTS_RE.search(html)
++    if not m:
++        pytest.skip(f"{path} 鏃犲祵鍏?PATIENTS")
++    patients = json.loads(m.group(1))
++    assert patients, f"{path}: PATIENTS 涓虹┖ 鈥?妫€鏌?haip.patients 鍔犺浇閾捐矾"
++    assert all("patient_id" in p for p in patients), f"{path}: 鎮ｈ€呰褰曠己 patient_id"
++
++
++@pytest.mark.parametrize("path", [p for p in PAGES if p.startswith(("/workflow/", "/agent/"))])
++def test_c4_agent_var_matches_route(path):
++    html = _get(path)
++    m = AGENT_RE.search(html)
++    assert m, f"{path}: 鏃?AGENT 鍙橀噺"
++    expected = path.rsplit("/", 1)[-1]
++    assert m.group(1) == expected, f"{path}: AGENT 琚薄鏌撲负 {m.group(1)!r}"
++
++
++@pytest.mark.parametrize("path", PAGES)
++def test_c5_fetch_paths_registered(path):
++    html = _get(path)
++    static_fetches = {p for p in FETCH_RE.findall(html) if "'" not in p and "+" not in p}
++    if not static_fetches:
++        pytest.skip(f"{path} 鏃犻潤鎬?fetch")
++    unmatched = []
++    for fp in static_fetches:
++        fp_clean = fp.split("?")[0]
++        ok = any(
++            getattr(r, "path", None) == fp_clean
++            or (hasattr(r, "path_regex") and r.path_regex.match(fp_clean))
++            for r in app.routes
++        )
++        if not ok:
++            unmatched.append(fp)
++    assert not unmatched, f"{path}: fetch 浜嗘湭娉ㄥ唽璺敱: {unmatched}"
++
++
++@pytest.mark.parametrize("wf_name", sorted(WORKFLOWS))
++def test_c6_workflow_tools_exist(wf_name):
++    wf = WORKFLOWS[wf_name]
++    plugin = get_agent(wf["agent"])
++    assert plugin is not None, f"workflow 寮曠敤鏈敞鍐?agent: {wf['agent']}"
++    tool_names = {t.name for t in plugin.tools}
++    missing = [s["tool"] for s in wf["stages"] if s["tool"] not in tool_names]
++    assert not missing, f"{wf_name}: stages 寮曠敤涓嶅瓨鍦ㄧ殑 tool: {missing}"
+diff --git a/packages/haip-core/haip/templates/index.html b/packages/haip-core/haip/templates/index.html
+index 241978e..cf2336a 100644
+--- a/packages/haip-core/haip/templates/index.html
++++ b/packages/haip-core/haip/templates/index.html
+@@ -131,7 +131,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text'
+       </div>
+       <div class="tab-content" id="tab-guard">
+         <h3>Guard 瀹夊叏楠岃瘉</h3>
+-        <textarea id="guard-input" style="height:120px" placeholder="绮樿创 Agent 杈撳嚭杩涜瀹夊叏楠岃瘉...">寤鸿杩涜 THA 鎵嬫湳, 鏃舵満 48h 鍐呫€傚弬鑰? NICE NG37</textarea>
++        <textarea id="guard-input" style="height:120px" placeholder="绮樿创 Agent 杈撳嚭杩涜瀹夊叏楠岃瘉 (鎵ц宸ュ叿璋冪敤鍚庤嚜鍔ㄥ甫鍏ユ渶杩戜竴娆＄粨鏋?..."></textarea>
+         <select id="guard-scenario" style="margin-top:8px">
+           <option value="鎵嬫湳鏂规">鎵嬫湳鏂规</option><option value="鎶楀嚌绠＄悊">鎶楀嚌绠＄悊</option>
+           <option value="楹婚唹璇勪及">楹婚唹璇勪及</option><option value="MDT鍒嗘">MDT鍒嗘</option>
+@@ -223,12 +223,18 @@ async function callTool() {
+   const r = await fetch('/api/call',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent:currentAgent.name,tool:tool,params:params})});
+   const data = await r.json();
+   document.getElementById('result-panel').textContent = JSON.stringify(data,null,2);
++  document.getElementById('guard-input').value = JSON.stringify(data,null,2);
+   document.getElementById('status-left').textContent = data.status==='ok'?'璋冪敤鎴愬姛':'璋冪敤澶辫触';
+ }
+ 
+ async function guardVerify() {
++  const guardText = document.getElementById('guard-input').value.trim();
++  if (!guardText) {
++    document.getElementById('result-panel').textContent = '璇峰厛鎵ц涓€娆″伐鍏疯皟鐢? 鎴栧湪 Guard 杈撳叆妗嗙矘璐村緟楠岃瘉鐨?Agent 杈撳嚭銆?;
++    return;
++  }
+   const r = await fetch('/api/guard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+-    output: document.getElementById('guard-input').value,
++    output: guardText,
+     scenario: document.getElementById('guard-scenario').value,
+     agent: currentAgent?.name||''
+   })});
+diff --git a/packages/haip-core/haip/ui_ortho_portal.html b/packages/haip-core/haip/ui_ortho_portal.html
+index 996dcc5..11ea004 100644
+--- a/packages/haip-core/haip/ui_ortho_portal.html
++++ b/packages/haip-core/haip/ui_ortho_portal.html
+@@ -77,7 +77,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','PingFang SC'
+ </div>
+ 
+ <script>
+-const PATIENT_IDS = ["P001","P002","P003","P004","P005"];
++let PATIENT_IDS = [];  // 鐢?his_patient_list 鍔ㄦ€佽幏鍙? 澶辫触鏃跺洖閫€婕旂ず ID
++const FALLBACK_PATIENT_IDS = ["P001","P002","P003","P004","P005"];
+ const CAPS = [
+   {id:"classify", ico:"馃Υ", title:"楠ㄦ姌鍒嗗瀷", desc:"Garden/Evans/AO", api:"classify"},
+   {id:"assess", ico:"馃數", title:"鏈墠璇勪及", desc:"鍚堝苟鐥?鑽墿/钀ュ吇", api:"assess"},
+@@ -141,6 +142,10 @@ async function apiCall(path, body){
+ }
+ 
+ async function loadPatients(){
++  try{
++    const l = await apiCall("/api/call", {agent:"orthopedic-surgery", tool:"his_patient_list", params:{}});
++    PATIENT_IDS = (Array.isArray(l.patient_ids) && l.patient_ids.length) ? l.patient_ids : FALLBACK_PATIENT_IDS;
++  }catch(e){ PATIENT_IDS = FALLBACK_PATIENT_IDS; }
+   for(const pid of PATIENT_IDS){
+     try{
+       const d = await apiCall("/api/call", {agent:"orthopedic-surgery", tool:"his_patient", params:{patient_id:pid}});

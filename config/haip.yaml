@@ -1,10 +1,21 @@
-# xhaip v1.1 — Platform Configuration with Security
+# xhaip v1.2 — Platform Configuration with Production Security Profile
+#
+# HAIP_ENV values:
+#   development (default): CORS=*, rate_limit disabled, demo seeds, baseline warnings only
+#   production:            CORS restricted, rate_limit enabled, no demo seeds unless
+#                          HAIP_SEED_DEMO_USERS=1, baseline violations block startup
+#
+# Override via: config/haip.production.yaml (loaded when HAIP_ENV=production)
 
 server:
   host: "0.0.0.0"
   port: 8769
   reload: false
   workers: 1
+
+  # CORS allow origins — development default "*", production should list specific hosts
+  # e.g. ["http://localhost:8769", "https://haip.example.com"]
+  cors_origins: ["*"]
 
 auth:
   enabled: true
@@ -14,16 +25,18 @@ auth:
   default_admin_password: "${HAIP_ADMIN_PASSWORD:Admin@123456}"
 
 security:
-  cors_origins: ["*"]
-  rate_limit_enabled: false
-  rate_limit_per_minute: 100
   encryption_key: "${ENCRYPTION_KEY:xhaip-dev-encryption-key-change-me}"
 
-audit:
-  enabled: true
-  max_events: 100000
-  log_agent_calls: true
-  log_api_calls: true
+  # Rate limiting — production 默认启用, 此键可覆盖 (false 仅在 development 生效)
+  rate_limit_enabled: false     # 开发模式: 禁用; 生产模式: 忽略此值, 默认启用
+  rate_limit_per_minute: 100
+  rate_limit_burst: 20
+  rate_limit_window_sec: 60
+
+  # Audit retention
+  audit_max_events: 100000
+  audit_log_agent_calls: true
+  audit_log_api_calls: true
 
 agents:
   definitions_dir: "packages/haip-hospital/agents/definitions"
