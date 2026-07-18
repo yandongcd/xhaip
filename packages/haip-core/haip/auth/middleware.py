@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+from functools import lru_cache
 from typing import Optional
 
 from fastapi import HTTPException, Request
@@ -10,6 +12,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse, Response
 
 from haip.auth.jwt import decode_token
+
+logger = logging.getLogger(__name__)
 
 security_scheme = HTTPBearer(
     scheme_name="Bearer",
@@ -36,6 +40,23 @@ def is_public_path(path: str) -> bool:
         if path == public or path.startswith(public + "/"):
             return True
     return False
+
+
+DEV_USER: dict = {
+    "user_id": "dev-user",
+    "username": "dev",
+    "roles": ["admin"],
+    "permissions": ["agent:read", "agent:execute", "patient:read", "admin:*"],
+    "tenant_id": None,
+}
+
+
+@lru_cache(maxsize=1)
+def _warn_dev_auth_bypass() -> bool:
+    logger.warning(
+        "开发模式免登录: 无 JWT 请求以内置 dev 用户放行 "
+        "(设 HAIP_ENV=production 或 HAIP_STRICT_SECURITY=true 强制登录)")
+    return True
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
@@ -66,6 +87,13 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
+            from haip.security_baseline import is_production_mode
+            if not is_production_mode():
+                # 开发模式免登录: 前端尚无登录流程 (commercial-readiness R1),
+                # 缺失 Authorization 时注入 dev 用户; 携带非法 token 仍 401 (fail-visible)。
+                _warn_dev_auth_bypass()
+                request.state.current_user = dict(DEV_USER)
+                return await call_next(request)
             return JSONResponse(
                 {"detail": "Missing or invalid Authorization header"},
                 status_code=401,

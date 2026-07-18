@@ -7,6 +7,7 @@ C4: 嵌入 AGENT 的页面其值 == 路由 agent 名
 C5: fetch 静态路径必须在 FastAPI 路由表注册
 C6: workflow STAGES[].tool 必须存在于 agent tools
 C7: querySelector('#x') 静态 id 同 C1
+C9: <script> 块花括号/圆括号必须配平 (JS SyntaxError 会导致整页脚本全灭)
 """
 
 from __future__ import annotations
@@ -125,6 +126,48 @@ def test_c6_workflow_tools_exist(wf_name):
 
 
 # ── C8: 门户聊天必须走 reason 模式 (禁止盲调 tools[0]) ──
+
+SCRIPT_RE = re.compile(r"<script[^>]*>(.*?)</script>", re.DOTALL)
+
+
+def _strip_js_literals(src: str) -> str:
+    """去掉字符串/模板/注释, 只留结构字符, 供括号配平检查."""
+    out: list[str] = []
+    i, n = 0, len(src)
+    while i < n:
+        c = src[i]
+        if c in ("'", '"', "`"):
+            quote = c
+            i += 1
+            while i < n and src[i] != quote:
+                i += 2 if src[i] == "\\" else 1
+            i += 1
+        elif c == "/" and i + 1 < n and src[i + 1] == "/":
+            while i < n and src[i] != "\n":
+                i += 1
+        elif c == "/" and i + 1 < n and src[i + 1] == "*":
+            i += 2
+            while i + 1 < n and not (src[i] == "*" and src[i + 1] == "/"):
+                i += 1
+            i += 2
+        else:
+            out.append(c)
+            i += 1
+    return "".join(out)
+
+
+@pytest.mark.parametrize("path", PAGES)
+def test_c9_script_braces_balanced(path):
+    html = _get(path)
+    for idx, script in enumerate(SCRIPT_RE.findall(html)):
+        stripped = _strip_js_literals(script)
+        for open_ch, close_ch in (("{", "}"), ("(", ")")):
+            balance = stripped.count(open_ch) - stripped.count(close_ch)
+            assert balance == 0, (
+                f"{path}: <script>#{idx} '{open_ch}{close_ch}' 不配平 ({balance:+d}) "
+                f"— JS SyntaxError 会令整页脚本失效 (主题切换/列表加载全灭)"
+            )
+
 
 def test_c8_portal_chat_uses_reason_mode():
     html = _get("/")

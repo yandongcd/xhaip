@@ -117,7 +117,7 @@ class TestJWT:
 
     def test_wrong_token_type(self):
         rt, _ = create_refresh_token("u1")
-        payload = decode_token(rt)
+        decode_token(rt)
         # decode alone works; refresh_access_token checks type
         with pytest.raises(ValueError):
             refresh_access_token(rt)  # works once
@@ -288,7 +288,9 @@ class TestAuthAPI:
         assert r.json()["username"] == "test_me_unique"
 
     def test_protected_endpoint_no_token(self):
+        """生产模式下无 token 必须 401。"""
         os.environ["HAIP_TEST_MODE"] = "false"
+        os.environ["HAIP_ENV"] = "production"
         try:
             from haip.web_server import app as app2
             client = TestClient(app2)
@@ -296,6 +298,39 @@ class TestAuthAPI:
             assert r.status_code == 401
         finally:
             os.environ["HAIP_TEST_MODE"] = "true"
+            os.environ.pop("HAIP_ENV", None)
+
+    def test_dev_mode_no_token_gets_dev_user(self):
+        """开发模式 (HAIP_ENV != production) 无 token 注入 dev 用户放行 — 门户免登录可用。"""
+        os.environ["HAIP_TEST_MODE"] = "false"
+        old_env = os.environ.pop("HAIP_ENV", None)
+        old_strict = os.environ.pop("HAIP_STRICT_SECURITY", None)
+        try:
+            from haip.web_server import app as app2
+            client = TestClient(app2)
+            r = client.get("/api/agents")
+            assert r.status_code == 200, f"dev 模式免登录失效: {r.status_code} {r.text[:200]}"
+            assert isinstance(r.json(), list) and r.json(), "dev 模式下 /api/agents 应返回 agent 列表"
+        finally:
+            os.environ["HAIP_TEST_MODE"] = "true"
+            if old_env is not None:
+                os.environ["HAIP_ENV"] = old_env
+            if old_strict is not None:
+                os.environ["HAIP_STRICT_SECURITY"] = old_strict
+
+    def test_dev_mode_invalid_token_still_401(self):
+        """开发模式下携带非法 token 仍 401 (fail-visible, 不静默降级)。"""
+        os.environ["HAIP_TEST_MODE"] = "false"
+        old_env = os.environ.pop("HAIP_ENV", None)
+        try:
+            from haip.web_server import app as app2
+            client = TestClient(app2)
+            r = client.get("/api/agents", headers={"Authorization": "Bearer not-a-jwt"})
+            assert r.status_code == 401
+        finally:
+            os.environ["HAIP_TEST_MODE"] = "true"
+            if old_env is not None:
+                os.environ["HAIP_ENV"] = old_env
 
 
 # ── Audit Tests ──
