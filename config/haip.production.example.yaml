@@ -1,0 +1,69 @@
+# haip.production.example.yaml
+# ==============================================================================
+# xhaip 生产环境配置示例
+#
+# 使用方式:
+#   1. 复制为 config/haip.production.yaml
+#   2. 按实际环境修改以下键值
+#   3. 设置环境变量 HAIP_ENV=production 启动
+#
+# 安全基线（production 下强制）:
+#   - JWT_SECRET_KEY 必须显式设置
+#   - HAIP_ADMIN_PASSWORD 必须显式设置（禁用默认 Admin@123456）
+#   - HAIP_DOCTOR_PASSWORD 必须显式设置（禁用默认 Doctor@123）
+#   - CORS 限制为指定域名
+#   - 速率限制默认启用
+#   - 演示账号种子默认跳过
+# ==============================================================================
+
+server:
+  host: "0.0.0.0"
+  port: 8769
+  reload: false
+  workers: 4
+
+  # 生产环境必须将 "*" 替换为实际域名列表
+  cors_origins:
+    - "http://localhost:8769"
+    - "https://haip.example-hospital.com"
+
+auth:
+  enabled: true
+  # JWT 密钥 — 必须设置环境变量 JWT_SECRET_KEY (生产环境不提供默认值)
+  jwt_secret_key: "${JWT_SECRET_KEY}"
+  access_token_expire: 900
+  refresh_token_expire: 604800
+  # 管理员初始密码 — 必须设置环境变量 HAIP_ADMIN_PASSWORD
+  default_admin_password: "${HAIP_ADMIN_PASSWORD}"
+
+security:
+  # 加密密钥 — 必须设置环境变量 ENCRYPTION_KEY
+  encryption_key: "${ENCRYPTION_KEY}"
+
+  rate_limit_enabled: true
+  rate_limit_per_minute: 100
+  rate_limit_burst: 20
+  rate_limit_window_sec: 60
+
+  audit_max_events: 500000
+
+agents:
+  definitions_dir: "packages/haip-hospital/agents/definitions"
+  auto_load: true
+  validate_on_load: true
+
+knowledge:
+  rules_dir: "packages/haip-hospital/knowledge/rules"
+  guidelines_dir: "packages/haip-hospital/knowledge/guidelines"
+  patients_file: "packages/haip-hospital/data/patients.json"
+
+togaf:
+  organization: true
+  validation:
+    enabled: true
+    checks: [CHK-001, CHK-002, CHK-003, CHK-004, CHK-005, CHK-006]
+  governance:
+    bp_validation: true
+    guideline_check: true
+  dashboard:
+    enabled: true

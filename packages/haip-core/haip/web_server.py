@@ -113,11 +113,8 @@ async def lifespan(app: FastAPI):
     from haip.security_baseline import check_security_baseline
     check_security_baseline()
     _seed_default_admin()
-    try:
-        from haip.auth import get_auth_service
-        get_auth_service().seed_demo_identities()
-    except (ImportError, AttributeError):
-        pass  # seed_demo_identities 需并行会话 auth/__init__.py 合入后生效
+    from haip.auth import get_auth_service
+    get_auth_service().seed_demo_identities()
     # Initialize default tenant
     from haip.tenants import init_default_tenant
     init_default_tenant()

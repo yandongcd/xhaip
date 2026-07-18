@@ -1,14 +1,20 @@
 """Authentication service — user management + login/register API.
 
 Provides:
-    - In-memory user store (PostgreSQL-backed in P1)
+    - Dual-backend user store: in-memory (test) / SQLite (production, HAIP_AUTH_DB)
     - FastAPI router for auth endpoints
     - Dependency injection helpers
 """
 
 from __future__ import annotations
 
+import json
+import logging
+import os
+import sqlite3
+import threading
 import uuid
+from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -20,6 +26,7 @@ from haip.auth.jwt import (
     revoke_refresh_token,
 )
 from haip.auth.models import (
+    PORTAL_IDENTITY_ROLES,
     LoginResponse,
     Permission,
     TokenRefreshRequest,
@@ -32,17 +39,137 @@ from haip.auth.password import hash_password, validate_password_strength, verify
 from haip.auth.rbac import get_permissions_for_roles, has_permission
 from haip.auth.middleware import get_current_user
 
+logger = logging.getLogger(__name__)
+
 auth_router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
+
+# 12 门户身份种子账户显示名 (R1a)
+_DEMO_IDENTITY_NAMES: dict[str, str] = {
+    "director": "院长",
+    "secretary": "党委书记",
+    "vice-director": "副院长",
+    "dept-head": "科主任",
+    "attending": "主治医师",
+    "head-nurse": "护士长",
+    "pharmacist": "临床药师",
+    "anesthesiologist": "麻醉医师",
+    "med-tech": "医技技师",
+    "admin": "系统管理员",
+    "resident": "住院医师",
+    "intern": "实习医师",
+}
+
+
+def _default_db_path() -> str:
+    """Resolve default SQLite path: HAIP_AUTH_DB env > data/auth.db."""
+    env_path = os.environ.get("HAIP_AUTH_DB", "")
+    if env_path:
+        return env_path
+    return str(_PROJECT_ROOT / "data" / "auth.db")
 
 
 class AuthService:
     """Manages user accounts and authentication sessions.
 
-    In this phase (P0), uses an in-memory store. Will migrate to PostgreSQL in P1.
+    backend="memory": pure in-memory dict (default under HAIP_TEST_MODE).
+    backend="sqlite": dict working-set mirrored to SQLite (db_path / HAIP_AUTH_DB).
     """
 
-    def __init__(self):
+    def __init__(self, backend: str | None = None, db_path: str | None = None):
+        if backend is None:
+            if db_path is not None:
+                backend = "sqlite"
+            elif os.environ.get("HAIP_TEST_MODE") == "true":
+                backend = "memory"
+            else:
+                backend = "sqlite"
+        self.backend = backend
         self._users: dict[str, dict[str, Any]] = {}
+        self._conn: sqlite3.Connection | None = None
+        self._db_lock = threading.Lock()
+        if backend == "sqlite":
+            self.db_path = db_path or _default_db_path()
+            if self.db_path != ":memory:":
+                Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
+            self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
+            self._conn.row_factory = sqlite3.Row
+            self._init_schema()
+            self._load_from_db()
+
+    # ── SQLite backend ──
+
+    def _init_schema(self) -> None:
+        assert self._conn is not None
+        with self._db_lock:
+            self._conn.execute(
+                """CREATE TABLE IF NOT EXISTS users (
+                    username TEXT PRIMARY KEY,
+                    id TEXT NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    email TEXT,
+                    display_name TEXT,
+                    department TEXT DEFAULT '',
+                    roles TEXT NOT NULL DEFAULT '[]',
+                    created_at TEXT DEFAULT '',
+                    is_active INTEGER NOT NULL DEFAULT 1
+                )"""
+            )
+            self._conn.commit()
+
+    def _load_from_db(self) -> None:
+        assert self._conn is not None
+        with self._db_lock:
+            rows = self._conn.execute("SELECT * FROM users").fetchall()
+        for row in rows:
+            try:
+                roles = json.loads(row["roles"])
+            except (ValueError, TypeError):
+                roles = ["doctor"]
+            self._users[row["username"]] = {
+                "id": row["id"],
+                "username": row["username"],
+                "password_hash": row["password_hash"],
+                "email": row["email"],
+                "display_name": row["display_name"],
+                "department": row["department"] or "",
+                "roles": roles,
+                "created_at": row["created_at"] or "",
+                "is_active": bool(row["is_active"]),
+            }
+
+    def _persist_user(self, user: dict[str, Any]) -> None:
+        if self._conn is None:
+            return
+        with self._db_lock:
+            self._conn.execute(
+                """INSERT OR REPLACE INTO users
+                   (username, id, password_hash, email, display_name,
+                    department, roles, created_at, is_active)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    user["username"],
+                    user["id"],
+                    user["password_hash"],
+                    user.get("email"),
+                    user.get("display_name"),
+                    user.get("department", ""),
+                    json.dumps(user.get("roles", []), ensure_ascii=False),
+                    user.get("created_at", ""),
+                    1 if user.get("is_active", True) else 0,
+                ),
+            )
+            self._conn.commit()
+
+    def close(self) -> None:
+        """Close the SQLite connection (no-op for memory backend)."""
+        if self._conn is not None:
+            with self._db_lock:
+                self._conn.close()
+            self._conn = None
+
+    # ── User management ──
 
     def create_user(
         self,
@@ -77,6 +204,7 @@ class AuthService:
             "is_active": True,
         }
         self._users[username] = user
+        self._persist_user(user)
         return {
             "id": user_id,
             "username": username,
@@ -86,6 +214,38 @@ class AuthService:
             "roles": user_roles,
             "permissions": user_permissions,
         }
+
+    def seed_demo_identities(self) -> int:
+        """Seed the 12 portal identity demo accounts (idempotent).
+
+        Skipped in HAIP_ENV=production unless HAIP_SEED_DEMO_USERS is set.
+        Returns the number of accounts created this call.
+        """
+        if (
+            os.environ.get("HAIP_ENV", "development") == "production"
+            and not os.environ.get("HAIP_SEED_DEMO_USERS")
+        ):
+            logger.info("生产环境未设置 HAIP_SEED_DEMO_USERS, 跳过演示账户种子")
+            return 0
+        demo_password = os.environ.get("HAIP_DEMO_PASSWORD", "Demo@123456")
+        created = 0
+        for identity, role in PORTAL_IDENTITY_ROLES.items():
+            if identity in self._users:
+                continue
+            try:
+                self.create_user(
+                    username=identity,
+                    password=demo_password,
+                    display_name=_DEMO_IDENTITY_NAMES.get(identity, identity),
+                    department="演示",
+                    roles=[role],
+                )
+                created += 1
+            except ValueError as e:
+                logger.warning("演示账户 %s 创建失败: %s", identity, e)
+        if created:
+            logger.info("已种子 %d 个门户身份演示账户", created)
+        return created
 
     def authenticate(self, username: str, password: str) -> dict[str, Any]:
         """Authenticate a user and return user info with tokens."""
@@ -156,6 +316,7 @@ class AuthService:
         if user is None:
             return False
         user["is_active"] = active
+        self._persist_user(user)
         return True
 
     def assign_role(self, username: str, role: str) -> bool:
@@ -165,6 +326,7 @@ class AuthService:
             return False
         if role not in user["roles"]:
             user["roles"].append(role)
+            self._persist_user(user)
         return True
 
     def remove_role(self, username: str, role: str) -> bool:
@@ -174,16 +336,32 @@ class AuthService:
             return False
         if role in user["roles"]:
             user["roles"].remove(role)
+            self._persist_user(user)
         return True
 
 
-# Global singleton
-_auth_service = AuthService()
+# Global singleton (lazy — honors env at first use)
+_auth_service: AuthService | None = None
+_auth_service_lock = threading.Lock()
 
 
 def get_auth_service() -> AuthService:
-    """Dependency: get the AuthService singleton."""
+    """Dependency: get the AuthService singleton (lazy init)."""
+    global _auth_service
+    if _auth_service is None:
+        with _auth_service_lock:
+            if _auth_service is None:
+                _auth_service = AuthService()
     return _auth_service
+
+
+def reset_auth_service() -> None:
+    """Close and drop the AuthService singleton (tests / re-config)."""
+    global _auth_service
+    with _auth_service_lock:
+        if _auth_service is not None:
+            _auth_service.close()
+        _auth_service = None
 
 
 # ── Auth API Endpoints ──
@@ -263,7 +441,7 @@ def me(
             payload = decode_token(auth_header[7:])
             user_id = payload["sub"]
         except Exception:
-            pass
+            logger.debug("/me token 解析失败, 回退 current_user.user_id", exc_info=True)
 
     auth = get_auth_service()
     user = auth.get_user_by_id(user_id)
@@ -293,7 +471,7 @@ def logout(
         try:
             revoke_refresh_token(token)
         except Exception:
-            pass
+            logger.debug("logout revoke 失败 (token 已失效?)", exc_info=True)
     return {"status": "ok"}
 
 
