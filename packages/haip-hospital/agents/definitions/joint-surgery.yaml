@@ -1,0 +1,104 @@
+name: joint-surgery
+cn_name: 关节与骨病外科智能体
+version: "1.0.0"
+type: business
+department: 关节与骨病外科
+port: 8843
+aliases: [关节外科, 关节骨科, 关节与骨病, joint-surgery, joint]
+
+prompt:
+  system: |
+    你是南方医院关节与骨病外科AI助手，负责髋膝关节功能评分、假体周围感染诊断、
+    关节置换术前规划、ERAS快速康复路径和翻修策略评估。
+    请基于AAOS/AAHKS/MSIS-ICM 2018/ERAS Society等指南给出专业建议。
+  temperature: 0.3
+  max_tokens: 4096
+
+depends_on:
+  - agent: medical-record
+    version: ">=1.0"
+  - agent: anesthesia-risk
+    version: ">=1.0"
+  - agent: cardio-risk
+    version: ">=1.0"
+
+tools:
+  - name: harris_hip_score
+    description: Harris髋关节评分(疼痛/功能/畸形/活动度四域, 0-100分, 输出分级)
+    handler: joint_surgery.harris_hip_score
+    input: {pain_level: str, gait: str, support: str, walking_distance: str, stairs: str, sitting: str, shoes_socks: str, public_transport: str, fixed_flexion: int, fixed_abduction: int, fixed_adduction: int, fixed_internal_rotation: int, leg_length_discrepancy_cm: float, flexion_rom: int, abduction_rom: int, adduction_rom: int, external_rotation_rom: int, internal_rotation_rom: int}
+
+  - name: kss_score
+    description: KSS膝关节评分(临床0-100+功能0-100双表)
+    handler: joint_surgery.kss_score
+    input: {pain: int, rom_degrees: int, mediolateral_stability_mm: int, anteroposterior_stability_mm: int, flexion_contracture_deg: int, extensor_lag_deg: int, alignment_degrees: int, walk_blocks: int, stairs_up_down: int, walking_aid: str}
+
+  - name: pji_diagnosis
+    description: 假体周围感染MSIS/ICM 2018诊断(主要+次要标准计分, 判定感染/可疑/排除)
+    handler: joint_surgery.pji_diagnosis
+    input: {sinus_tract: bool, positive_cultures: int, same_organism: bool, crp: float, esr: float, synovial_wbc: float, pmn_pct: float, alpha_defensin_positive: bool, frozen_section_positive: bool, intraop_purulence: bool, d_dimer: float}
+
+  - name: tha_tka_planning
+    description: THA/TKA置换术前规划(适应证核对+假体类型建议+骨水泥/生物固定)
+    handler: joint_surgery.tha_tka_planning
+    input: {joint: str, diagnosis: str, age: int, bmi: float, infection_risk: str, bone_quality: str, deformity_degree: str, prior_surgery: bool}
+
+  - name: eras_pathway
+    description: THA/TKA ERAS快速康复路径(术前宣教/氨甲环酸/早期下地/出院标准checklist)
+    handler: joint_surgery.eras_pathway
+    input: {procedure: str, patient_id: str, age: int, comorbidities: list, current_phase: str}
+
+  - name: revision_assessment
+    description: 翻修评估(松动/磨损/不稳分型→翻修策略+骨缺损分级)
+    handler: joint_surgery.revision_assessment
+    input: {joint: str, issue_type: str, lab_crp: float, lab_esr: float, symptoms: list, xray_findings: list, prior_revision_count: int}
+
+guard:
+  triggers: [手术, 感染, 翻修, 关节置换, 假体, 脱位]
+  high_risk_scenarios:
+    - 假体周围感染急诊处理
+    - 关节脱位急诊复位
+    - 翻修术中大段骨缺损
+    - 假体周围骨折
+
+ui:
+  template: chat-with-role-switcher
+  roles:
+    - {id: attending, label: 主治医师, default: true}
+    - {id: resident, label: 住院医师}
+    - {id: anesthesiologist, label: 麻醉医师}
+    - {id: head_nurse, label: 护士长}
+    - {id: dept_head, label: 科主任}
+    - {id: rehab_therapist, label: 康复治疗师}
+
+stages:
+  - order: 1
+    id: preop
+    label: 术前评估
+    desc: "适应证核对 + 假体类型 + 固定方式选择"
+    role: "主治医师 / 科主任"
+    role_ids: [attending, dept_head]
+  - order: 2
+    id: infection
+    label: 感染筛查
+    desc: "MSIS/ICM 2018 PJI 诊断标准 (主要+次要)"
+    role: "主治医师"
+    role_ids: [attending]
+  - order: 3
+    id: eras
+    label: ERAS 路径
+    desc: "术前/术中/术后/出院 4阶段快速康复checklist"
+    role: "主治医师 / 住院医师 / 护士长"
+    role_ids: [attending, resident, head_nurse]
+  - order: 4
+    id: hhs_kss
+    label: 功能评分
+    desc: "Harris髋关节评分 + KSS膝关节评分"
+    role: "主治医师 / 康复治疗师"
+    role_ids: [attending, rehab_therapist]
+  - order: 5
+    id: revision
+    label: 翻修评估
+    desc: "松动/磨损/不稳分型 → 翻修策略 + 骨缺损分级"
+    role: "主治医师 / 科主任"
+    role_ids: [attending, dept_head]

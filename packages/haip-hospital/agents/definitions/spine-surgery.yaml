@@ -1,0 +1,108 @@
+name: spine-surgery
+cn_name: 脊柱骨科智能体
+version: "1.0.0"
+type: business
+department: 脊柱骨科
+port: 8842
+aliases: [脊柱骨科, 脊柱外科, spine-surgery, spine]
+
+prompt:
+  system: |
+    你是南方医院脊柱骨科AI助手，负责脊柱脊髓损伤分级、脊柱侧弯评估、
+    腰椎管狭窄诊疗、功能障碍量化、术式路径推荐和脊柱红旗征急诊筛查。
+    请基于ISNCSCI ASIA标准、SRS侧弯指南、NASS腰椎指南和NICE红旗征标准给出专业建议。
+  temperature: 0.3
+  max_tokens: 4096
+
+depends_on:
+  - agent: medical-record
+    version: ">=1.0"
+  - agent: anesthesia-risk
+    version: ">=1.0"
+
+tools:
+  - name: asia_classification
+    description: ASIA脊髓损伤分级(A-E, 输入运动/感觉平面与骶段保留, 参考ISNCSCI 2019)
+    handler: spine_surgery.asia_classification
+    input: {motor_level: str, sensory_level: str, motor_scores: dict, sacral_sparing: bool, anal_contraction: bool}
+
+  - name: cobb_severity
+    description: 脊柱侧弯Cobb角分级(<10正常/10-25观察/25-45支具/>45手术)+Risser骨龄修正
+    handler: spine_surgery.cobb_severity
+    input: {cobb_angle: float, risser_grade: int, age: int, curve_type: str, progression_risk: str}
+
+  - name: stenosis_assessment
+    description: 腰椎管狭窄评估(症状+步行距离+Schizas MRI影像分级→保守/减压建议, 参考NASS 2019)
+    handler: spine_surgery.stenosis_assessment
+    input: {symptoms: list, walking_distance_m: float, schizas_grade: str, segment_level: str, central_stenosis: bool, foraminal_stenosis: bool, age: int}
+
+  - name: odi_score
+    description: Oswestry功能障碍指数(10项0-5分, 输出百分比与功能障碍分级)
+    handler: spine_surgery.odi_score
+    input: {scores: dict}
+
+  - name: surgical_pathway
+    description: 脊柱术式路径建议(PELD椎间孔镜/UBE/OLIF/TLIF/开放, 按病种+节段+骨密度)
+    handler: spine_surgery.surgical_pathway
+    input: {diagnosis: str, segment: str, t_score: float, age: int, multi_level: bool, instability: bool, prior_surgery: bool}
+
+  - name: red_flags
+    description: 脊柱红旗征筛查(马尾综合征/肿瘤/感染/骨折, 命中→急诊升级绿色通道)
+    handler: spine_surgery.red_flags
+    input: {patient_id: str, symptoms: list, history: list, age: int, lab_crp: float, lab_esr: float}
+
+guard:
+  triggers: [手术, 感染, 急诊, 马尾, 瘫痪, 肿瘤, 骨折]
+  high_risk_scenarios:
+    - 马尾综合征紧急减压
+    - 脊柱感染急诊处理
+    - 脊柱肿瘤病理骨折
+    - 高位颈髓损伤呼吸管理
+    - Cobb角>45°手术评估
+
+ui:
+  template: chat-with-role-switcher
+  roles:
+    - {id: attending, label: 主治医师, default: true}
+    - {id: resident, label: 住院医师}
+    - {id: anesthesiologist, label: 麻醉医师}
+    - {id: head_nurse, label: 护士长}
+    - {id: dept_head, label: 科主任}
+
+stages:
+  - order: 1
+    id: red_flags
+    label: 红旗征筛查
+    desc: "马尾/肿瘤/感染/骨折 4类急症筛查, 命中→急诊绿色通道"
+    role: "主治医师 / 住院医师"
+    role_ids: [attending, resident]
+  - order: 2
+    id: asia
+    label: ASIA 脊髓损伤分级
+    desc: "运动/感觉平面 + 骶段保留 → ASIA A-E 分级"
+    role: "主治医师 / 住院医师"
+    role_ids: [attending, resident]
+  - order: 3
+    id: cobb
+    label: Cobb 角侧弯评估
+    desc: "Cobb 角分度 + Risser 骨龄 + 支具/手术指征判定"
+    role: "主治医师 / 科主任"
+    role_ids: [attending, dept_head]
+  - order: 4
+    id: stenosis
+    label: 腰椎管狭窄评估
+    desc: "神经源性跛行 + 步行距离 + Schizas MRI → 保守/介入/手术"
+    role: "主治医师"
+    role_ids: [attending]
+  - order: 5
+    id: odi
+    label: ODI 功能障碍量化
+    desc: "10项 Oswestry 功能障碍指数 (0-100%)"
+    role: "主治医师 / 住院医师"
+    role_ids: [attending, resident]
+  - order: 6
+    id: pathway
+    label: 术式路径建议
+    desc: "PELD/UBE/OLIF/TLIF/开放 — 按病种+节段+骨密度"
+    role: "主治医师 / 科主任"
+    role_ids: [attending, dept_head]

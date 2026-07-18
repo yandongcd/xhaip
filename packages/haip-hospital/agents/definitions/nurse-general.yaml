@@ -1,0 +1,119 @@
+name: nurse-general
+cn_name: 通用护理智能体
+version: "1.0.0"
+type: business
+department: 护理部
+port: 8904
+aliases: [护理, 跌倒, 压疮, DVT, 围术期护理, 交班, 生命体征, EWS, 早期预警, nurse, nursing]
+
+prompt:
+  system: |
+    你是南方医院通用护理智能体，覆盖全院护理核心场景：
+    - 压疮风险评估 (Braden 6项评分)
+    - 跌倒风险评估 (Morse 6因子评分)
+    - DVT风险评估 (Caprini + 物理/药物预防建议)
+    - 围术期护理4阶段方案 (VTE护理集束)
+    - SBAR交班摘要生成
+    - 生命体征逐项判读 + 简化早期预警评分 (EWS)
+    基于国家卫健委护理规范、Braden/Morse/Caprini 国际量表、SBAR 标准给出专业建议。
+    使用中文回答。
+  temperature: 0.3
+  max_tokens: 4096
+
+tools:
+  - name: braden_score
+    description: >
+      Braden压疮风险评估 — 6项评分(感知能力/潮湿程度/活动能力/移动能力/营养/摩擦力剪切力 各1-4分)，
+      总分6-23分，≤9极高危, 10-12高危, 13-14中危, 15-18低危, ≥19无风险。
+    handler: nurse_general.braden_score
+    input:
+      sensory: str
+      moisture: str
+      activity: str
+      mobility: str
+      nutrition: str
+      friction: str
+
+  - name: morse_fall_score
+    description: >
+      Morse跌倒风险评估 — 6个因子(跌倒史/次要诊断/步行辅助/静脉输液/步态/精神状态)，
+      总分0-125分，<25低危, 25-45中危, >45高危，含分级防跌措施清单。
+    handler: nurse_general.morse_fall_score
+    input:
+      fall_history: str
+      secondary_diagnosis: str
+      ambulatory_aid: str
+      iv_heparin_lock: str
+      gait: str
+      mental_status: str
+
+  - name: caprini_dvt
+    description: >
+      Caprini DVT风险评估 — 40+风险因子评分，0-1低危, 2中危, 3-4高危, ≥5极高危。
+      含分级预防建议(IPC/GCS/踝泵/LMWH)和禁忌注意事项。
+    handler: nurse_general.caprini_dvt
+    input:
+      age: int
+      bmi: float
+      surgery_type: str
+      surgery_duration_min: int
+      conditions: list
+      medications: list
+
+  - name: vte_nursing_bundle
+    description: >
+      围术期护理4阶段方案 — 术前/术日/术后24-72h/出院指导，
+      含体位管理/管道护理/疼痛管理/健康教育条目化checklist。
+    handler: nurse_general.vte_nursing_bundle
+    input:
+      procedure: str
+      age: int
+      conditions: list
+
+  - name: handover_summary
+    description: >
+      SBAR交班摘要生成 — Situation/Background/Assessment/Recommendation四段式结构，
+      输入患者关键字段 → 生成结构化SBAR文本。
+    handler: nurse_general.handover_summary
+    input:
+      patient_id: str
+      patient_name: str
+      age: int
+      diagnosis: str
+      current_status: str
+      key_events: str
+      recommendations: list
+
+  - name: vital_signs_alert
+    description: >
+      生命体征逐项判读 — T/P/R/BP/SpO2 逐项判读 + 简化早期预警评分 (EWS)，
+      异常→分级升级建议(观察/通知医师/紧急会诊)。
+    handler: nurse_general.vital_signs_alert
+    input:
+      temperature: float
+      pulse: int
+      respiration: int
+      systolic_bp: int
+      spo2: float
+      avpu: str
+
+guard:
+  triggers: [跌倒, 压疮, 围术期护理, 生命体征, 交班, DVT风险, 早期预警]
+  high_risk_scenarios:
+    - Braden评分 ≤9 极高压疮风险
+    - Morse评分 >45 高跌倒风险
+    - Caprini 评分 ≥5 极高DVT风险
+    - EWS ≥7 紧急呼叫
+
+ui:
+  template: chat-with-role-switcher
+  roles:
+    - {id: head_nurse, label: 护士长, default: true}
+    - {id: staff_nurse, label: 责任护士}
+    - {id: charge_nurse, label: 主班护士}
+    - {id: icu_nurse, label: ICU护士}
+    - {id: operating_nurse, label: 手术室护士}
+  sidebar:
+    - {category: 风险评估, tools: [braden_score, morse_fall_score, caprini_dvt]}
+    - {category: 护理方案, tools: [vte_nursing_bundle]}
+    - {category: 交班与监测, tools: [handover_summary, vital_signs_alert]}
