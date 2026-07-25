@@ -23,7 +23,14 @@ async function callTool(tool) {
   var toolDef = TOOLS.find(function(t) { return t.name === tool; });
   if (toolDef && Object.keys(toolDef.input||{}).length) {
     for (var k in toolDef.input) {
-      params[k] = document.querySelector('.inp-'+tool+'[data-field="'+k+'"]')?.value||toolDef.input[k];
+      var el = document.querySelector('.inp-'+tool+'[data-field="'+k+'"]');
+      var value = el ? el.value : '';
+      var type = toolDef.input[k];
+      if (type === 'dict' || type === 'list') {
+        try { params[k] = value ? JSON.parse(value) : {}; } catch(e) { params[k] = {}; }
+      } else {
+        params[k] = value || toolDef.input[k];
+      }
     }
   } else {
     try { var el = document.querySelector('.inp-'+tool); if (el) params = JSON.parse(el.value||'{}'); } catch(e) {}
