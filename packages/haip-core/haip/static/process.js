@@ -223,6 +223,11 @@ function renderStageContent(n){
 }
 
 function renderStage1(p,s){
+  if (AGENT_TYPE === 'master_data') {
+    return renderMasterDataStage1(p,s);
+  } else if (AGENT_TYPE === 'specialist') {
+    return renderSpecialistStage1(p,s);
+  }
   return '<div class="section" style="margin-bottom:20px"><div class="section-title" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px">📋 患者概要</div>'+
     '<div class="summary-bar" style="background:var(--bg-overlay);border-radius:8px;padding:16px 20px;font-size:14px;line-height:2;color:var(--text)"><span>姓名: <strong style="color:var(--accent)">'+p.name+'</strong></span> · <span>'+p.age+'岁</span> · <span>'+p.patient_id+'</span> · <span>科室: <span class="tag blue" style="display:inline-block;padding:2px 8px;border-radius:var(--radius-full);font-size:12px;font-weight:500;background:var(--blue-bg);color:var(--blue)">'+(p.department||DEPT)+'</span></span>'+
     '<br><span>诊断: <strong style="color:var(--accent)">'+p.diagnosis+'</strong></span></div></div>'+
@@ -240,6 +245,44 @@ function renderStage1(p,s){
     '<div class="triage-main '+(p.urgency==='high'?'tri-i':'tri-iii')+'" style="font-size:18px;font-weight:700;color:'+(p.urgency==='high'?'var(--red)':'var(--green)')+'">'+(p.urgency==='high'?'⚠ 紧急处理':'✓ 常规处理')+'</div>'+
     '<div class="triage-sub" style="font-size:13px;color:var(--text2);margin-top:4px">'+(p.urgency==='high'?'需优先处理，触发高危流程':'按标准流程依次推进')+'</div></div></div>'+
     '<div class="alert '+(p.urgency==='high'?'red':'blue')+'" style="border-radius:8px;padding:12px 16px;font-size:13px;line-height:1.6;margin-top:12px;background:'+(p.urgency==='high'?'var(--red-bg)':'var(--blue-bg)')+';border:1px solid '+(p.urgency==='high'?'rgba(220,38,38,.2)':'rgba(8,145,178,.2)')+';color:'+(p.urgency==='high'?'var(--red)':'var(--accent)')+'">'+'ℹ 患者信息完整，可进入诊断与分型阶段。'+'</div>';
+}
+
+function renderMasterDataStage1(p,s) {
+  return '<div class="section" style="margin-bottom:20px"><div class="section-title" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px">📊 数据概览</div>'+
+    '<div class="summary-bar" style="background:var(--bg-overlay);border-radius:8px;padding:16px 20px;font-size:14px;line-height:2;color:var(--text)"><span>数据源: <strong style="color:var(--accent)">'+(p.patient_id||'ALL')+'</strong></span> · <span>机构: <span class="tag blue" style="display:inline-block;padding:2px 8px;border-radius:var(--radius-full);font-size:12px;font-weight:500;background:var(--blue-bg);color:var(--blue)">'+(p.department||DEPT)+'</span></span>'+
+    '<br><span>描述: <strong style="color:var(--accent)">'+(p.diagnosis||'主数据资产')+'</strong></span></div></div>'+
+    '<div class="card" style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:24px;margin-bottom:16px"><h3 style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px"><span class="ch-icon">🗂️</span> 数据资产详情</h3>'+
+    '<div class="tabs" style="display:flex;gap:0;margin-bottom:0;border-bottom:2px solid var(--border)">'+
+    '<button class="tab-btn active" data-pane="basic" onclick="switchTab(\'basic\')" style="padding:8px 20px;border:none;border-bottom:3px solid var(--accent);background:transparent;color:var(--accent);font-weight:700;font-size:14px;cursor:pointer;font-family:inherit">基本信息</button>'+
+    '<button class="tab-btn" data-pane="labs" onclick="switchTab(\'labs\')" style="padding:8px 20px;border:none;border-bottom:3px solid transparent;background:transparent;color:var(--text3);font-weight:500;font-size:14px;cursor:pointer;font-family:inherit">数据字段</button></div>'+
+    '<div class="tab-pane active" id="pane-basic" style="display:block;padding:20px 0 0 0"><div style="font-size:13px;line-height:1.8">'+formatDP(p)+'</div></div>'+
+    '<div class="tab-pane" id="pane-labs" style="display:none;padding:20px 0 0 0"><div style="font-size:13px;line-height:1.8">'+formatLabs(p)+'</div></div>'+
+    '</div>'+
+    '<div class="section" style="margin-bottom:20px"><div class="section-title" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px">💡 数据状态</div>'+
+    '<div class="triage-card III" style="border-radius:10px;padding:16px 20px;margin-top:12px;border-left:4px solid var(--green);background:var(--bg-elevated)">'+
+    '<div class="triage-main" style="font-size:18px;font-weight:700;color:var(--green)">✓ 数据就绪</div>'+
+    '<div class="triage-sub" style="font-size:13px;color:var(--text2);margin-top:4px">数据源已接入，可按标准流程进入分析阶段</div></div></div>'+
+    '<div class="alert blue" style="border-radius:8px;padding:12px 16px;font-size:13px;line-height:1.6;margin-top:12px;background:var(--blue-bg);border:1px solid rgba(8,145,178,.2);color:var(--accent)">ℹ 数据资产信息完整，可进入数据分析阶段。</div>';
+}
+
+function renderSpecialistStage1(p,s) {
+  return '<div class="section" style="margin-bottom:20px"><div class="section-title" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px">🔬 专业评估概要</div>'+
+    '<div class="summary-bar" style="background:var(--bg-overlay);border-radius:8px;padding:16px 20px;font-size:14px;line-height:2;color:var(--text)"><span>对象: <strong style="color:var(--accent)">'+p.name+'</strong></span> · <span>'+p.patient_id+'</span> · <span>领域: <span class="tag blue" style="display:inline-block;padding:2px 8px;border-radius:var(--radius-full);font-size:12px;font-weight:500;background:var(--blue-bg);color:var(--blue)">'+(p.department||DEPT)+'</span></span>'+
+    '<br><span>场景: <strong style="color:var(--accent)">'+(p.diagnosis||'专业评估')+'</strong></span></div></div>'+
+    '<div class="card" style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:24px;margin-bottom:16px"><h3 style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px"><span class="ch-icon">📋</span> 评估详情</h3>'+
+    '<div class="tabs" style="display:flex;gap:0;margin-bottom:0;border-bottom:2px solid var(--border)">'+
+    '<button class="tab-btn active" data-pane="basic" onclick="switchTab(\'basic\')" style="padding:8px 20px;border:none;border-bottom:3px solid var(--accent);background:transparent;color:var(--accent);font-weight:700;font-size:14px;cursor:pointer;font-family:inherit">基本信息</button>'+
+    '<button class="tab-btn" data-pane="present" onclick="switchTab(\'present\')" style="padding:8px 20px;border:none;border-bottom:3px solid transparent;background:transparent;color:var(--text3);font-weight:500;font-size:14px;cursor:pointer;font-family:inherit">评估说明</button>'+
+    '<button class="tab-btn" data-pane="labs" onclick="switchTab(\'labs\')" style="padding:8px 20px;border:none;border-bottom:3px solid transparent;background:transparent;color:var(--text3);font-weight:500;font-size:14px;cursor:pointer;font-family:inherit">参考指标</button></div>'+
+    '<div class="tab-pane active" id="pane-basic" style="display:block;padding:20px 0 0 0"><div style="font-size:13px;line-height:1.8">'+formatDP(p)+'</div></div>'+
+    '<div class="tab-pane" id="pane-present" style="display:none;padding:20px 0 0 0"><div style="font-size:13px;line-height:1.8">'+(p.present||p.scenario||'待填写')+'</div></div>'+
+    '<div class="tab-pane" id="pane-labs" style="display:none;padding:20px 0 0 0"><div style="font-size:13px;line-height:1.8">'+formatLabs(p)+'</div></div>'+
+    '</div>'+
+    '<div class="section" style="margin-bottom:20px"><div class="section-title" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px">🎯 评估判定</div>'+
+    '<div class="triage-card III" style="border-radius:10px;padding:16px 20px;margin-top:12px;border-left:4px solid var(--green);background:var(--bg-elevated)">'+
+    '<div class="triage-main" style="font-size:18px;font-weight:700;color:var(--green)">✓ 可进入评估</div>'+
+    '<div class="triage-sub" style="font-size:13px;color:var(--text2);margin-top:4px">按专业评估标准流程依次推进</div></div></div>'+
+    '<div class="alert blue" style="border-radius:8px;padding:12px 16px;font-size:13px;line-height:1.6;margin-top:12px;background:var(--blue-bg);border:1px solid rgba(8,145,178,.2);color:var(--accent)">ℹ 评估信息完整，可进入专业分析阶段。</div>';
 }
 
 function renderMidStage(p,s,n){
@@ -271,6 +314,36 @@ function renderMidStage(p,s,n){
 }
 
 function renderLastStage(p,s){
+  if (AGENT_TYPE === 'master_data') {
+    return '<div class="card"><h3><span class="ch-icon">📤</span> 报告输出计划</h3>'+
+      '<div style="font-size:13px;line-height:1.8">'+(p.followup||'根据数据规范生成标准化报告，包括指标看板、趋势图表、异常标注和分发配置。')+'</div></div>'+
+      '<div class="card"><h3><span class="ch-icon">📊</span> 报告节点</h3>'+
+      '<div class="fu-timeline">'+
+      '<div class="fu-node"><span class="fu-dot"></span><span class="fu-label">日报</span><span class="fu-sub">核心指标 / 异常摘要</span></div>'+
+      '<div class="fu-node"><span class="fu-dot"></span><span class="fu-label">周报</span><span class="fu-sub">趋势对比 / 环比分析</span></div>'+
+      '<div class="fu-node"><span class="fu-dot"></span><span class="fu-label">月报</span><span class="fu-sub">综合分析 / 建议报告</span></div>'+
+      '</div></div>'+
+      '<div class="card"><h3><span class="ch-icon">📋</span> 分发计划</h3>'+
+      '<table><tr><th>频率</th><th>报告内容</th><th>接收方</th><th>状态</th></tr>'+
+      '<tr><td>每日</td><td>核心指标看板</td><td>数据管理员</td><td><span class="tag green">已配置</span></td></tr>'+
+      '<tr><td>每周</td><td>趋势分析报告</td><td>科主任</td><td><span class="tag blue">已配置</span></td></tr>'+
+      '<tr><td>每月</td><td>综合分析报告</td><td>全院管理层</td><td><span class="tag blue">已配置</span></td></tr></table></div>';
+  }
+  if (AGENT_TYPE === 'specialist') {
+    return '<div class="card"><h3><span class="ch-icon">📅</span> 评估输出计划</h3>'+
+      '<div style="font-size:13px;line-height:1.8">'+(p.followup||'根据专业评估规范生成评估报告，包括核心建议、风险预警和后续监测节点。')+'</div></div>'+
+      '<div class="card"><h3><span class="ch-icon">📊</span> 跟踪节点</h3>'+
+      '<div class="fu-timeline">'+
+      '<div class="fu-node"><span class="fu-dot"></span><span class="fu-label">评估完成</span><span class="fu-sub">报告生成 / 建议输出</span></div>'+
+      '<div class="fu-node"><span class="fu-dot"></span><span class="fu-label">1 月后</span><span class="fu-sub">效果初评 / 调整</span></div>'+
+      '<div class="fu-node"><span class="fu-dot"></span><span class="fu-label">3 月后</span><span class="fu-sub">全面复核 / 长期方案</span></div>'+
+      '</div></div>'+
+      '<div class="card"><h3><span class="ch-icon">📋</span> 交付清单</h3>'+
+      '<table><tr><th>时间</th><th>交付物</th><th>接收方</th><th>状态</th></tr>'+
+      '<tr><td>即时</td><td>评估报告</td><td>申请科室</td><td><span class="tag green">待生成</span></td></tr>'+
+      '<tr><td>1月后</td><td>效果评估</td><td>申请科室</td><td><span class="tag blue">计划中</span></td></tr>'+
+      '<tr><td>3月后</td><td>长期管理方案</td><td>申请科室 · 专科</td><td><span class="tag blue">计划中</span></td></tr></table></div>';
+  }
   return '<div class="card"><h3><span class="ch-icon">📅</span> 随访计划</h3>'+
     '<div style="font-size:13px;line-height:1.8">'+(p.followup||'根据科室规范制定个性化随访方案，包括定期复查、功能评估、长期用药管理。')+'</div></div>'+
     '<div class="card"><h3><span class="ch-icon">📊</span> 随访节点</h3>'+
