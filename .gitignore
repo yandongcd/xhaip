@@ -19,3 +19,5 @@ xhaip.db
 .env
 .env.local
 .env.production
+data/*.json
+data/*.db
