@@ -75,7 +75,6 @@ def render_process_ui(
 
     # ── 数据注入 (JSON → JS 全局变量) ──
     xhaip_data = json.dumps({
-        "patients": patients,
         "stages": stages,
         "guard_triggers": guard_triggers,
         "depends_on": depends_on or [],
@@ -84,8 +83,6 @@ def render_process_ui(
         "agent_type": agent_type,
         "department": department or "—",
         "default_role_id": roles[0]["id"] if roles else "attending",
-        "roles_count": len(roles),
-        "stages_count": len(stages),
     }, ensure_ascii=False)
 
     return f"""<!DOCTYPE html>

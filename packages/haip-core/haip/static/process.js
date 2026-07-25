@@ -1,5 +1,5 @@
 var XHAIP_DATA = JSON.parse(document.getElementById('xhaip-data').textContent);
-var PATIENTS = XHAIP_DATA.patients;
+var PATIENTS = [];
 var STAGES = XHAIP_DATA.stages;
 var GUARD_TRIGGERS = XHAIP_DATA.guard_triggers;
 var DEPENDS_ON = XHAIP_DATA.depends_on;
@@ -16,16 +16,27 @@ function init(){
   try {
     var testEl = document.getElementById('patient-list');
     if (!testEl) { console.error('patient-list not found in DOM'); return; }
-    testEl.innerHTML = '<div style="padding:10px;text-align:center;font-size:12px;color:var(--text2)">加载中: '+PATIENTS.length+' 位患者...</div>';
-    setTimeout(function(){ renderPatientList(); }, 100);
+    testEl.innerHTML = '<div style="padding:10px;text-align:center;font-size:12px;color:var(--text2)">加载患者数据...</div>';
+    loadPatientsAsync();
   } catch(e) { document.getElementById('patient-list').innerHTML = '<div style="color:red;padding:10px">JS Error: '+e.message+'</div>'; }
   switchRole(currentRole);
   document.getElementById('home-stages').textContent = STAGES.length;
-  document.getElementById('home-patients').textContent = PATIENTS.length;
   document.getElementById('home-roles').textContent = 7;
   document.getElementById('home-guards').textContent = GUARD_TRIGGERS.length;
   renderDepsPage();
   renderGuidelinesPage();
+}
+
+async function loadPatientsAsync() {
+  try {
+    var resp = await fetch('/api/patients/' + AGENT_NAME + '?limit=100');
+    var data = await resp.json();
+    PATIENTS = data.patients || [];
+    document.getElementById('home-patients').textContent = data.total || PATIENTS.length;
+    renderPatientList();
+  } catch(e) {
+    document.getElementById('patient-list').innerHTML = '<div style="color:red;padding:10px">加载失败: '+e.message+'</div>';
+  }
 }
 
 function toggleMenu(){
