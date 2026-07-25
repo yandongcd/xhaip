@@ -1,7 +1,8 @@
 """Final fix: add data_entities and missing guideline to remaining rules."""
 import os
-import yaml
 from pathlib import Path
+
+import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 

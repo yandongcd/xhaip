@@ -1,13 +1,16 @@
 """Verify G1-G3 + G7-G8 modules."""
 import sys
+
 sys.path.insert(0, "packages/haip-core")
 
 print("=== G1: Hospital Data Models ===")
 from haip.data.models import ALL_MODELS
+
 print(f"ORM Models OK: {len(ALL_MODELS)} tables (HIS/EMR/LIS/PACS/NIS)")
 
 print("\n=== G2: OPA Policy Engine ===")
 from haip.policy import get_policy_engine
+
 engine = get_policy_engine()
 
 # Test: same department
@@ -38,7 +41,7 @@ print(f"  Consulted: allow={engine.allow(ctx5)}")
 print(f"  Rules: {len(engine.list_rules())}")
 
 print("\n=== G3: Clinical Rules Engine ===")
-from haip.rules_engine import evaluate, EvaluationContext, Rule, Certainty, evaluate_rules
+from haip.rules_engine import Certainty, EvaluationContext, Rule, evaluate, evaluate_rules
 from haip.rules_engine.impact import analyze_impact
 
 # Expression evaluator
@@ -65,11 +68,13 @@ print(f"  Impact OK: {impact.source_id}, affected={len(impact.affected_rules)}, 
 
 print("\n=== G8: LLM Gateway ===")
 from haip.llm.gateway import get_llm_gateway
+
 gw = get_llm_gateway()
 print(f"  LLM Gateway OK: config={gw.config.primary_provider}, cache_size={len(gw._cache)}")
 
 print("\n=== G7: SQL Reference Files ===")
 from pathlib import Path
+
 sql_dir = Path("data/sql")
 for f in sorted(sql_dir.glob("*.sql")):
     print(f"  {f.name}: {len(f.read_text(encoding='utf-8'))} chars")

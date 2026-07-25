@@ -3,12 +3,12 @@ Checks: handler paths, YAML type leaks in JS, str/int comparisons, accessibility
 """
 import ast
 import importlib
-import json
 import pathlib
 import re
 import sys
-import yaml
 from collections import defaultdict
+
+import yaml
 
 ROOT = pathlib.Path(r"D:\dst\projects\xhaip")
 YAML_DIR = ROOT / "packages/haip-hospital/agents/definitions"
@@ -48,7 +48,7 @@ for yf in sorted(YAML_DIR.glob("*.yaml")):
                 broken += 1
                 results["handler_func_missing"].append(f"{agent}/{tool['name']}: {handler}")
                 print(f"  FAIL [{agent}] {tool['name']}: module {mod} OK but function '{fn}' not found")
-        except ModuleNotFoundError as e:
+        except ModuleNotFoundError:
             broken += 1
             results["handler_module_missing"].append(f"{agent}/{tool['name']}: {handler}")
             print(f"  FAIL [{agent}] {tool['name']}: {handler} — module not found")

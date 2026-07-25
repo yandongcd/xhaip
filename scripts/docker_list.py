@@ -1,6 +1,7 @@
 """Generate docker-compose from agent YAML definitions."""
-import yaml
 from pathlib import Path
+
+import yaml
 
 DEFS_DIR = Path("packages/haip-hospital/agents/definitions")
 PROFILES = {

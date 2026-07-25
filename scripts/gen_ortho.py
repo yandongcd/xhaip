@@ -9,7 +9,8 @@ sys.path.insert(0, str(ROOT / "packages" / "haip-core"))
 sys.path.insert(0, str(ROOT / "packages" / "haip-hospital"))
 sys.path.insert(0, str(ROOT / "packages" / "haip-hospital" / "modules"))
 
-from haip.agent import load_from_dir, get as get_agent
+from haip.agent import get as get_agent
+from haip.agent import load_from_dir
 from haip.ui_render import render_agent_ui
 
 load_from_dir(str(ROOT / "packages" / "haip-hospital" / "agents" / "definitions"))

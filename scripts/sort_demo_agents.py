@@ -1,6 +1,6 @@
 """Sort AGENTS in demo HTML by maturity score."""
-import sys
 import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "packages" / "haip-core"))
 sys.path.insert(0, str(ROOT / "packages" / "haip-hospital"))
 from haip.agent import load_from_dir
+
 load_from_dir(str(ROOT / "packages" / "haip-hospital" / "agents" / "definitions"))
 from haip.togaf.analysis import analyze_all_v2
 

@@ -5,8 +5,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 sys.path.insert(0, str(ROOT / "packages" / "haip-core"))
-from haip.togaf.rule_engine import RuleEngine
 import json
+
+from haip.togaf.rule_engine import RuleEngine
 
 engine = RuleEngine()
 engine.load_all()

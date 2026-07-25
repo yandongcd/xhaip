@@ -1,5 +1,6 @@
 """Update all agent YAMLs with proper clinical workflow stages and role assignments."""
 import pathlib
+
 import yaml
 
 YAML_DIR = pathlib.Path(r"D:\dst\projects\xhaip\packages\haip-hospital\agents\definitions")
