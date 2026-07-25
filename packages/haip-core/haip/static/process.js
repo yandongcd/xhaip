@@ -148,7 +148,7 @@ function selectPatient(pid){
   currentStage = 1; completedStages = {};
   document.getElementById('header-patient').classList.add('visible');
   document.getElementById('hp-name').textContent = currentPatient.name+' · '+currentPatient.age+'岁';
-  document.getElementById('hp-stage').textContent = currentPatient.department||DEPT;
+  document.getElementById('hp-badge').textContent = currentPatient.department||DEPT;
   clickStage(1); renderPatientList(); updateRightbar();
 }
 
