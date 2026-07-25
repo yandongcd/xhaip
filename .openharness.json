@@ -1,42 +1,101 @@
 {
-  "version": "2.0",
+  "version": "2.1",
   "project": "xhaip",
-  "project_name": "HAIP v1.0 Hospital AI Platform",
-  "project_root": "D:\\projects\\xhaip",
-  "skills_dir": ".openharness\\skills",
-  "runtime_dir": ".openharness\\runtime",
-  "snapshots_dir": ".openharness\\runtime\\snapshots",
-  "agents": {
-    "definitions_dir": "packages\\haip-hospital\\agents\\definitions",
-    "count": 14,
-    "types": {"business": 5, "specialist": 7, "master_data": 2}
-  },
+  "project_name": "HAIP v1.2 — Hospital AI Platform PROD-READY",
+  "project_root": "D:\\dst\\projects\\xhaip",
+  "harness_type": "ai-platform",
+  "description": "YAML-driven multi-agent hospital AI platform with 58 clinical agents, TOGAF 10 governance, medical safety guard system, and FHIR/HL7v2 interoperability",
+  "skills_dir": ".openharness/skills",
+  "runtime_dir": ".openharness/runtime",
+  "snapshots_dir": ".openharness/runtime/snapshots",
+  "principles": [
+    "YAML-driven Agent definition (30 lines YAML + pure business logic)",
+    "Engine as independent pip package (haip-core)",
+    "LLM Provider abstraction (1-line config swap)",
+    "Knowledge base SQLite/YAML versioned sync",
+    "Guard-gated medical safety (T1/T2 trust enforcement)",
+    "Citation enforcement on all clinical outputs"
+  ],
   "engine": {
-    "package": "packages\\haip-core",
-    "modules": ["agent", "a2a", "llm", "tools", "guard", "orchestrator", "knowledge", "loop", "cli", "matcher"],
-    "coverage_target": 90
+    "package": "packages/haip-core",
+    "version": "1.2.0",
+    "modules": [
+      "agent", "a2a", "llm", "tools", "guard", "orchestrator",
+      "knowledge", "loop", "cli", "auth", "audit", "permission",
+      "policy", "rules_engine", "clinical", "crypto",
+      "data", "adapters", "fhir", "hl7v2", "licensing",
+      "tenants", "session", "togaf", "templates", "operations"
+    ],
+    "module_count": 25,
+    "coverage_target": 85
   },
-  "assets": {
-    "guidelines": 26,
-    "rules": 22,
-    "business_processes": 11,
-    "capabilities": 3,
+  "agents": {
+    "definitions_dir": "packages/haip-hospital/agents/definitions",
+    "count": 58,
+    "schema": "packages/haip-hospital/agents/agent-schema.json",
+    "types": {
+      "business": 57,
+      "master_data": 1
+    },
+    "enhanced_modules": {
+      "orthopedics": {"lines": 392, "functions": 9, "features": ["T2 timing engine (8-factor)", "4-dimension complication predictor", "4-stage nursing plan", "fracture classifier", "surgery planner"]},
+      "pharmacy": {"lines": 213, "functions": 11, "features": ["PONV risk scoring", "TPN calculator", "prescription review (17 rules)", "antiemetic regimens", "drug DB query"]},
+      "cardio_risk": {"lines": 153, "functions": 3, "features": ["RCRI scoring", "ECG pattern library (6 patterns)", "Periop MI classification"]},
+      "anesthesia": {"lines": 116, "functions": 4, "features": ["ASA grading", "Difficult airway assessment", "Anticoagulation bridge plan", "Anesthesia plan"]},
+      "cardio_surgery": {"lines": 94, "functions": 3, "features": ["EuroSCORE II", "Anticoagulation plan", "Postop management"]},
+      "pediatrics": {"lines": 151, "functions": 3, "features": ["Growth assessment", "Pediatric dosing (8 drugs)", "IMCI decision tree (8 rules)"]},
+      "acute_pain": {"lines": 99, "functions": 3, "features": ["NRS/VAS + neuropathic detection", "PCA dosing", "Crisis detection"]},
+      "cancer_pain": {"lines": 92, "functions": 3, "features": ["WHO 3-step ladder", "Opioid safety", "Palliative referral"]},
+      "togaf": {"lines": 145, "functions": 5, "features": ["Architecture governance", "Metamodel validation", "Dashboard", "LeanIX export"]}
+    },
+    "stub_modules": 54
+  },
+  "knowledge": {
+    "path": "packages/haip-hospital/knowledge",
+    "guidelines": 70,
+    "rules": 21,
+    "rules_count": 237,
+    "business_processes": 19,
+    "capabilities": 4,
     "value_streams": 1,
-    "architecture": 6,
-    "roles": 1,
-    "guideline_sources": 1,
-    "total": 71
+    "total_assets": 178
+  },
+  "data": {
+    "patients": 498,
+    "provenance": true,
+    "validation": "scripts/validate_patients.py"
+  },
+  "security": {
+    "auth": "JWT + HMAC A2A signing",
+    "rbac": "U2A / A2A / A2D (SQLite)",
+    "audit": "append-only immutable log",
+    "guard": "4-layer Verifier (Citation + Confidence + T1/T2 gate)",
+    "encryption": "AES-256-GCM (Fernet with PBKDF2 fallback)",
+    "policy": "OPA-style Python-native engine (4 builtin policies)"
   },
   "tests": {
-    "unit_dir": "packages\\haip-core\\tests",
-    "integration_dir": "tests\\integration",
-    "total": 196,
-    "coverage_pct": 93
+    "unit_dir": "packages/haip-core/tests",
+    "integration_dir": "tests/integration",
+    "total": 926,
+    "coverage_pct": 75,
+    "framework": "pytest",
+    "contract_tests": ["test_ui_contracts.py", "test_handler_contracts.py"]
   },
   "quality": {
-    "ruff": true,
-    "mypy": true,
-    "ci": ".github\\workflows\\ci.yml"
+    "ruff": 0,
+    "mypy": 0,
+    "ci": ".github/workflows/ci.yml",
+    "ci_jobs": 7,
+    "pre_commit": ".pre-commit-config.yaml",
+    "dependabot": ".github/dependabot.yml",
+    "pr_template": ".github/pull_request_template.md"
+  },
+  "deploy": {
+    "docker_compose": "docker-compose.yml",
+    "docker_services": 26,
+    "docker_resource_limits": true,
+    "k8s": "deploy/k8s/",
+    "monitoring": ["Prometheus ServiceMonitor", "/api/metrics", "/api/health"]
   },
   "skills": [
     {"name": "xhaip-core", "type": "architecture", "trust_level": "T1"},
@@ -48,21 +107,17 @@
     {"name": "xhaip-pediatrics", "type": "guideline", "trust_level": "T1"},
     {"name": "xhaip-masterdata", "type": "guideline", "trust_level": "T1"}
   ],
-  "principles": [
-    "YAML-driven Agent definition (30 lines YAML + pure business logic)",
-    "Engine as independent pip package (haip-core)",
-    "LLM Provider abstraction (1-line config swap)",
-    "Knowledge base SQLite/YAML sync"
+  "sub_projects": [
+    "packages/haip-core/.openharness.json",
+    "packages/haip-hospital/.openharness.json"
   ],
-  "enhanced_modules": {
-    "orthopedics": {"lines": 392, "functions": 9, "features": ["T2 timing engine (8-factor)", "4-dimension complication predictor", "4-stage nursing plan", "4-timepoint followup plan", "fracture classifier", "surgery planner"]},
-    "cardio_risk": {"lines": 153, "functions": 3, "features": ["RCRI scoring", "ECG pattern library (6 patterns)", "Periop MI classification"]},
-    "anesthesia": {"lines": 116, "functions": 4, "features": ["ASA grading", "Difficult airway assessment", "Anticoagulation bridge plan", "Anesthesia plan"]},
-    "cardio_surgery": {"lines": 94, "functions": 3, "features": ["EuroSCORE II", "Anticoagulation plan (warfarin/NOAC)", "Postop management"]},
-    "pediatrics": {"lines": 151, "functions": 3, "features": ["Growth assessment", "Pediatric dosing (8 drugs)", "IMCI decision tree (8 rules)"]},
-    "acute_pain": {"lines": 99, "functions": 3, "features": ["NRS/VAS + neuropathic detection", "PCA dosing (age/renal/liver adjusted)", "Crisis detection (compartment/arterial/nerve)"]},
-    "cancer_pain": {"lines": 92, "functions": 3, "features": ["WHO 3-step ladder", "Opioid safety (OD/DDI/renal/liver)", "Palliative referral"]},
-    "medical_record": {"lines": 115, "functions": 4, "features": ["5 sample patients (P001-P005)", "Lab results query", "Exam reports query", "Patient search"]}
-  },
-  "last_snapshot": "2026-07-09T16:50:00"
+  "metadata": {
+    "created": "2026-07-10",
+    "updated": "2026-07-26",
+    "version_current": "1.2.0",
+    "tool": "OpenHarness v2.1",
+    "maintainer": "xhaip team",
+    "commits_ahead": 45,
+    "last_snapshot": "2026-07-09T16:50:00"
+  }
 }

@@ -1,0 +1,54 @@
+{
+  "version": "2.1",
+  "project": "haip-hospital",
+  "project_name": "HAIP Hospital Configuration v1.2.0",
+  "project_root": "D:\\dst\\projects\\xhaip\\packages\\haip-hospital",
+  "harness_type": "agent-definitions",
+  "description": "58 YAML-driven clinical AI agent definitions, handler modules, clinical knowledge base (70 guidelines, 237 rules), 498 digital patients with provenance",
+  "parent": "xhaip",
+  "agents": {
+    "definitions_dir": "agents/definitions",
+    "count": 58,
+    "schema": "agents/agent-schema.json",
+    "categories": {
+      "core": ["medical-record", "metrics", "pharmacy", "portal"],
+      "surgical": ["orthopedic-surgery", "cardio-risk", "anesthesia-risk", "cardio-surgery", "neurosurgery", "general-surgery"],
+      "medical": ["cardiology", "respiratory", "gastroenterology", "nephrology", "endocrinology", "hematology", "oncology"],
+      "emergency": ["emergency", "icu"],
+      "women_children": ["obgyn", "pediatrics", "neonatology"],
+      "specialty": ["ophthalmology", "ent", "dermatology", "psychiatry", "rehabilitation", "tcm"],
+      "pain": ["pain-hub"],
+      "arch": ["togaf"]
+    }
+  },
+  "modules": {
+    "directory": "modules",
+    "total": 58,
+    "enhanced": ["orthopedics", "pharmacy", "cardio_risk", "anesthesia", "cardio_surgery", "pediatrics", "acute_pain", "cancer_pain", "togaf", "shared"],
+    "stub": 48
+  },
+  "knowledge": {
+    "path": "knowledge",
+    "guidelines": 70,
+    "rules": {"groups": 21, "total": 237},
+    "business_processes": 19,
+    "capabilities": 4,
+    "value_streams": 1,
+    "architecture": 1,
+    "guideline_sources": 2,
+    "data_entities": 1,
+    "roles": 1,
+    "total_assets": 178
+  },
+  "data": {
+    "patients_file": "data/patients.json",
+    "patients_count": 498,
+    "provenance": true,
+    "specialty_fields": true
+  },
+  "metadata": {
+    "created": "2026-07-10",
+    "updated": "2026-07-26",
+    "tool": "OpenHarness v2.1"
+  }
+}

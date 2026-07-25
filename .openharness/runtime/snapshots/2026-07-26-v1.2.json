@@ -1,0 +1,43 @@
+{
+  "version": "1.2.0",
+  "timestamp": "2026-07-26T08:00:00Z",
+  "project": "xhaip",
+  "summary": {
+    "agents": 58,
+    "modules": 25,
+    "tests": 926,
+    "coverage_pct": 75,
+    "guidelines": 70,
+    "rules": 237,
+    "patients": 498,
+    "knowledge_assets": 178,
+    "ci_jobs": 7,
+    "docker_services": 26,
+    "commits": 45
+  },
+  "quality": {
+    "ruff": "0 errors",
+    "mypy": "0 errors",
+    "ci_branch_match": true,
+    "health_endpoint": true,
+    "metrics_endpoint": true,
+    "agent_schema_validation": true,
+    "dependabot": true,
+    "pre_commit_hooks": true,
+    "pr_template": true,
+    "security_policy": true,
+    "codeowners": true
+  },
+  "modules_tested": [
+    "crypto", "hl7v2", "licensing", "tenants", "adapters",
+    "data", "fhir", "tools", "policy", "rules_engine",
+    "auth", "audit", "permission", "guard", "orchestrator",
+    "knowledge", "agent", "a2a", "llm", "loop", "togaf"
+  ],
+  "risk_status": {
+    "blockers": 0,
+    "high": 0,
+    "medium": 6,
+    "mitigated": 11
+  }
+}
