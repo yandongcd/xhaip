@@ -20,7 +20,7 @@ function init(){{
     testEl.innerHTML = '<div style="padding:10px;text-align:center;font-size:12px;color:var(--text2)">加载中: '+PATIENTS.length+' 位患者...</div>';
     setTimeout(function(){{ renderPatientList(); }}, 100);
   }} catch(e) {{ document.getElementById('patient-list').innerHTML = '<div style="color:red;padding:10px">JS Error: '+e.message+'</div>'; }}
-  clickStage(1);
+  switchRole(currentRole);
   document.getElementById('home-stages').textContent = STAGES.length;
   document.getElementById('home-patients').textContent = PATIENTS.length;
   document.getElementById('home-roles').textContent = {roles_count};
@@ -62,6 +62,33 @@ function switchRole(rid){{
     var allowed = stage.role_ids || [];
     el.style.display = (allowed.length === 0 || allowed.indexOf(rid) >= 0) ? 'flex' : 'none';
   }});
+  // 筛选中间栏 stage-content
+  document.querySelectorAll('.stage-content').forEach(function(el){{
+    var idParts = el.id.split('-');
+    var order = parseInt(idParts[idParts.length-1]);
+    var stage = STAGES.find(function(s){{ return s.order === order }});
+    if (!stage) return;
+    var allowed = stage.role_ids || [];
+    el.style.display = (allowed.length === 0 || allowed.indexOf(rid) >= 0) ? 'block' : 'none';
+  }});
+  // 查找当前角色可访问的第一个阶段
+  var firstAccessible = 1;
+  for (var i = 0; i < STAGES.length; i++) {{
+    var allowed = STAGES[i].role_ids || [];
+    if (allowed.length === 0 || allowed.indexOf(rid) >= 0) {{
+      firstAccessible = STAGES[i].order;
+      break;
+    }}
+  }}
+  // 如果当前阶段不可访问，跳转到第一个可访问阶段
+  var currStage = STAGES.find(function(s){{ return s.order === currentStage }});
+  if (currStage) {{
+    var currAllowed = currStage.role_ids || [];
+    if (currAllowed.length > 0 && currAllowed.indexOf(rid) < 0) {{
+      clickStage(firstAccessible);
+      return;
+    }}
+  }}
   // 更新当前阶段计数
   var visibleItems = document.querySelectorAll('.rb-item:not([style*="display: none"])');
   document.getElementById('rb-done-count').textContent = visibleItems.length;
@@ -176,34 +203,38 @@ function renderStageContent(n){{
   if (n===1) content = renderStage1(p,s);
   else if (n===STAGES.length) content = renderLastStage(p,s);
   else content = renderMidStage(p,s,n);
-  el.innerHTML = '<div class="stage-bar s'+n+'" style="width:'+(completedStages[n]?'100':'30')+'%"></div>'+
-    '<div class="stage-hdr"><span class="sh-num">'+n+'</span><h2>'+s.label+'</h2><span class="sh-role">'+s.role+'</span>'+
-    (n<STAGES.length ? '<button class="btn btn-sm btn-outline" onclick="advanceStage()" style="margin-left:auto">下一步 →</button>' : '')+
-    '</div><div class="sh-desc" style="margin-bottom:12px;font-size:var(--fs-sm)">'+s.desc+'</div>'+
+  el.innerHTML = '<div class="stage-bar s'+n+'" style="height:3px;background:var(--accent);border-radius:2px;margin-bottom:20px;width:'+(completedStages[n]?'100':'30')+'%;transition:all .3s"></div>'+
+    '<div class="stage-hdr" style="display:flex;align-items:center;gap:16px;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid var(--border)">'+
+    '<span class="sh-num" style="width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">'+n+'</span>'+
+    '<h2 style="font-size:20px;font-weight:700;color:var(--text);margin:0">'+s.label+'</h2>'+
+    '<span class="sh-role" style="font-size:12px;color:var(--text3);background:var(--bg-subtle);padding:4px 14px;border-radius:var(--radius-full)">'+s.role+'</span>'+
+    (n<STAGES.length ? '<button class="btn btn-sm btn-outline" onclick="advanceStage()" style="margin-left:auto;padding:6px 16px;border:1px solid var(--border);border-radius:var(--radius-full);background:transparent;color:var(--text2);cursor:pointer;font-size:12px;font-family:inherit">下一步 →</button>' : '')+
+    '</div><div class="sh-desc" style="font-size:12px;color:var(--text2);margin-bottom:16px">'+s.desc+'</div>'+
     content+
-    '<div class="fx-nav">'+
-    (n>1 ? '<button class="btn btn-outline" onclick="clickStage('+(n-1)+')">← '+STAGES[n-2].label+'</button>' : '<span></span>')+
-    (n<STAGES.length ? '<button class="btn" onclick="advanceStage()">确认 → '+STAGES[n].label+'</button>' : '<button class="btn btn-success" onclick="showComplete()">✅ 完成全部流程</button>')+
+    '<div class="fx-nav" style="display:flex;justify-content:space-between;margin-top:20px;padding-top:16px;border-top:1px solid var(--border-muted)">'+
+    (n>1 ? '<button class="btn btn-outline" onclick="clickStage('+(n-1)+')" style="padding:8px 20px;border:1px solid var(--border);border-radius:var(--radius-full);background:transparent;color:var(--text);cursor:pointer;font-size:13px;font-family:inherit">← '+STAGES[n-2].label+'</button>' : '<span></span>')+
+    (n<STAGES.length ? '<button class="btn" onclick="advanceStage()" style="padding:8px 20px;border:none;border-radius:var(--radius-full);background:var(--accent);color:#fff;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit">确认 → '+STAGES[n].label+'</button>' : '<button class="btn btn-success" onclick="showComplete()" style="padding:8px 20px;border:none;border-radius:var(--radius-full);background:var(--green);color:#fff;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit">✅ 完成全部流程</button>')+
     '</div>';
 }}
 
 function renderStage1(p,s){{
-  return '<div class="section"><div class="section-title">📋 患者概要</div>'+
-    '<div class="summary-bar"><span>姓名: <strong>'+p.name+'</strong></span> · <span>'+p.age+'岁</span> · <span>'+p.patient_id+'</span> · <span>科室: <span class="tag blue">'+(p.department||DEPT)+'</span></span>'+
-    '<br><span>诊断: <strong>'+p.diagnosis+'</strong></span></div></div>'+
-    '<div class="card"><h3><span class="ch-icon">📖</span> 病史详情</h3>'+
-    '<div class="tabs"><button class="tab-btn active" data-pane="basic" onclick="switchTab(\\'basic\\')">基本信息</button>'+
-    '<button class="tab-btn" data-pane="present" onclick="switchTab(\\'present\\')">现病史</button>'+
-    '<button class="tab-btn" data-pane="labs" onclick="switchTab(\\'labs\\')">检验指标</button></div>'+
-    '<div class="tab-pane active" id="pane-basic"><div style="font-size:13px;line-height:1.8">'+formatDP(p)+'</div></div>'+
-    '<div class="tab-pane" id="pane-present"><div style="font-size:13px;line-height:1.8">'+(p.present||p.scenario||'待录入')+'</div></div>'+
-    '<div class="tab-pane" id="pane-labs"><div style="font-size:13px;line-height:1.8">'+formatLabs(p)+'</div></div>'+
+  return '<div class="section" style="margin-bottom:20px"><div class="section-title" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px">📋 患者概要</div>'+
+    '<div class="summary-bar" style="background:var(--bg-overlay);border-radius:8px;padding:16px 20px;font-size:14px;line-height:2;color:var(--text)"><span>姓名: <strong style="color:var(--accent)">'+p.name+'</strong></span> · <span>'+p.age+'岁</span> · <span>'+p.patient_id+'</span> · <span>科室: <span class="tag blue" style="display:inline-block;padding:2px 8px;border-radius:var(--radius-full);font-size:12px;font-weight:500;background:var(--blue-bg);color:var(--blue)">'+(p.department||DEPT)+'</span></span>'+
+    '<br><span>诊断: <strong style="color:var(--accent)">'+p.diagnosis+'</strong></span></div></div>'+
+    '<div class="card" style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:24px;margin-bottom:16px"><h3 style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px"><span class="ch-icon">📖</span> 病史详情</h3>'+
+    '<div class="tabs" style="display:flex;gap:0;margin-bottom:0;border-bottom:2px solid var(--border)">'+
+    '<button class="tab-btn active" data-pane="basic" onclick="switchTab(\\'basic\\')" style="padding:8px 20px;border:none;border-bottom:3px solid var(--accent);background:transparent;color:var(--accent);font-weight:700;font-size:14px;cursor:pointer;font-family:inherit">基本信息</button>'+
+    '<button class="tab-btn" data-pane="present" onclick="switchTab(\\'present\\')" style="padding:8px 20px;border:none;border-bottom:3px solid transparent;background:transparent;color:var(--text3);font-weight:500;font-size:14px;cursor:pointer;font-family:inherit">现病史</button>'+
+    '<button class="tab-btn" data-pane="labs" onclick="switchTab(\\'labs\\')" style="padding:8px 20px;border:none;border-bottom:3px solid transparent;background:transparent;color:var(--text3);font-weight:500;font-size:14px;cursor:pointer;font-family:inherit">检验指标</button></div>'+
+    '<div class="tab-pane active" id="pane-basic" style="display:block;padding:20px 0 0 0"><div style="font-size:13px;line-height:1.8">'+formatDP(p)+'</div></div>'+
+    '<div class="tab-pane" id="pane-present" style="display:none;padding:20px 0 0 0"><div style="font-size:13px;line-height:1.8">'+(p.present||p.scenario||'待录入')+'</div></div>'+
+    '<div class="tab-pane" id="pane-labs" style="display:none;padding:20px 0 0 0"><div style="font-size:13px;line-height:1.8">'+formatLabs(p)+'</div></div>'+
     '</div>'+
-    '<div class="section"><div class="section-title">🚨 分诊判定</div>'+
-    '<div class="triage-card '+(p.urgency==='high'?'I':'III')+'">'+
-    '<div class="triage-main '+(p.urgency==='high'?'tri-i':'tri-iii')+'">'+(p.urgency==='high'?'⚠ 紧急处理':'✓ 常规处理')+'</div>'+
-    '<div class="triage-sub">'+(p.urgency==='high'?'需优先处理，触发高危流程':'按标准流程依次推进')+'</div></div></div>'+
-    '<div class="alert '+(p.urgency==='high'?'red':'blue')+'">'+(p.urgency==='high'?'⚠ 该患者已触发紧急流程，请优先完成登记与分诊。':'ℹ 患者信息完整，可进入诊断与分型阶段。')+'</div>';
+    '<div class="section" style="margin-bottom:20px"><div class="section-title" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px">🚨 分诊判定</div>'+
+    '<div class="triage-card '+(p.urgency==='high'?'I':'III')+'" style="border-radius:10px;padding:16px 20px;margin-top:12px;border-left:4px solid '+(p.urgency==='high'?'var(--red)':'var(--green)')+';background:var(--bg-elevated)">'+
+    '<div class="triage-main '+(p.urgency==='high'?'tri-i':'tri-iii')+'" style="font-size:18px;font-weight:700;color:'+(p.urgency==='high'?'var(--red)':'var(--green)')+'">'+(p.urgency==='high'?'⚠ 紧急处理':'✓ 常规处理')+'</div>'+
+    '<div class="triage-sub" style="font-size:13px;color:var(--text2);margin-top:4px">'+(p.urgency==='high'?'需优先处理，触发高危流程':'按标准流程依次推进')+'</div></div></div>'+
+    '<div class="alert '+(p.urgency==='high'?'red':'blue')+'" style="border-radius:8px;padding:12px 16px;font-size:13px;line-height:1.6;margin-top:12px;background:'+(p.urgency==='high'?'var(--red-bg)':'var(--blue-bg)')+';border:1px solid '+(p.urgency==='high'?'rgba(220,38,38,.2)':'rgba(8,145,178,.2)')+';color:'+(p.urgency==='high'?'var(--red)':'var(--accent)')+'">'+'ℹ 患者信息完整，可进入诊断与分型阶段。'+'</div>';
 }}
 
 function renderMidStage(p,s,n){{
@@ -251,24 +282,34 @@ function renderLastStage(p,s){{
 function formatDP(p){{
   var html = '';
   var fields = {{patient_id:'患者ID',name:'姓名',age:'年龄',gender:'性别',diagnosis:'诊断',department:'科室',scenario:'临床场景'}};
-  for (var k in fields){{ if (p[k]!==undefined && p[k]!==null) html += '<div class="dp"><span class="dpl">'+fields[k]+'</span><span class="dpv">'+p[k]+'</span></div>' }}
+  for (var k in fields){{ if (p[k]!==undefined && p[k]!==null) html += '<div style="display:flex;padding:5px 0;border-bottom:1px solid var(--border-muted);line-height:1.8"><span style="width:90px;flex-shrink:0;color:var(--text3);font-size:12px;font-weight:500">'+fields[k]+'</span><span style="color:var(--text);font-size:13px;font-weight:500">'+p[k]+'</span></div>' }}
   return html;
 }}
 
 function formatLabs(p){{
-  if (!p.lab_results || Object.keys(p.lab_results).length===0) return '<div class="empty"><div class="e-icon">🔬</div><div class="e-text">暂无检验数据</div></div>';
+  if (!p.lab_results || Object.keys(p.lab_results).length===0) return '<div class="empty" style="text-align:center;padding:60px 20px;color:var(--text3)"><div class="e-icon">🔬</div><div class="e-text" style="font-size:14px">暂无检验数据</div></div>';
   var html = '';
-  for (var k in p.lab_results){{ html += '<div class="dp"><span class="dpl">'+k+'</span><span class="dpv">'+p.lab_results[k]+'</span></div>' }}
+  for (var k in p.lab_results){{ html += '<div style="display:flex;padding:5px 0;border-bottom:1px solid var(--border-muted);line-height:1.8"><span style="width:90px;flex-shrink:0;color:var(--text3);font-size:12px;font-weight:500">'+k+'</span><span style="color:var(--text);font-size:13px;font-weight:500">'+p.lab_results[k]+'</span></div>' }}
   return html;
 }}
 
 function switchTab(pane){{
-  document.querySelectorAll('.tab-btn').forEach(function(e){{ e.classList.remove('active') }});
+  document.querySelectorAll('.tab-btn').forEach(function(e){{
+    e.classList.remove('active');
+    e.style.borderBottomColor = 'transparent';
+    e.style.color = 'var(--text3)';
+    e.style.fontWeight = '500';
+  }});
   var btn = document.querySelector('.tab-btn[data-pane="'+pane+'"]');
-  if (btn) btn.classList.add('active');
-  document.querySelectorAll('.tab-pane').forEach(function(e){{ e.classList.remove('active') }});
+  if (btn) {{
+    btn.classList.add('active');
+    btn.style.borderBottomColor = 'var(--accent)';
+    btn.style.color = 'var(--accent)';
+    btn.style.fontWeight = '700';
+  }}
+  document.querySelectorAll('.tab-pane').forEach(function(e){{ e.style.display = 'none' }});
   var p = document.getElementById('pane-'+pane);
-  if (p) p.classList.add('active');
+  if (p) p.style.display = 'block';
 }}
 
 function showToast(msg){{

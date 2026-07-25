@@ -58,7 +58,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 
 /* ── 3-Column Layout ── */
 .app{display:flex;flex:1;min-height:0}
-  .leftbar{width:260px;flex-shrink:0;border-right:1px solid var(--border-muted);background:var(--bg-overlay);display:flex;flex-direction:column;overflow:hidden}
+  .leftbar{width:195px;flex-shrink:0;border-right:1px solid var(--border-muted);background:var(--bg-overlay);display:flex;flex-direction:column;overflow:hidden}
 .lb-search{padding:10px 12px;border-bottom:1px solid var(--border-muted)}
 .lb-search input{width:100%;padding:6px 10px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-full);font-size:12px;outline:none;font-family:inherit;color:var(--text)}
 .lb-search input:focus{border-color:var(--blue)}

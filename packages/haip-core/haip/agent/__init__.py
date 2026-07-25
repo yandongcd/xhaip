@@ -59,12 +59,12 @@ class StageDef:
 
 # 默认诊疗阶段 — 按 Agent 类型分组
 _DEFAULT_STAGES_BUSINESS = [
-    {"order": 1, "id": "reg", "label": "登记与初评", "desc": "患者基本信息采集、病史录入、初步评估、分诊判定", "role": "分诊护士 / 接诊医师"},
-    {"order": 2, "id": "diag", "label": "诊断与分型", "desc": "明确诊断、分型分级、鉴别诊断、辅助检查", "role": "主治医师"},
-    {"order": 3, "id": "assess", "label": "综合评估", "desc": "多维度评估（合并症/检验/影像/风险评分/多学科会诊）", "role": "主治医师 / 多学科"},
-    {"order": 4, "id": "plan", "label": "方案制定", "desc": "制定个性化治疗方案、用药方案、手术计划", "role": "主治医师 / 科室主任"},
-    {"order": 5, "id": "exec", "label": "治疗执行", "desc": "执行治疗方案、监测并发症、调整方案", "role": "执行团队"},
-    {"order": 6, "id": "follow", "label": "随访与康复", "desc": "出院随访计划、康复训练、长期管理", "role": "随访护士 / 康复师"},
+    {"order": 1, "id": "reg", "label": "登记与初评", "desc": "患者基本信息采集、病史录入、初步评估、分诊判定", "role": "分诊护士 / 接诊医师", "role_ids": ["attending", "nurse"]},
+    {"order": 2, "id": "diag", "label": "诊断与分型", "desc": "明确诊断、分型分级、鉴别诊断、辅助检查", "role": "主治医师", "role_ids": ["attending"]},
+    {"order": 3, "id": "assess", "label": "综合评估", "desc": "多维度评估（合并症/检验/影像/风险评分/多学科会诊）", "role": "主治医师 / 多学科", "role_ids": ["attending"]},
+    {"order": 4, "id": "plan", "label": "方案制定", "desc": "制定个性化治疗方案、用药方案、手术计划", "role": "主治医师 / 科主任", "role_ids": ["attending"]},
+    {"order": 5, "id": "exec", "label": "治疗执行", "desc": "执行治疗方案、监测并发症、调整方案", "role": "执行团队", "role_ids": ["attending", "nurse"]},
+    {"order": 6, "id": "follow", "label": "随访与康复", "desc": "出院随访计划、康复训练、长期管理", "role": "随访护士 / 康复师", "role_ids": ["attending", "nurse"]},
 ]
 _DEFAULT_STAGES_SPECIALIST = [
     {"order": 1, "id": "evaluate", "label": "专项评估", "desc": "专科评估指标采集、风险评估、量表评分", "role": "专科医师"},

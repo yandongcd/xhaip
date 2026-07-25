@@ -152,3 +152,41 @@ ui:
     - {category: TPN配比, tools: [calculate_tpn]}
     - {category: 处方审核, tools: [review_prescription]}
     - {category: 药品查询, tools: [list_medications]}
+
+stages:
+  - order: 1
+    id: reception
+    label: 接诊登记
+    desc: 患者基本信息采集、病史录入、过敏史筛查
+    role: 药师 / 主治医师
+    role_ids: [pharmacist, attending]
+  - order: 2
+    id: medication-review
+    label: 用药评估
+    desc: 处方审核、药物交互检查、PONV风险评分、营养风险筛查
+    role: 临床药师 / 审方药师 / 药师 / 主治医师 / 麻醉医师
+    role_ids: [clinical_pharmacist, review_pharmacist, pharmacist, attending, anesthesiologist]
+  - order: 3
+    id: comprehensive-assessment
+    label: 综合评估
+    desc: NRS2002营养评估、TPN配比计算、止吐方案制定、抗凝桥接评估
+    role: 临床药师 / 药师 / 主治医师 / 营养师 / 麻醉医师
+    role_ids: [clinical_pharmacist, pharmacist, attending, dietitian, anesthesiologist]
+  - order: 4
+    id: plan-formulation
+    label: 方案制定
+    desc: 个体化用药方案、营养支持方案、止吐预防方案、围术期用药管理
+    role: 审方药师 / 药师 / 主治医师 / 营养师 / 麻醉医师
+    role_ids: [review_pharmacist, pharmacist, attending, dietitian, anesthesiologist]
+  - order: 5
+    id: treatment-execution
+    label: 执行配药
+    desc: TPN配制执行、处方调配、静配操作、用药监测
+    role: 静配药师 / 药师 / 主治医师
+    role_ids: [iv_compounding_pharmacist, pharmacist, attending]
+  - order: 6
+    id: followup-monitoring
+    label: 随访监测
+    desc: 用药依从性随访、不良反应监测、营养状态复查、疗效评估
+    role: 审方药师 / 主治医师 / 营养师
+    role_ids: [review_pharmacist, attending, dietitian]
