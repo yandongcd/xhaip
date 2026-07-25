@@ -197,6 +197,51 @@ app.include_router(tenant_router)
 from haip.licensing.api import license_router  # noqa: E402
 app.include_router(license_router)
 
+# ---- Patient API (async loading) ----
+@app.get("/api/patients/{agent_name}")
+def get_patients(agent_name: str, limit: int = 50, offset: int = 0):
+    """Async patient loading with pagination."""
+    import json
+    from pathlib import Path as _P
+    pfile = _P(__file__).resolve().parent.parent.parent.parent / "packages/haip-hospital/data/patients.json"
+    with open(pfile, encoding="utf-8") as f:
+        data = json.load(f)
+
+    patients = data.get("patients", [])
+    # Filter compatible patients
+    compatible = []
+    for p in patients:
+        compat = p.get("compatible_agents", [])
+        dept = p.get("department", "")
+        if not compat or agent_name in compat or \
+           agent_name.replace("-","") in dept.replace(" ","").lower():
+            compatible.append({
+                "patient_id": p.get("patient_id", ""),
+                "name": p.get("name", p.get("patient_name", "")),
+                "age": p.get("age", p.get("age_years", "")),
+                "gender": p.get("gender", p.get("sex", "")),
+                "diagnosis": p.get("diagnosis", p.get("primary_diagnosis", "")),
+                "department": dept,
+                "scenario": p.get("scenario", p.get("clinical_scenario", "")),
+                "urgency": p.get("urgency", "normal"),
+                "lab_results": p.get("lab_results", {}),
+                "present": p.get("present", p.get("history_of_present_illness", "")),
+                "followup": p.get("followup", ""),
+                "plan": p.get("plan", ""),
+                "execution": p.get("execution", ""),
+                "assessments": p.get("assessments", []),
+            })
+
+    total = len(compatible)
+    page = compatible[offset:offset + limit]
+    return {"total": total, "patients": page, "offset": offset, "limit": limit}
+
+# ---- ClinicalHarness 审计 ----
+@app.get("/api/harness")
+def harness_report():
+    from haip.clinical_harness import ClinicalHarness
+    return ClinicalHarness().run()
+
 # ---- Health Check ----
 @app.get("/api/health")
 def health_check():
