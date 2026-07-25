@@ -2,7 +2,6 @@
 # 按科室分组部署，depend 关系自动处理启动顺序
 # 启动子集: docker compose --profile core up
 # 启动全部: docker compose --profile full up
-version: "3.8"
 
 x-agent: &agent-base
   build:

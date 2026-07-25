@@ -2,9 +2,9 @@ name: xhaip CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   validate:
@@ -89,4 +89,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Docker compose build check
-        run: docker compose -f docker-compose.yml build --no-cache 2>&1 || true
+        run: docker compose -f docker-compose.yml build --no-cache
