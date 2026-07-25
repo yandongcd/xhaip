@@ -56,8 +56,8 @@ async function runGuard(tool) {
 function addHistory(tool, status) {
   HISTORY.unshift({tool:tool, time:new Date().toLocaleTimeString('zh-CN'), status:status});
   if (HISTORY.length > 10) HISTORY.pop();
-  var color = status === 'ok' ? 'var(--green)' : 'var(--danger)';
   document.getElementById('history-list').innerHTML = HISTORY.map(function(e) {
+    var color = e.status === 'ok' ? 'var(--green)' : 'var(--danger)';
     return '<div class="history-item"><span class="hist-tool">'+e.tool+'</span><span class="hist-status" style="color:'+color+'">'+e.status+'</span><span class="hist-time">'+e.time+'</span></div>';
   }).join('');
 }
