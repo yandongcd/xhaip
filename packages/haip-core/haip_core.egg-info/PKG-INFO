@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: haip-core
-Version: 1.0.0
+Version: 1.2.0
 Summary: HAIP 核心引擎 — LLM Provider / A2A / Orchestrator / Guard / 知识库
 Requires-Python: >=3.10
 Requires-Dist: pydantic>=2.0
@@ -10,8 +10,14 @@ Requires-Dist: typer>=0.12
 Requires-Dist: rich>=13.0
 Requires-Dist: fastapi>=0.100
 Requires-Dist: uvicorn>=0.23
+Requires-Dist: bcrypt>=4.0
+Requires-Dist: PyJWT>=2.0
+Requires-Dist: prometheus-client>=0.19
+Requires-Dist: sqlalchemy[asyncio]>=2.0
+Requires-Dist: structlog>=24.0
 Provides-Extra: dev
 Requires-Dist: pytest>=8.0; extra == "dev"
 Requires-Dist: pytest-cov>=5.0; extra == "dev"
 Requires-Dist: ruff>=0.5; extra == "dev"
 Requires-Dist: mypy>=1.10; extra == "dev"
+Requires-Dist: jsonschema>=4.20; extra == "dev"
