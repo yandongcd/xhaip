@@ -286,12 +286,37 @@ function renderSpecialistStage1(p,s) {
 }
 
 function renderMidStage(p,s,n){
+  var midIndex = n - 2; // 0-based among middle stages (skip first and last)
+  var midCount = STAGES.length - 2;
+  var stageFraction = midCount > 0 ? midIndex / midCount : 0.5; // 0~1, position in middle stages
+
   var items = [];
   if (p.assessments && p.assessments.length) items = p.assessments;
   else if (p.tools && p.tools.length) items = p.tools;
-  else if (AGENT_TYPE === 'master_data') items = ['数据源接入','数据清洗与标准化','质量校验','统计指标计算','趋势对比分析','异常模式检测'];
-  else if (AGENT_TYPE === 'specialist') items = ['专业指标采集','风险评估计算','干预方案生成','效果监测评估'];
-  else items = ['检验结果复核','影像资料评估','风险评分计算','合并症管理','用药方案确认'];
+  else if (AGENT_TYPE === 'master_data') {
+    var masterStages = [
+      ['数据源接入','数据格式校验','字段映射配置'],
+      ['数据清洗与标准化','缺失值处理','异常值标记'],
+      ['统计指标计算','趋势对比分析','异常模式检测']
+    ];
+    items = masterStages[Math.floor(stageFraction * masterStages.length)] || masterStages[masterStages.length-1];
+  } else if (AGENT_TYPE === 'specialist') {
+    var specStages = [
+      ['专业指标采集','数据质量评估','参考范围比对'],
+      ['风险评估计算','风险分层','干预阈值判定'],
+      ['干预方案生成','方案优先级排序','效果预估']
+    ];
+    items = specStages[Math.floor(stageFraction * specStages.length)] || specStages[specStages.length-1];
+  } else {
+    var businessStages = [
+      ['检验结果复核','影像资料调阅','生命体征评估'],
+      ['风险评分计算','合并症影响评估','多学科会诊协调'],
+      ['治疗方案制定','用药方案确认','手术风险评估'],
+      ['治疗执行监控','并发症预防','疗效初步评估']
+    ];
+    items = businessStages[Math.floor(stageFraction * businessStages.length)] || businessStages[businessStages.length-1];
+  }
+
   var done = completedStages[n] ? items.length : Math.floor(items.length*0.5);
   var pending = items.length - done;
   var html = '<div class="kpis">';
