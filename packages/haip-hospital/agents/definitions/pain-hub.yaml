@@ -1,75 +1,92 @@
 name: pain-hub
 cn_name: 疼痛专病智能体门户
-version: "1.0.0"
+version: 1.0.0
 type: business
 department: 疼痛科
 port: 8840
-aliases: [疼痛中枢, 疼痛门户, pain-hub]
-
+aliases:
+- 疼痛中枢
+- 疼痛门户
+- pain-hub
 prompt:
-  system: |
-    你是南方医院疼痛专病管理中枢，根据患者疼痛类型/阶段自动路由到对应的疼痛Sub-agent。
+  system: '你是南方医院疼痛专病管理中枢，根据患者疼痛类型/阶段自动路由到对应的疼痛Sub-agent。
+
     支持急性疼痛、慢性疼痛、癌性疼痛、介入疼痛和疼痛康复五种管理路径。
+
+    '
   temperature: 0.3
-
 sub_agents:
-  - acute-pain
-  - chronic-pain
-  - cancer-pain
-  - interventional-pain
-  - pain-rehab
-
+- acute-pain
+- chronic-pain
+- cancer-pain
+- interventional-pain
+- pain-rehab
 tools:
-  - name: triage
-    description: 根据疼痛类型和严重程度分诊到对应Sub-agent
-    handler: pain_hub.triage
-    input: {pain_type: str, vas_score: int, description: str}
-
-  - name: aggregate
-    description: 聚合多个Sub-agent的评估结果
-    handler: pain_hub.merge
-    input: {results: list}
-
+- name: triage
+  description: 根据疼痛类型和严重程度分诊到对应Sub-agent
+  handler: pain_hub.triage
+  input:
+    pain_type: str
+    vas_score: int
+    description: str
+- name: aggregate
+  description: 聚合多个Sub-agent的评估结果
+  handler: pain_hub.merge
+  input:
+    results: list
 ui:
   template: chat-with-role-switcher
   roles:
-    - {id: attending, label: 主治医师, default: true}
-    - {id: head_nurse, label: 护士长}
-
+  - id: attending
+    label: 主治医师
+    default: true
+  - id: head_nurse
+    label: 护士长
 stages:
-  - order: 1
-    id: triage
-    label: 疼痛分诊
-    desc: "VAS/NRS评分 + 疼痛类型识别 + 路由到Sub-agent"
-    role: "主治医师"
-    role_ids: [attending]
-  - order: 2
-    id: acute
-    label: 急性评估
-    desc: "A2A→acute-pain: 急性疼痛病因诊断 + 镇痛方案"
-    role: "主治医师"
-    role_ids: [attending]
-  - order: 3
-    id: chronic
-    label: 慢痛管理
-    desc: "A2A→chronic-pain: 慢性疼痛综合评估 + 多模式镇痛"
-    role: "主治医师"
-    role_ids: [attending]
-  - order: 4
-    id: cancer
-    label: 癌痛管理
-    desc: "A2A→cancer-pain: WHO三阶梯镇痛 + 爆发痛处置"
-    role: "主治医师"
-    role_ids: [attending]
-  - order: 5
-    id: intervention
-    label: 介入治疗
-    desc: "A2A→interventional-pain: 神经阻滞/射频/脊髓电刺激"
-    role: "主治医师"
-    role_ids: [attending]
-  - order: 6
-    id: rehab
-    label: 康复随访
-    desc: "A2A→pain-rehab: 功能恢复 + 心理支持 + 长期随访"
-    role: "主治医师 / 护士长"
-    role_ids: [attending, head_nurse]
+- order: 1
+  id: triage
+  label: 疼痛分诊
+  desc: VAS/NRS评分 + 疼痛类型识别 + 路由到Sub-agent
+  role: 主治医师
+  role_ids:
+  - attending
+- order: 2
+  id: acute
+  label: 急性评估
+  desc: 'A2A→acute-pain: 急性疼痛病因诊断 + 镇痛方案'
+  role: 主治医师
+  role_ids:
+  - attending
+- order: 3
+  id: chronic
+  label: 慢痛管理
+  desc: 'A2A→chronic-pain: 慢性疼痛综合评估 + 多模式镇痛'
+  role: 主治医师
+  role_ids:
+  - attending
+- order: 4
+  id: cancer
+  label: 癌痛管理
+  desc: 'A2A→cancer-pain: WHO三阶梯镇痛 + 爆发痛处置'
+  role: 主治医师
+  role_ids:
+  - attending
+- order: 5
+  id: intervention
+  label: 介入治疗
+  desc: 'A2A→interventional-pain: 神经阻滞/射频/脊髓电刺激'
+  role: 主治医师
+  role_ids:
+  - attending
+- order: 6
+  id: rehab
+  label: 康复随访
+  desc: 'A2A→pain-rehab: 功能恢复 + 心理支持 + 长期随访'
+  role: 主治医师 / 护士长
+  role_ids:
+  - attending
+  - head_nurse
+guard:
+  triggers:
+  - 诊断决策
+  - 治疗方案

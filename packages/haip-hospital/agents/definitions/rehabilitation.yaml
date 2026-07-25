@@ -76,3 +76,7 @@ stages:
   - attending
   - therapist
   - nurse
+guard:
+  triggers:
+  - 诊断决策
+  - 治疗方案
