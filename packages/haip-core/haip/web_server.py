@@ -242,6 +242,12 @@ def harness_report():
     from haip.clinical_harness import ClinicalHarness
     return ClinicalHarness().run()
 
+# ---- MetaHarness 五能力统一自检 ----
+@app.get("/api/meta-harness")
+def meta_harness_report():
+    from haip.meta_harness import get_meta_harness
+    return get_meta_harness().run_full_cycle()
+
 # ---- Autonomous Decision ----
 @app.post("/api/decide/{agent_name}")
 async def decide(agent_name: str, request: Request):

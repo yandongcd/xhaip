@@ -61,7 +61,7 @@ class LLMProvider(ABC):
             return DeepSeekProvider(
                 api_key=config.get("api_key", ""),
                 model=config.get("model", "deepseek-chat"),
-                base_url=config.get("base_url", "https://api.deepseek.com"),
+                base_url=config.get("base_url") or config.get("api_base", "https://api.deepseek.com"),
             )
         if provider_name == "mock":
             from haip.llm.mock import MockProvider
