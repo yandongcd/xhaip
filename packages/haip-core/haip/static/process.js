@@ -244,16 +244,18 @@ function renderStage1(p,s){
 
 function renderMidStage(p,s,n){
   var items = [];
-  if (p.assessments) items = p.assessments;
-  else if (p.tools) items = p.tools;
+  if (p.assessments && p.assessments.length) items = p.assessments;
+  else if (p.tools && p.tools.length) items = p.tools;
+  else if (AGENT_TYPE === 'master_data') items = ['数据源接入','数据清洗与标准化','质量校验','统计指标计算','趋势对比分析','异常模式检测'];
+  else if (AGENT_TYPE === 'specialist') items = ['专业指标采集','风险评估计算','干预方案生成','效果监测评估'];
   else items = ['检验结果复核','影像资料评估','风险评分计算','合并症管理','用药方案确认'];
   var done = completedStages[n] ? items.length : Math.floor(items.length*0.5);
   var pending = items.length - done;
   var html = '<div class="kpis">';
-  html += '<div class="kpi"><span class="val blue">'+items.length+'</span><span class="lbl">评估项</span></div>';
+  html += '<div class="kpi"><span class="val blue">'+items.length+'</span><span class="lbl">检查项</span></div>';
   html += '<div class="kpi"><span class="val '+(done===items.length?'green':'blue')+'">'+done+'</span><span class="lbl">已完成</span></div>';
   html += '<div class="kpi"><span class="val '+(pending>0?'amber':'green')+'">'+pending+'</span><span class="lbl">待完成</span></div>';
-  html += '<div class="kpi"><span class="val blue">'+(done===items.length?'100':Math.round(done/items.length*100))+'%</span><span class="lbl">完成率</span></div>';
+  html += '<div class="kpi"><span class="val blue">'+(items.length>0?Math.round(done/items.length*100):0)+'%</span><span class="lbl">完成率</span></div>';
   html += '</div>';
   html += '<div class="cl-section"><div class="cl-section-title">'+s.label+' — 检查列表</div>';
   items.forEach(function(item,i){
