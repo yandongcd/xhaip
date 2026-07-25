@@ -1,18 +1,12 @@
-"""诊疗流程 UI 渲染器 — 动态阶段 + 角色切换 + 数字病人 (Gold Standard Design System).
+"""诊疗流程 UI 渲染器 — 动态阶段 + 角色切换 + 数字病人.
 
-每个 Agent 通过 YAML 定义 workflows / roles / stages，
-CSS 和 JS 已抽取至 ui_process_css.py / ui_process_js.py。
+CSS 和 JS 已迁移至 haip/static/ 独立文件，不再嵌入 Python。
 """
 
 from __future__ import annotations
 
 import json
-
-from haip.ui_process_css import PROCESS_CSS
-from haip.ui_process_js import PROCESS_JS
-
-STAGE_COLORS = ["#0969da", "#1a7f37", "#8b6914", "#cf222e", "#6e5494", "#0a84ff",
-                "#1a7f37", "#cf222e", "#0969da"]
+from pathlib import Path
 
 
 def render_process_ui(
@@ -25,18 +19,6 @@ def render_process_ui(
     guard_triggers: list[str] | None = None,
     depends_on: list[dict] | None = None,
 ) -> str:
-    """渲染诊疗流程 HTML — Core.
-
-    Args:
-        name: Agent 技术名 (e.g. orthopedic-surgery)
-        cn_name: 中文名 (e.g. 创伤骨科智能体)
-        department: 科室名
-        agent_type: business / specialist / master_data
-        roles: 角色列表 [{"id":"attending","label":"主治医师","icon":"🩺"}, ...]
-        stages: 阶段列表 [{"order":1,"id":"reg","label":"登记与初评","desc":"...","role":"主治"}, ...]
-        guard_triggers: 高危触发标签
-        depends_on: 依赖的其他 Agent 列表
-    """
     if roles is None:
         roles = []
     if stages is None:
@@ -45,8 +27,6 @@ def render_process_ui(
         guard_triggers = []
 
     patients = _load_patients(name)
-    stages_json = json.dumps(stages, ensure_ascii=False)
-    patients_json = json.dumps(patients, ensure_ascii=False)
 
     # ── 角色 Pill HTML ──
     role_html = ""
@@ -93,19 +73,20 @@ def render_process_ui(
             f'<div style="font-size:10px;color:var(--text3);margin-top:4px">{deps}</div></div>'
         )
 
-    # Resolve JS variables (extracted to ui_process_js.py, needs format)
-    import json as _json
-    resolved_js = PROCESS_JS.format(
-        patients_json=patients_json,
-        stages_json=stages_json,
-        guard_triggers_json=_json.dumps(guard_triggers, ensure_ascii=False),
-        depends_on_json=_json.dumps(depends_on or [], ensure_ascii=False),
-        name=name, cn_name=cn_name, agent_type=agent_type,
-        department=department or '—',
-        default_role_id=roles[0]['id'] if roles else 'attending',
-        roles_count=str(len(roles)),
-        stages_count=str(len(stages)),
-    )
+    # ── 数据注入 (JSON → JS 全局变量) ──
+    xhaip_data = json.dumps({
+        "patients": patients,
+        "stages": stages,
+        "guard_triggers": guard_triggers,
+        "depends_on": depends_on or [],
+        "name": name,
+        "cn_name": cn_name,
+        "agent_type": agent_type,
+        "department": department or "—",
+        "default_role_id": roles[0]["id"] if roles else "attending",
+        "roles_count": len(roles),
+        "stages_count": len(stages),
+    }, ensure_ascii=False)
 
     return f"""<!DOCTYPE html>
 <html lang="zh-CN">
@@ -113,9 +94,7 @@ def render_process_ui(
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>{cn_name} · 诊疗流程 — HAIP</title>
-<style>
-{PROCESS_CSS}
-</style>
+<link rel="stylesheet" href="/static/process.css">
 </head>
 <body>
 
@@ -123,11 +102,11 @@ def render_process_ui(
 <div class="menu-overlay" id="menu-overlay" onclick="closeMenu()"></div>
 <div class="menu-panel" id="menu-panel">
   <div class="menu-header">
-    <button class="close-btn" onclick="closeMenu()">&times;</button>
-    <h3 style="font-size:14px;font-weight:600">{department or cn_name}</h3>
+    <button class="close-btn" onclick="closeMenu()">×</button>
+    <span style="font-weight:600;font-size:14px">{cn_name}</span>
   </div>
   <div class="menu-items">
-    <button class="menu-item active" onclick="switchToPage('home')"><span class="mi-icon">🏠</span> 首页</button>
+    <button class="menu-item" onclick="switchToPage('home')"><span class="mi-icon">🏠</span> 首页</button>
     <button class="menu-item" onclick="switchToPage('haip-instance')"><span class="mi-icon">🔄</span> HAIP 实例 — 多智能体协同</button>
     <button class="menu-item" onclick="switchToPage('guidelines')"><span class="mi-icon">📚</span> 指南资产</button>
     <div class="menu-divider"></div>
@@ -137,21 +116,26 @@ def render_process_ui(
 
 <!-- ─── Header ─── -->
 <div class="header">
-  <div class="header-logo" onclick="toggleMenu()">{department or '🏥'} <span>· HAIP</span></div>
-  <div class="header-role" id="role-bar">
-    {role_html}
+  <div class="header-logo" onclick="toggleMenu()">
+    <span style="font-size:20px">🏥</span> {cn_name} · HAIP
+  </div>
+  <div class="header-role">
+{role_html}
   </div>
   <div class="header-patient" id="header-patient">
     <span class="hp-name" id="hp-name"></span>
-    <span class="hp-badge" id="hp-stage"></span>
+    <span class="hp-badge" id="hp-badge"></span>
   </div>
 </div>
 
 <!-- ─── 3-Column Layout ─── -->
 <div class="app">
+  <!-- Left: Patient List -->
   <div class="leftbar">
-    <div class="lb-search"><input type="text" id="patient-search" placeholder="搜索患者..." oninput="searchPatients()"></div>
-    <div class="lb-header">数字病人 · {department or cn_name}</div>
+    <div class="lb-search">
+      <input type="text" placeholder="搜索患者..." oninput="searchPatients()" id="patient-search">
+    </div>
+    <div class="lb-header">数字病人 · {cn_name}</div>
     <div class="patient-list" id="patient-list"></div>
     <div class="lb-footer">共 <strong id="lb-count">0</strong> 位患者</div>
   </div>
@@ -238,17 +222,19 @@ def render_process_ui(
 <!-- ─── Toast ─── -->
 <div class="toast" id="toast"></div>
 
-<script>
-{resolved_js}
+<!-- ─── Data Injection ─── -->
+<script type="application/json" id="xhaip-data">
+{xhaip_data}
 </script>
+
+<!-- ─── Logic ─── -->
+<script src="/static/process.js"></script>
 </body>
 </html>"""
 
 
 def _load_patients(agent_name: str) -> list[dict]:
-    """从 patients.json 加载与给定 agent 兼容的患者数据。"""
     from haip.patients import load_patients
-
     matched = load_patients(agent_name, limit=30, only_compatible=True)
     if matched:
         return _normalize_patients(matched)
@@ -256,43 +242,31 @@ def _load_patients(agent_name: str) -> list[dict]:
 
 
 def _normalize_patients(patients: list[dict]) -> list[dict]:
-    """标准化患者数据字段名，确保模板 JS 能正确消费。"""
-    out = []
+    result = []
     for p in patients[:30]:
-        age_val = p.get("age", 0) or p.get("age_months", 0)
-        out.append({
-            "patient_id": p.get("patient_id", ""),
-            "name": p.get("name", "未知"),
-            "age": age_val,
-            "gender": p.get("gender", ""),
-            "diagnosis": p.get("diagnosis", ""),
-            "department": p.get("department", ""),
-            "scenario": p.get("scenario", ""),
-            "lab_results": p.get("lab_results", {}),
-            "present": p.get("scenario", ""),
+        result.append({
+            "patient_id": p.get("patient_id", p.get("id", "")),
+            "name": p.get("name", p.get("patient_name", "")),
+            "age": p.get("age", p.get("age_years", "")),
+            "gender": p.get("gender", p.get("sex", "")),
+            "diagnosis": p.get("diagnosis", p.get("primary_diagnosis", "")),
+            "department": p.get("department", p.get("dept", "")),
+            "scenario": p.get("scenario", p.get("clinical_scenario", "")),
             "urgency": p.get("urgency", "normal"),
-            "assessments": p.get("assessments", []),
+            "lab_results": p.get("lab_results", {}),
+            "present": p.get("present", p.get("history_of_present_illness", "")),
             "plan": p.get("plan", ""),
             "execution": p.get("execution", ""),
             "followup": p.get("followup", ""),
+            "assessments": p.get("assessments", []),
+            "tools": p.get("tools", []),
         })
-    return out
+    return result
 
 
 def _fallback_patients() -> list[dict]:
-    """无患者数据时提供示例数据。"""
     return [
-        {"patient_id": "DEMO-001", "name": "示例患者A", "age": 65,
-         "diagnosis": "示例诊断 (请配置患者数据)", "department": "默认科室",
-         "scenario": "示例临床场景", "lab_results": {"Hb": 130, "WBC": 8.0},
-         "urgency": "normal"},
-        {"patient_id": "DEMO-002", "name": "示例患者B", "age": 72,
-         "diagnosis": "示例诊断 (请配置患者数据)", "department": "默认科室",
-         "scenario": "示例临床场景", "lab_results": {"Hb": 115, "WBC": 9.5},
-         "urgency": "high"},
+        {"patient_id": "P000", "name": "示例患者", "age": "55", "gender": "M",
+         "diagnosis": "示例诊断", "department": "示例科室", "scenario": "示例场景",
+         "lab_results": {"WBC": "6.5", "HGB": "140"}, "urgency": "normal"},
     ]
-
-
-def load_patients_for_agent(agent_name: str) -> list[dict]:
-    """公共 API：加载与指定 agent 兼容的患者。"""
-    return _load_patients(agent_name)

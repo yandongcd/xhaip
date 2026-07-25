@@ -38,6 +38,30 @@ jobs:
         run: python -m ruff check .
       - name: MyPy check
         run: python -m mypy packages/haip-core/haip/ --show-error-codes --no-error-summary
+      - name: CSS syntax check
+        run: python -c "
+import re, sys
+css_files = ['packages/haip-core/haip/static/process.css']
+errors = 0
+for f in css_files:
+    try:
+        with open(f) as fh:
+            c = fh.read()
+        depth = 0
+        for i, ch in enumerate(c):
+            if ch == '{': depth += 1
+            elif ch == '}': depth -= 1
+            if depth < 0:
+                print(f'ERROR {f}: unbalanced }} at pos {i}')
+                errors += 1
+                break
+        if '{{' in c or '}}' in c:
+            print(f'ERROR {f}: double braces found')
+            errors += 1
+    except FileNotFoundError:
+        print(f'WARN {f}: not found')
+sys.exit(errors)
+"
 
   unit:
     name: "Unit tests"

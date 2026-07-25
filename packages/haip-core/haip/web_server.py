@@ -135,6 +135,14 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="xhaip v1.2 API", version="1.2.0", lifespan=lifespan)
+
+# Static files (CSS/JS)
+from pathlib import Path as _Path
+_static_dir = _Path(__file__).parent / "static"
+if _static_dir.is_dir():
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_get_cors_origins(),

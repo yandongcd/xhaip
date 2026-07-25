@@ -1,6 +1,5 @@
-"""Generated CSS for ui_process ? extracted from ui_process.py."""
-
-PROCESS_CSS = """/* ═══════════════════════════════════════════════
+﻿
+/* ═══════════════════════════════════════════════
    HAIP Design System v2 — Medical Clinic Edition
    Primary: Teal (#0891B2) / Accent: Green (#16A34A)
    ═══════════════════════════════════════════════ */
@@ -220,4 +219,5 @@ tr:hover td{background:var(--bg-overlay)}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 
 /* ── Responsive ── */
-@media(max-width:900px){.leftbar,.rightbar{display:none}.center{width:100%}.header{flex-wrap:wrap;height:auto;padding:6px 10px}.header-role{margin-left:0;margin-top:4px}"""
+@media(max-width:900px){.leftbar,.rightbar{display:none}.center{width:100%}.header{flex-wrap:wrap;height:auto;padding:6px 10px}.header-role{margin-left:0;margin-top:4px}
+
