@@ -83,7 +83,15 @@ def random_labs(dept, dx):
 with open(ROOT / "packages" / "haip-hospital" / "data" / "patients.json", encoding='utf-8') as f:
     data = json.load(f)
 existing = data.get('patients', [])
-next_id = max(int(p['patient_id'][1:]) for p in existing) + 1
+
+# Generate next ID safely (handle mixed formats like P001, 20-NF001)
+next_id = 500  # Start from P500 to avoid conflicts
+existing_ids = {p['patient_id'] for p in existing}
+while True:
+    pid = f"P{next_id:04d}"
+    if pid not in existing_ids:
+        break
+    next_id += 1
 
 # Count existing per dept
 dept_counts = {}
@@ -93,7 +101,7 @@ for p in existing:
 
 # ── Generate ──
 new_patients = []
-TARGET = 8
+TARGET = 300  # Per department — generates ~10,000 total
 
 for dept_name, agent_id in dept_agents.items():
     dx_list = diagnoses.get(dept_name, [f'{dept_name}常见病'])
@@ -114,7 +122,7 @@ for dept_name, agent_id in dept_agents.items():
             compat.extend(['cardio-risk','anesthesia-risk','pharmacy'])
         
         patient = {
-            'patient_id': f'P{next_id}',
+            'patient_id': f'P{next_id:04d}',
             'name': f'{random.choice(SURNAMES)}*',
             'age': age, 'gender': gender,
             'weight_kg': round(random.uniform(42, 96), 1),
