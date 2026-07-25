@@ -139,6 +139,19 @@ def call(agent: str, tool: str, params: dict[str, Any] | None = None,
                 _agent_cache.clear()  # Reset on excessive caching
             _agent_cache[handler] = importlib.import_module(module_name)
         fn = getattr(_agent_cache[handler], func_name)
+        # Coerce param types from YAML input schema (form inputs are always strings)
+        if tool_def.input and params:
+            for k, pt in tool_def.input.items():
+                if k in params and isinstance(params[k], str):
+                    try:
+                        if pt in ("int", "integer"):
+                            params[k] = int(params[k])
+                        elif pt in ("float", "number", "double"):
+                            params[k] = float(params[k])
+                        elif pt == "bool":
+                            params[k] = params[k].lower() in ("true", "1", "yes")
+                    except (ValueError, TypeError):
+                        pass  # Keep original value if coercion fails
         result = fn(**params)
     except ModuleNotFoundError as e:
         elapsed = (time.perf_counter() - t0) * 1000
