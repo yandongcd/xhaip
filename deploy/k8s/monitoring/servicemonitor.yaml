@@ -1,0 +1,20 @@
+# Prometheus ServiceMonitor — auto-discover xhaip metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: xhaip-portal
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: xhaip-portal
+  namespaceSelector:
+    matchNames:
+    - xhaip
+  endpoints:
+  - port: http
+    path: /api/metrics
+    interval: 30s
+    scrapeTimeout: 10s

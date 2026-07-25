@@ -189,6 +189,38 @@ app.include_router(tenant_router)
 from haip.licensing.api import license_router  # noqa: E402
 app.include_router(license_router)
 
+# ---- Health Check ----
+@app.get("/api/health")
+def health_check():
+    """Liveness/readiness probe — checks DB, knowledge store, agent registry."""
+    checks: dict[str, str] = {"status": "ok"}
+    try:
+        from haip.database import _engine
+        if _engine is None:
+            checks["database"] = "not-initialized"
+        else:
+            checks["database"] = "ok"
+    except Exception:
+        checks["database"] = "error"
+
+    try:
+        from haip.knowledge.runtime import get_kb
+        kb = get_kb()
+        checks["knowledge"] = "ok" if kb else "not-loaded"
+    except Exception:
+        checks["knowledge"] = "error"
+
+    try:
+        from haip.agent import list_all
+        agents = list_all()
+        checks["agents"] = str(len(agents))
+    except Exception:
+        checks["agents"] = "error"
+
+    healthy = all(v in ("ok",) or v.isdigit() for v in checks.values() if v != "ok")
+    checks["healthy"] = healthy and checks.get("status") == "ok"
+    return checks
+
 # TOGAF template API
 from haip.togaf.templates.engine import get_togaf_engine  # noqa: E402
 togaf_engine = get_togaf_engine()
