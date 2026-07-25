@@ -8,7 +8,7 @@ on:
 
 jobs:
   validate:
-    name: "Linter"
+    name: "Validate"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,8 +17,12 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         run: pip install -e "packages/haip-core[dev]"
-      - name: Run xhaip validate
+      - name: Validate agents list
         run: python -m haip list
+      - name: Validate agent YAML schema
+        run: |
+          pip install jsonschema
+          python scripts/validate_agents.py
 
   lint:
     name: "Ruff + MyPy"

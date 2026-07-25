@@ -14,6 +14,14 @@ x-agent: &agent-base
     - ./packages/haip-hospital/modules:/app/packages/haip-hospital/modules:ro
     - ./config:/app/config:ro
   restart: unless-stopped
+  deploy:
+    resources:
+      limits:
+        cpus: "1.0"
+        memory: 512M
+      reservations:
+        cpus: "0.25"
+        memory: 128M
   healthcheck:
     test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:${AGENT_PORT}/api/health')"]
     interval: 30s
