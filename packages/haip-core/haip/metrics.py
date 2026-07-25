@@ -121,6 +121,32 @@ def get_metrics() -> MetricsCollector:
     return _metrics
 
 
+class MetricsMiddleware:
+    """FastAPI middleware that records HTTP request metrics automatically."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        import time
+        start = time.monotonic()
+
+        async def _send(message):
+            if message["type"] == "http.response.start":
+                status = message["status"]
+                endpoint = scope.get("path", "/")
+                method = scope.get("method", "GET")
+                duration = time.monotonic() - start
+                _metrics.record_http(endpoint=endpoint, method=method, status=status, duration_s=duration)
+            await send(message)
+
+        await self.app(scope, receive, _send)
+
+
 def setup_metrics(app: FastAPI, prefix: str = "/api/metrics"):
     """Register /metrics endpoint on the FastAPI app."""
 

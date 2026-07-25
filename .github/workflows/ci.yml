@@ -79,7 +79,7 @@ jobs:
       - name: Install dependencies
         run: pip install -e "packages/haip-core[dev]"
       - name: Run tests with coverage
-        run: python -m pytest packages/haip-core/tests/ tests/integration/ --cov=packages/haip-core/haip --cov-report=term --cov-report=html --cov-fail-under=70 --tb=short
+        run: python -m pytest packages/haip-core/tests/ tests/integration/ --cov=packages/haip-core/haip --cov-report=term --cov-report=html --cov-fail-under=75 --tb=short
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         if: always()

@@ -150,6 +150,10 @@ app.add_middleware(AuthMiddleware)
 from haip.audit.middleware import AuditMiddleware  # noqa: E402
 app.add_middleware(AuditMiddleware)
 
+# Metrics middleware — records HTTP request metrics
+from haip.metrics import MetricsMiddleware  # noqa: E402
+app.add_middleware(MetricsMiddleware)
+
 # Rate limit middleware — production-default enabled
 from haip.rate_limit import RateLimitMiddleware  # noqa: E402
 rl_cfg = _get_rate_limit_config()
@@ -168,6 +172,10 @@ app.include_router(auth_router)
 # Audit API router
 from haip.audit import audit_router  # noqa: E402
 app.include_router(audit_router)
+
+# Prometheus metrics endpoint
+from haip.metrics import setup_metrics  # noqa: E402
+setup_metrics(app)
 
 # FHIR API router
 from haip.fhir import fhir_router  # noqa: E402

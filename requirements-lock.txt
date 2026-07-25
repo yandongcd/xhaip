@@ -1,6 +1,5 @@
 # xhaip v1.2 — pinned production dependencies
 # Generated: 2026-07-25
-# Re-pin: pip freeze | grep -E "pydantic|pyyaml|httpx|typer|rich|fastapi|uvicorn|bcrypt|PyJWT" > requirements-lock.txt
 pydantic==2.9.2
 pyyaml==6.0.2
 httpx==0.28.1
@@ -10,6 +9,7 @@ fastapi==0.115.6
 uvicorn==0.34.0
 bcrypt==4.2.1
 PyJWT==2.10.1
+prometheus-client==0.21.1
 
 # Dev
 pytest==8.3.4
