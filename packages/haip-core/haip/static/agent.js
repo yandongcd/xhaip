@@ -24,12 +24,12 @@ async function callTool(tool) {
   if (toolDef && Object.keys(toolDef.input||{}).length) {
     for (var k in toolDef.input) {
       var el = document.querySelector('.inp-'+tool+'[data-field="'+k+'"]');
-      var value = el ? el.value : '';
+      var value = el ? (el.value || '') : '';
       var type = toolDef.input[k];
       if (type === 'dict' || type === 'list') {
         try { params[k] = value ? JSON.parse(value) : {}; } catch(e) { params[k] = {}; }
       } else {
-        params[k] = value || toolDef.input[k];
+        params[k] = value;
       }
     }
   } else {
