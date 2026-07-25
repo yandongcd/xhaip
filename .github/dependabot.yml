@@ -1,23 +1,23 @@
 version: 2
 updates:
   - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 10
-    assignees:
-      - "tianlinyi"
-    labels:
-      - "dependencies"
-
-  - package-ecosystem: "github-actions"
-    directory: "/"
+    directory: "/packages/haip-core"
     schedule:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 5
-    assignees:
-      - "tianlinyi"
     labels:
       - "dependencies"
+      - "pip"
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "chore(ci)"
