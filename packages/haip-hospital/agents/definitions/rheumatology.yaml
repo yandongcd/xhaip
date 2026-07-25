@@ -1,91 +1,99 @@
 name: rheumatology
 cn_name: 风湿免疫科智能体
-version: "1.0.0"
+version: 1.0.0
 type: business
 department: 风湿免疫科
 port: 8786
-aliases: [风湿免疫科, rheumatology]
-
+aliases:
+- 风湿免疫科
+- rheumatology
 prompt:
-  system: |
-    你是南方医院风湿免疫科AI助手，负责风湿免疫科常见疾病的诊疗评估和管理。
-    请基于相关临床指南给出专业建议。
+  system: 你是南方医院风湿免疫科AI助手，负责风湿免疫科常见疾病的诊疗评估和管理。请基于最新临床指南（2025-2026）给出专业建议，包括诊断标准、治疗方案、风险评估和随访计划。
   temperature: 0.3
-
 tools:
-  - name: bp_reception
-    description: 接诊与初步评估
-    handler: rheumatology.bp_reception
-    input: {patient_id: str}
-
-  - name: bp_exam
-    description: 辅助检查
-    handler: rheumatology.bp_exam
-    input: {patient_id: str}
-
-  - name: bp_diagnosis
-    description: 确诊与分型分期
-    handler: rheumatology.bp_diagnosis
-    input: {patient_id: str}
-
-  - name: bp_plan
-    description: 治疗方案制定
-    handler: rheumatology.bp_plan
-    input: {patient_id: str}
-
-  - name: bp_treatment
-    description: 治疗执行与监测
-    handler: rheumatology.bp_treatment
-    input: {patient_id: str}
-
-  - name: bp_followup
-    description: 随访与长期管理
-    handler: rheumatology.bp_followup
-    input: {patient_id: str}
-
-
+- name: bp_reception
+  description: 接诊与初步评估
+  handler: rheumatology.bp_reception
+  input:
+    patient_id: str
+- name: bp_exam
+  description: 辅助检查
+  handler: rheumatology.bp_exam
+  input:
+    patient_id: str
+- name: bp_diagnosis
+  description: 确诊与分型分期
+  handler: rheumatology.bp_diagnosis
+  input:
+    patient_id: str
+- name: bp_plan
+  description: 治疗方案制定
+  handler: rheumatology.bp_plan
+  input:
+    patient_id: str
+- name: bp_treatment
+  description: 治疗执行与监测
+  handler: rheumatology.bp_treatment
+  input:
+    patient_id: str
+- name: bp_followup
+  description: 随访与长期管理
+  handler: rheumatology.bp_followup
+  input:
+    patient_id: str
 ui:
   template: chat-with-role-switcher
   roles:
-    - {id: attending, label: 主治医师, default: true}
-    - {id: resident, label: 住院医师}
-    - {id: head_nurse, label: 护士长}
-    - {id: head, label: 科主任}
-
+  - id: attending
+    label: 主治医师
+    default: true
+  - id: resident
+    label: 住院医师
+  - id: head_nurse
+    label: 护士长
+  - id: head
+    label: 科主任
 stages:
-  - order: 1
-    id: bp-reception
-    label: 接诊与初步评估
-    desc: "接诊与初步评估流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 2
-    id: bp-exam
-    label: 辅助检查
-    desc: "辅助检查流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 3
-    id: bp-diagnosis
-    label: 确诊与分型分期
-    desc: "确诊与分型分期流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 4
-    id: bp-plan
-    label: 治疗方案制定
-    desc: "治疗方案制定流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 5
-    id: bp-treatment
-    label: 治疗执行与监测
-    desc: "治疗执行与监测流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 6
-    id: bp-followup
-    label: 随访与长期管理
-    desc: "随访与长期管理流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
+- order: 1
+  id: reception
+  label: 接诊登记
+  desc: 主诉采集、现病史、既往史、过敏史、体格检查
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
+- order: 2
+  id: exam
+  label: 辅助检查
+  desc: 实验室检查、影像学检查、心电图、专科检查
+  role_ids:
+  - attending
+  - resident
+- order: 3
+  id: diagnosis
+  label: 诊断与分型
+  desc: 明确诊断、疾病分型分期、鉴别诊断、合并症评估
+  role_ids:
+  - attending
+- order: 4
+  id: treatment-plan
+  label: 治疗方案
+  desc: 制定个体化治疗方案、用药方案、非药物治疗、健康教育
+  role_ids:
+  - attending
+  - head
+- order: 5
+  id: execution
+  label: 治疗执行
+  desc: 执行治疗方案、用药管理、病情监测、并发症预防
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
+- order: 6
+  id: followup
+  label: 随访管理
+  desc: 慢病随访、用药依从性、复查检验、生活方式指导
+  role_ids:
+  - attending
+  - head_nurse

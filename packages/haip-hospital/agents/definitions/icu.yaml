@@ -1,82 +1,90 @@
 name: icu
 cn_name: 重症医学科智能体
-version: "1.0.0"
+version: 1.0.0
 type: business
 department: 重症医学科
 port: 8809
-aliases: [重症医学科, icu]
-
+aliases:
+- 重症医学科
+- icu
 prompt:
-  system: |
-    你是南方医院重症医学科AI助手，负责重症医学科常见疾病的诊疗评估和管理。
-    请基于相关临床指南给出专业建议。
+  system: 你是南方医院重症医学科AI助手，负责重症医学科常见疾病的诊疗评估和管理。请基于最新临床指南（2025-2026）给出专业建议，包括诊断标准、治疗方案、风险评估和随访计划。
   temperature: 0.3
-
 tools:
-  - name: bp_triage
-    description: 急诊分诊
-    handler: icu.bp_triage
-    input: {patient_id: str}
-
-  - name: bp_rescue
-    description: 紧急救治
-    handler: icu.bp_rescue
-    input: {patient_id: str}
-
-  - name: bp_icu
-    description: 重症监护
-    handler: icu.bp_icu
-    input: {patient_id: str}
-
-  - name: bp_transfer
-    description: 转归评估
-    handler: icu.bp_transfer
-    input: {patient_id: str}
-
-  - name: bp_followup
-    description: 随访跟踪
-    handler: icu.bp_followup
-    input: {patient_id: str}
-
+- name: bp_triage
+  description: 急诊分诊
+  handler: icu.bp_triage
+  input:
+    patient_id: str
+- name: bp_rescue
+  description: 紧急救治
+  handler: icu.bp_rescue
+  input:
+    patient_id: str
+- name: bp_icu
+  description: 重症监护
+  handler: icu.bp_icu
+  input:
+    patient_id: str
+- name: bp_transfer
+  description: 转归评估
+  handler: icu.bp_transfer
+  input:
+    patient_id: str
+- name: bp_followup
+  description: 随访跟踪
+  handler: icu.bp_followup
+  input:
+    patient_id: str
 guard:
-  triggers: ['手术决策']
-
+  triggers:
+  - 手术决策
 ui:
   template: chat-with-role-switcher
   roles:
-    - {id: attending, label: 主治医师, default: true}
-    - {id: resident, label: 住院医师}
-    - {id: head_nurse, label: 护士长}
-    - {id: head, label: 科主任}
-
+  - id: attending
+    label: 主治医师
+    default: true
+  - id: emergency_doctor
+    label: 急诊医师
+  - id: triage_nurse
+    label: 分诊护士
+  - id: head_nurse
+    label: 护士长
 stages:
-  - order: 1
-    id: bp-triage
-    label: 急诊分诊
-    desc: "急诊分诊流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 2
-    id: bp-rescue
-    label: 紧急救治
-    desc: "紧急救治流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 3
-    id: bp-icu
-    label: 重症监护
-    desc: "重症监护流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 4
-    id: bp-transfer
-    label: 转归评估
-    desc: "转归评估流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 5
-    id: bp-followup
-    label: 随访跟踪
-    desc: "随访跟踪流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
+- order: 1
+  id: triage
+  label: 急诊分诊
+  desc: 生命体征、GCS评分、创伤评分、分诊级别判定（Ⅰ-Ⅳ级）
+  role_ids:
+  - attending
+  - triage_nurse
+- order: 2
+  id: rescue
+  label: 紧急救治
+  desc: ABC评估、气道管理、循环支持、止血、建立静脉通路
+  role_ids:
+  - attending
+  - emergency_doctor
+  - head_nurse
+- order: 3
+  id: exam-diagnosis
+  label: 快速诊断
+  desc: 床旁超声、急诊CT、血气分析、心电图、心肌标志物
+  role_ids:
+  - attending
+  - emergency_doctor
+- order: 4
+  id: treatment
+  label: 急诊处置
+  desc: 药物抢救、清创缝合、骨折固定、急诊手术准备
+  role_ids:
+  - attending
+  - emergency_doctor
+  - head_nurse
+- order: 5
+  id: disposition
+  label: 分流决策
+  desc: 收入院/留观/转ICU/离院评估、交接记录
+  role_ids:
+  - attending

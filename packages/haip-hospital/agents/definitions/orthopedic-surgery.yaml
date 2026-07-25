@@ -1,249 +1,285 @@
 name: orthopedic-surgery
 cn_name: 老年髋部骨折精准治疗智能体
-version: "1.1.0"
+version: 1.1.0
 type: business
 department: 创伤骨科
 port: 8765
-aliases: [骨科, 创伤骨科, 骨外科, ortho]
-
+aliases:
+- 骨科
+- 创伤骨科
+- 骨外科
+- ortho
 prompt:
-  system: |
-    你是南方医院创伤骨科AI助手，负责骨折分型、术前评估、手术方案推荐、
-    并发症预测、手术时机决策、围术期护理和术后随访管理。
-    请基于国家卫健委2022版、NICE NG37、AAOS 2022、CSCO等指南给出专业建议。
+  system: 你是南方医院创伤骨科AI助手，负责创伤骨科常见疾病的诊疗评估和管理。请基于最新临床指南（2025-2026）给出专业建议，包括诊断标准、治疗方案、风险评估和随访计划。
   temperature: 0.3
   max_tokens: 4096
-
 depends_on:
-  - agent: medical-record
-    version: ">=1.0"
-  - agent: cardio-risk
-    version: ">=1.0"
-  - agent: anesthesia-risk
-    version: ">=1.0"
-  - agent: mdt
-    version: ">=1.0"
-    note: "跨科室 MDT 会诊技能 Agent (8773)"
-  - agent: pain-management
-    version: ">=1.0"
-    note: "疼痛管理技能 Agent (8771)"
-  - agent: education
-    version: ">=1.0"
-    note: "教育技能 Agent (8772)"
-
+- agent: medical-record
+  version: '>=1.0'
+- agent: cardio-risk
+  version: '>=1.0'
+- agent: anesthesia-risk
+  version: '>=1.0'
+- agent: mdt
+  version: '>=1.0'
+  note: 跨科室 MDT 会诊技能 Agent (8773)
+- agent: pain-management
+  version: '>=1.0'
+  note: 疼痛管理技能 Agent (8771)
+- agent: education
+  version: '>=1.0'
+  note: 教育技能 Agent (8772)
 tools:
-  - name: classify_fracture
-    description: 骨折分型评估 (Garden/Evans/AO)
-    handler: orthopedics.assess
-    input: {patient_id: str, xray_findings: dict}
-
-  - name: preop_assessment
-    description: 术前综合评估 (合并症/药物/营养/认知)
-    handler: orthopedics.evaluate
-    input: {patient_id: str}
-
-  - name: surgical_plan
-    description: 手术方案推荐 (THA/HA/PFNA/DHS)
-    handler: orthopedics.plan
-    input: {patient_id: str, fracture_type: str, age: int}
-
-  - name: complication_risk
-    description: 并发症风险预测 (DVT/感染/心脏/跌倒谵妄 4维)
-    handler: orthopedics.predict_complications
-    input: {patient_id: str, age: int, labs: dict, conditions: list}
-
-  - name: timing_decision
-    description: T2 层次手术时机决策 (8因素 → emergency/urgent/elective)
-    handler: orthopedics.evaluate_timing
-    input: {patient_id: str, labs: dict, ecg_findings: str, conditions: list, meds: list}
-
-  - name: nursing_plan
-    description: 围术期护理计划 (4阶段25项)
-    handler: orthopedics.nursing_plan
-    input: {patient_id: str, age: int, conditions: list}
-
-  - name: followup_plan
-    description: 术后随访计划 (1/3/6/12月 + 红旗症状 + 骨质疏松管理)
-    handler: orthopedics.followup_plan
-    input: {patient_id: str, procedure: str}
-
-  - name: quality_audit
-    description: 6阶段18检查点质控审计
-    handler: orthopedics.extended.quality_audit
-    input: {patient_id: str, compliance: dict}
-
-  - name: checklist
-    description: 11项术前检查清单 (急诊分诊)
-    handler: orthopedics.extended.checklist
-    input: {patient_id: str, symptoms: list, conditions: list, age: int}
-
-  - name: completeness
-    description: 14项术前检查完备性评估
-    handler: orthopedics.extended.completeness
-    input: {patient_id: str, completed_tests: list}
-
-  - name: rehab_track
-    description: 4阶段康复跟踪 + Harris 评分
-    handler: orthopedics.extended.rehab_track
-    input: {patient_id: str, procedure: str}
-
-  - name: osteoporosis_mgmt
-    description: FRAX评估 + 骨质疏松治疗方案
-    handler: orthopedics.extended.osteoporosis_mgmt
-    input: {patient_id: str, age: int, gender: str, conditions: list}
-
-  - name: analyze_xray
-    description: X光骨折分析 (Evans/Garden/AO分型)
-    handler: orthopedics.clinical.analyze_xray
-    input: {patient_id: str, view: str, findings: dict}
-
-  - name: parse_clinical
-    description: 自然语言临床文本解析 (规则引擎)
-    handler: orthopedics.clinical.parse_clinical_text
-    input: {text: str}
-
-  - name: harris_score
-    description: Harris髋关节评分 (100分制)
-    handler: orthopedics.clinical.harris_score
-    input: {pain: str, gait: str, support: str, distance: str}
-
-  - name: mdt_aggregate
-    description: MDT 多学科会诊聚合 (心内+麻醉+骨科+疼痛 → 结构化纪要)
-    handler: orthopedics.mdt.mdt_aggregate
-    input: {patient_id: str, chief_complaint: str, cardio_eval: dict, anesthesia_eval: dict, orthopedic_eval: dict, pain_eval: dict}
-
-  - name: mdt_summary
-    description: MDT 会诊纪要摘要 (Markdown 格式)
-    handler: orthopedics.mdt.mdt_summary
-    input: {mdt_result: dict}
-
-  - name: pain_assess
-    description: 疼痛评估 (VAS/NRS) — 输入必须由护士提供
-    handler: pain_management.assess_pain
-    input: {patient_id: str, vas_score: float, nurse_id: str, assessment_time: str}
-
-  - name: pain_analgesia
-    description: 多模式镇痛阶梯方案
-    handler: pain_management.multimodal_analgesia
-    input: {patient_id: str, vas_score: float, allergies: list, renal_function: str, liver_function: str}
-
-  - name: case_teach
-    description: 典型病例教学 (合成病例)
-    handler: education.case_teaching
-    input: {fracture_type: str, difficulty: str}
-
-  - name: guideline_ref
-    description: 指南速查 (NHSA/NICE/AAOS)
-    handler: education.guideline_quick_ref
-    input: {guideline: str, topic: str}
-
-  - name: his_labs
-    description: 模拟 LIS 检验数据查询
-    handler: orthopedics.his_adapter.query_labs
-    input: {patient_id: str, lab_items: list}
-
-  - name: his_patient
-    description: 模拟 HIS 患者病历查询
-    handler: orthopedics.his_adapter.query_patient
-    input: {patient_id: str}
-
-  - name: his_patient_list
-    description: 模拟 HIS 在册患者 ID 列表
-    handler: orthopedics.his_adapter.list_patient_ids
-    input: {}
-
-  - name: his_image
-    description: 模拟 PACS 影像查询
-    handler: orthopedics.his_adapter.query_imaging
-    input: {patient_id: str, modality: str}
-
-  - name: idata_search
-    description: 模拟 iData 知识库检索
-    handler: orthopedics.idata_adapter.search_knowledge
-    input: {query: str, category: str}
-
+- name: classify_fracture
+  description: 骨折分型评估 (Garden/Evans/AO)
+  handler: orthopedics.assess
+  input:
+    patient_id: str
+    xray_findings: dict
+- name: preop_assessment
+  description: 术前综合评估 (合并症/药物/营养/认知)
+  handler: orthopedics.evaluate
+  input:
+    patient_id: str
+- name: surgical_plan
+  description: 手术方案推荐 (THA/HA/PFNA/DHS)
+  handler: orthopedics.plan
+  input:
+    patient_id: str
+    fracture_type: str
+    age: int
+- name: complication_risk
+  description: 并发症风险预测 (DVT/感染/心脏/跌倒谵妄 4维)
+  handler: orthopedics.predict_complications
+  input:
+    patient_id: str
+    age: int
+    labs: dict
+    conditions: list
+- name: timing_decision
+  description: T2 层次手术时机决策 (8因素 → emergency/urgent/elective)
+  handler: orthopedics.evaluate_timing
+  input:
+    patient_id: str
+    labs: dict
+    ecg_findings: str
+    conditions: list
+    meds: list
+- name: nursing_plan
+  description: 围术期护理计划 (4阶段25项)
+  handler: orthopedics.nursing_plan
+  input:
+    patient_id: str
+    age: int
+    conditions: list
+- name: followup_plan
+  description: 术后随访计划 (1/3/6/12月 + 红旗症状 + 骨质疏松管理)
+  handler: orthopedics.followup_plan
+  input:
+    patient_id: str
+    procedure: str
+- name: quality_audit
+  description: 6阶段18检查点质控审计
+  handler: orthopedics.extended.quality_audit
+  input:
+    patient_id: str
+    compliance: dict
+- name: checklist
+  description: 11项术前检查清单 (急诊分诊)
+  handler: orthopedics.extended.checklist
+  input:
+    patient_id: str
+    symptoms: list
+    conditions: list
+    age: int
+- name: completeness
+  description: 14项术前检查完备性评估
+  handler: orthopedics.extended.completeness
+  input:
+    patient_id: str
+    completed_tests: list
+- name: rehab_track
+  description: 4阶段康复跟踪 + Harris 评分
+  handler: orthopedics.extended.rehab_track
+  input:
+    patient_id: str
+    procedure: str
+- name: osteoporosis_mgmt
+  description: FRAX评估 + 骨质疏松治疗方案
+  handler: orthopedics.extended.osteoporosis_mgmt
+  input:
+    patient_id: str
+    age: int
+    gender: str
+    conditions: list
+- name: analyze_xray
+  description: X光骨折分析 (Evans/Garden/AO分型)
+  handler: orthopedics.clinical.analyze_xray
+  input:
+    patient_id: str
+    view: str
+    findings: dict
+- name: parse_clinical
+  description: 自然语言临床文本解析 (规则引擎)
+  handler: orthopedics.clinical.parse_clinical_text
+  input:
+    text: str
+- name: harris_score
+  description: Harris髋关节评分 (100分制)
+  handler: orthopedics.clinical.harris_score
+  input:
+    pain: str
+    gait: str
+    support: str
+    distance: str
+- name: mdt_aggregate
+  description: MDT 多学科会诊聚合 (心内+麻醉+骨科+疼痛 → 结构化纪要)
+  handler: orthopedics.mdt.mdt_aggregate
+  input:
+    patient_id: str
+    chief_complaint: str
+    cardio_eval: dict
+    anesthesia_eval: dict
+    orthopedic_eval: dict
+    pain_eval: dict
+- name: mdt_summary
+  description: MDT 会诊纪要摘要 (Markdown 格式)
+  handler: orthopedics.mdt.mdt_summary
+  input:
+    mdt_result: dict
+- name: pain_assess
+  description: 疼痛评估 (VAS/NRS) — 输入必须由护士提供
+  handler: pain_management.assess_pain
+  input:
+    patient_id: str
+    vas_score: float
+    nurse_id: str
+    assessment_time: str
+- name: pain_analgesia
+  description: 多模式镇痛阶梯方案
+  handler: pain_management.multimodal_analgesia
+  input:
+    patient_id: str
+    vas_score: float
+    allergies: list
+    renal_function: str
+    liver_function: str
+- name: case_teach
+  description: 典型病例教学 (合成病例)
+  handler: education.case_teaching
+  input:
+    fracture_type: str
+    difficulty: str
+- name: guideline_ref
+  description: 指南速查 (NHSA/NICE/AAOS)
+  handler: education.guideline_quick_ref
+  input:
+    guideline: str
+    topic: str
+- name: his_labs
+  description: 模拟 LIS 检验数据查询
+  handler: orthopedics.his_adapter.query_labs
+  input:
+    patient_id: str
+    lab_items: list
+- name: his_patient
+  description: 模拟 HIS 患者病历查询
+  handler: orthopedics.his_adapter.query_patient
+  input:
+    patient_id: str
+- name: his_patient_list
+  description: 模拟 HIS 在册患者 ID 列表
+  handler: orthopedics.his_adapter.list_patient_ids
+  input: {}
+- name: his_image
+  description: 模拟 PACS 影像查询
+  handler: orthopedics.his_adapter.query_imaging
+  input:
+    patient_id: str
+    modality: str
+- name: idata_search
+  description: 模拟 iData 知识库检索
+  handler: orthopedics.idata_adapter.search_knowledge
+  input:
+    query: str
+    category: str
 guard:
-  triggers: [手术决策, 心梗评估, MDT分歧]
+  triggers:
+  - 手术决策
+  - 心梗评估
+  - MDT分歧
   high_risk_scenarios:
-    - THA术后DVT预防
-    - PFNA内固定失败风险
-    - 老年髋部骨折48h手术窗口
-    - 围术期心肌梗死
-
+  - THA术后DVT预防
+  - PFNA内固定失败风险
+  - 老年髋部骨折48h手术窗口
+  - 围术期心肌梗死
 ui:
   template: chat-with-role-switcher
   roles:
-    - {id: attending, label: 主治医师, default: true}
-    - {id: resident, label: 住院医师}
-    - {id: anesthesiologist, label: 麻醉医师}
-    - {id: head_nurse, label: 护士长}
-    - {id: staff_nurse, label: 责任护士}
-    - {id: dept_head, label: 科主任}
-
+  - id: attending
+    label: 主治医师
+    default: true
+  - id: resident
+    label: 住院医师
+  - id: surgeon
+    label: 手术医师
+  - id: anesthesiologist
+    label: 麻醉医师
+  - id: icu_doctor
+    label: ICU医师
+  - id: head_nurse
+    label: 护士长
+  - id: instrument_nurse
+    label: 器械护士
+  - id: rehab_therapist
+    label: 康复师
 stages:
-  - order: 1
-    id: triage
-    label: 急诊分诊
-    desc: "11项检查清单, 绿色通道判定 (≥75岁+髋部骨折)"
-    role: "主治医师 / 住院医师 / 护士长 / 责任护士"
-    role_ids: [attending, resident, head_nurse, staff_nurse]
-  - order: 2
-    id: classify
-    label: 骨折分型
-    desc: "Garden/Evans/AO 分型评估"
-    role: "主治医师 / 住院医师"
-    role_ids: [attending, resident]
-  - order: 3
-    id: preop
-    label: 术前评估
-    desc: "合并症/药物/营养/认知 + 14项检查完备性"
-    role: "主治医师 / 住院医师 / 麻醉医师 / 责任护士"
-    role_ids: [attending, resident, anesthesiologist, staff_nurse]
-  - order: 4
-    id: mdt
-    label: MDT 会诊
-    desc: "多学科会诊: 聚合心内+麻醉+骨科+疼痛评估 → MDT 纪要"
-    role: "主治医师 / 麻醉医师"
-    role_ids: [attending, anesthesiologist]
-  - order: 5
-    id: timing
-    label: 手术时机
-    desc: "T2 8因素层次决策 (高危→择期 / 中危→限期 / 无→48h急诊)"
-    role: "主治医师 / 麻醉医师"
-    role_ids: [attending, anesthesiologist]
-  - order: 6
-    id: complication
-    label: 并发症预测
-    desc: "DVT/感染/心脏/跌倒-谵妄 4维风险评估"
-    role: "主治医师"
-    role_ids: [attending]
-  - order: 7
-    id: surgery
-    label: 手术方案
-    desc: "THA/HA/PFNA/DHS 手术方式推荐"
-    role: "主治医师"
-    role_ids: [attending]
-  - order: 8
-    id: nursing
-    label: 围术期护理
-    desc: "4阶段25项护理计划 (术前/D0/D1-3/恢复期)"
-    role: "主治医师 / 住院医师 / 护士长 / 责任护士"
-    role_ids: [attending, resident, head_nurse, staff_nurse]
-  - order: 9
-    id: rehab
-    label: 术后康复
-    desc: "4阶段康复跟踪 + Harris 髋关节评分"
-    role: "主治医师 / 住院医师 / 护士长 / 责任护士"
-    role_ids: [attending, resident, head_nurse, staff_nurse]
-  - order: 10
-    id: followup
-    label: 随访计划
-    desc: "1/3/6/12月随访 + 6个红旗症状 + 骨质疏松管理"
-    role: "主治医师 / 护士长 / 责任护士"
-    role_ids: [attending, head_nurse, staff_nurse]
-  - order: 11
-    id: quality
-    label: 质控审计
-    desc: "6阶段18检查点合规评分"
-    role: "主治医师 / 科主任"
-    role_ids: [attending, dept_head]
+- order: 1
+  id: preop-eval
+  label: 术前评估
+  desc: GCS/ASA评分、影像学评估、凝血功能、心肺功能筛查、麻醉评估
+  role_ids:
+  - attending
+  - resident
+  - anesthesiologist
+- order: 2
+  id: preop-prep
+  label: 术前准备
+  desc: 备血交叉配血、预防性抗生素、深静脉穿刺、导尿、备皮
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
+- order: 3
+  id: surgery
+  label: 手术执行
+  desc: 术中监测、出血量评估、冰冻病理、器械清点
+  role_ids:
+  - attending
+  - surgeon
+  - anesthesiologist
+  - instrument_nurse
+- order: 4
+  id: postop-icu
+  label: 术后监护
+  desc: ICU监测、GCS追踪、ICP管理、引流管管理、电解质平衡
+  role_ids:
+  - attending
+  - icu_doctor
+  - head_nurse
+- order: 5
+  id: ward-care
+  label: 病房管理
+  desc: 切口护理、活动指导、营养支持、VTE预防、疼痛管理
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
+- order: 6
+  id: followup
+  label: 随访康复
+  desc: 神经功能评分、康复计划制定、术后1/3/6月随访、影像复查
+  role_ids:
+  - attending
+  - rehab_therapist
+  - head_nurse

@@ -1,115 +1,126 @@
 name: vascular-surgery
 cn_name: 血管外科智能体
-version: "1.0.0"
+version: 1.0.0
 type: business
 department: 血管外科
 port: 8795
-aliases: [血管外科, vascular-surgery]
-
+aliases:
+- 血管外科
+- vascular-surgery
 prompt:
-  system: |
-    你是南方医院血管外科AI助手，负责血管外科常见疾病的诊疗评估和管理。
-    请基于相关临床指南给出专业建议。
+  system: 你是南方医院血管外科AI助手，负责血管外科常见疾病的诊疗评估和管理。请基于最新临床指南（2025-2026）给出专业建议，包括诊断标准、治疗方案、风险评估和随访计划。
   temperature: 0.3
-
 tools:
-  - name: bp_reg
-    description: 患者登记分诊
-    handler: vascular_surgery.bp_reg
-    input: {patient_id: str}
-
-  - name: bp_diag
-    description: 诊断评估
-    handler: vascular_surgery.bp_diag
-    input: {patient_id: str}
-
-  - name: bp_preop
-    description: 术前准备
-    handler: vascular_surgery.bp_preop
-    input: {patient_id: str}
-
-  - name: bp_risk
-    description: 风险评估
-    handler: vascular_surgery.bp_risk
-    input: {patient_id: str}
-
-  - name: bp_mdt
-    description: MDT决策
-    handler: vascular_surgery.bp_mdt
-    input: {patient_id: str}
-
-  - name: bp_surgery
-    description: 手术执行
-    handler: vascular_surgery.bp_surgery
-    input: {patient_id: str}
-
-  - name: bp_nursing
-    description: 围术期护理
-    handler: vascular_surgery.bp_nursing
-    input: {patient_id: str}
-
-  - name: bp_followup
-    description: 术后随访
-    handler: vascular_surgery.bp_followup
-    input: {patient_id: str}
-
+- name: bp_reg
+  description: 患者登记分诊
+  handler: vascular_surgery.bp_reg
+  input:
+    patient_id: str
+- name: bp_diag
+  description: 诊断评估
+  handler: vascular_surgery.bp_diag
+  input:
+    patient_id: str
+- name: bp_preop
+  description: 术前准备
+  handler: vascular_surgery.bp_preop
+  input:
+    patient_id: str
+- name: bp_risk
+  description: 风险评估
+  handler: vascular_surgery.bp_risk
+  input:
+    patient_id: str
+- name: bp_mdt
+  description: MDT决策
+  handler: vascular_surgery.bp_mdt
+  input:
+    patient_id: str
+- name: bp_surgery
+  description: 手术执行
+  handler: vascular_surgery.bp_surgery
+  input:
+    patient_id: str
+- name: bp_nursing
+  description: 围术期护理
+  handler: vascular_surgery.bp_nursing
+  input:
+    patient_id: str
+- name: bp_followup
+  description: 术后随访
+  handler: vascular_surgery.bp_followup
+  input:
+    patient_id: str
 guard:
-  triggers: ['手术决策']
-
+  triggers:
+  - 手术决策
 ui:
   template: chat-with-role-switcher
   roles:
-    - {id: attending, label: 主治医师, default: true}
-    - {id: resident, label: 住院医师}
-    - {id: head_nurse, label: 护士长}
-    - {id: head, label: 科主任}
-
+  - id: attending
+    label: 主治医师
+    default: true
+  - id: resident
+    label: 住院医师
+  - id: surgeon
+    label: 手术医师
+  - id: anesthesiologist
+    label: 麻醉医师
+  - id: icu_doctor
+    label: ICU医师
+  - id: head_nurse
+    label: 护士长
+  - id: instrument_nurse
+    label: 器械护士
+  - id: rehab_therapist
+    label: 康复师
 stages:
-  - order: 1
-    id: bp-reg
-    label: 患者登记分诊
-    desc: "患者登记分诊流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 2
-    id: bp-diag
-    label: 诊断评估
-    desc: "诊断评估流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 3
-    id: bp-preop
-    label: 术前准备
-    desc: "术前准备流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 4
-    id: bp-risk
-    label: 风险评估
-    desc: "风险评估流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 5
-    id: bp-mdt
-    label: MDT决策
-    desc: "MDT决策流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 6
-    id: bp-surgery
-    label: 手术执行
-    desc: "手术执行流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 7
-    id: bp-nursing
-    label: 围术期护理
-    desc: "围术期护理流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 8
-    id: bp-followup
-    label: 术后随访
-    desc: "术后随访流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
+- order: 1
+  id: preop-eval
+  label: 术前评估
+  desc: GCS/ASA评分、影像学评估、凝血功能、心肺功能筛查、麻醉评估
+  role_ids:
+  - attending
+  - resident
+  - anesthesiologist
+- order: 2
+  id: preop-prep
+  label: 术前准备
+  desc: 备血交叉配血、预防性抗生素、深静脉穿刺、导尿、备皮
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
+- order: 3
+  id: surgery
+  label: 手术执行
+  desc: 术中监测、出血量评估、冰冻病理、器械清点
+  role_ids:
+  - attending
+  - surgeon
+  - anesthesiologist
+  - instrument_nurse
+- order: 4
+  id: postop-icu
+  label: 术后监护
+  desc: ICU监测、GCS追踪、ICP管理、引流管管理、电解质平衡
+  role_ids:
+  - attending
+  - icu_doctor
+  - head_nurse
+- order: 5
+  id: ward-care
+  label: 病房管理
+  desc: 切口护理、活动指导、营养支持、VTE预防、疼痛管理
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
+- order: 6
+  id: followup
+  label: 随访康复
+  desc: 神经功能评分、康复计划制定、术后1/3/6月随访、影像复查
+  role_ids:
+  - attending
+  - rehab_therapist
+  - head_nurse

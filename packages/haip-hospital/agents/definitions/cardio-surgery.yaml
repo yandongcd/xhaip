@@ -1,88 +1,116 @@
 name: cardio-surgery
 cn_name: 心血管外科智能体
-version: "1.0.0"
+version: 1.0.0
 type: business
 department: 心血管外科
 port: 8768
-aliases: [心外科, 心血管外科, 心脏外科, cardio]
-
+aliases:
+- 心外科
+- 心血管外科
+- 心脏外科
+- cardio
 prompt:
-  system: |
-    你是南方医院心血管外科AI助手，负责心脏手术评估、术后管理、
-    抗凝方案设计和随访管理。请基于AHA/ACC/ESC等指南给出专业建议。
+  system: 你是南方医院心血管外科AI助手，负责心血管外科常见疾病的诊疗评估和管理。请基于最新临床指南（2025-2026）给出专业建议，包括诊断标准、治疗方案、风险评估和随访计划。
   temperature: 0.3
-
 depends_on:
-  - agent: medical-record
-    version: ">=1.0"
-  - agent: cardio-risk
-    version: ">=1.0"
-
+- agent: medical-record
+  version: '>=1.0'
+- agent: cardio-risk
+  version: '>=1.0'
 tools:
-  - name: surgical_assess
-    description: 心脏手术术前评估 (EuroSCORE/CABG/瓣膜)
-    handler: cardio_surgery.evaluate
-    input: {patient_id: str}
-
-  - name: anticoagulation_plan
-    description: 抗凝方案 (华法林/NOAC/桥接)
-    handler: cardio_surgery.plan
-    input: {patient_id: str, surgery_type: str}
-
-  - name: postop_management
-    description: 术后管理方案 (监护/引流/抗心律失常)
-    handler: cardio_surgery.manage
-    input: {patient_id: str, procedure: str}
-
+- name: surgical_assess
+  description: 心脏手术术前评估 (EuroSCORE/CABG/瓣膜)
+  handler: cardio_surgery.evaluate
+  input:
+    patient_id: str
+- name: anticoagulation_plan
+  description: 抗凝方案 (华法林/NOAC/桥接)
+  handler: cardio_surgery.plan
+  input:
+    patient_id: str
+    surgery_type: str
+- name: postop_management
+  description: 术后管理方案 (监护/引流/抗心律失常)
+  handler: cardio_surgery.manage
+  input:
+    patient_id: str
+    procedure: str
 guard:
-  triggers: [药物交互, 心梗评估, 手术决策]
+  triggers:
+  - 药物交互
+  - 心梗评估
+  - 手术决策
   high_risk_scenarios:
-    - 华法林过量出血
-    - 术后心包填塞
-    - 瓣膜置换术后抗凝失败
-
+  - 华法林过量出血
+  - 术后心包填塞
+  - 瓣膜置换术后抗凝失败
 ui:
   template: chat-with-role-switcher
   roles:
-    - {id: attending, label: 主治医师, default: true}
-    - {id: anesthesiologist, label: 麻醉医师}
-    - {id: head_nurse, label: 护士长}
-    - {id: dept_head, label: 科主任}
-
+  - id: attending
+    label: 主治医师
+    default: true
+  - id: resident
+    label: 住院医师
+  - id: surgeon
+    label: 手术医师
+  - id: anesthesiologist
+    label: 麻醉医师
+  - id: icu_doctor
+    label: ICU医师
+  - id: head_nurse
+    label: 护士长
+  - id: instrument_nurse
+    label: 器械护士
+  - id: rehab_therapist
+    label: 康复师
 stages:
-  - order: 1
-    id: preop
-    label: 术前评估
-    desc: "EuroSCORE II 评分 + 心脏超声 + 冠脉造影评估"
-    role: "主治医师 / 科主任"
-    role_ids: [attending, dept_head]
-  - order: 2
-    id: risk
-    label: 风险评估
-    desc: "围术期心梗风险 + 抗凝桥接方案"
-    role: "主治医师 / 麻醉医师"
-    role_ids: [attending, anesthesiologist]
-  - order: 3
-    id: plan
-    label: 手术方案
-    desc: "CABG/瓣膜置换/瓣膜修复 术式选择"
-    role: "主治医师 / 科主任"
-    role_ids: [attending, dept_head]
-  - order: 4
-    id: anticoag
-    label: 抗凝方案
-    desc: "华法林/NOAC/桥接方案制定"
-    role: "主治医师"
-    role_ids: [attending]
-  - order: 5
-    id: postop
-    label: 术后监护
-    desc: "心包引流/血流动力学监测/心律失常管理"
-    role: "主治医师 / 护士长"
-    role_ids: [attending, head_nurse]
-  - order: 6
-    id: followup
-    label: 康复随访
-    desc: "1/3/6/12月随访 + 超声复查 + 抗凝管理"
-    role: "主治医师 / 护士长"
-    role_ids: [attending, head_nurse]
+- order: 1
+  id: preop-eval
+  label: 术前评估
+  desc: GCS/ASA评分、影像学评估、凝血功能、心肺功能筛查、麻醉评估
+  role_ids:
+  - attending
+  - resident
+  - anesthesiologist
+- order: 2
+  id: preop-prep
+  label: 术前准备
+  desc: 备血交叉配血、预防性抗生素、深静脉穿刺、导尿、备皮
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
+- order: 3
+  id: surgery
+  label: 手术执行
+  desc: 术中监测、出血量评估、冰冻病理、器械清点
+  role_ids:
+  - attending
+  - surgeon
+  - anesthesiologist
+  - instrument_nurse
+- order: 4
+  id: postop-icu
+  label: 术后监护
+  desc: ICU监测、GCS追踪、ICP管理、引流管管理、电解质平衡
+  role_ids:
+  - attending
+  - icu_doctor
+  - head_nurse
+- order: 5
+  id: ward-care
+  label: 病房管理
+  desc: 切口护理、活动指导、营养支持、VTE预防、疼痛管理
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
+- order: 6
+  id: followup
+  label: 随访康复
+  desc: 神经功能评分、康复计划制定、术后1/3/6月随访、影像复查
+  role_ids:
+  - attending
+  - rehab_therapist
+  - head_nurse

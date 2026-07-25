@@ -1,80 +1,94 @@
 name: psychiatry
 cn_name: 精神心理科智能体
-version: "1.0.0"
+version: 1.0.0
 type: business
 department: 精神心理科
 port: 8811
-aliases: [精神心理科, psychiatry]
-
+aliases:
+- 精神心理科
+- psychiatry
 prompt:
-  system: |
-    你是南方医院精神心理科AI助手，负责精神心理科常见疾病的诊疗评估和管理。
-    请基于相关临床指南给出专业建议。
+  system: 你是南方医院精神心理科AI助手，负责精神心理科常见疾病的诊疗评估和管理。请基于最新临床指南（2025-2026）给出专业建议，包括诊断标准、治疗方案、风险评估和随访计划。
   temperature: 0.3
-
 tools:
-  - name: bp_reception
-    description: 接诊评估
-    handler: psychiatry.bp_reception
-    input: {patient_id: str}
-
-  - name: bp_exam
-    description: 检查检验
-    handler: psychiatry.bp_exam
-    input: {patient_id: str}
-
-  - name: bp_diagnosis
-    description: 诊断确认
-    handler: psychiatry.bp_diagnosis
-    input: {patient_id: str}
-
-  - name: bp_treatment
-    description: 治疗执行
-    handler: psychiatry.bp_treatment
-    input: {patient_id: str}
-
-  - name: bp_followup
-    description: 随访管理
-    handler: psychiatry.bp_followup
-    input: {patient_id: str}
-
-
+- name: bp_reception
+  description: 接诊评估
+  handler: psychiatry.bp_reception
+  input:
+    patient_id: str
+- name: bp_exam
+  description: 检查检验
+  handler: psychiatry.bp_exam
+  input:
+    patient_id: str
+- name: bp_diagnosis
+  description: 诊断确认
+  handler: psychiatry.bp_diagnosis
+  input:
+    patient_id: str
+- name: bp_treatment
+  description: 治疗执行
+  handler: psychiatry.bp_treatment
+  input:
+    patient_id: str
+- name: bp_followup
+  description: 随访管理
+  handler: psychiatry.bp_followup
+  input:
+    patient_id: str
 ui:
   template: chat-with-role-switcher
   roles:
-    - {id: attending, label: 主治医师, default: true}
-    - {id: resident, label: 住院医师}
-    - {id: head_nurse, label: 护士长}
-    - {id: head, label: 科主任}
-
+  - id: attending
+    label: 主治医师
+    default: true
+  - id: resident
+    label: 住院医师
+  - id: head_nurse
+    label: 护士长
+  - id: head
+    label: 科主任
 stages:
-  - order: 1
-    id: bp-reception
-    label: 接诊评估
-    desc: "接诊评估流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 2
-    id: bp-exam
-    label: 检查检验
-    desc: "检查检验流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 3
-    id: bp-diagnosis
-    label: 诊断确认
-    desc: "诊断确认流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 4
-    id: bp-treatment
-    label: 治疗执行
-    desc: "治疗执行流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
-  - order: 5
-    id: bp-followup
-    label: 随访管理
-    desc: "随访管理流程"
-    role: "主治医师 / 住院医师 / 护士长"
-    role_ids: ['attending', 'resident', 'head_nurse']
+- order: 1
+  id: reception
+  label: 接诊登记
+  desc: 主诉采集、现病史、既往史、过敏史、体格检查
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
+- order: 2
+  id: exam
+  label: 辅助检查
+  desc: 实验室检查、影像学检查、心电图、专科检查
+  role_ids:
+  - attending
+  - resident
+- order: 3
+  id: diagnosis
+  label: 诊断与分型
+  desc: 明确诊断、疾病分型分期、鉴别诊断、合并症评估
+  role_ids:
+  - attending
+- order: 4
+  id: treatment-plan
+  label: 治疗方案
+  desc: 制定个体化治疗方案、用药方案、非药物治疗、健康教育
+  role_ids:
+  - attending
+  - head
+- order: 5
+  id: execution
+  label: 治疗执行
+  desc: 执行治疗方案、用药管理、病情监测、并发症预防
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
+- order: 6
+  id: followup
+  label: 随访管理
+  desc: 慢病随访、用药依从性、复查检验、生活方式指导
+  role_ids:
+  - attending
+  - head_nurse
