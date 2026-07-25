@@ -41,7 +41,7 @@ class TestHealthEndpoint:
         assert r.status_code == 200
         data = r.json()
         assert data["status"] == "ok"
-        assert data["version"] == "1.0.0"
+        assert data["version"] == "1.2.0"
 
     def test_health_agents_loaded(self):
         """PROJECT_ROOT 路径错误时 agents_loaded=0, 此测试捕获该问题。"""

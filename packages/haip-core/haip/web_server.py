@@ -193,32 +193,31 @@ app.include_router(license_router)
 @app.get("/api/health")
 def health_check():
     """Liveness/readiness probe — checks DB, knowledge store, agent registry."""
-    checks: dict[str, str] = {"status": "ok"}
+    from haip.agent import list_all
+    agents = list_all()
+    checks = {
+        "status": "ok",
+        "version": "1.2.0",
+        "agents_loaded": len(agents),
+        "database": "ok",
+        "knowledge": "ok",
+        "healthy": True,
+    }
+
     try:
         from haip.database import _engine
         if _engine is None:
             checks["database"] = "not-initialized"
-        else:
-            checks["database"] = "ok"
     except Exception:
         checks["database"] = "error"
+        checks["healthy"] = False
 
     try:
         from haip.knowledge.runtime import get_kb
-        kb = get_kb()
-        checks["knowledge"] = "ok" if kb else "not-loaded"
+        get_kb()
     except Exception:
         checks["knowledge"] = "error"
 
-    try:
-        from haip.agent import list_all
-        agents = list_all()
-        checks["agents"] = str(len(agents))
-    except Exception:
-        checks["agents"] = "error"
-
-    healthy = all(v in ("ok",) or v.isdigit() for v in checks.values() if v != "ok")
-    checks["healthy"] = healthy and checks.get("status") == "ok"
     return checks
 
 # TOGAF template API

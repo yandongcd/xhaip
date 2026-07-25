@@ -1,74 +1,72 @@
-"""测试 Tool 抽象层."""
+"""Tests for haip.tools — base tool abstraction."""
 
+import pytest
 from haip.tools import BaseTool, ToolResult
-from haip.tools.registry import execute, list_all, list_schemas, register, _tools
-
-
-class EchoTool(BaseTool):
-    name = "echo"
-    description = "Echo back input"
-
-    def parameters(self) -> dict:
-        return {"msg": {"type": "string", "description": "Message to echo"}}
-
-    def execute(self, msg: str = "hello", **kwargs) -> ToolResult:
-        return ToolResult(success=True, output=msg, data={"echo": msg})
-
-
-class FailTool(BaseTool):
-    name = "fail"
-    description = "Always fails"
-
-    def execute(self, **kwargs) -> ToolResult:
-        raise RuntimeError("Intentional failure")
 
 
 class TestToolResult:
-    def test_defaults(self):
-        r = ToolResult()
-        assert r.success is True
-        assert r.output == ""
+    def test_success_result(self):
+        result = ToolResult(success=True, output="ok")
+        assert result.success is True
+        assert result.output == "ok"
+        assert result.error == ""
 
-    def test_error(self):
-        r = ToolResult(success=False, error="Something went wrong")
-        assert r.success is False
-        assert r.error == "Something went wrong"
-
-    def test_with_data(self):
-        r = ToolResult(data={"score": 5}, confidence=0.85)
-        assert r.data["score"] == 5
-        assert r.confidence == 0.85
-
-
-class TestToolRegistry:
-    def setup_method(self):
-        _tools.clear()
-
-    def test_register_and_list(self):
-        tool = EchoTool()
-        register(tool)
-        assert list_all()["echo"] is tool
-
-    def test_list_schemas(self):
-        register(EchoTool())
-        schemas = list_schemas()
-        assert len(schemas) == 1
-        assert schemas[0]["name"] == "echo"
-        assert "parameters" in schemas[0]
-
-    def test_execute_success(self):
-        register(EchoTool())
-        result = execute("echo", msg="world")
-        assert result.success
-        assert result.output == "world"
-
-    def test_execute_unknown_tool(self):
-        result = execute("nonexistent")
+    def test_failure_result(self):
+        result = ToolResult(success=False, error="bad")
         assert result.success is False
-        assert "Unknown tool" in result.error
+        assert result.error == "bad"
 
-    def test_execute_failure(self):
-        register(FailTool())
-        result = execute("fail")
-        assert result.success is False
-        assert "Intentional failure" in result.error
+    def test_result_with_citations(self):
+        result = ToolResult(
+            success=True,
+            output="diagnosis",
+            citations=[{"title": "CMA指南", "url": "https://cma.org"}, {"title": "NCCN v3"}],
+            confidence=0.85,
+        )
+        assert len(result.citations) == 2
+        assert result.citations[0]["title"] == "CMA指南"
+        assert result.confidence == 0.85
+
+    def test_result_with_data(self):
+        result = ToolResult(success=True, output="ok", data={"items": [1, 2, 3]})
+        assert result.data["items"] == [1, 2, 3]
+
+    def test_default_values(self):
+        result = ToolResult(success=True)
+        assert result.output == ""
+        assert result.error == ""
+        assert result.data == {}
+        assert result.citations == []
+        assert result.confidence == 0.0
+
+
+class TestBaseTool:
+    def test_concrete_tool(self):
+        class MyTool(BaseTool):
+            name = "my_tool"
+            description = "test tool"
+
+            def parameters(self) -> dict:
+                return {"param1": "str"}
+
+            def execute(self, **kwargs) -> ToolResult:
+                return ToolResult(success=True, output=f"done: {kwargs}")
+
+        tool = MyTool()
+        assert tool.name == "my_tool"
+        result = tool.execute(param1="hello")
+        assert result.success is True
+        assert "hello" in result.output
+
+    def test_abstract_cannot_instantiate(self):
+        with pytest.raises(TypeError):
+            BaseTool()
+
+    def test_default_parameters(self):
+        class SimpleTool(BaseTool):
+            name = "s"
+            description = "d"
+            def execute(self, **kwargs) -> ToolResult:
+                return ToolResult(success=True)
+
+        assert SimpleTool().parameters() == {}

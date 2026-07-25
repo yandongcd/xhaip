@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import hmac
 import json
 import os
 from dataclasses import dataclass, field
@@ -134,7 +135,7 @@ class LicenseManager:
         except Exception:
             return False
 
-        return hashlib.compare_digest(expected, actual)
+        return hmac.compare_digest(expected, actual)
 
     def is_valid(self) -> bool:
         """Check if license is currently valid."""
