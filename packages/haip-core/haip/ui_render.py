@@ -30,11 +30,13 @@ def render_agent_ui(name: str, cn_name: str, agent_type: str, port: int,
         fields = ""
         if inp:
             for field, ftype in inp.items():
-                fields += f'<div class="form-group"><label>{field}</label>'
-                fields += f'<input class="inp-{t["name"]}" data-field="{field}" value="" placeholder="{ftype}"></div>\n'
+                fid = f"inp-{t['name']}-{field}"
+                fields += f'<div class="form-group"><label for="{fid}">{field}</label>'
+                fields += f'<input id="{fid}" class="inp-{t["name"]}" data-field="{field}" placeholder="{ftype}"></div>\n'
         else:
-            fields += '<div class="form-group"><label>参数 (JSON)</label>'
-            fields += f'<textarea class="inp-{t["name"]}">{{}}</textarea></div>\n'
+            fid = f"inp-{t['name']}-params"
+            fields += f'<div class="form-group"><label for="{fid}">参数 (JSON)</label>'
+            fields += f'<textarea id="{fid}" class="inp-{t["name"]}">{{}}</textarea></div>\n'
 
         cards += f'''    <div class="tool-card" id="card-{t["name"]}">
       <h3>{label}</h3>
@@ -80,7 +82,7 @@ def render_agent_ui(name: str, cn_name: str, agent_type: str, port: int,
 
   <div class="main">
     {guard_html}
-    <div class="tool-grid">
+    <div class="tool-grid" id="tool-grid">
 {cards}    </div>
   </div>
 
