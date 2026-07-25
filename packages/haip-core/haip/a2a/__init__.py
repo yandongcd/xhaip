@@ -246,6 +246,14 @@ def _record(agent: str, tool: str, status: str, error: str,
         logger.debug("TOGAF ABB 映射记录失败", exc_info=True)
 
     _call_history.append(entry)
+
+    # ── Agent Memory Recording (持续探索) ──
+    try:
+        from haip.memory import get_memory
+        get_memory().record(agent, "", tool, status=status)
+    except Exception:
+        pass
+
     # Prune to prevent unbounded growth
     if len(_call_history) > 1000:
         _call_history[:] = _call_history[-500:]

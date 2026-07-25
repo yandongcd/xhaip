@@ -260,6 +260,19 @@ async def plan_workflow(agent_name: str, request: Request):
     planner = get_workflow_planner()
     return planner.plan(agent_name, patient)
 
+# ---- Agent Memory & Insights ----
+@app.get("/api/memory/insights/{agent_name}")
+def agent_insights(agent_name: str):
+    """Agent持续探索 — 决策历史洞察."""
+    from haip.memory import get_memory
+    return get_memory().insights(agent_name)
+
+@app.get("/api/memory/global")
+def global_insights():
+    """全量Agent学习洞察 — TOGAF治理用."""
+    from haip.memory import get_memory
+    return get_memory().global_insights()
+
 # ---- TOGAF Architecture Governance ----
 @app.get("/api/togaf/governance")
 def togaf_governance():
