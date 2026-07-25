@@ -27,3 +27,31 @@ tools:
     description: 获取效率指标 (平均住院日/床位使用率)
     handler: metrics.get_efficiency_metrics
     input: {department: str, month: str}
+
+ui:
+  template: chat-with-role-switcher
+  roles:
+    - {id: data_admin, label: 数据管理员, default: true}
+    - {id: data_analyst, label: 数据分析师}
+    - {id: quality_director, label: 质控主任}
+    - {id: dept_head, label: 科主任}
+
+stages:
+  - order: 1
+    id: collect
+    label: 指标采集
+    desc: "科室上报数据校验、多源指标汇聚、数据清洗"
+    role: 数据管理员
+    role_ids: [data_admin, data_analyst]
+  - order: 2
+    id: analyze
+    label: 指标分析
+    desc: "同比环比计算、趋势分析、异常标记、预警触发"
+    role: 数据分析师
+    role_ids: [data_admin, data_analyst, quality_director]
+  - order: 3
+    id: report
+    label: 报告发布
+    desc: "指标看板生成、质控报告输出、全院指标分发"
+    role: 数据分析师 / 质控主任 / 科主任
+    role_ids: [data_admin, data_analyst, quality_director, dept_head]

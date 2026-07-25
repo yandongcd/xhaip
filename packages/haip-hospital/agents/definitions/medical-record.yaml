@@ -27,3 +27,31 @@ tools:
     description: 获取患者影像检查报告
     handler: medical_record.get_exams
     input: {patient_id: str}
+
+ui:
+  template: chat-with-role-switcher
+  roles:
+    - {id: data_admin, label: 数据管理员, default: true}
+    - {id: data_analyst, label: 数据分析师}
+    - {id: dept_head, label: 科主任}
+    - {id: nurse, label: 临床护士}
+
+stages:
+  - order: 1
+    id: collect
+    label: 数据汇集
+    desc: "多源数据采集、格式标准化、质量校验"
+    role: 数据管理员
+    role_ids: [data_admin, data_analyst]
+  - order: 2
+    id: analyze
+    label: 数据分析
+    desc: "统计指标计算、趋势对比分析、异常模式检测"
+    role: 数据分析师
+    role_ids: [data_admin, data_analyst, dept_head]
+  - order: 3
+    id: report
+    label: 报告分发
+    desc: "指标看板生成、分析报告输出、数据下发配置"
+    role: 数据分析师 / 科主任
+    role_ids: [data_admin, data_analyst, dept_head]
