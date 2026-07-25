@@ -141,8 +141,12 @@ def call(agent: str, tool: str, params: dict[str, Any] | None = None,
         fn = getattr(_agent_cache[handler], func_name)
         # Coerce param types from YAML input schema (form inputs are always strings)
         if tool_def.input and params:
+            keys_to_drop = []
             for k, pt in tool_def.input.items():
                 if k in params and isinstance(params[k], str):
+                    if not params[k].strip():
+                        keys_to_drop.append(k)  # Empty string → use function default
+                        continue
                     try:
                         if pt in ("int", "integer"):
                             params[k] = int(params[k])
@@ -151,7 +155,9 @@ def call(agent: str, tool: str, params: dict[str, Any] | None = None,
                         elif pt == "bool":
                             params[k] = params[k].lower() in ("true", "1", "yes")
                     except (ValueError, TypeError):
-                        pass  # Keep original value if coercion fails
+                        pass
+            for k in keys_to_drop:
+                params.pop(k, None)
         result = fn(**params)
     except ModuleNotFoundError as e:
         elapsed = (time.perf_counter() - t0) * 1000
