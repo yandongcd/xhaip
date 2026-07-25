@@ -1,78 +1,118 @@
 name: lab-critical-value
 cn_name: 检验危急值智能体
-version: "1.0.0"
+version: 1.0.0
 type: specialist
 department: 检验科
 port: 8903
-aliases: [危急值, 输血, 检验科, 实验室, 危急值报告, critical value]
-
+aliases:
+- 危急值
+- 输血
+- 检验科
+- 实验室
+- 危急值报告
+- critical value
 prompt:
-  system: |
-    你是检验危急值智能体，基于WS/T 405-2012《临床检验危急值报告与处置规范》
+  system: '你是检验危急值智能体，基于WS/T 405-2012《临床检验危急值报告与处置规范》
+
     和三级医院通行标准，提供检验危急值判定、科室路由推荐、批量筛查、
+
     报告闭环记录功能。覆盖电解质、血气、血常规、凝血、心肌标志物、
+
     肝肾功能、新生儿等30项危急值阈值。使用中文回答。
+
+    '
   temperature: 0.2
   max_tokens: 2048
-
 tools:
-  - name: check_critical_value
-    description: >
-      单项检验危急值判定 — 对比30项内置危急值阈值表判定是否危急、
-      危急方向（低值/高值）、危急级别（一级危急/二级警戒）、
-      复检建议和临床意义。
-    handler: lab_critical_value.check_critical_value
-    input:
-      item: str
-      value: float
-      unit: str
-      age_group: str
+- name: check_critical_value
+  description: '单项检验危急值判定 — 对比30项内置危急值阈值表判定是否危急、 危急方向（低值/高值）、危急级别（一级危急/二级警戒）、 复检建议和临床意义。
 
-  - name: classify_and_route
-    description: >
-      危急值路由推荐 — 根据检验项目和危急方向自动推荐响应科室、
-      升级链条（值班医生→科主任→医务处）、10/30分钟响应时限。
-    handler: lab_critical_value.classify_and_route
-    input:
-      item: str
-      value: float
-      patient_dept: str
+    '
+  handler: lab_critical_value.check_critical_value
+  input:
+    item: str
+    value: float
+    unit: str
+    age_group: str
+- name: classify_and_route
+  description: '危急值路由推荐 — 根据检验项目和危急方向自动推荐响应科室、 升级链条（值班医生→科主任→医务处）、10/30分钟响应时限。
 
-  - name: batch_screen
-    description: >
-      批量检验结果筛查 — 一批检验结果逐项判定危急值，
-      输出命中清单按危急级别排序。
-    handler: lab_critical_value.batch_screen
-    input:
-      labs: list
+    '
+  handler: lab_critical_value.classify_and_route
+  input:
+    item: str
+    value: float
+    patient_dept: str
+- name: batch_screen
+  description: '批量检验结果筛查 — 一批检验结果逐项判定危急值， 输出命中清单按危急级别排序。
 
-  - name: notification_record
-    description: >
-      危急值报告闭环记录 — 生成记录结构（时间戳/接收人/是否确认/超时标记），
-      为后续LIS订阅与推送落地预留接口。
-    handler: lab_critical_value.notification_record
-    input:
-      item: str
-      value: float
-      notified_to: str
-      ack: bool
+    '
+  handler: lab_critical_value.batch_screen
+  input:
+    labs: list
+- name: notification_record
+  description: '危急值报告闭环记录 — 生成记录结构（时间戳/接收人/是否确认/超时标记）， 为后续LIS订阅与推送落地预留接口。
 
+    '
+  handler: lab_critical_value.notification_record
+  input:
+    item: str
+    value: float
+    notified_to: str
+    ack: bool
 guard:
-  triggers: [危急值, 输血, 检验科, 检验结果, 化验值异常, 实验室]
+  triggers:
+  - 危急值
+  - 输血
+  - 检验科
+  - 检验结果
+  - 化验值异常
+  - 实验室
   high_risk_scenarios:
-    - 危急值通知超时未确认（一级危急>10min、二级警戒>30min未闭环）
-    - cTnI报警级+胸痛患者超过10分钟未启动绿色通道
-    - Hb<50 未在30分钟内完成输血评估
-    - 新生儿总胆红素>342 未在2小时内启动换血评估
-    - 血乳酸>4 脓毒症1小时集束化治疗未启动
-
+  - 危急值通知超时未确认（一级危急>10min、二级警戒>30min未闭环）
+  - cTnI报警级+胸痛患者超过10分钟未启动绿色通道
+  - Hb<50 未在30分钟内完成输血评估
+  - 新生儿总胆红素>342 未在2小时内启动换血评估
+  - 血乳酸>4 脓毒症1小时集束化治疗未启动
 ui:
   template: chat-with-role-switcher
   roles:
-    - {id: lab_tech, label: 检验技师, default: true}
-    - {id: clinician, label: 临床医生}
-    - {id: nurse, label: 临床护士}
-    - {id: quality_manager, label: 质控主管}
+  - id: lab_tech
+    label: 检验技师
+    default: true
+  - id: clinician
+    label: 临床医生
+  - id: nurse
+    label: 临床护士
+  - id: quality_manager
+    label: 质控主管
   sidebar:
-    - {category: 危急值判定, tools: [check_critical_value, batch_screen]}
-    - {category: 路由与闭环, tools: [classify_and_route, notification_record]}
+  - category: 危急值判定
+    tools:
+    - check_critical_value
+    - batch_screen
+  - category: 路由与闭环
+    tools:
+    - classify_and_route
+    - notification_record
+stages:
+- order: 1
+  id: detect
+  label: 危急值识别
+  desc: 检验结果筛查、危急值判定、分级预警
+  role_ids:
+  - technician
+  - attending
+- order: 2
+  id: notify
+  label: 通知处理
+  desc: 临床科室通知、处理时限跟踪、闭环确认
+  role_ids:
+  - technician
+  - nurse
+- order: 3
+  id: audit
+  label: 质量审计
+  desc: 处理合格率统计、延迟分析、改进措施
+  role_ids:
+  - attending

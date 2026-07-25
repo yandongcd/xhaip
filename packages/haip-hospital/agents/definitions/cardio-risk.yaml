@@ -1,29 +1,68 @@
 name: cardio-risk
 cn_name: 围术期心脏评估
-version: "1.0.0"
+version: 1.0.0
 type: specialist
 department: 跨科室
 port: 8801
-aliases: [心脏评估, 心内科, cardio-risk]
-
+aliases:
+- 心脏评估
+- 心内科
+- cardio-risk
 prompt:
-  system: |
-    你是围术期心脏风险评估专家，负责术前心血管风险分层、
+  system: '你是围术期心脏风险评估专家，负责术前心血管风险分层、
+
     心电图判读、心肌酶分析和RCRI评分。
+
+    '
   temperature: 0.3
-
 tools:
-  - name: assess_cardiac
-    description: 综合心脏风险评估 (RCRI+心电图+心肌酶+心功能)
-    handler: cardio_risk.evaluate
-    input: {patient_id: str, labs: dict, ecg_findings: str}
-
-  - name: assess_mi
-    description: 围术期心肌梗死风险评估
-    handler: cardio_risk.evaluate_mi
-    input: {patient_id: str, troponin: float, ecg: str}
-
-  - name: assess_hypertension
-    description: 高血压风险评估与管理建议
-    handler: cardio_risk.evaluate_htn
-    input: {patient_id: str, sbp: int, dbp: int, meds: list}
+- name: assess_cardiac
+  description: 综合心脏风险评估 (RCRI+心电图+心肌酶+心功能)
+  handler: cardio_risk.evaluate
+  input:
+    patient_id: str
+    labs: dict
+    ecg_findings: str
+- name: assess_mi
+  description: 围术期心肌梗死风险评估
+  handler: cardio_risk.evaluate_mi
+  input:
+    patient_id: str
+    troponin: float
+    ecg: str
+- name: assess_hypertension
+  description: 高血压风险评估与管理建议
+  handler: cardio_risk.evaluate_htn
+  input:
+    patient_id: str
+    sbp: int
+    dbp: int
+    meds: list
+stages:
+- order: 1
+  id: assess
+  label: 心血管风险评估
+  desc: RCRI评分、Goldman指数、运动试验评估
+  role_ids:
+  - attending
+- order: 2
+  id: optimize
+  label: 术前优化
+  desc: 血压控制、抗凝管理、心功能优化
+  role_ids:
+  - attending
+  - cardiologist
+- order: 3
+  id: monitor
+  label: 围术期监测
+  desc: ECG监测、心肌标志物、血流动力学
+  role_ids:
+  - attending
+  - cardiologist
+ui:
+  template: chat-with-role-switcher
+  roles:
+  - id: attending
+    label: attending
+  - id: cardiologist
+    label: cardiologist

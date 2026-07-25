@@ -1,29 +1,59 @@
 name: pain-rehab
 cn_name: 疼痛康复管理
-version: "1.0.0"
+version: 1.0.0
 type: specialist
 department: 疼痛科
-aliases: [疼痛康复, pain-rehab]
+aliases:
+- 疼痛康复
+- pain-rehab
 parent: pain-hub
-
 prompt:
-  system: |
-    你是疼痛康复管理专家，负责康复运动处方制定、功能恢复进展评估
+  system: '你是疼痛康复管理专家，负责康复运动处方制定、功能恢复进展评估
+
     和合并症管理（抑郁/焦虑/自杀风险）。
+
+    '
   temperature: 0.3
-
 tools:
-  - name: exercise_rx
-    description: 康复运动处方 (部位/强度/频率)
-    handler: pain_rehab.exercise
-    input: {patient_id: str}
-
-  - name: assess_progress
-    description: 功能恢复进展评估
-    handler: pain_rehab.assess_progress
-    input: {patient_id: str}
-
-  - name: comorbidity
-    description: 合并症评估 (抑郁/焦虑/自杀风险)
-    handler: pain_rehab.comorbid
-    input: {patient_id: str}
+- name: exercise_rx
+  description: 康复运动处方 (部位/强度/频率)
+  handler: pain_rehab.exercise
+  input:
+    patient_id: str
+- name: assess_progress
+  description: 功能恢复进展评估
+  handler: pain_rehab.assess_progress
+  input:
+    patient_id: str
+- name: comorbidity
+  description: 合并症评估 (抑郁/焦虑/自杀风险)
+  handler: pain_rehab.comorbid
+  input:
+    patient_id: str
+stages:
+- order: 1
+  id: assess
+  label: 康复评估
+  desc: 疼痛相关功能障碍评估、康复目标设定
+  role_ids:
+  - therapist
+- order: 2
+  id: rehab
+  label: 康复治疗
+  desc: 运动疗法、物理因子、作业治疗
+  role_ids:
+  - therapist
+- order: 3
+  id: evaluate
+  label: 效果评估
+  desc: 功能改善评估、重返工作/生活能力评估
+  role_ids:
+  - therapist
+  - attending
+ui:
+  template: chat-with-role-switcher
+  roles:
+  - id: attending
+    label: attending
+  - id: therapist
+    label: therapist

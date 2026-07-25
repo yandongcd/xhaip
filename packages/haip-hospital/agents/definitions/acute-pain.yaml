@@ -1,36 +1,73 @@
 name: acute-pain
 cn_name: 急性疼痛评估与管理
-version: "1.0.0"
+version: 1.0.0
 type: specialist
 department: 疼痛科
 port: 8841
-aliases: [急性疼痛, acute-pain]
+aliases:
+- 急性疼痛
+- acute-pain
 parent: pain-hub
-
 prompt:
-  system: |
-    你是急性疼痛管理专家，负责术后疼痛、创伤疼痛的评估与镇痛方案制定。
+  system: '你是急性疼痛管理专家，负责术后疼痛、创伤疼痛的评估与镇痛方案制定。
+
     使用VAS/NRS评分标准，提供PCA镇痛方案。
+
+    '
   temperature: 0.3
-
 tools:
-  - name: assess_acute
-    description: 急性疼痛综合评估 (NRS/VAS + 神经病理检测)
-    handler: acute_pain.assess
-    input: {patient_id: str}
-
-  - name: manage_pca
-    description: PCA 镇痛方案 (剂量/年龄/肾功能调整)
-    handler: acute_pain.pca
-    input: {patient_id: str}
-
-  - name: detect_crisis
-    description: 疼痛危象检测 (骨筋膜室/动脉栓塞)
-    handler: acute_pain.crisis
-    input: {patient_id: str}
-
+- name: assess_acute
+  description: 急性疼痛综合评估 (NRS/VAS + 神经病理检测)
+  handler: acute_pain.assess
+  input:
+    patient_id: str
+- name: manage_pca
+  description: PCA 镇痛方案 (剂量/年龄/肾功能调整)
+  handler: acute_pain.pca
+  input:
+    patient_id: str
+- name: detect_crisis
+  description: 疼痛危象检测 (骨筋膜室/动脉栓塞)
+  handler: acute_pain.crisis
+  input:
+    patient_id: str
 guard:
-  triggers: [药物交互]
+  triggers:
+  - 药物交互
   high_risk_scenarios:
-    - 骨筋膜室综合征
-    - 阿片类药物呼吸抑制
+  - 骨筋膜室综合征
+  - 阿片类药物呼吸抑制
+stages:
+- order: 1
+  id: assess
+  label: 疼痛评估
+  desc: NRS/VAS评分、疼痛性质评估、神经病理筛查
+  role_ids:
+  - attending
+  - nurse
+- order: 2
+  id: analgesia
+  label: 镇痛方案
+  desc: WHO阶梯镇痛、PCA参数设定、多模式镇痛
+  role_ids:
+  - attending
+- order: 3
+  id: monitor
+  label: 效果监测
+  desc: 疼痛缓解评估、不良反应监测、方案调整
+  role_ids:
+  - attending
+  - nurse
+- order: 4
+  id: followup
+  label: 随访管理
+  desc: 慢性疼痛筛查、阿片依赖评估、功能恢复评估
+  role_ids:
+  - attending
+ui:
+  template: chat-with-role-switcher
+  roles:
+  - id: attending
+    label: attending
+  - id: nurse
+    label: nurse

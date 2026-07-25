@@ -1,48 +1,93 @@
 name: pain-management
 cn_name: 疼痛管理智能体
-version: "1.0.0"
+version: 1.0.0
 type: specialist
 department: 跨科室
 port: 8771
-aliases: [疼痛管理, pain, 镇痛]
-
+aliases:
+- 疼痛管理
+- pain
+- 镇痛
 prompt:
-  system: |
-    你是南方医院疼痛管理技能智能体，负责围术期疼痛评估、多模式镇痛方案推荐、
+  system: '你是南方医院疼痛管理技能智能体，负责围术期疼痛评估、多模式镇痛方案推荐、
+
     无痛化病房质控指标管理。遵循 WHO 疼痛阶梯治疗原则和 ERAS 加速康复外科指南。
+
     注意: VAS/NRS 疼痛评分必须由临床医护人员输入，智能体不自行评估疼痛分值。
+
+    '
   temperature: 0.2
   max_tokens: 2048
-
 tools:
-  - name: assess_pain
-    description: 疼痛评估 VAS/NRS/FLACC (VAS值须由护理人员床旁输入，不接受空值)
-    handler: pain_management.assess_pain
-    input: {patient_id: str, vas_score: float, nurse_id: str, assessment_time: str}
-
-  - name: multimodal_analgesia
-    description: 多模式镇痛阶梯方案推荐 (NSAIDs→弱阿片→强阿片→局麻→神经阻滞)
-    handler: pain_management.multimodal_analgesia
-    input: {patient_id: str, vas_score: float, allergies: list, renal_function: str, liver_function: str}
-
-  - name: pain_free_ward_metrics
-    description: 无痛化病房质控指标 VAS<3比例/爆发痛频率/补救用药率 (±2分评估容差)
-    handler: pain_management.pain_free_ward_metrics
-    input: {ward_id: str, period: str}
-
-  - name: pca_config
-    description: 术后 PCA 镇痛泵配置建议
-    handler: pain_management.pca_config
-    input: {patient_id: str, age: int, weight: float, procedure: str, allergies: list}
-
+- name: assess_pain
+  description: 疼痛评估 VAS/NRS/FLACC (VAS值须由护理人员床旁输入，不接受空值)
+  handler: pain_management.assess_pain
+  input:
+    patient_id: str
+    vas_score: float
+    nurse_id: str
+    assessment_time: str
+- name: multimodal_analgesia
+  description: 多模式镇痛阶梯方案推荐 (NSAIDs→弱阿片→强阿片→局麻→神经阻滞)
+  handler: pain_management.multimodal_analgesia
+  input:
+    patient_id: str
+    vas_score: float
+    allergies: list
+    renal_function: str
+    liver_function: str
+- name: pain_free_ward_metrics
+  description: 无痛化病房质控指标 VAS<3比例/爆发痛频率/补救用药率 (±2分评估容差)
+  handler: pain_management.pain_free_ward_metrics
+  input:
+    ward_id: str
+    period: str
+- name: pca_config
+  description: 术后 PCA 镇痛泵配置建议
+  handler: pain_management.pca_config
+  input:
+    patient_id: str
+    age: int
+    weight: float
+    procedure: str
+    allergies: list
 guard:
-  triggers: [阿片过量, 呼吸抑制, 过敏反应]
+  triggers:
+  - 阿片过量
+  - 呼吸抑制
+  - 过敏反应
   high_risk_scenarios:
-    - 老年患者阿片类药物使用
-    - 肾功能不全患者 NSAIDs 禁忌
-    - PCA 泵参数设置错误
-
+  - 老年患者阿片类药物使用
+  - 肾功能不全患者 NSAIDs 禁忌
+  - PCA 泵参数设置错误
 depends_on:
-  - agent: anesthesia-risk
-    version: ">=1.0"
-    note: "麻醉 Agent 为强制依赖 — 术中镇痛策略由麻醉 Agent 主导，疼痛 Agent 覆盖术前/术后"
+- agent: anesthesia-risk
+  version: '>=1.0'
+  note: 麻醉 Agent 为强制依赖 — 术中镇痛策略由麻醉 Agent 主导，疼痛 Agent 覆盖术前/术后
+stages:
+- order: 1
+  id: assess
+  label: 疼痛综合评估
+  desc: 多维度疼痛评估、心理评估、功能评估
+  role_ids:
+  - attending
+- order: 2
+  id: treatment
+  label: 综合治疗
+  desc: 药物+介入+康复+心理综合方案
+  role_ids:
+  - attending
+  - therapist
+- order: 3
+  id: followup
+  label: 随访评估
+  desc: 疗效评估、方案调整、慢性化预防
+  role_ids:
+  - attending
+ui:
+  template: chat-with-role-switcher
+  roles:
+  - id: attending
+    label: attending
+  - id: therapist
+    label: therapist
