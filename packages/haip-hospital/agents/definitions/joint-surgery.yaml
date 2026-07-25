@@ -118,6 +118,10 @@ guard:
   - 关节脱位急诊复位
   - 翻修术中大段骨缺损
   - 假体周围骨折
+  citation:
+    required: true
+    min_sources: 1
+    min_trust: T2
 ui:
   template: chat-with-role-switcher
   roles:

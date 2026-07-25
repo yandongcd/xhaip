@@ -213,6 +213,10 @@ guard:
   - PFNA内固定失败风险
   - 老年髋部骨折48h手术窗口
   - 围术期心肌梗死
+  citation:
+    required: true
+    min_sources: 1
+    min_trust: T2
 ui:
   template: chat-with-role-switcher
   roles:

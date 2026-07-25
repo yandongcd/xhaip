@@ -97,3 +97,10 @@ stages:
   role_ids:
   - attending
   - head_nurse
+guard:
+  triggers:
+  - 诊断决策
+  - 治疗方案
+  high_risk_scenarios:
+  - 诊断决策
+  - 治疗方案

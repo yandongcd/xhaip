@@ -92,3 +92,14 @@ stages:
   role_ids:
   - attending
   - head_nurse
+guard:
+  triggers:
+  - ABCDE 阳性 → 皮肤活检
+  - 皮疹 > 30% 体表面积 → 系统治疗
+  - 瘙痒伴黄疸 → 肝病排查
+  - 大疱性皮肤病 → 危重
+  - 诊断决策
+  - 治疗方案
+  high_risk_scenarios:
+  - 皮疹 > 30% 体表面积 → 系统治疗
+  - ABCDE 阳性 → 皮肤活检

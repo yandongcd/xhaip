@@ -44,6 +44,10 @@ guard:
   - 华法林过量出血
   - 术后心包填塞
   - 瓣膜置换术后抗凝失败
+  citation:
+    required: true
+    min_sources: 1
+    min_trust: T2
 ui:
   template: chat-with-role-switcher
   roles:
