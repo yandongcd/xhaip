@@ -126,3 +126,36 @@ class TestHITL:
         )
         result = hook.check(ctx, "建议使用外用药膏")
         assert result is None  # No HITL needed
+
+
+class TestMCPTransport:
+    """MCP transport error handling (no live server needed)."""
+
+    def test_mcp_instantiation(self):
+        t = MCPTransport(base_url="http://localhost:8765")
+        assert isinstance(t, AgentTransport)
+        assert t.base_url == "http://localhost:8765"
+        assert t.timeout == 30.0
+
+    def test_mcp_custom_timeout(self):
+        t = MCPTransport(base_url="http://localhost:8765", timeout=10.0)
+        assert t.timeout == 10.0
+
+    def test_mcp_connection_error(self):
+        t = MCPTransport(base_url="http://127.0.0.1:19999")
+        result = t.call("test-agent", "test-tool", {})
+        assert result["status"] == "error"
+        assert "Connection failed" in result["error"]
+
+    def test_mcp_url_construction(self):
+        t = MCPTransport(base_url="http://host:1234/")
+        result = t.call("agent-x", "tool-y", {"key": "val"})
+        assert result["status"] == "error"  # connection refused, but url is correct
+
+    def test_mcp_registry_integration(self):
+        t = MCPTransport(base_url="http://localhost:8765")
+        set_transport("remote-agent", t)
+        stored = get_transport("remote-agent")
+        assert stored is t
+        assert isinstance(stored, MCPTransport)
+        remove_transport("remote-agent")
