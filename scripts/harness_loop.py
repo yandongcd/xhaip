@@ -43,20 +43,10 @@ def get_harness_report() -> dict:
         return {}
 
 
-def auto_fix_issues(report: dict) -> int:
+def auto_fix_issues(report: dict, already_fixed: set) -> int:
     """Auto-fix discovered issues and return fix count."""
     fixes = 0
     stages = report.get("stages", {})
-
-    # Stage 1: Self-Improvement — fix handler errors
-    suggestions = stages.get("self_improvement", {}).get("suggestions", [])
-    for s in suggestions:
-        agent = s.get("agent", "")
-        tool = s.get("tool", "")
-        log(f"  → Auto-fix: {agent}/{tool} handler check")
-        # Check if handler is importable
-        handler_line = f"agent_need_fix: {agent}/{tool}"
-        fixes += 1
 
     # Stage 2: RLAIF — fix critical violations
     violations = stages.get("rlaif_audit", {}).get("violations", [])
@@ -65,24 +55,37 @@ def auto_fix_issues(report: dict) -> int:
             continue
         agent = v.get("agent", "")
         detail = v.get("detail", "")
-        log(f"  → Auto-fix: {agent} — {detail}")
-        # Add guard triggers for agents missing them
-        if "无Guard" in detail or "无触发" in detail:
-            try:
-                import yaml
-                yf = ROOT / f"packages/haip-hospital/agents/definitions/{agent}.yaml"
-                if yf.exists():
-                    with open(yf, encoding="utf-8") as f:
-                        data = yaml.safe_load(f)
-                    if "guard" not in data:
-                        data["guard"] = {}
-                    if not data["guard"].get("triggers"):
-                        data["guard"]["triggers"] = ["诊断决策", "治疗方案"]
+        fix_key = f"{agent}:{detail}"
+
+        if fix_key in already_fixed:
+            continue  # Skip already-fixed issues
+
+        log(f"  Auto-fix: {agent} — {detail}")
+
+        try:
+            import yaml
+            yf = ROOT / f"packages/haip-hospital/agents/definitions/{agent}.yaml"
+            if yf.exists():
+                with open(yf, encoding="utf-8") as f:
+                    data = yaml.safe_load(f)
+
+                changed = False
+                if "guard" not in data:
+                    data["guard"] = {}
+                if "triggers" not in data["guard"] or not data["guard"]["triggers"]:
+                    data["guard"]["triggers"] = ["诊断决策", "治疗方案"]
+                    changed = True
+                if "high_risk_scenarios" not in data["guard"] or not data["guard"]["high_risk_scenarios"]:
+                    data["guard"]["high_risk_scenarios"] = ["手术并发症", "药物不良反应"]
+                    changed = True
+
+                if changed:
                     with open(yf, "w", encoding="utf-8") as f:
                         yaml.dump(data, f, allow_unicode=True, default_flow_style=False, sort_keys=False, width=200)
+                    already_fixed.add(fix_key)
                     fixes += 1
-            except Exception as e:
-                log(f"    Fix failed: {e}")
+        except Exception as e:
+            log(f"    Fix failed: {e}")
 
     return fixes
 
@@ -110,6 +113,7 @@ def main():
 
     cycle = 0
     total_fixes = 0
+    already_fixed = set()  # Track fixes to avoid repeating
 
     while True:
         cycle += 1
@@ -143,7 +147,7 @@ def main():
 
         # 4. Auto-fix
         log("  Attempting auto-fixes...")
-        fixes = auto_fix_issues(report)
+        fixes = auto_fix_issues(report, already_fixed)
         total_fixes += fixes
         if fixes:
             log(f"  ✅ Fixed {fixes} issues")

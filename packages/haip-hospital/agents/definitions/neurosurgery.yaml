@@ -54,6 +54,9 @@ tools:
 guard:
   triggers:
   - 手术决策
+  high_risk_scenarios:
+  - 手术并发症
+  - 药物不良反应
 ui:
   template: chat-with-role-switcher
   roles:
