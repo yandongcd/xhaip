@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -52,11 +52,12 @@ class LLMGateway:
     - Circuit breaker on repeated failures
     """
 
-    def __init__(self, config: Optional[LLMGatewayConfig] = None):
+    def __init__(self, config: LLMGatewayConfig | None = None):
         self.config = config or LLMGatewayConfig()
         self.stats = GatewayStats()
         self._cache: dict[str, tuple[float, Any]] = {}
         self._rate_tracker: dict[str, list[float]] = {}
+        self._rate_tracker_last_cleanup: float = 0.0
         self._failure_counts: dict[str, int] = {}
         self._circuit_open: set[str] = set()
         self._circuit_reset_time: dict[str, float] = {}
@@ -65,13 +66,22 @@ class LLMGateway:
         """Check if user has exceeded rate limit."""
         now = time.time()
         window = now - 60  # 1-minute sliding window
+
+        # Periodic cleanup of stale keys (every 300s)
+        if now - self._rate_tracker_last_cleanup > 300:
+            self._rate_tracker_last_cleanup = now
+            stale = [k for k, ts in self._rate_tracker.items()
+                     if not ts or max(ts) < window]
+            for k in stale:
+                del self._rate_tracker[k]
+
         timestamps = self._rate_tracker.get(user_id, [])
         timestamps = [t for t in timestamps if t > window]
         timestamps.append(now)
         self._rate_tracker[user_id] = timestamps
         return len(timestamps) <= self.config.rate_limit_per_minute
 
-    def _check_cache(self, cache_key: str) -> Optional[Any]:
+    def _check_cache(self, cache_key: str) -> Any | None:
         """Check response cache."""
         if cache_key in self._cache:
             ts, result = self._cache[cache_key]
@@ -92,7 +102,7 @@ class LLMGateway:
                 if now - v[0] < self.config.cache_ttl_seconds * 2
             }
 
-    def _cache_key(self, messages: list[dict], tools: Optional[list] = None) -> str:
+    def _cache_key(self, messages: list[dict], tools: list | None = None) -> str:
         """Generate a cache key from messages."""
         import hashlib
         import json
@@ -126,7 +136,7 @@ class LLMGateway:
         self,
         messages: list[dict],
         *,
-        tools: Optional[list] = None,
+        tools: list | None = None,
         temperature: float = 0.3,
         max_tokens: int = 4096,
         user_id: str = "default",
@@ -207,9 +217,10 @@ class LLMGateway:
     def _get_provider_config(self, provider_name: str) -> dict[str, Any]:
         """Get LLM provider configuration."""
         from pathlib import Path
+
         import yaml
 
-        # Default configs
+        # Default configs — never fall through to mock in production
         configs = {
             "deepseek": {
                 "provider": "deepseek",
@@ -219,11 +230,14 @@ class LLMGateway:
                 "temperature": 0.3,
                 "max_tokens": 4096,
             },
-            "mock": {
-                "provider": "mock",
-                "mock_responses": True,
+            "fail-closed": {
+                "provider": "fail-closed",
+                "mode": "production",
             },
         }
+
+        # Remove "mock" as default — this was the dangerous fallback
+        mock_config = configs.pop("mock", None)
 
         # Try loading from config file
         config_path = (
@@ -235,11 +249,11 @@ class LLMGateway:
             if "llm" in cfg:
                 configs[provider_name] = cfg["llm"]
 
-        return configs.get(provider_name, configs["mock"])
+        return configs.get(provider_name, configs["fail-closed"])
 
 
 # Global singleton
-_llm_gateway: Optional[LLMGateway] = None
+_llm_gateway: LLMGateway | None = None
 
 
 def get_llm_gateway() -> LLMGateway:
