@@ -6,8 +6,7 @@ import json
 import time
 
 import haip.patients as patients_mod
-from haip.patients import load_patients, clear_cache
-
+from haip.patients import clear_cache, load_all_patients, load_patients
 
 PTS = [
     {"patient_id": "P001", "name": "张三", "compatible_agents": ["orthopedic-surgery"]},
@@ -110,3 +109,33 @@ class TestPatientCache:
         clear_cache()
         result3 = load_patients("orthopedic-surgery")
         assert len(result3) == 2
+
+
+class TestLoadAllPatients:
+    def test_returns_all_patients(self, tmp_path, monkeypatch):
+        f = _write(tmp_path, {"patients": PTS})
+        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", f)
+        clear_cache()
+        result = load_all_patients()
+        assert len(result) == 3
+        assert result[0]["patient_id"] == "P001"
+
+    def test_respects_max_items(self, tmp_path, monkeypatch):
+        f = _write(tmp_path, {"patients": PTS})
+        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", f)
+        clear_cache()
+        result = load_all_patients(max_items=2)
+        assert len(result) == 2
+
+    def test_uses_cache_on_second_call(self, tmp_path, monkeypatch):
+        f = _write(tmp_path, {"patients": PTS})
+        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", f)
+        clear_cache()
+        load_all_patients()
+        result = load_all_patients()
+        assert len(result) == 3
+
+    def test_missing_file_returns_empty(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(patients_mod, "PATIENTS_FILE", tmp_path / "nonexistent.json")
+        clear_cache()
+        assert load_all_patients() == []
