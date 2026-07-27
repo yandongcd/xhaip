@@ -295,14 +295,21 @@ def _interpolate_env(value: Any) -> Any:
 
 
 def _load_llm_config() -> dict[str, Any]:
-    """加载     LLM 配置（从 config/llm.yaml, 含环境变量插值）。"""
+    """加载 LLM 配置（从 config/llm.yaml, 含环境变量插值, mtime 缓存）。"""
     candidates = [
         Path(__file__).resolve().parent.parent.parent.parent / "config" / "llm.yaml",
         Path(__file__).resolve().parent.parent.parent.parent.parent / "config" / "llm.yaml",
     ]
+    now = time.time()
+    if _load_llm_config._cache_time > 0 and now - _load_llm_config._cache_time < 5:
+        return _load_llm_config._cache
     for p in candidates:
         if p.exists():
             try:
+                mtime = p.stat().st_mtime
+                if mtime == _load_llm_config._file_mtime and _load_llm_config._cache:
+                    _load_llm_config._cache_time = now
+                    return _load_llm_config._cache
                 with open(p, encoding="utf-8") as f:
                     cfg = yaml.safe_load(f).get("llm", {})
             except (OSError, yaml.YAMLError) as e:
@@ -319,8 +326,16 @@ def _load_llm_config() -> dict[str, Any]:
                     pass
                 except Exception:
                     logger.debug("api_key_store 读取失败", exc_info=True)
+            _load_llm_config._cache = cfg
+            _load_llm_config._file_mtime = mtime
+            _load_llm_config._cache_time = now
             return cfg
     return {"provider": "mock", "mock_responses": True}
+
+
+_load_llm_config._cache: dict[str, Any] = {}
+_load_llm_config._cache_time: float = 0.0
+_load_llm_config._file_mtime: float = 0.0
 
 
 def _build_loop_components(agent: str):
