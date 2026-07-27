@@ -80,3 +80,35 @@ def load_patients(agent_name: str, limit: int = 8, only_compatible: bool = False
     if only_compatible:
         return []
     return all_pts[:limit]
+
+
+def load_all_patients(max_items: int = 0) -> list[dict]:
+    """加载全部患者 (从 mtime+size 缓存, 线程安全).
+
+    Args:
+        max_items: 返回条数上限 (0 表示不限制).
+    """
+    if not PATIENTS_FILE.exists():
+        logger.warning("patients.json 不存在: %s", PATIENTS_FILE)
+        return []
+    try:
+        stat = PATIENTS_FILE.stat()
+        key = (str(PATIENTS_FILE), stat.st_mtime_ns, stat.st_size)
+    except OSError as e:
+        logger.warning("patients.json stat 失败: %s", e)
+        return []
+
+    global _cache_key, _cache_patients
+    with _cache_lock:
+        if _cache_key == key and _cache_patients is not None:
+            all_pts = _cache_patients
+        else:
+            all_pts = _read_all_patients()
+            if all_pts is None:
+                return []
+            _cache_key = key
+            _cache_patients = all_pts
+
+    if max_items > 0:
+        return all_pts[:max_items]
+    return list(all_pts)
