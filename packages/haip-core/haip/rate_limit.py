@@ -10,8 +10,8 @@ Provides:
 
 from __future__ import annotations
 
+import threading
 import time
-from typing import Optional
 
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -27,6 +27,7 @@ class TokenBucket:
         self.window = window  # window in seconds
         self._buckets: dict[str, tuple[float, float]] = {}  # key → (tokens, last_refill)
         self._last_cleanup = time.time()
+        self._lock = threading.Lock()
 
     def _refill(self, tokens: float, last_refill: float) -> tuple[float, float]:
         now = time.time()
@@ -38,28 +39,29 @@ class TokenBucket:
         """Try to consume a token. Returns (allowed, headers)."""
         now = time.time()
 
-        # Cleanup old entries periodically
-        if now - self._last_cleanup > 300:
-            self._last_cleanup = now
-            stale = [k for k, (t, lr) in self._buckets.items() if now - lr > 600]
-            for k in stale:
-                del self._buckets[k]
+        with self._lock:
+            # Cleanup old entries periodically
+            if now - self._last_cleanup > 300:
+                self._last_cleanup = now
+                stale = [k for k, (t, lr) in self._buckets.items() if now - lr > 600]
+                for k in stale:
+                    del self._buckets[k]
 
-        tokens, last_refill = self._buckets.get(key, (self.rate + self.burst, now))
-        tokens, last_refill = self._refill(tokens, last_refill)
+            tokens, last_refill = self._buckets.get(key, (self.rate + self.burst, now))
+            tokens, last_refill = self._refill(tokens, last_refill)
 
-        headers = {
-            "X-RateLimit-Limit": str(self.rate),
-            "X-RateLimit-Remaining": str(max(0, int(tokens))),
-            "X-RateLimit-Reset": str(int(now + self.window)),
-        }
+            headers = {
+                "X-RateLimit-Limit": str(self.rate),
+                "X-RateLimit-Remaining": str(max(0, int(tokens))),
+                "X-RateLimit-Reset": str(int(now + self.window)),
+            }
 
-        if tokens >= cost:
-            self._buckets[key] = (tokens - cost, last_refill)
-            return True, headers
+            if tokens >= cost:
+                self._buckets[key] = (tokens - cost, last_refill)
+                return True, headers
 
-        self._buckets[key] = (tokens, last_refill)
-        return False, headers
+            self._buckets[key] = (tokens, last_refill)
+            return False, headers
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -71,8 +73,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         rate: int = 100,
         burst: int = 20,
         window: int = 60,
-        cost_map: Optional[dict[str, int]] = None,
-        exclude_paths: Optional[set[str]] = None,
+        cost_map: dict[str, int] | None = None,
+        exclude_paths: set[str] | None = None,
         enabled: bool = True,
     ):
         super().__init__(app)
