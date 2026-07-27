@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
+import threading
 from pathlib import Path
 
 # ── 数据模型 ──
@@ -49,6 +50,7 @@ class KnowledgeStore:
     def __init__(self, db_path: str = ":memory:"):
         self.db = sqlite3.connect(db_path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
+        self._lock = threading.Lock()
         self.db.execute("PRAGMA journal_mode=WAL")
         self._init_schema()
 
@@ -63,15 +65,16 @@ class KnowledgeStore:
 
     def upsert_guideline(self, data: dict) -> None:
         import json
-        self.db.execute(
-            """INSERT OR REPLACE INTO guidelines
-               (id, name, abbr, publisher, version, trust_level, language, source_file, key_sections)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (data["id"], data["name"], data.get("abbr"), data.get("publisher"),
-             data.get("version"), data.get("trust_level", "T2"), data.get("language", "zh"),
-             data.get("source_file"), json.dumps(data.get("key_sections", []))),
-        )
-        self.db.commit()
+        with self._lock:
+            self.db.execute(
+                """INSERT OR REPLACE INTO guidelines
+                   (id, name, abbr, publisher, version, trust_level, language, source_file, key_sections)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (data["id"], data["name"], data.get("abbr"), data.get("publisher"),
+                 data.get("version"), data.get("trust_level", "T2"), data.get("language", "zh"),
+                 data.get("source_file"), json.dumps(data.get("key_sections", []))),
+            )
+            self.db.commit()
 
     def get_guideline(self, gid: str) -> dict | None:
         row = self.db.execute("SELECT * FROM guidelines WHERE id = ?", (gid,)).fetchone()
@@ -94,20 +97,21 @@ class KnowledgeStore:
 
     def upsert_rule(self, data: dict) -> None:
         import json
-        self.db.execute(
-            """INSERT OR REPLACE INTO rules
-               (id, rule_set_id, decision_point, condition_expr, conclusion,
-                rule_type, certainty, evidence_sources, exceptions, priority)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (data["id"], data["rule_set_id"],
-             data.get("decision_point", data.get("id", "")),
-             data.get("condition_expr"), data.get("conclusion", data.get("decision_point", "")),
-             data.get("rule_type", "deterministic"), data.get("certainty", "strong"),
-             json.dumps(data.get("evidence_sources", [])),
-             json.dumps(data.get("exceptions", [])),
-             data.get("priority", 0)),
-        )
-        self.db.commit()
+        with self._lock:
+            self.db.execute(
+                """INSERT OR REPLACE INTO rules
+                   (id, rule_set_id, decision_point, condition_expr, conclusion,
+                    rule_type, certainty, evidence_sources, exceptions, priority)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (data["id"], data["rule_set_id"],
+                 data.get("decision_point", data.get("id", "")),
+                 data.get("condition_expr"), data.get("conclusion", data.get("decision_point", "")),
+                 data.get("rule_type", "deterministic"), data.get("certainty", "strong"),
+                 json.dumps(data.get("evidence_sources", [])),
+                 json.dumps(data.get("exceptions", [])),
+                 data.get("priority", 0)),
+            )
+            self.db.commit()
 
     def find_rules(self, decision_point: str) -> list[dict]:
         rows = self.db.execute(

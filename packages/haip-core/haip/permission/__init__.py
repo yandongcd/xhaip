@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import sqlite3
+import threading
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
@@ -72,6 +73,7 @@ class PermissionManager:
     def __init__(self, db_path: str = ":memory:"):
         self._db = sqlite3.connect(db_path, check_same_thread=False)
         self._db.row_factory = sqlite3.Row
+        self._lock = threading.Lock()
         self._db.execute("PRAGMA journal_mode=WAL")
         self._init_schema()
 
@@ -136,55 +138,56 @@ class PermissionManager:
             import os
             include_dev_users = os.environ.get(
                 "HAIP_STRICT_SECURITY", "").strip().lower() not in ("1", "true", "yes", "on")
-        # Roles
-        for code, name, cat in [
-            ("ROLE_PHYSICIAN", "医师", "clinical"),
-            ("ROLE_SPECIALIST", "专科医师", "clinical"),
-            ("ROLE_PHARMACIST", "药师", "clinical"),
-            ("ROLE_NURSE", "护士", "clinical"),
-            ("ROLE_ANESTHESIOLOGIST", "麻醉师", "clinical"),
-            ("ROLE_EMERGENCY", "急诊医师", "clinical"),
-            ("ROLE_ADMIN", "管理员", "admin"),
-        ]:
-            self._db.execute(
-                "INSERT OR IGNORE INTO auth_role VALUES (?,?,?)", (code, name, cat))
-
-        # Default users (development only — strict 模式跳过)
-        users = [
-            ("dr_001", "张医师", "主治医师", "ROLE_PHYSICIAN"),
-            ("pharm_001", "李药师", "临床药师", "ROLE_PHARMACIST"),
-            ("nurse_001", "王护士", "护士长", "ROLE_NURSE"),
-            ("admin_001", "管理员", "系统管理员", "ROLE_ADMIN"),
-        ] if include_dev_users else []
-        for uid, real_name, title, role in users:
-            self._db.execute(
-                "INSERT OR IGNORE INTO auth_user VALUES (?,?,?,?,NULL,NULL,'active')",
-                (uid, uid, real_name, title))
-            self._db.execute(
-                "INSERT OR IGNORE INTO auth_user_role VALUES (?,?)", (uid, role))
-
-        # Agent registration
-        if agent_ids:
-            for aid in agent_ids:
+        with self._lock:
+            # Roles
+            for code, name, cat in [
+                ("ROLE_PHYSICIAN", "医师", "clinical"),
+                ("ROLE_SPECIALIST", "专科医师", "clinical"),
+                ("ROLE_PHARMACIST", "药师", "clinical"),
+                ("ROLE_NURSE", "护士", "clinical"),
+                ("ROLE_ANESTHESIOLOGIST", "麻醉师", "clinical"),
+                ("ROLE_EMERGENCY", "急诊医师", "clinical"),
+                ("ROLE_ADMIN", "管理员", "admin"),
+            ]:
                 self._db.execute(
-                    "INSERT OR IGNORE INTO auth_agent VALUES (?,?,?,'','active')",
-                    (aid, aid, "business"))
+                    "INSERT OR IGNORE INTO auth_role VALUES (?,?,?)", (code, name, cat))
 
-        # Default A2A policies: master_data agents are universally callable
-        for target in ("medical-record", "metrics", "togaf"):
+            # Default users (development only — strict 模式跳过)
+            users = [
+                ("dr_001", "张医师", "主治医师", "ROLE_PHYSICIAN"),
+                ("pharm_001", "李药师", "临床药师", "ROLE_PHARMACIST"),
+                ("nurse_001", "王护士", "护士长", "ROLE_NURSE"),
+                ("admin_001", "管理员", "系统管理员", "ROLE_ADMIN"),
+            ] if include_dev_users else []
+            for uid, real_name, title, role in users:
+                self._db.execute(
+                    "INSERT OR IGNORE INTO auth_user VALUES (?,?,?,?,NULL,NULL,'active')",
+                    (uid, uid, real_name, title))
+                self._db.execute(
+                    "INSERT OR IGNORE INTO auth_user_role VALUES (?,?)", (uid, role))
+
+            # Agent registration
+            if agent_ids:
+                for aid in agent_ids:
+                    self._db.execute(
+                        "INSERT OR IGNORE INTO auth_agent VALUES (?,?,?,'','active')",
+                        (aid, aid, "business"))
+
+            # Default A2A policies: master_data agents are universally callable
+            for target in ("medical-record", "metrics", "togaf"):
+                self._db.execute(
+                    """INSERT OR IGNORE INTO perm_agent_call_policy
+                       (caller_agent_type, target_agent_id, allowed_tools, priority)
+                       VALUES ('*', ?, '*', 100)""",
+                    (target,))
+
+            # Emergency agent has all-access
             self._db.execute(
-                """INSERT OR IGNORE INTO perm_agent_call_policy
-                   (caller_agent_type, target_agent_id, allowed_tools, priority)
-                   VALUES ('*', ?, '*', 100)""",
-                (target,))
+                """INSERT OR IGNORE INTO perm_data_policy
+                   (agent_id, agent_type, dept_scope, security_label)
+                   VALUES ('emergency', 'business', 'all', 'EMERGENCY')""")
 
-        # Emergency agent has all-access
-        self._db.execute(
-            """INSERT OR IGNORE INTO perm_data_policy
-               (agent_id, agent_type, dept_scope, security_label)
-               VALUES ('emergency', 'business', 'all', 'EMERGENCY')""")
-
-        self._db.commit()
+            self._db.commit()
 
     # ── U2A: User → Agent ──
 

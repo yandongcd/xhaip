@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import sqlite3
+import threading
 import uuid
 
 logger = logging.getLogger(__name__)
@@ -23,6 +24,7 @@ class SignoffManager:
     def __init__(self, db_path: str = ":memory:"):
         self._db = sqlite3.connect(db_path, check_same_thread=False)
         self._db.row_factory = sqlite3.Row
+        self._lock = threading.Lock()
         self._db.execute("PRAGMA journal_mode=WAL")
         self._db.executescript("""
             CREATE TABLE IF NOT EXISTS signoff_record (
@@ -42,11 +44,12 @@ class SignoffManager:
     def create(self, agent: str = "", tool: str = "", patient_id: str = "",
                output_summary: str = "", risk_level: str = "medium") -> str:
         sid = uuid.uuid4().hex[:12]
-        self._db.execute(
-            """INSERT INTO signoff_record (id, agent, tool, patient_id, output_summary, risk_level)
-               VALUES (?,?,?,?,?,?)""",
-            (sid, agent, tool, patient_id, output_summary[:2000], risk_level))
-        self._db.commit()
+        with self._lock:
+            self._db.execute(
+                """INSERT INTO signoff_record (id, agent, tool, patient_id, output_summary, risk_level)
+                   VALUES (?,?,?,?,?,?)""",
+                (sid, agent, tool, patient_id, output_summary[:2000], risk_level))
+            self._db.commit()
         return sid
 
     def decide(self, signoff_id: str, reviewer_id: str, decision: str,
@@ -62,18 +65,19 @@ class SignoffManager:
             raise ValueError(f"签核单不存在: {signoff_id}")
         if rec["status"] != "pending":
             raise ValueError(f"签核单已定 ({rec['status']}), 不可二次修改")
-        self._db.execute("BEGIN")
-        try:
-            self._db.execute(
-                """UPDATE signoff_record
-                   SET status=?, reviewer_id=?, reason=?, decided_at=datetime('now')
-                   WHERE id=?""",
-                (decision, reviewer_id, reason, signoff_id))
-            self._audit(signoff_id, reviewer_id, decision, reason)
-            self._db.commit()
-        except Exception:
-            self._db.rollback()
-            raise
+        with self._lock:
+            self._db.execute("BEGIN")
+            try:
+                self._db.execute(
+                    """UPDATE signoff_record
+                       SET status=?, reviewer_id=?, reason=?, decided_at=datetime('now')
+                       WHERE id=?""",
+                    (decision, reviewer_id, reason, signoff_id))
+                self._audit(signoff_id, reviewer_id, decision, reason)
+                self._db.commit()
+            except Exception:
+                self._db.rollback()
+                raise
         result = self.get(signoff_id)
         assert result is not None
         return result
