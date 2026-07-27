@@ -15,13 +15,12 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-
-import sqlite3
 
 
 @dataclass
@@ -83,6 +82,8 @@ class MemoryService:
         conn = sqlite3.connect(self._db_path)
         conn.executescript(SCHEMA_MEMORY)
         conn.execute("PRAGMA journal_mode=WAL")
+        from haip.schema_version import ensure_version
+        ensure_version(conn, 1)
         conn.close()
 
     def _get_conn(self) -> sqlite3.Connection:

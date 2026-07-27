@@ -15,9 +15,10 @@ Environment:
 from __future__ import annotations
 
 import os
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import AsyncGenerator, Optional
+from typing import Any
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -33,8 +34,8 @@ _DEFAULT_SQLITE = os.environ.get(
     f"sqlite+aiosqlite:///{Path(__file__).resolve().parent.parent.parent.parent / 'xhaip.db'}",
 )
 
-_engine: Optional[AsyncEngine] = None
-_sessionmaker: Optional[async_sessionmaker[AsyncSession]] = None
+_engine: AsyncEngine | None = None
+_sessionmaker: async_sessionmaker[AsyncSession] | None = None
 
 
 def get_database_url() -> str:
@@ -48,7 +49,7 @@ def _create_engine(url: str) -> AsyncEngine:
     pool_class = QueuePool if is_postgres else NullPool
     pool_size = int(os.environ.get("DB_POOL_SIZE", "10"))
 
-    kwargs = {
+    kwargs: dict[str, Any] = {
         "echo": os.environ.get("DB_ECHO", "").lower() == "true",
     }
     if is_postgres:
@@ -61,7 +62,7 @@ def _create_engine(url: str) -> AsyncEngine:
     return create_async_engine(url, **kwargs)
 
 
-def init_database(url: Optional[str] = None):
+def init_database(url: str | None = None):
     """Initialize the database engine and session factory.
 
     Called once at application startup.
@@ -85,7 +86,7 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """FastAPI dependency: yields a database session."""
     if _sessionmaker is None:
         init_database()
-    session: AsyncSession = _sessionmaker()  # type: ignore[union-attr]
+    session: AsyncSession = _sessionmaker()  # type: ignore[misc]  # _sessionmaker may be None
     try:
         yield session
         await session.commit()
@@ -101,7 +102,7 @@ async def session_scope():
     """Context manager for database sessions (non-FastAPI usage)."""
     if _sessionmaker is None:
         init_database()
-    session: AsyncSession = _sessionmaker()  # type: ignore[union-attr]
+    session: AsyncSession = _sessionmaker()  # type: ignore[misc]  # _sessionmaker may be None
     try:
         yield session
         await session.commit()
@@ -117,6 +118,11 @@ async def create_tables():
     from sqlalchemy import text
 
     async with session_scope() as session:
+        # Set schema version via PRAGMA (SQLite) or table (PostgreSQL)
+        try:
+            await session.execute(text("PRAGMA user_version = 2"))
+        except Exception:
+            pass  # PostgreSQL fallback
         # Users table
         await session.execute(text("""
             CREATE TABLE IF NOT EXISTS users (

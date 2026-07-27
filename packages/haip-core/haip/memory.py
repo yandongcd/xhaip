@@ -32,6 +32,8 @@ class AgentMemory:
     def _init_db(self):
         with sqlite3.connect(str(self.db_path)) as conn:
             conn.execute("PRAGMA journal_mode=WAL")
+            from haip.schema_version import ensure_version
+            ensure_version(conn, 1)
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS decisions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,

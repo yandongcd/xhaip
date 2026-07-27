@@ -52,6 +52,8 @@ class KnowledgeStore:
         self.db.row_factory = sqlite3.Row
         self._lock = threading.Lock()
         self.db.execute("PRAGMA journal_mode=WAL")
+        from haip.schema_version import ensure_version
+        ensure_version(self.db, 1)
         self._init_schema()
 
     def _init_schema(self) -> None:

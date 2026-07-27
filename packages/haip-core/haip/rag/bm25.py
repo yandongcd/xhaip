@@ -33,6 +33,8 @@ class BM25Index:
         try:
             self._conn = sqlite3.connect(self._db_path)
             self._conn.execute("PRAGMA journal_mode=WAL")
+            from haip.schema_version import ensure_version
+            ensure_version(self._conn, 1)
             self._conn.execute("""
                 CREATE VIRTUAL TABLE IF NOT EXISTS rag_fts USING fts5(
                     id, content_type, source_id, text, metadata,
