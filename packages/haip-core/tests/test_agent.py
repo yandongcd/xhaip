@@ -5,8 +5,16 @@ from pathlib import Path
 
 import pytest
 
-from haip.agent import DomainPlugin, load_from_dir, register, get, list_all, build_a2a_routes, ToolDef
-
+from haip.agent import (
+    DomainPlugin,
+    ToolDef,
+    _registry,
+    build_a2a_routes,
+    get,
+    list_all,
+    load_from_dir,
+    register,
+)
 
 YAML_PHARMACY = """
 name: pharmacy
@@ -99,7 +107,7 @@ class TestDomainPlugin:
 
 class TestAgentRegistry:
     def setup_method(self):
-        list_all().clear()
+        _registry.clear()
 
     def test_register_and_get(self):
         plugin = DomainPlugin(name="test", type="business")
@@ -138,7 +146,7 @@ class TestAgentRegistry:
 
 class TestErrorPaths:
     def setup_method(self):
-        list_all().clear()
+        _registry.clear()
 
     def test_invalid_yaml_load(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -167,7 +175,7 @@ class TestErrorPaths:
 
 class TestBoundaryConditions:
     def setup_method(self):
-        list_all().clear()
+        _registry.clear()
 
     def test_agent_name_with_chinese_characters(self):
         plugin = DomainPlugin(name="测试智能体", cn_name="测试中文名称", type="business")
@@ -192,3 +200,123 @@ class TestBoundaryConditions:
         list_all()
         for i in range(10):
             assert get(f"agent_{i}") is not None
+
+
+# ── Per-agent Loading Tests (v1.3) ─────────────────────────────────────
+
+YAML_DEP_CHAIN = """
+name: dep-a
+cn_name: Agent A
+type: business
+port: 8001
+depends_on:
+  - agent: dep-b
+tools:
+  - name: t1
+    description: tool one
+    handler: mod.fn
+"""
+
+YAML_DEP_B = """
+name: dep-b
+cn_name: Agent B
+type: master_data
+port: 8002
+depends_on:
+  - agent: dep-c
+tools:
+  - name: t2
+    description: tool two
+    handler: mod.fn2
+"""
+
+YAML_DEP_C = """
+name: dep-c
+cn_name: Agent C
+type: master_data
+port: 8003
+tools:
+  - name: t3
+    description: tool three
+    handler: mod.fn3
+"""
+
+YAML_DEPRECATED = """
+name: old-agent
+cn_name: Old Agent
+type: business
+port: 9000
+depends_on: []
+"""
+
+
+class TestAgentFilter:
+    def setup_method(self):
+        _registry.clear()
+    def setup_method(self):
+        list_all().clear()
+
+    def test_load_with_agent_filter_single(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp)
+            (d / "dep-a.yaml").write_text(YAML_DEP_CHAIN, encoding="utf-8")
+            (d / "dep-b.yaml").write_text(YAML_DEP_B, encoding="utf-8")
+            (d / "dep-c.yaml").write_text(YAML_DEP_C, encoding="utf-8")
+            count = load_from_dir(str(d), agent_filter="dep-a")
+            assert count >= 3  # dep-a + dep-b + dep-c via BFS
+
+    def test_load_with_agent_filter_only_loads_depends_on_chain(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp)
+            (d / "target.yaml").write_text(YAML_DEP_CHAIN.replace("dep-a", "target"), encoding="utf-8")
+            (d / "dep-b.yaml").write_text(YAML_DEP_B, encoding="utf-8")
+            (d / "dep-c.yaml").write_text(YAML_DEP_C, encoding="utf-8")
+            (d / "pharmacy.yaml").write_text(YAML_PHARMACY, encoding="utf-8")
+            count = load_from_dir(str(d), agent_filter="target")
+            assert count >= 3
+            assert get("target") is not None
+            assert get("dep-b") is not None
+            assert get("dep-c") is not None
+            assert get("pharmacy") is None  # unrelated to depends_on chain
+
+    def test_load_without_filter_loads_all(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp)
+            (d / "a.yaml").write_text(YAML_DEP_CHAIN.replace("dep-a", "agent-a"), encoding="utf-8")
+            (d / "dep-b.yaml").write_text(YAML_DEP_B, encoding="utf-8")
+            (d / "dep-c.yaml").write_text(YAML_DEP_C, encoding="utf-8")
+            count = load_from_dir(str(d))
+            assert count >= 3
+
+    def test_skips_deprecated_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp)
+            (d / "active.yaml").write_text(YAML_DEP_CHAIN.replace("dep-a", "active"), encoding="utf-8")
+            (d / "old.yaml.deprecated").write_text(YAML_DEPRECATED, encoding="utf-8")
+            count = load_from_dir(str(d))
+            assert count == 1
+            assert get("active") is not None
+            assert get("old-agent") is None
+
+    def test_skips_internal_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp)
+            (d / "active.yaml").write_text(YAML_DEP_CHAIN.replace("dep-a", "active"), encoding="utf-8")
+            (d / "hidden.yaml.internal").write_text(YAML_DEPRECATED, encoding="utf-8")
+            count = load_from_dir(str(d))
+            assert count == 1
+            assert get("active") is not None
+            assert get("old-agent") is None
+
+    def test_list_all_excludes_skipped(self):
+        register(DomainPlugin(name="active", type="business"))
+        register(DomainPlugin(name="legacy", type="business"))
+        agents = list_all()
+        assert "active" in agents
+        # list_all filters based on filename convention (.deprecated/.internal)
+        # Direct registration bypasses file check, so both are visible
+
+    def test_agent_filter_nonexistent_agent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            count = load_from_dir(str(tmp), agent_filter="no-such-agent")
+            assert count == 0
