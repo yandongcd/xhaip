@@ -113,6 +113,12 @@ class PermissionManager:
                 action TEXT, resource_type TEXT, resource_id TEXT,
                 decision TEXT, reason TEXT, metadata TEXT
             );
+            CREATE INDEX IF NOT EXISTS idx_auth_user_role_user_id ON auth_user_role(user_id);
+            CREATE INDEX IF NOT EXISTS idx_auth_role_agent_role_code ON auth_role_agent(role_code);
+            CREATE INDEX IF NOT EXISTS idx_perm_agent_call_target ON perm_agent_call_policy(target_agent_id);
+            CREATE INDEX IF NOT EXISTS idx_perm_data_agent ON perm_data_policy(agent_id);
+            CREATE INDEX IF NOT EXISTS idx_audit_access_timestamp ON audit_access_log(event_time);
+            CREATE INDEX IF NOT EXISTS idx_audit_access_user ON audit_access_log(subject_id);
         """)
 
     # ── Seed ──
@@ -323,8 +329,8 @@ class PermissionManager:
     def can(self, role: str, action: str) -> bool:
         """Simple role-based check. Delegates to auth/rbac when available."""
         try:
-            from haip.auth.rbac import has_permission
             from haip.auth.models import Permission
+            from haip.auth.rbac import has_permission
             return has_permission([role], Permission.AGENT_EXECUTE)
         except ImportError:
             return self._role_can_fallback(role, action, "*")
