@@ -61,13 +61,18 @@ class SignoffManager:
             raise ValueError(f"签核单不存在: {signoff_id}")
         if rec["status"] != "pending":
             raise ValueError(f"签核单已定 ({rec['status']}), 不可二次修改")
-        self._db.execute(
-            """UPDATE signoff_record
-               SET status=?, reviewer_id=?, reason=?, decided_at=datetime('now')
-               WHERE id=?""",
-            (decision, reviewer_id, reason, signoff_id))
-        self._db.commit()
-        self._audit(signoff_id, reviewer_id, decision, reason)
+        self._db.execute("BEGIN")
+        try:
+            self._db.execute(
+                """UPDATE signoff_record
+                   SET status=?, reviewer_id=?, reason=?, decided_at=datetime('now')
+                   WHERE id=?""",
+                (decision, reviewer_id, reason, signoff_id))
+            self._audit(signoff_id, reviewer_id, decision, reason)
+            self._db.commit()
+        except Exception:
+            self._db.rollback()
+            raise
         result = self.get(signoff_id)
         assert result is not None
         return result
@@ -97,7 +102,7 @@ class SignoffManager:
             ctx = PermissionContext(user_id=reviewer_id, role="ROLE_PHYSICIAN")
             get_permission_manager().log_access(
                 ctx, "SIGNOFF", f"signoff/{signoff_id}", decision, reason)
-        except Exception as e:  # noqa: BLE001 — 审计失败不阻断签核, 但必须告警
+        except Exception as e:
             logger.warning("签核审计写入失败 %s: %s", signoff_id, e)
 
     def close(self) -> None:
@@ -136,6 +141,6 @@ def reset_signoff_manager() -> None:
     if _signoff is not None:
         try:
             _signoff.close()
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
         _signoff = None

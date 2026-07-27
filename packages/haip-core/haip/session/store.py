@@ -17,11 +17,11 @@ import sqlite3
 import threading
 import time
 import uuid
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterator
-
+from typing import Any
 
 # ── Event Model ──
 
@@ -243,38 +243,35 @@ class SessionService:
                      "state_keys": list(json.loads(r["state_json"]).keys())} for r in rows]
 
     def delete_session(self, session_id) -> bool:
-        with self._lock:
-            with self._get_conn() as conn:
-                cur = conn.execute("DELETE FROM agent_sessions WHERE id = ?", (session_id,))
-                conn.commit()
-                return cur.rowcount > 0
+        with self._lock, self._get_conn() as conn:
+            cur = conn.execute("DELETE FROM agent_sessions WHERE id = ?", (session_id,))
+            conn.commit()
+            return cur.rowcount > 0
 
     def append_event(self, session: AgentSession, event: Event) -> None:
         if event.partial:
             return
-        if event.state_delta:
-            session.apply_delta(event.state_delta)
-            with self._get_conn() as conn:
+        with self._lock, self._get_conn() as conn:
+            if event.state_delta:
+                session.apply_delta(event.state_delta)
                 conn.execute(
                     "UPDATE agent_sessions SET state_json = ?, last_update = ? WHERE id = ?",
                     (json.dumps(session.state, ensure_ascii=False), time.time(), session.id),
                 )
-        with self._lock:
-            with self._get_conn() as conn:
-                conn.execute(
-                    """INSERT INTO agent_events(id, session_id, invocation_id, author, timestamp,
+            conn.execute(
+                """INSERT INTO agent_events(id, session_id, invocation_id, author, timestamp,
                        content, role, tool_name, tool_args_json, partial,
                        state_delta_json, artifact_delta_json, turn_complete, error, branch)
                     VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (event.id, session.id, event.invocation_id, event.author,
-                     event.timestamp, event.content, event.role,
-                     event.tool_name, json.dumps(event.tool_args, ensure_ascii=False),
-                     1 if event.partial else 0,
-                     json.dumps(event.state_delta, ensure_ascii=False),
-                     json.dumps(event.artifact_delta, ensure_ascii=False),
-                     1 if event.turn_complete else 0, event.error, event.branch),
-                )
-                conn.commit()
+                (event.id, session.id, event.invocation_id, event.author,
+                 event.timestamp, event.content, event.role,
+                 event.tool_name, json.dumps(event.tool_args, ensure_ascii=False),
+                 1 if event.partial else 0,
+                 json.dumps(event.state_delta, ensure_ascii=False),
+                 json.dumps(event.artifact_delta, ensure_ascii=False),
+                 1 if event.turn_complete else 0, event.error, event.branch),
+            )
+            conn.commit()
         session.events.append(event)
 
     def _load_events(self, conn, session_id) -> list[Event]:
@@ -302,15 +299,14 @@ class SessionService:
                     new_state.pop(k, None)
                 else:
                     new_state[k] = v
-        with self._lock:
-            with self._get_conn() as conn:
-                for e in session.events[keep_events:]:
-                    conn.execute("DELETE FROM agent_events WHERE id = ?", (e.id,))
-                conn.execute(
-                    "UPDATE agent_sessions SET state_json = ?, last_update = ? WHERE id = ?",
-                    (json.dumps(new_state, ensure_ascii=False), time.time(), session.id),
-                )
-                conn.commit()
+        with self._lock, self._get_conn() as conn:
+            for e in session.events[keep_events:]:
+                conn.execute("DELETE FROM agent_events WHERE id = ?", (e.id,))
+            conn.execute(
+                "UPDATE agent_sessions SET state_json = ?, last_update = ? WHERE id = ?",
+                (json.dumps(new_state, ensure_ascii=False), time.time(), session.id),
+            )
+            conn.commit()
         session.state = new_state
         session.events = session.events[:keep_events]
 
