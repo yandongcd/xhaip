@@ -22,15 +22,18 @@ Condition combinators: and, or (arrays of sub-conditions)
 
 from __future__ import annotations
 
+import operator
+import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-import operator
-import re
-
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent  # xhaip root
-RULES_DIR = PROJECT_ROOT / "packages" / "haip-hospital" / "knowledge" / "rules"
+RULES_DIR = Path(os.environ.get(
+    "HAIP_RULES_DIR",
+    str(PROJECT_ROOT / "packages" / "haip-hospital" / "knowledge" / "rules"),
+))
 
 
 @dataclass

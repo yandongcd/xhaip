@@ -18,13 +18,20 @@ Usage:
 
 from __future__ import annotations
 
-from pathlib import Path
 import json
+import os
+from pathlib import Path
 from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent  # xhaip root
-KNOWLEDGE_DIR = PROJECT_ROOT / "packages" / "haip-hospital" / "knowledge"
-PATIENTS_FILE = PROJECT_ROOT / "packages" / "haip-hospital" / "data" / "patients.json"
+KNOWLEDGE_DIR = Path(os.environ.get(
+    "HAIP_KNOWLEDGE_DIR",
+    str(PROJECT_ROOT / "packages" / "haip-hospital" / "knowledge"),
+))
+PATIENTS_FILE = Path(os.environ.get(
+    "HAIP_PATIENTS_FILE",
+    str(PROJECT_ROOT / "packages" / "haip-hospital" / "data" / "patients.json"),
+))
 
 # Cached patient data
 _patient_cache: dict[str, dict] | None = None
@@ -223,7 +230,11 @@ class KnowledgeAgent:
 
 
 # Common vital sign / lab reference ranges
-_VITAL_RANGES: dict[str, tuple[float, float, str]] = {
+# Primary source: knowledge/rules/reference_ranges.yaml
+# Falls back to hardcoded defaults if YAML not available.
+# NOTE: These are REFERENCE RANGES (normal range), distinct from CRITICAL VALUES
+# defined in knowledge/rules/clinical_lab_critical_value/critical_thresholds.yaml
+_VITAL_RANGES_DEFAULTS: dict[str, tuple[float, float, str]] = {
     "Hb": (110, 160, "g/L"),
     "WBC": (3.5, 10.0, "x10^9/L"),
     "PLT": (100, 300, "x10^9/L"),
@@ -240,3 +251,25 @@ _VITAL_RANGES: dict[str, tuple[float, float, str]] = {
     "PaO2": (80, 100, "mmHg"),
     "TSH": (0.4, 4.0, "mIU/L"),
 }
+
+
+def _load_vital_ranges() -> dict[str, tuple[float, float, str]]:
+    """Load reference ranges from YAML config, fall back to defaults."""
+    try:
+        import yaml
+        ranges_file = KNOWLEDGE_DIR / "rules" / "reference_ranges.yaml"
+        if ranges_file.exists():
+            with open(ranges_file, encoding="utf-8") as f:
+                config = yaml.safe_load(f)
+            data = config.get("ranges", {})
+            if data:
+                return {
+                    k: (v["low"], v["high"], v["unit"])
+                    for k, v in data.items()
+                }
+    except Exception:
+        pass
+    return dict(_VITAL_RANGES_DEFAULTS)
+
+
+_VITAL_RANGES = _load_vital_ranges()
