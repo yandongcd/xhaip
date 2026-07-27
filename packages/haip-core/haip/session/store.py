@@ -166,6 +166,9 @@ CREATE INDEX IF NOT EXISTS idx_agent_events_timestamp ON agent_events(session_id
 
 # ── SessionService ──
 
+# Schema version for PRAGMA user_version tracking
+SESSION_SERVICE_VERSION = 2
+
 class SessionService:
     """SQLite 后端 Agent 会话持久化."""
 
@@ -177,6 +180,8 @@ class SessionService:
             conn.executescript(SCHEMA_V1)
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("PRAGMA foreign_keys=ON")
+            from haip.schema_version import ensure_version
+            ensure_version(conn, SESSION_SERVICE_VERSION)
 
     @contextmanager
     def _get_conn(self) -> Iterator[sqlite3.Connection]:
