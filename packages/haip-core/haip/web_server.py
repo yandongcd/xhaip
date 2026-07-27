@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+import time
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent  # xhaip root
@@ -365,9 +366,20 @@ def global_insights():
     return get_memory().global_insights()
 
 # ---- TOGAF Architecture Governance ----
+_togaf_cache: dict | None = None
+_togaf_cache_time: float = 0.0
+_togaf_cache_ttl: float = 30.0
+
+
 @app.get("/api/togaf/governance")
 def togaf_governance():
-    """TOGAF架构治理视图 — Agent复用度、架构合规、原则应用."""
+    """TOGAF架构治理视图 — Agent复用度、架构合规、原则应用 (30s mtime 缓存)."""
+    global _togaf_cache, _togaf_cache_time
+
+    now = time.monotonic()
+    if _togaf_cache is not None and now - _togaf_cache_time < _togaf_cache_ttl:
+        return _togaf_cache
+
     from collections import Counter
     from pathlib import Path as _Pth
 
@@ -403,15 +415,18 @@ def togaf_governance():
         {"id": "P7", "name": "智能规划能力", "status": "applied", "metric": "WorkflowPlanner 动态生成"},
     ]
 
-    return {
+    result = {
         "agents_total": len(list(defs_dir.glob("*.yaml"))),
         "agent_types": dict(agent_types),
         "avg_stages": round(sum(stage_counts) / len(stage_counts), 1) if stage_counts else 0,
         "guard_coverage": f"{guard_agents}/{len(list(defs_dir.glob('*.yaml')))}",
         "most_reused": deps_count.most_common(5),
         "principles": principles,
-        "compliance_score": 100,  # All principles applied
+        "compliance_score": 100,
     }
+    _togaf_cache = result
+    _togaf_cache_time = now
+    return result
 
 # ---- Health Check ----
 @app.get("/api/health")
