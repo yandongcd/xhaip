@@ -37,16 +37,11 @@ def _copy_and_manifest(src: Path, dest_dir: Path, manifest: list[dict]) -> None:
 
 
 def collect_files(root: Path) -> list[Path]:
-    """收集需备份的文件列表."""
+    """收集需备份的文件列表 — 自动发现所有 *.db + patients.json."""
     files: list[Path] = []
 
-    db_path = root / "xhaip.db"
-    if db_path.is_file():
-        files.append(db_path)
-
-    data_dir = root / "data"
-    if data_dir.is_dir():
-        for db_file in sorted(data_dir.glob("*.db")):
+    for db_file in sorted(root.rglob("*.db")):
+        if db_file.is_file():
             files.append(db_file)
 
     patients_json = root / "packages" / "haip-hospital" / "data" / "patients.json"
