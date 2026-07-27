@@ -305,8 +305,13 @@ class SessionService:
                 else:
                     new_state[k] = v
         with self._lock, self._get_conn() as conn:
-            for e in session.events[keep_events:]:
-                conn.execute("DELETE FROM agent_events WHERE id = ?", (e.id,))
+            delete_ids = [e.id for e in session.events[keep_events:]]
+            if delete_ids:
+                placeholders = ",".join("?" * len(delete_ids))
+                conn.execute(
+                    f"DELETE FROM agent_events WHERE id IN ({placeholders})",
+                    delete_ids,
+                )
             conn.execute(
                 "UPDATE agent_sessions SET state_json = ?, last_update = ? WHERE id = ?",
                 (json.dumps(new_state, ensure_ascii=False), time.time(), session.id),
