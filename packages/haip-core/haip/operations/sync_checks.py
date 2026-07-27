@@ -6,7 +6,6 @@ import time
 from pathlib import Path
 from typing import Any
 
-
 # ════════════════════════════════════
 # Skill 同步 (sync_skills)
 # ════════════════════════════════════
@@ -79,7 +78,8 @@ def system_checks() -> dict[str, Any]:
     deps = ["pydantic", "pyyaml", "httpx", "typer", "fastapi"]
     for dep in deps:
         try:
-            __import__(dep)
+            import importlib
+            importlib.import_module(dep)
             checks[dep] = "ok"
         except ImportError:
             checks[dep] = "missing"
@@ -102,7 +102,7 @@ def system_checks() -> dict[str, Any]:
 def benchmark_a2a(iterations: int = 10) -> dict[str, Any]:
     """A2A 调用基准测试。"""
     from haip.a2a import call, clear_history
-    from haip.agent import register, _registry, DomainPlugin, ToolDef
+    from haip.agent import DomainPlugin, ToolDef, _registry, register
 
     _registry.clear()
     clear_history()
