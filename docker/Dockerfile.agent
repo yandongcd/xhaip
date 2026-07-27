@@ -18,17 +18,22 @@ RUN pip install -e /app/packages/haip-core
 ENV PYTHONPATH="/app/packages/haip-core:/app/packages/haip-hospital"
 ENV AGENT_NAME=${AGENT_NAME}
 ENV AGENT_PORT=${AGENT_PORT}
+ENV XHAIP_AGENT_NAME=${AGENT_NAME}
 
 RUN python -c "\
 import sys; sys.path.insert(0,'packages/haip-core'); sys.path.insert(0,'packages/haip-hospital'); \
 from haip.agent import load_from_dir, list_all; \
-load_from_dir('/app/packages/haip-hospital/agents/definitions'); \
+load_from_dir('/app/packages/haip-hospital/agents/definitions', agent_filter='${AGENT_NAME}'); \
 agents = list_all(); \
 print(f'Agents loaded: {len(agents)}')"
 
 EXPOSE ${AGENT_PORT}
 
+# Run as non-root user
+RUN useradd --create-home --shell /bin/bash appuser
+USER appuser
+
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:${AGENT_PORT}/api/health')" || exit 1
+  CMD python -c "import os,urllib.request; urllib.request.urlopen(f'http://localhost:{os.environ[\"AGENT_PORT\"]}/api/health')" || exit 1
 
 CMD python -m uvicorn haip.web_server:app --host 0.0.0.0 --port ${AGENT_PORT}

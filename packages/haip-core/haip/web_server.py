@@ -394,6 +394,8 @@ def togaf_governance():
     guard_agents = 0
 
     for yf in sorted(defs_dir.glob("*.yaml")):
+        if yf.name.startswith("_") or ".deprecated" in yf.name or ".internal" in yf.name:
+            continue
         with open(yf, encoding="utf-8") as f:
             a = yaml.safe_load(f)
         t = a.get("type", "business")
@@ -563,8 +565,9 @@ except Exception:
 YAML_DIR = PROJECT_ROOT / "packages" / "haip-hospital" / "agents" / "definitions"
 from haip.patients import PATIENTS_FILE  # 患者数据路径单一真相源
 
-# 启动时加载所有 Agent（含 TOGAF 校验）
-load_from_dir(str(YAML_DIR))
+# 启动时加载 Agent（支持 XHAIP_AGENT_NAME 精简部署）
+_agent_filter = os.environ.get("XHAIP_AGENT_NAME", "")
+load_from_dir(str(YAML_DIR), agent_filter=_agent_filter)
 # Initialize A2A service auth secrets for all agents
 try:
     from haip.a2a.auth import init_agent_secrets
@@ -1113,11 +1116,21 @@ def agent_ui(request: Request, name: str):
     if not p:
         raise HTTPException(404, detail={"error": f"Agent '{name}' not found"})
     patients = load_patients(name, limit=50) if name != "metrics" else []
+    role_emoji = {
+        "attending": "🏥", "resident": "🩺", "surgeon": "🔪",
+        "anesthesiologist": "😴", "icu_doctor": "💚", "head_nurse": "👩‍⚕️",
+        "instrument_nurse": "🛠️", "rehab_therapist": "🦾",
+        "pharmacist": "💊", "technician": "🔬", "head": "👤",
+    }
     agent_data = {
         "name": p.name, "cn_name": p.cn_name, "type": p.type, "port": p.port,
         "tools": [{"name": t.name, "description": t.description, "input": t.input} for t in p.tools],
         "depends_on": p.depends_on, "guard": {"triggers": p.guard.triggers},
         "sub_agents": p.sub_agents,
+        "stages": p.get_stages(),
+        "ui": {
+            "roles": [{"id": r["id"], "label": r["label"], "emoji": role_emoji.get(r["id"], "👤")} for r in p.ui.roles],
+        },
     }
     patient_list = [{"patient_id": pt.get("patient_id",""), "name": pt.get("name","?"), "age": pt.get("age",0), "diagnosis": pt.get("diagnosis",""), "department": pt.get("department",""), "lab_results": pt.get("lab_results",{}), "scenario": pt.get("scenario","")} for pt in (patients or [])[:50]]
     content = templates.env.get_template("agent.html").render(

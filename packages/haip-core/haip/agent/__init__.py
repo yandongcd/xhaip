@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
 import yaml
 
+logger = logging.getLogger(__name__)
+
 AgentType = Literal["business", "specialist", "master_data", "rules", "architecture"]
+TrustTier = Literal["deep", "standard", "light"]  # v2.0: Agent分级体系
 
 
 @dataclass
@@ -120,6 +124,7 @@ class DomainPlugin:
     cn_name: str = ""
     version: str = "1.0.0"
     type: AgentType = "business"
+    trust_tier: TrustTier = "standard"  # v2.0: deep|standard|light
     department: str = ""
     port: int = 0
     aliases: list[str] = field(default_factory=list)
@@ -169,6 +174,7 @@ class DomainPlugin:
             cn_name=data.get("cn_name", ""),
             version=data.get("version", "1.0.0"),
             type=data.get("type", "business"),
+            trust_tier=data.get("trust_tier", "standard"),
             department=data.get("department", ""),
             port=data.get("port", 0),
             aliases=data.get("aliases", []),
@@ -196,37 +202,80 @@ def get(name: str) -> DomainPlugin | None:
     return _registry.get(name)
 
 
-def list_all() -> dict[str, DomainPlugin]:
-    return dict(_registry)
+def list_all(include_skipped: bool = False) -> dict[str, DomainPlugin]:
+    if include_skipped:
+        return dict(_registry)
+    return {k: v for k, v in _registry.items() if not _is_skipped(k + ".yaml")}
 
 
-def load_from_dir(definitions_dir: str | Path, on_register: callable | None = None) -> int:
-    """从目录加载所有 YAML Agent 定义，返回注册数量。
+def load_from_dir(definitions_dir: str | Path, agent_filter: str = "",
+                  on_register: callable | None = None) -> int:
+    """从目录加载 YAML Agent 定义，返回注册数量。
     
     Args:
         definitions_dir: YAML目录路径
+        agent_filter: 非空时仅加载指定 agent + depends_on 链 (BFS).
+                      用于 per-agent 容器精简部署。
         on_register: 可选回调，在每个Agent注册后调用。
-                    签名: on_register(plugin: DomainPlugin) -> None
-                    用于TOGAF校验、日志等。异常会被捕获并打印警告。
     """
     root = Path(definitions_dir)
+    if agent_filter:
+        return _load_single_agent(root, agent_filter, on_register)
+    return _load_all_agents(root, on_register)
+
+
+def _is_skipped(filename: str) -> bool:
+    return ".deprecated" in filename or ".internal" in filename
+
+
+def _parse_and_register(yaml_file: Path, on_register) -> DomainPlugin | None:
+    with open(yaml_file, encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+    if not isinstance(data, dict) or "name" not in data:
+        return None
+    plugin = DomainPlugin.from_yaml(data)
+    register(plugin)
+    if on_register is not None:
+        try:
+            on_register(plugin)
+        except Exception as e:
+            import sys
+            print(f"[TOGAF] Validation warning for {plugin.name}: {e}", file=sys.stderr)
+    return plugin
+
+
+def _load_all_agents(root: Path, on_register) -> int:
     count = 0
     for yaml_file in sorted(root.glob("*.yaml")):
-        if yaml_file.name.startswith("_"):
+        if yaml_file.name.startswith("_") or _is_skipped(yaml_file.name):
             continue
-        with open(yaml_file, encoding="utf-8") as f:
-            data = yaml.safe_load(f)
-        if not isinstance(data, dict) or "name" not in data:
+        if _parse_and_register(yaml_file, on_register):
+            count += 1
+    return count
+
+
+def _load_single_agent(root: Path, agent_name: str, on_register) -> int:
+    """BFS 加载指定 agent + depends_on 链."""
+    loaded: set[str] = set()
+    queue: list[str] = [agent_name]
+    count = 0
+    while queue:
+        name = queue.pop(0)
+        if name in loaded:
             continue
-        plugin = DomainPlugin.from_yaml(data)
-        register(plugin)
-        if on_register is not None:
-            try:
-                on_register(plugin)
-            except Exception as e:
-                import sys
-                print(f"[TOGAF] Validation warning for {plugin.name}: {e}", file=sys.stderr)
+        yf = root / f"{name}.yaml"
+        if not yf.exists():
+            logger.warning("Agent YAML 不存在: %s", yf)
+            continue
+        plugin = _parse_and_register(yf, on_register)
+        if plugin is None:
+            continue
+        loaded.add(name)
         count += 1
+        for dep in plugin.depends_on:
+            dep_name = dep.get("agent", "") if isinstance(dep, dict) else str(dep)
+            if dep_name and dep_name not in loaded:
+                queue.append(dep_name)
     return count
 
 
