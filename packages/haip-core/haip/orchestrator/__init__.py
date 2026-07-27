@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from haip.a2a import call as a2a_call
 from haip.llm import LLMProvider
 
 
@@ -70,34 +68,7 @@ class OrchestrationResult:
 
 # ── Transport ──
 
-class AgentTransport(ABC):
-    """Agent 调用传输层抽象。"""
-
-    @abstractmethod
-    def call(self, agent: str, tool: str, params: dict[str, Any]) -> dict[str, Any]:
-        ...
-
-
-class InProcessTransport(AgentTransport):
-    """进程内 A2A 调用 — 直接 importlib 加载。"""
-
-    def call(self, agent: str, tool: str, params: dict[str, Any]) -> dict[str, Any]:
-        return a2a_call(agent, tool, params)
-
-
-class MockTransport(AgentTransport):
-    """测试用 Mock Transport。"""
-
-    def __init__(self, responses: dict[str, dict[str, Any]] | None = None):
-        self.responses = responses or {}
-        self.call_log: list[dict[str, Any]] = []
-
-    def call(self, agent: str, tool: str, params: dict[str, Any]) -> dict[str, Any]:
-        self.call_log.append({"agent": agent, "tool": tool, "params": params})
-        key = f"{agent}/{tool}"
-        if key in self.responses:
-            return dict(self.responses[key])
-        return {"status": "ok", "result": f"mock:{agent}/{tool}", "agent": agent}
+from haip.a2a.transport import AgentTransport, InProcessTransport, MockTransport  # noqa: F401
 
 
 # ── Orchestrator ──
@@ -180,8 +151,7 @@ class A2AOrchestrator:
             content = resp.content.strip()
             if "```" in content:
                 content = content.split("```")[1]
-                if content.startswith("json"):
-                    content = content[4:]
+                content = content.removeprefix("json")
             nodes_data = json.loads(content)
             if isinstance(nodes_data, list):
                 nodes = [TaskNode(**n) for n in nodes_data]
