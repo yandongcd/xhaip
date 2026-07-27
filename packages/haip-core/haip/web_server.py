@@ -1047,16 +1047,16 @@ def agent_knowledge(name: str):
                 all_rules = agent_obj.rule_engine.get_rules()
                 rules = [r.get("name", str(r)) for r in (all_rules or [])]
             except Exception:
-                pass
+                logger.debug("agent rule_engine.get_rules() failed for %s", name, exc_info=True)
     except Exception:
-        pass
+        logger.debug("agent knowledge module load failed for %s", name, exc_info=True)
 
     # Also fetch from knowledge runtime
     try:
         kb = get_kb(str(PROJECT_ROOT))
         kb_stats = kb.stats()
     except Exception:
-        pass
+        logger.debug("knowledge runtime stats failed", exc_info=True)
 
     return {
         "agent": name,
