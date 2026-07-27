@@ -252,7 +252,7 @@ def _record(agent: str, tool: str, status: str, error: str,
         from haip.memory import get_memory
         get_memory().record(agent, "", tool, status=status)
     except Exception:
-        pass
+        logger.debug("Agent Memory 记录失败 (非致命)", exc_info=True)
 
     # Prune to prevent unbounded growth
     if len(_call_history) > 1000:
@@ -396,7 +396,10 @@ def _run_guard(output: str, tool_calls: list, plugin) -> dict:
                     )
                     guard_result["flags"].append(guard_result["blocked_reason"])
     except Exception as e:
-        logger.debug("Guard 验证异常, 降级通过: %s", e)
+        logger.exception("Guard 验证异常, 阻断通过: %s", e)
+        guard_result["passed"] = False
+        guard_result["flags"].append(f"Guard 内部异常: {e}")
+        guard_result["blocked_reason"] = f"Guard 验证管道异常: {e}"
 
     return guard_result
 
@@ -484,8 +487,8 @@ async def call_with_loop_async(
         return {"status": "error", "error": str(e)}
 
     from haip.loop import AsyncAgentLoop
-    from haip.session.store import InMemorySessionService, SessionService
     from haip.loop.context import InvocationContext
+    from haip.session.store import InMemorySessionService, SessionService
 
     if use_session_service:
         from pathlib import Path as _Path
@@ -554,8 +557,8 @@ async def stream_events(
         return
 
     from haip.loop import AsyncAgentLoop
-    from haip.session.store import InMemorySessionService
     from haip.loop.context import InvocationContext
+    from haip.session.store import InMemorySessionService
 
     session_svc = InMemorySessionService()
     session = session_svc.get_or_create_session(session_id, user_id=user_id)

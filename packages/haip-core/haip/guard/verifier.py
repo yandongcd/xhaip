@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 
 from haip.guard.citation import Citation, CitationEngine
 from haip.guard.confidence import ConfidenceScore, ConfidenceScorer
 from haip.llm import LLMProvider
 
+logger = logging.getLogger(__name__)
 
 # ── 高危场景触发条件 ──
 
@@ -54,6 +56,24 @@ class GuardVerifier:
         self.llm = llm_provider
 
     def verify(
+        self,
+        agent_output: str,
+        scenario: str = "",
+        agent_name: str = "",
+        tool_results: list[dict] | None = None,
+        cross_agent_outputs: list[str] | None = None,
+        llm_temperature: float = 0.3,
+    ) -> GuardResult:
+        try:
+            return self._verify_impl(
+                agent_output, scenario, agent_name,
+                tool_results, cross_agent_outputs, llm_temperature,
+            )
+        except Exception:
+            logger.exception("Guard 验证管道内部异常, 阻断通过: agent=%s scenario=%s", agent_name, scenario)
+            return GuardResult(passed=False, flags=["Guard 内部异常: 验证不可用"])
+
+    def _verify_impl(
         self,
         agent_output: str,
         scenario: str = "",
