@@ -56,6 +56,7 @@ class TestProductionProfile:
     def test_production_demo_seeded_with_flag(self, monkeypatch, tmp_path):
         monkeypatch.setenv("HAIP_ENV", "production")
         monkeypatch.setenv("HAIP_SEED_DEMO_USERS", "1")
+        monkeypatch.setenv("HAIP_DEMO_PASSWORD", "TestDemo@123")
         monkeypatch.setenv("HAIP_AUTH_DB", str(tmp_path / "auth.db"))
         from haip.auth import AuthService, reset_auth_service
         reset_auth_service()

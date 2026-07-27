@@ -42,7 +42,11 @@ PHI_FIELDS: set[str] = {
 
 def _derive_key_fernet() -> bytes:
     """Derive a Fernet-compatible key from the master secret using HKDF."""
-    master = os.environ.get("ENCRYPTION_KEY", "xhaip-dev-encryption-key-change-me")
+    master = os.environ.get("ENCRYPTION_KEY")
+    if not master:
+        if os.environ.get("HAIP_ENV") == "production":
+            raise RuntimeError("ENCRYPTION_KEY 未设置，生产环境必须通过环境变量配置")
+        master = "xhaip-dev-encryption-key-change-me"
     hkdf = HKDF(
         algorithm=hashes.SHA256(),
         length=32,
@@ -55,7 +59,11 @@ def _derive_key_fernet() -> bytes:
 
 def _derive_key_stdlib() -> bytes:
     """Derive a 32-byte key from the master secret using PBKDF2."""
-    master = os.environ.get("ENCRYPTION_KEY", "xhaip-dev-encryption-key-change-me")
+    master = os.environ.get("ENCRYPTION_KEY")
+    if not master:
+        if os.environ.get("HAIP_ENV") == "production":
+            raise RuntimeError("ENCRYPTION_KEY 未设置，生产环境必须通过环境变量配置")
+        master = "xhaip-dev-encryption-key-change-me"
     from hashlib import pbkdf2_hmac
 
     raw = pbkdf2_hmac(
@@ -147,7 +155,7 @@ def encrypt_patient_record(record: dict[str, Any]) -> dict[str, Any]:
     """Encrypt PHI fields in a patient record."""
     result = dict(record)
     for field in PHI_FIELDS:
-        if field in result and result[field]:
+        if result.get(field):
             result[field] = encrypt_field(str(result[field]))
     return result
 
@@ -156,6 +164,6 @@ def decrypt_patient_record(record: dict[str, Any]) -> dict[str, Any]:
     """Decrypt PHI fields in a patient record."""
     result = dict(record)
     for field in PHI_FIELDS:
-        if field in result and result[field]:
+        if result.get(field):
             result[field] = decrypt_field(str(result[field]))
     return result

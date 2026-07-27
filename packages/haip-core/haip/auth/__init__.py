@@ -25,6 +25,7 @@ from haip.auth.jwt import (
     refresh_access_token,
     revoke_refresh_token,
 )
+from haip.auth.middleware import get_current_user
 from haip.auth.models import (
     PORTAL_IDENTITY_ROLES,
     LoginResponse,
@@ -37,7 +38,6 @@ from haip.auth.models import (
 )
 from haip.auth.password import hash_password, validate_password_strength, verify_password
 from haip.auth.rbac import get_permissions_for_roles, has_permission
-from haip.auth.middleware import get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -175,10 +175,10 @@ class AuthService:
         self,
         username: str,
         password: str,
-        email: Optional[str] = None,
-        display_name: Optional[str] = None,
-        department: Optional[str] = None,
-        roles: Optional[list[str]] = None,
+        email: str | None = None,
+        display_name: str | None = None,
+        department: str | None = None,
+        roles: list[str] | None = None,
     ) -> dict[str, Any]:
         """Create a new user account."""
         if username in self._users:
@@ -227,7 +227,11 @@ class AuthService:
         ):
             logger.info("生产环境未设置 HAIP_SEED_DEMO_USERS, 跳过演示账户种子")
             return 0
-        demo_password = os.environ.get("HAIP_DEMO_PASSWORD", "Demo@123456")
+        demo_password = os.environ.get("HAIP_DEMO_PASSWORD")
+        if not demo_password:
+            if os.environ.get("HAIP_ENV") == "production":
+                raise ValueError("HAIP_DEMO_PASSWORD 未设置，生产环境必须通过环境变量配置")
+            demo_password = "Demo@123456"
         created = 0
         for identity, role in PORTAL_IDENTITY_ROLES.items():
             if identity in self._users:
@@ -284,11 +288,11 @@ class AuthService:
             },
         }
 
-    def get_user(self, username: str) -> Optional[dict[str, Any]]:
+    def get_user(self, username: str) -> dict[str, Any] | None:
         """Get user by username."""
         return self._users.get(username)
 
-    def get_user_by_id(self, user_id: str) -> Optional[dict[str, Any]]:
+    def get_user_by_id(self, user_id: str) -> dict[str, Any] | None:
         """Get user by ID."""
         for user in self._users.values():
             if user["id"] == user_id:
