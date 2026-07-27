@@ -23,6 +23,7 @@ class SignoffManager:
     def __init__(self, db_path: str = ":memory:"):
         self._db = sqlite3.connect(db_path, check_same_thread=False)
         self._db.row_factory = sqlite3.Row
+        self._db.execute("PRAGMA journal_mode=WAL")
         self._db.executescript("""
             CREATE TABLE IF NOT EXISTS signoff_record (
                 id TEXT PRIMARY KEY,

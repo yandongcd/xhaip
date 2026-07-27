@@ -31,6 +31,7 @@ class AgentMemory:
 
     def _init_db(self):
         with sqlite3.connect(str(self.db_path)) as conn:
+            conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS decisions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,

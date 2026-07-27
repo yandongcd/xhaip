@@ -5,7 +5,6 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-
 # ── 数据模型 ──
 
 CREATE_GUIDELINES = """
@@ -50,6 +49,7 @@ class KnowledgeStore:
     def __init__(self, db_path: str = ":memory:"):
         self.db = sqlite3.connect(db_path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
+        self.db.execute("PRAGMA journal_mode=WAL")
         self._init_schema()
 
     def _init_schema(self) -> None:
