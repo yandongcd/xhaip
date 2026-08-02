@@ -11,18 +11,16 @@
   - pipeline: BP 编排
 """
 
-import sys
-
-sys.path.insert(0, r"D:\FC\xhaip\packages\haip-hospital\modules")
-
 import pytest
-from pharmacy.antiemetic import scoring_engine
-from pharmacy.antiemetic import drug_recommend
-from pharmacy.antiemetic import drug_controls
-from pharmacy.antiemetic import anesthesia_guide
-from pharmacy.antiemetic import nondrug_guide
-from pharmacy.antiemetic import drug_db
-from pharmacy.antiemetic import pipeline
+from pharmacy.antiemetic import (
+    anesthesia_guide,
+    drug_controls,
+    drug_db,
+    drug_recommend,
+    nondrug_guide,
+    pipeline,
+    scoring_engine,
+)
 
 
 # ════════════════════════════════════════════
