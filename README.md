@@ -12,12 +12,15 @@
 ## 快速开始
 
 ```bash
-pip install -e "packages/haip-core[dev]"
-python -m pytest packages/haip-core/tests/ tests/integration/ -v
+# 免安装自包含: 从仓库根目录直接运行 (sitecustomize.py 自动注入内部包路径)
+python -m uvicorn haip.web_server:app
+python -m pytest packages/haip-core/tests/ tests/ -v
 
 # 数据质量检查
 python scripts/validate_patients.py
 ```
+
+> 可选: 需要打包分发时 `pip install -e "packages/haip-core[dev]"`（仅此场景需要）。
 
 ## 项目结构
 

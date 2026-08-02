@@ -8,10 +8,9 @@
 
 ```bash
 cd xhaip
-pip install -e "packages/haip-core[dev]"
-pytest packages/haip-core/tests/ tests/integration/ -v
-ruff check .
-mypy packages/haip-core/haip/
+python -m pytest packages/haip-core/tests/ tests/ -v   # 免安装: sitecustomize.py 自动注入内部路径
+python -m ruff check .
+python -m mypy packages/haip-core/haip/
 ```
 
 ## 架构
