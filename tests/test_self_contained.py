@@ -53,3 +53,18 @@ def test_sitecustomize_injects_internal_paths():
     for rel in ("packages/haip-core", "packages/haip-hospital",
                 "packages/haip-hospital/modules"):
         assert str(ROOT / rel) in sys.path, f"{rel} 未注入 sys.path"
+
+
+def test_no_external_absolute_paths():
+    offenders = []
+    for fp in _iter_text_files(ROOT):
+        try:
+            text = fp.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for pat in _FORBIDDEN_PATTERNS:
+            if pat in text:
+                offenders.append((str(fp.relative_to(ROOT)), pat))
+    assert not offenders, (
+        "外部路径引用:\n" + "\n".join(f"{p}: {pat}" for p, pat in sorted(offenders))
+    )
