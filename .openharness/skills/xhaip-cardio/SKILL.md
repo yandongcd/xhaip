@@ -4,8 +4,8 @@ name: xhaip-cardio
 description: 心血管外科 + 心脏评估。EuroSCORE II / 抗凝方案(warfarin/NOAC) / 术后管理 + RCRI评分 / ECG 6模式库 / 围术期MI分型 / 高血压管理。153+94 行, 3+3 函数。
 trust_level: T1
 source:
-  - D:\FC\xhaip\packages\haip-hospital\agents\definitions\cardio-surgery.yaml
-  - D:\FC\xhaip\packages\haip-hospital\agents\definitions\cardio-risk.yaml
+  - packages/haip-hospital/agents/definitions/cardio-surgery.yaml
+  - packages/haip-hospital/agents/definitions/cardio-risk.yaml
 ---
 
 # 心血管外科 + 心脏评估

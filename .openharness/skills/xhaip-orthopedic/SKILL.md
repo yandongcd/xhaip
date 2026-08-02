@@ -4,8 +4,8 @@ name: xhaip-orthopedic
 description: 创伤骨科智能体。骨折分型 (Garden/Evans/AO) / 术前评估 / 手术方案 (THA/HA/PFNA) / 并发症预测 (DVT/感染) / 手术时机决策。6 个 A2A 工具, 依赖心脏评估 + 麻醉评估 + 病历。
 trust_level: T1
 source:
-  - D:\FC\xhaip\packages\haip-hospital\agents\definitions\orthopedic-surgery.yaml
-  - D:\FC\xhaip\packages\haip-hospital\modules\orthopedics\__init__.py
+  - packages/haip-hospital/agents/definitions/orthopedic-surgery.yaml
+  - packages/haip-hospital/modules/orthopedics/__init__.py
 ---
 
 # 创伤骨科智能体

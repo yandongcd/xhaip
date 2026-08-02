@@ -4,8 +4,8 @@ name: xhaip-pharmacy
 description: 药剂科智能体。营养风险评估 (NRS2002) / TPN 全肠外营养配比计算 / 处方审核 (17条风险规则) / EN vs PN 途径推荐 / 药品信息查询。6 个 A2A 工具, 6 个临床角色视角切换。
 trust_level: T1
 source:
-  - D:\FC\xhaip\packages\haip-hospital\agents\definitions\pharmacy.yaml
-  - D:\FC\xhaip\packages\haip-hospital\modules\pharmacy\assessment\__init__.py
+  - packages/haip-hospital/agents/definitions/pharmacy.yaml
+  - packages/haip-hospital/modules/pharmacy/assessment/__init__.py
 ---
 
 # 药剂科智能体

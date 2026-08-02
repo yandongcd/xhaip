@@ -4,8 +4,8 @@ name: xhaip-anesthesia
 description: 围术期麻醉评估。ASA 分级 (1-6) / 困难气道评估 (Mallampati+甲颌距) / 抗凝管理 (华法林/NOAC/抗血小板桥接) / 麻醉方案推荐 (全麻/腰麻)。116 行, 4 函数。
 trust_level: T1
 source:
-  - D:\FC\xhaip\packages\haip-hospital\agents\definitions\anesthesia-risk.yaml
-  - D:\FC\xhaip\packages\haip-hospital\modules\anesthesia\__init__.py
+  - packages/haip-hospital/agents/definitions/anesthesia-risk.yaml
+  - packages/haip-hospital/modules/anesthesia/__init__.py
 ---
 
 # 围术期麻醉评估

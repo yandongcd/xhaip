@@ -4,8 +4,8 @@ name: xhaip-pediatrics
 description: 儿科智能体。生长发育评估 (身高/体重/BMI 百分位) / 儿童用药剂量计算 (按体重/体表面积) / WHO IMCI 常见病诊断辅助 (肺炎/胃肠炎)。3 个 A2A 工具。
 trust_level: T1
 source:
-  - D:\FC\xhaip\packages\haip-hospital\agents\definitions\pediatrics.yaml
-  - D:\FC\xhaip\packages\haip-hospital\modules\pediatrics\__init__.py
+  - packages/haip-hospital/agents/definitions/pediatrics.yaml
+  - packages/haip-hospital/modules/pediatrics/__init__.py
 ---
 
 # 儿科智能体

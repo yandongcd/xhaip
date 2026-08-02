@@ -4,7 +4,7 @@ name: xhaip-pain
 description: 疼痛专病管理体系。Hub + 5 Sub-agents 树形拓扑: 分诊 → 急性/慢性/癌性/介入/康复。6 个 Agent x 3 工具 = 18 个 A2A 调用入口。完整覆盖从急性术后到终身癌痛管理。
 trust_level: T1
 source:
-  - D:\FC\xhaip\packages\haip-hospital\agents\definitions\pain-hub.yaml
+  - packages/haip-hospital/agents/definitions/pain-hub.yaml
 ---
 
 # 疼痛专病管理体系

@@ -4,8 +4,8 @@ name: xhaip-masterdata
 description: 患者数据中心 + 指标数据中心。全院患者数据的单一真相源 (查询患者/检验/检查) + 全院运营指标 (质量/效率/科室)。3+3 个 A2A 工具。含 3 个预置样本患者 (P001骨科/P002心外/P003儿科)。
 trust_level: T1
 source:
-  - D:\FC\xhaip\packages\haip-hospital\agents\definitions\medical-record.yaml
-  - D:\FC\xhaip\packages\haip-hospital\agents\definitions\metrics.yaml
+  - packages/haip-hospital/agents/definitions/medical-record.yaml
+  - packages/haip-hospital/agents/definitions/metrics.yaml
 ---
 
 # 患者数据中心 + 指标数据中心

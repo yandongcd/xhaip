@@ -5,8 +5,8 @@ description: xhaip v1.0 核心引擎。10 模块 (agent/a2a/llm/tools/guard/orch
 trust_level: T1
 version: "1.0.0"
 source:
-  - D:\FC\xhaip\packages\haip-core
-  - D:\FC\xhaip\docs\specs\xhaip-refactoring-design.md
+  - packages/haip-core
+  - docs/specs/xhaip-refactoring-design.md
 ---
 
 # xhaip v1.0 核心引擎
