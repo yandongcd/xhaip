@@ -4,6 +4,7 @@ Guidelines: CPIC, NMPA, UpToDate Lexicomp, 中国药典, Beers Criteria 2023
 """
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from haip.togaf.knowledge_agent import KnowledgeAgent
@@ -103,6 +104,50 @@ _BEERS_2023 = {
 
 # ═══════ Renal / Hepatic Dose Adjustment ═══════
 
+_CR_UMOL_TO_MGDL = 88.4  # μmol/L → mg/dL
+
+
+def _num(v: Any) -> float | None:
+    """Safely coerce a value to float; unparseable/missing → None."""
+    if v is None or v == "":
+        return None
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    return f if math.isfinite(f) else None
+
+
+def _compute_crcl(patient: dict | None, labs: dict) -> tuple[float | None, str]:
+    """Cockcroft-Gault CrCl (mL/min) from patient age/weight/sex.
+
+    肌酐以 μmol/L 存储 → 先 ÷88.4 转 mg/dL 再代入 CG 公式.
+    数据缺失/无法解析时返回 (None, note) — 绝不进入任何减量分支.
+    """
+    cr = None
+    for k in ("creatinine", "Cr"):
+        v = labs.get(k)
+        if v is not None:
+            cr = v
+            break
+    if cr is None:
+        return None, "肌酐数据缺失"
+    cr_umol = _num(cr)
+    if cr_umol is None:
+        return None, "肌酐数值无法解析"
+    if cr_umol <= 0:
+        return None, "肌酐数值异常(≤0)"
+    age = _num((patient or {}).get("age"))
+    weight = _num((patient or {}).get("weight_kg"))
+    if age is None or weight is None:
+        return None, "年龄/体重数据缺失"
+    crcl = ((140 - age) * weight) / (72 * (cr_umol / _CR_UMOL_TO_MGDL))
+    gender = str((patient or {}).get("gender", "M") or "M").upper()
+    if gender.startswith("F"):
+        crcl *= 0.85
+    return round(crcl, 1), ""
+
+
 def _renally_adjusted(crcl: float, drug: str) -> str | None:
     """CKD-EPI CrCl 导向的剂量调整."""
     d = drug.lower()
@@ -148,7 +193,7 @@ def order_audit(patient_id: str = "", orders: list | None = None,
     drug_names = [o.get("drug", o) if isinstance(o, dict) else str(o) for o in orders]
     age = p.get("age", 50) if p else 50
     labs = (p.get("lab_results", {}) or {}) if p else {}
-    crcl = round(float(labs.get("creatinine", 1.0) or 1.0), 1)
+    crcl, renal_data_note = _compute_crcl(p, labs)
     child_pugh = kwargs.get("child_pugh", "A")
 
     # 1. Drug-drug interactions
@@ -160,12 +205,13 @@ def order_audit(patient_id: str = "", orders: list | None = None,
                                    "severity": rule["severity"], "effect": rule["effect"],
                                    "mechanism": rule["mechanism"], "action": rule["action"]})
 
-    # 2. Renal dose check
-    for drug in drug_names:
-        adj = _renally_adjusted(crcl, drug)
-        if adj and "标准" not in adj:
-            issues.append({"type": "肾功能调整", "drug": drug, "severity": "medium to high",
-                           "crcl": crcl, "adjustment": adj, "action": f"按CrCl={crcl}调整剂量"})
+    # 2. Renal dose check (肌酐缺失时跳过, 不进入任何减量分支)
+    if crcl is not None:
+        for drug in drug_names:
+            adj = _renally_adjusted(crcl, drug)
+            if adj and "标准" not in adj:
+                issues.append({"type": "肾功能调整", "drug": drug, "severity": "medium to high",
+                               "crcl": crcl, "adjustment": adj, "action": f"按CrCl={crcl}调整剂量"})
 
     # 3. Hepatic dose check
     for drug in drug_names:
@@ -195,6 +241,8 @@ def order_audit(patient_id: str = "", orders: list | None = None,
     return {
         "status": "ok", "patient_id": patient_id,
         "drugs_audited": drug_names, "issues": issues,
+        "crcl": crcl,
+        "renal_data_note": renal_data_note,
         "tdm_recommendations": tdm_recommendations,
         "high_severity_count": sum(1 for i in issues if i["severity"] == "high"),
         "passed": len(issues) == 0,
@@ -329,7 +377,8 @@ def _check_lab_interaction(new_drug: str, p: dict) -> list[dict]:
     alerts = []
     labs = p.get("lab_results", {}) or {}
     k = float(labs.get("k", 4.0) or labs.get("potassium", 4.0) or 4.0)
-    cr = float(labs.get("creatinine", 80) or 80)
+    cr_raw = labs.get("creatinine", labs.get("Cr", 80))
+    cr = float(cr_raw or 80)
 
     drug_lower = new_drug.lower()
     if ("spironolactone" in drug_lower or "螺内酯" in new_drug or "eplerenone" in drug_lower or "依普利酮" in new_drug) and k > 5.0:

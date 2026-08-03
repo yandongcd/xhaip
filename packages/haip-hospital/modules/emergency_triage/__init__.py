@@ -8,6 +8,9 @@
 """
 from __future__ import annotations
 
+import math
+import re
+
 from haip.togaf.knowledge_agent import KnowledgeAgent
 
 _agent = KnowledgeAgent(agent_name="emergency-triage", department="急诊科")
@@ -214,17 +217,85 @@ def triage_record(**kwargs) -> dict:
     }
 
 
-def _match(text: str, criterion: str, vitals: dict) -> bool:
-    """Simple keyword matching for triage criteria."""
-    crit_lower = criterion.lower()
-    if any(kw in text for kw in crit_lower.split()):
-        return True
-    if isinstance(vitals, dict):
-        if "spo2" in crit_lower and "SpO2" in vitals:
-            return True
-        if "sbp" in crit_lower and "SBP" in vitals:
-            return True
+_VITAL_ALIASES = {
+    "spo2": "SpO2", "收缩压": "SBP", "hr": "HR", "gcs": "GCS",
+    "高热": "Temp", "发热": "Temp", "低热": "Temp", "体温": "Temp",
+}
+
+
+def _vital_value(vitals: dict, key: str) -> float | None:
+    """Read a vital value safely; unparseable/missing → None (never matches)."""
+    v = vitals.get(key, vitals.get(key.lower()))
+    if v is None or v == "":
+        return None
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    return f if math.isfinite(f) else None
+
+
+def _vital_match(criterion: str, vitals: dict) -> bool:
+    """Compare numeric vital thresholds embedded in a criterion against vitals.
+
+    Handles: SpO2<85% / SpO2 85-92% / SpO2>92%, 收缩压<90mmHg,
+    HR>150或<40, GCS≤8 / GCS 9-13, 高热>41°C / 发热39-41°C / 低热<39°C.
+    Missing or unparseable values never match (no existence-only hit).
+    """
+    if not isinstance(vitals, dict):
+        return False
+    lower = criterion.lower()
+    last_key: str | None = None
+    for part in re.split(r"或", lower):
+        part = part.strip()
+        if not part:
+            continue
+        key = next((k for alias, k in _VITAL_ALIASES.items() if alias in part), None)
+        if key is None:
+            key = last_key
+        else:
+            last_key = key
+        if key is None:
+            continue
+        v = _vital_value(vitals, key)
+        if v is None:
+            continue
+        m = re.search(r"(\d+)\s*[-–]\s*(\d+)", part)
+        if m:
+            lo, hi = float(m.group(1)), float(m.group(2))
+            if lo <= v <= hi:
+                return True
+        for op, thr in re.findall(r"([<>]=?|≤|≥)\s*(\d+)", part):
+            t = float(thr)
+            if op == "<" and v < t:
+                return True
+            if op in ("<=", "≤") and v <= t:
+                return True
+            if op == ">" and v > t:
+                return True
+            if op in (">=", "≥") and v >= t:
+                return True
     return False
+
+
+def _keyword_keys(criterion: str) -> list[str]:
+    """Build match keywords: strip parenthetical content (() and （）),
+    then split on 或 and / so semantic keywords become matchable."""
+    keys: list[str] = []
+    for part in re.split(r"[或/]", criterion.lower()):
+        for ch in "()（）":
+            part = part.split(ch, 1)[0]
+        part = part.strip(" ,，、;；+")
+        if part:
+            keys.append(part)
+    return keys
+
+
+def _match(text: str, criterion: str, vitals: dict) -> bool:
+    """Keyword matching (parenthetical-stripped) + numeric vital threshold check."""
+    if any(kw in text for kw in _keyword_keys(criterion)):
+        return True
+    return _vital_match(criterion, vitals)
 
 
 # ── v2.0 扩展: 群伤检伤分类 START ──

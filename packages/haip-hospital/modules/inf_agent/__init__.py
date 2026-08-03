@@ -4,6 +4,7 @@ Guidelines: Surviving Sepsis Campaign 2021, IDSA, CLSI M100 (2024), 中国抗菌
 """
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from haip.togaf.knowledge_agent import KnowledgeAgent
@@ -25,6 +26,43 @@ def _get_patient(kwargs: dict) -> tuple[dict | None, dict | None]:
 
 
 # ═══════ Sepsis / SIRS / qSOFA Screening ═══════
+
+def _num(v: Any) -> float | None:
+    """Safely coerce a value to float; unparseable/missing → None."""
+    if v is None or v == "":
+        return None
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    return f if math.isfinite(f) else None
+
+
+def _organ_dysfunction_flags(labs: dict) -> list[str]:
+    """器官功能障碍标志 — 乳酸/血小板/肌酐/胆红素.
+
+    肌酐 (creatinine/Cr) 与胆红素 (bilirubin/TBil) 在本数据集中以
+    μmol/L 存储, 先换算 mg/dL (Cr ÷88.4, TBil ÷17.1) 再与 1.2 mg/dL 阈值比较.
+    """
+    flags: list[str] = []
+    lactate = _num(labs.get("lactate"))
+    if lactate is not None and lactate > 2:
+        flags.append(f"高乳酸血症 (Lac={lactate}) — 组织低灌注")
+    plt = _num(labs.get("platelet", labs.get("PLT")))
+    if plt is not None and plt < 100:
+        flags.append(f"血小板减少 (PLT={plt})")
+    cr = _num(labs.get("creatinine", labs.get("Cr")))
+    if cr is not None:
+        cr_mgdl = cr / 88.4
+        if cr_mgdl > 1.2:
+            flags.append(f"急性肾损伤 (Cr={cr:.1f}μmol/L={cr_mgdl:.1f}mg/dL)")
+    bili = _num(labs.get("bilirubin", labs.get("TBil")))
+    if bili is not None:
+        bili_mgdl = bili / 17.1
+        if bili_mgdl > 1.2:
+            flags.append(f"高胆红素血症 (TBil={bili:.1f}μmol/L={bili_mgdl:.1f}mg/dL)")
+    return flags
+
 
 def _sirs_criteria(labs: dict, vitals: dict | None = None) -> dict:
     """SIRS 全身炎症反应综合征 4 项标准评估."""
@@ -491,23 +529,13 @@ def sepsis_screening(patient_id: str = "", vitals: dict | None = None,
     labs = p.get("lab_results", {}) or {}
     lactate = float(labs.get("lactate", 1.5) or 1.5)
     pct = float(labs.get("PCT", 0.5) or 0.5)
-    plt = float(labs.get("platelet", 200) or 200)
-    cr = float(labs.get("creatinine", 1.0) or 1.0)
-    bili = float(labs.get("bilirubin", 1.0) or 1.0)
+    plt = float(labs.get("platelet", labs.get("PLT", 200)) or 200)
 
     sirs = _sirs_criteria(labs, vitals)
     qsofa = _qsofa(vitals)
 
-    # Organ dysfunction indicators
-    organ_flags = []
-    if lactate > 2:
-        organ_flags.append(f"高乳酸血症 (Lac={lactate}) — 组织低灌注")
-    if plt < 100:
-        organ_flags.append(f"血小板减少 (PLT={plt})")
-    if cr > 1.2:
-        organ_flags.append(f"急性肾损伤 (Cr={cr})")
-    if bili > 1.2:
-        organ_flags.append(f"高胆红素血症 (TBil={bili})")
+    # Organ dysfunction indicators (Cr/TBil μmol/L → mg/dL 换算后比较)
+    organ_flags = _organ_dysfunction_flags(labs)
 
     sepsis_likely = sirs["positive"] and qsofa["positive"]
     septic_shock = sepsis_likely and lactate > 2

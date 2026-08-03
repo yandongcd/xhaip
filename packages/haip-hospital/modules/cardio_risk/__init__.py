@@ -49,42 +49,30 @@ _RCRI_FACTORS: list[tuple[str, str, list[str]]] = [
 def _classify_bp(sbp: int, dbp: int) -> dict[str, Any]:
     """BP classification per 中国高血压防治指南 (2024 年修订版).
 
-    Classification tiers:
+    Classification tiers (grade by the higher of systolic/diastolic tier):
       正常: SBP < 120 AND DBP < 80
       正常高值: SBP 120-139 AND/OR DBP 80-89
       1 级高血压 (轻度): SBP 140-159 AND/OR DBP 90-99
       2 级高血压 (中度): SBP 160-179 AND/OR DBP 100-109
       3 级高血压 (重度): SBP >= 180 AND/OR DBP >= 110
-      单纯收缩期高血压 (ISH): SBP >= 140 AND DBP < 90
+      单纯收缩期高血压 (ISH): SBP >= 140 AND DBP < 90 — 分级按收缩压档位
     """
     if sbp < 120 and dbp < 80:
-        grade = "正常"
-        grade_cn = "正常血压"
-        level = 0
-    elif 120 <= sbp <= 139 or 80 <= dbp <= 89:
-        grade = "正常高值"
-        grade_cn = "正常高值血压"
-        level = 0
-    elif (140 <= sbp <= 159 or 90 <= dbp <= 99) and not (sbp >= 140 and dbp < 90):
-        grade = "1级"
-        grade_cn = "1 级高血压 (轻度)"
-        level = 1
-    elif 160 <= sbp <= 179 or 100 <= dbp <= 109:
-        grade = "2级"
-        grade_cn = "2 级高血压 (中度)"
-        level = 2
-    elif sbp >= 180 or dbp >= 110:
-        grade = "3级"
-        grade_cn = "3 级高血压 (重度)"
-        level = 3
-    elif sbp >= 140 and dbp < 90:
-        grade = "ISH"
-        grade_cn = "单纯收缩期高血压 (ISH)"
-        level = 1
+        return {"grade": "正常", "grade_cn": "正常血压", "level": 0, "sbp": sbp, "dbp": dbp}
+
+    s_tier = 3 if sbp >= 180 else 2 if sbp >= 160 else 1 if sbp >= 140 else 0
+    d_tier = 3 if dbp >= 110 else 2 if dbp >= 100 else 1 if dbp >= 90 else 0
+    level = max(s_tier, d_tier)
+    ish = sbp >= 140 and dbp < 90
+
+    if level == 0:
+        grade, grade_cn = "正常高值", "正常高值血压"
+    elif level == 1:
+        grade, grade_cn = ("ISH", "单纯收缩期高血压 (ISH)") if ish else ("1级", "1 级高血压 (轻度)")
+    elif level == 2:
+        grade, grade_cn = "2级", "2 级高血压 (中度)" + (" (ISH)" if ish else "")
     else:
-        grade = "未分类"
-        grade_cn = "未分类"
-        level = 0
+        grade, grade_cn = "3级", "3 级高血压 (重度)" + (" (ISH)" if ish else "")
 
     return {"grade": grade, "grade_cn": grade_cn, "level": level, "sbp": sbp, "dbp": dbp}
 

@@ -4,6 +4,8 @@
 """
 from __future__ import annotations
 
+import math
+
 from haip.togaf.knowledge_agent import KnowledgeAgent
 
 _agent = KnowledgeAgent(agent_name="sepsis-early-warning", department="检验医学科")
@@ -22,15 +24,46 @@ LYMPH_REF = {
 }
 
 
+def _patient_vitals_labs(p: dict, kwargs: dict) -> tuple[dict, dict]:
+    """Merge vital sign sources: kwargs vital_signs > patient vital_signs;
+    labs from patient lab_results (兜底)."""
+    merged: dict = {}
+    for source in ((p or {}).get("vital_signs") or {}, kwargs.get("vital_signs") or {}):
+        if isinstance(source, dict):
+            merged.update(source)
+    labs = (p or {}).get("lab_results") or {}
+    return merged, labs
+
+
+def _get_vital(vitals: dict, labs: dict, *keys: str) -> float | None:
+    """Read first parseable numeric value from vitals, then lab_results."""
+    for container in (vitals, labs):
+        for k in keys:
+            v = container.get(k)
+            if v is None or v == "":
+                continue
+            try:
+                f = float(v)
+            except (TypeError, ValueError):
+                continue
+            if math.isfinite(f):
+                return f
+    return None
+
+
 def immune_status(**kwargs) -> dict:
     """免疫状态评估 — 淋巴细胞亚群 + NLR."""
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid) or {}
-    labs = p.get("lab_results", {}) or {}
+    vitals, labs = _patient_vitals_labs(p, kwargs)
 
-    # NLR (neutrophil-to-lymphocyte ratio)
-    neut = float(labs.get("neutrophil", labs.get("NEUT", 4.0)) or 4.0)
-    lymph = float(labs.get("lymphocyte", labs.get("LYMPH", 1.5)) or 1.5)
+    # NLR (neutrophil-to-lymphocyte ratio) — vital_signs 大写键优先, lab_results 兜底
+    neut = _get_vital(vitals, labs, "NEUT", "neutrophil", "ANC")
+    lymph = _get_vital(vitals, labs, "LYMPH", "lymphocyte")
+    if neut is None:
+        neut = 4.0
+    if lymph is None:
+        lymph = 1.5
     nlr = round(neut / lymph, 1) if lymph > 0 else 99
 
     # Immune status interpretation
@@ -63,16 +96,20 @@ def sepsis_score(**kwargs) -> dict:
     """脓毒症风险评分 — qSOFA + SOFA + PCT阶梯."""
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid) or {}
-    labs = p.get("lab_results", {}) or {}
+    vitals, labs = _patient_vitals_labs(p, kwargs)
 
-    # qSOFA (quick SOFA)
-    rr = float(labs.get("RR", 16) or 16)
-    sbp = float(labs.get("SBP", 120) or 120)
-    gcs = int(labs.get("GCS", 15) or 15)
+    # qSOFA (quick SOFA) — vital_signs 大写键优先, lab_results 兜底
+    rr = _get_vital(vitals, labs, "RR", "respiratory_rate")
+    sbp = _get_vital(vitals, labs, "SBP", "sbp")
+    gcs = _get_vital(vitals, labs, "GCS", "gcs")
+    rr = rr if rr is not None else 16
+    sbp = sbp if sbp is not None else 120
+    gcs = gcs if gcs is not None else 15
     qsofa = sum([rr >= 22, sbp <= 100, gcs <= 14])
 
     # PCT阶梯
-    pct = float(labs.get("PCT", 0) or 0)
+    pct = _get_vital({}, labs, "PCT", "pct")
+    pct = pct if pct is not None else 0
     pct_level = "正常"
     if pct > 10:
         pct_level = "严重脓毒症高度可能"

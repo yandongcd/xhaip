@@ -46,6 +46,43 @@ class TestInfAgent:
         r = _qsofa({"respiratory_rate": 16, "sbp": 120, "gcs": 15})
         assert r["positive"] is False
 
+    def test_organ_flags_normal_umol_no_aki(self):
+        """C4 回归: Cr=95.7μmol/L (≈1.08mg/dL) + TBil=9.2μmol/L 不得再误报 AKI/高胆红素."""
+        from modules.inf_agent import _organ_dysfunction_flags
+        flags = _organ_dysfunction_flags({"Cr": 95.7, "TBil": 9.2, "lactate": 1.5, "PLT": 200})
+        assert all("急性肾损伤" not in f and "高胆红素血症" not in f for f in flags)
+
+    def test_organ_flags_aki_umol_threshold(self):
+        """Cr=250μmol/L (2.83mg/dL) + TBil=25μmol/L (1.46mg/dL) 应命中."""
+        from modules.inf_agent import _organ_dysfunction_flags
+        flags = _organ_dysfunction_flags({"Cr": 250, "TBil": 25, "lactate": 2.5, "PLT": 85})
+        joined = " ".join(flags)
+        assert "急性肾损伤" in joined
+        assert "高胆红素血症" in joined
+        assert "高乳酸血症" in joined
+        assert "血小板减少" in joined
+
+    def test_organ_flags_lowercase_keys(self):
+        """patients_v2 风格小写键同样生效."""
+        from modules.inf_agent import _organ_dysfunction_flags
+        flags = _organ_dysfunction_flags({"creatinine": 95, "bilirubin": 15})
+        assert all("急性肾损伤" not in f and "高胆红素血症" not in f for f in flags)
+
+    def test_organ_flags_missing_creatinine_no_aki(self):
+        """肌酐缺失 → 不得误报 AKI."""
+        from modules.inf_agent import _organ_dysfunction_flags
+        flags = _organ_dysfunction_flags({"TBil": 20})
+        assert all("急性肾损伤" not in f for f in flags)
+
+    def test_sepsis_screening_real_patient_no_false_aki(self):
+        """真实患者 P374 (Cr=95.7μmol/L, TBil=9.2μmol/L): 不再假阳性 AKI/高胆红素."""
+        from modules.inf_agent import sepsis_screening
+        r = sepsis_screening(patient_id="P374")
+        assert r["status"] == "ok"
+        joined = " ".join(str(f) for f in r.get("findings", []))
+        assert "急性肾损伤" not in joined
+        assert "高胆红素血症" not in joined
+
     def test_test_recommend_bacterial_respiratory(self):
         from modules.inf_agent import test_recommend
         r = test_recommend(patient_id="P001", suspected_type="bacterial", infection_site="respiratory")
@@ -455,6 +492,32 @@ class TestDrugAgent:
         r = _renally_adjusted(20, "metformin")
         assert "禁忌" in r or "减量" in r
 
+    def test_order_audit_crcl_cockcroft_gault_real_patient(self):
+        """C4: 真实患者 P001 (62M/43.1kg/Cr=70.4μmol/L) → CrCl≈58.6, 左氧氟沙星按 CrCl 调整."""
+        from modules.drug_agent import order_audit
+        r = order_audit(patient_id="P001", orders=[{"drug": "左氧氟沙星"}])
+        crcl = r.get("crcl")
+        assert crcl is not None, "CrCl 应被真实计算"
+        assert 50 <= crcl <= 70, f"CrCl={crcl} 超出 CG 预期范围"
+        renal_issues = [i for i in r.get("issues", []) if i.get("type") == "肾功能调整"]
+        assert len(renal_issues) == 1
+        assert renal_issues[0]["crcl"] == crcl
+
+    def test_order_audit_missing_creatinine_no_renal_adjustment(self):
+        """C4 回归: 肌酐缺失 (P046 无 Cr) → 数据缺失标记, 绝不进入减量分支."""
+        from modules.drug_agent import order_audit
+        r = order_audit(patient_id="P046", orders=[{"drug": "左氧氟沙星"}])
+        assert r.get("crcl") is None
+        assert "缺失" in (r.get("renal_data_note") or "")
+        assert all(i.get("type") != "肾功能调整" for i in r.get("issues", []))
+
+    def test_order_audit_missing_patient_no_renal_adjustment(self):
+        """患者不存在 → 同样不得以默认 CrCl=1.0 触发最强减量."""
+        from modules.drug_agent import order_audit
+        r = order_audit(patient_id="P-NOT-EXIST", orders=[{"drug": "二甲双胍"}])
+        assert r.get("crcl") is None
+        assert all(i.get("type") != "肾功能调整" for i in r.get("issues", []))
+
 
 # ══════════════════════════════════════════════════════════════
 # Bladder Cancer v2.0 (TMT/RC + NMIBC + neoadjuvant)
@@ -484,6 +547,25 @@ class TestBladderCancer:
         r = guideline_reference(clinical_scenario="neoadjuvant")
         assert "ddMVAC" in r.get("guidelines", {}).get("EAU 2024", "") or \
                "GC" in r.get("guidelines", {}).get("EAU 2024", "")
+
+    def test_eligibility_neoadj_crcl_real_patient(self):
+        """C4: P374 (82M/47.3kg/Cr=95.7μmol/L) → CG CrCl≈35 <60 → 顺铂不合格."""
+        from modules.bladder_cancer import eligibility_score
+        r = eligibility_score(patient_id="P374", T_stage="T2", N_status="N0")
+        neoadj = r.get("neoadjuvant")
+        assert neoadj is not None
+        assert neoadj["cisplatin_eligible"] is False
+        assert any("CrCl" in reason for reason in neoadj["reasons"])
+        assert 30 <= neoadj["crcl"] <= 45, f"CG CrCl={neoadj['crcl']} 超出预期"
+
+    def test_eligibility_neoadj_missing_creatinine(self):
+        """C4 回归: 肌酐缺失 → 不因默认值误判, 以数据缺失标记提示."""
+        from modules.bladder_cancer import eligibility_score
+        r = eligibility_score(patient_id="P046", T_stage="T2", N_status="N0")
+        neoadj = r.get("neoadjuvant")
+        assert neoadj is not None
+        assert neoadj["cisplatin_eligible"] is True
+        assert any("数据缺失" in reason for reason in neoadj["reasons"])
 
 
 # ══════════════════════════════════════════════════════════════

@@ -4,6 +4,7 @@ Guidelines: EAU 2024, NCCN 2025, CUA 2024
 """
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from haip.togaf.knowledge_agent import KnowledgeAgent
@@ -20,6 +21,50 @@ _agent.rule_engine.load_all()
 
 def _get_patient(kwargs: dict) -> tuple[dict | None, dict | None]:
     return _agent.get_patient_from_kwargs(kwargs)
+
+
+_CR_UMOL_TO_MGDL = 88.4  # μmol/L → mg/dL
+
+
+def _num(v: Any) -> float | None:
+    """Safely coerce a value to float; unparseable/missing → None."""
+    if v is None or v == "":
+        return None
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    return f if math.isfinite(f) else None
+
+
+def _compute_crcl(patient: dict | None, labs: dict) -> tuple[float | None, str]:
+    """Cockcroft-Gault CrCl (mL/min) from patient age/weight/sex.
+
+    肌酐以 μmol/L 存储 → 先 ÷88.4 转 mg/dL 再代入 CG 公式.
+    数据缺失/无法解析时返回 (None, note) — 不进入任何肾功能减量分支.
+    """
+    cr = None
+    for k in ("creatinine", "Cr"):
+        v = labs.get(k)
+        if v is not None:
+            cr = v
+            break
+    if cr is None:
+        return None, "肌酐数据缺失"
+    cr_umol = _num(cr)
+    if cr_umol is None:
+        return None, "肌酐数值无法解析"
+    if cr_umol <= 0:
+        return None, "肌酐数值异常(≤0)"
+    age = _num((patient or {}).get("age"))
+    weight = _num((patient or {}).get("weight_kg"))
+    if age is None or weight is None:
+        return None, "年龄/体重数据缺失"
+    crcl = ((140 - age) * weight) / (72 * (cr_umol / _CR_UMOL_TO_MGDL))
+    gender = str((patient or {}).get("gender", "M") or "M").upper()
+    if gender.startswith("F"):
+        crcl *= 0.85
+    return round(crcl, 1), ""
 
 
 # ═══════ EAU NMIBC Risk Stratification ═══════
@@ -109,11 +154,13 @@ def _tm_et_score(kwargs: dict) -> dict:
 
 # ═══════ Neoadjuvant Chemotherapy ═══════
 
-def _neoadjuvant_eval(age: int, crcl: float, ecog: int, t_stage: str) -> dict:
+def _neoadjuvant_eval(age: int, crcl: float | None, ecog: int, t_stage: str) -> dict:
     """Cisplatin eligibility for neoadjuvant chemotherapy."""
     cisplatin_eligible = True
     reasons = []
-    if crcl < 60:
+    if crcl is None:
+        reasons.append("肾功能数据缺失 — 建议检测 CrCl 后确认顺铂资格")
+    elif crcl < 60:
         cisplatin_eligible = False
         reasons.append(f"CrCl={crcl} <60 — 顺铂相对禁忌")
     if ecog >= 2:
@@ -130,7 +177,8 @@ def _neoadjuvant_eval(age: int, crcl: float, ecog: int, t_stage: str) -> dict:
         regimen = "顺铂不合格 → 直接手术(无证据支持卡铂替代方案) 或 免疫治疗临床试验"
         note = "新辅助免疫(pembrolizumab/nivolumab)正在III期试验中"
 
-    return {"cisplatin_eligible": cisplatin_eligible, "regimen": regimen, "note": note, "reasons": reasons}
+    return {"cisplatin_eligible": cisplatin_eligible, "regimen": regimen, "note": note,
+            "reasons": reasons, "crcl": crcl}
 
 
 # ═══════ Handler Functions ═══════
@@ -163,9 +211,9 @@ def eligibility_score(patient_id: str = "", T_stage: str = "T2",
             risk_cat = "low"
         nmibc_info = {"risk_group": risk_cat, **_NMIBC_RISK.get(risk_cat, {})}
 
-    # Neoadjuvant for MIBC
+    # Neoadjuvant for MIBC (CrCl 由 Cockcroft-Gault 真实计算, 肌酐 μmol/L→mg/dL)
     labs = (p.get("lab_results", {}) or {}) if p else {}
-    crcl = round(float(labs.get("creatinine", 1.0) or 1.0), 1)
+    crcl, crcl_note = _compute_crcl(p, labs)
     neoadj = _neoadjuvant_eval(age, crcl, kwargs.get("ecog", 0), T_stage) if T_stage in ("T2", "T3a", "T3b") else None
 
     return {
@@ -176,6 +224,8 @@ def eligibility_score(patient_id: str = "", T_stage: str = "T2",
         "deductions": score_result["deductions"],
         "nmibc_risk": nmibc_info,
         "neoadjuvant": neoadj,
+        "crcl": crcl,
+        "renal_data_note": crcl_note,
         "summary": f"保膀胱评分 — {score_result['score']}/100 → {score_result['recommendation'][:40]}",
     }
 
