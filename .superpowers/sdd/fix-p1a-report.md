@@ -182,7 +182,14 @@ def _pick(labs: dict | None, *keys: str):
 ## 暂存与提交
 - 暂存：仅本次变更文件（24 个修改 + 2 个新增），未用 `git add -A`；`docs/review/`、`eval_report.json`、`patient_agent.py`、`progression.py` 等非本次文件未暂存。
 - 测试运行生成的 `knowledge/.guideline_snapshot.json` 已删除（运行时产物）。
-- commit SHA: 见 `git log -1`（提交后回填）。
+
+### ⚠️ 并行提交竞争（重要）
+本仓库存在并行提交者。本批次暂存 24 个代码/YAML 文件后，另一并行批次（`5a0c9fc feat(B2): ASVP 对抗安全管道`）的 `git commit` 在 21:29:34 先行执行，将**全部已暂存文件**（含本批次 24 个文件）一并纳入其提交。本批次随后提交时仅剩报告文件（`602307e`）。
+
+- **实际代码变更所在 commit**: `5a0c9fc`（feat(B2): ASVP 对抗安全管道 — 内容为本批次修复后的工作树版本，已验证）
+- **报告 commit**: `602307e`（fix: P1-A 规则 YAML 修复+可见性 / 端口冲突 / 孤儿 agent / 检验 key 漂移）
+- 工作树已验证 = HEAD：YAML 全量解析 0 FAIL、validate_agents 83/83、端口无重复。
+- 未改写历史（`5a0c9fc` 属并行批次，amend/rebase 有冲突风险）。
 
 ## 遗留观察（不阻塞）
 1. `modules/orthopedics/__init__.py:167` 同样存在 `labs.get("troponin", labs.get("cTnI", 0))` 大小写漂移模式 —— 不在 P1-5b 指定 4 模块内，未改，建议后续统一处理。
