@@ -52,15 +52,43 @@ class TestInfAgent:
         flags = _organ_dysfunction_flags({"Cr": 95.7, "TBil": 9.2, "lactate": 1.5, "PLT": 200})
         assert all("急性肾损伤" not in f and "高胆红素血症" not in f for f in flags)
 
-    def test_organ_flags_aki_umol_threshold(self):
-        """Cr=250μmol/L (2.83mg/dL) + TBil=25μmol/L (1.46mg/dL) 应命中."""
+    def test_organ_flags_no_baseline_screening_note(self):
+        """无基线时 Cr=250μmol/L (2.83mg/dL) 不得再报 AKI — 降级为肾功能异常筛查提示."""
         from modules.inf_agent import _organ_dysfunction_flags
         flags = _organ_dysfunction_flags({"Cr": 250, "TBil": 25, "lactate": 2.5, "PLT": 85})
         joined = " ".join(flags)
-        assert "急性肾损伤" in joined
+        assert "急性肾损伤" not in joined
+        assert "肾功能异常" in joined
         assert "高胆红素血症" in joined
         assert "高乳酸血症" in joined
         assert "血小板减少" in joined
+
+    def test_organ_flags_with_baseline_kdigo_aki(self):
+        """有基线 (scr_baseline) 时按 KDIGO 相对标准: Cr/基线=250/150=1.67≥1.5 → AKI 1期."""
+        from modules.inf_agent import _organ_dysfunction_flags
+        flags = _organ_dysfunction_flags({"Cr": 250, "scr_baseline": 150})
+        joined = " ".join(flags)
+        assert "急性肾损伤" in joined
+        assert "肾功能异常" not in joined
+
+    def test_organ_flags_with_baseline_kdigo_boundary(self):
+        """KDIGO 边界: Cr/基线=225/150=1.5 精确命中; 223.5/150=1.49 不命中."""
+        from modules.inf_agent import _organ_dysfunction_flags
+        assert "急性肾损伤" in " ".join(_organ_dysfunction_flags({"Cr": 225, "scr_baseline": 150}))
+        assert "急性肾损伤" not in " ".join(_organ_dysfunction_flags({"Cr": 223.5, "scr_baseline": 150}))
+
+    def test_organ_flags_with_baseline_no_aki_despite_absolute(self):
+        """有基线但 Cr 仅轻度升高 (160/150=1.07<1.5): 即使 Cr>106μmol/L 也不报 AKI/肾功能异常 —
+        慢性稳定升高 (如 CKD) 不再被绝对阈值误伤."""
+        from modules.inf_agent import _organ_dysfunction_flags
+        flags = _organ_dysfunction_flags({"creatinine": 160, "scr_baseline": 150})
+        assert all("急性肾损伤" not in f and "肾功能异常" not in f for f in flags)
+
+    def test_organ_flags_patients_v2_pc001(self):
+        """patients_v2 PC001 实景: Cr=185/基线=150=1.23<1.5 → 无 AKI (旧绝对阈值会误报)."""
+        from modules.inf_agent import _organ_dysfunction_flags
+        flags = _organ_dysfunction_flags({"creatinine": 185, "scr_baseline": 150})
+        assert all("急性肾损伤" not in f and "肾功能异常" not in f for f in flags)
 
     def test_organ_flags_lowercase_keys(self):
         """patients_v2 风格小写键同样生效."""
