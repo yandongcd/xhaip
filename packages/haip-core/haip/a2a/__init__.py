@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import importlib
+import json as _json
 import logging
 import os
 import re
@@ -681,7 +682,6 @@ async def stream_events(
     Guard 门控: 最终助手回复产生时先跑与同步路径相同的 Guard 校验,
     未通过则推送 guard_blocked 事件且不发送回复内容。
     """
-    import json as _json
 
     try:
         plugin, tools, llm, _a2a_executor = _build_loop_components(agent, perm_ctx)
