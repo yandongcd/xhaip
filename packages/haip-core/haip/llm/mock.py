@@ -81,3 +81,27 @@ class MockProvider(LLMProvider):
             input_tokens=fixture.get("input_tokens", 0),
             output_tokens=fixture.get("output_tokens", 0),
         )
+
+
+class SeqMockProvider(MockProvider):
+    """序列化 Mock: 按顺序返回预设的 ChatResponse (支持 tool_calls).
+
+    Usage:
+        mock = SeqMockProvider([
+            ChatResponse(content='', tool_calls=[ToolCall(id='1', name='timing_decision', arguments={})]),
+            ChatResponse(content='基于工具结果...'),
+        ])
+        # 第1次 chat → tool_call, 第2次 chat → 文本回复
+    """
+
+    def __init__(self, responses: list[ChatResponse]):
+        super().__init__({})
+        self.responses = responses
+        self._idx = 0
+
+    def chat(self, messages=None, tools=None, temperature=0.3, max_tokens=4096):
+        if self._idx < len(self.responses):
+            resp = self.responses[self._idx]
+            self._idx += 1
+            return resp
+        return ChatResponse(content="Analysis complete.", model="mock-seq")
