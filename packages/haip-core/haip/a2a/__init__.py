@@ -363,16 +363,16 @@ def _record(agent: str, tool: str, status: str, error: str,
     try:
         from haip.evolution.hook import evolution_hook
         evolution_hook(agent, tool, status, result)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Evolution hook 异常 (非致命): %s", e)
 
     # ── B3: TOGAF-AI 决策溯源记录 ──
     try:
         from haip.togaf.trace import build_trace_from_call
         trace = build_trace_from_call(agent, "", {tool: result} if result else {})
         entry["trace"] = trace
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("TOGAF-AI trace 记录异常 (非致命): %s", e)
 
 
 def get_history(limit: int = 20) -> list[dict[str, Any]]:

@@ -116,8 +116,9 @@ class MDTOrchestrator:
             if rnd >= 2 and len(round_states[rnd - 1]) == 0 and len(round_states[rnd - 2]) == 0:
                 break
 
-        # Phase N+1: Complete
-        session.status = MDTStatus.COMPLETED
+        # Phase N+1: Complete (preserve DEADLOCKED from last round)
+        if session.status != MDTStatus.DEADLOCKED:
+            session.status = MDTStatus.COMPLETED
         session.resolved_at = time.time()
         session.rounds = rnd  # type: ignore[attr-defined]
 
