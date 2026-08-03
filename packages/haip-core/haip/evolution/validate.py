@@ -25,11 +25,16 @@ def _rule_applies(exp: dict[str, Any], case: dict[str, Any]) -> bool:
     return any(kw in question for kw in trigger_kws)
 
 
-def _rule_suggests(exp: dict[str, Any], case: dict[str, Any]) -> bool:
-    """经验的行动建议是否与案例金标准一致 (字段级对比)."""
+def _rule_suggests(exp: dict[str, Any], case: dict[str, Any]) -> bool | None:
+    """经验的行动建议是否与案例金标准一致 (字段级对比).
+
+    Returns:
+        True/False: 可判断的一致/不一致
+        None: 经验文本不含任何可判定关键词 → 无法判断 (不计入 trials, 防假阳性)
+    """
     gold = case.get("gold", {})
     if not gold:
-        return False
+        return None
     # 对比 urgency (最常用金标准字段)
     gold_urgency = gold.get("urgency")
     if gold_urgency:
@@ -40,7 +45,8 @@ def _rule_suggests(exp: dict[str, Any], case: dict[str, Any]) -> bool:
             return gold_urgency == "urgent"
         if "延迟" in action or "MDT" in action:
             return gold_urgency == "elective"
-    return True
+        return None  # 无法从文本判定与 gold 的关系
+    return None
 
 
 def validate_experience(
@@ -63,12 +69,18 @@ def validate_experience(
     cases = memory.search_cases(exp["agent"], exp["trigger"], k=10)
     trials = 0
     passed = 0
+    undecidable = 0
     detail_parts = []
     for case in cases:
         if not _rule_applies(exp, case):
             continue
+        suggestion = _rule_suggests(exp, case)
+        if suggestion is None:
+            undecidable += 1
+            detail_parts.append(f"~ {case['case_id']} (无法判断)")
+            continue
         trials += 1
-        if _rule_suggests(exp, case):
+        if suggestion:
             passed += 1
             detail_parts.append(f"✓ {case['case_id']}")
         else:
@@ -94,6 +106,7 @@ def validate_experience(
     return {
         "exp_id": exp_id, "trials": trials, "pass_count": passed,
         "pass_rate": rate_now, "verdict": verdict,
+        "undecidable": undecidable,
         "detail": "; ".join(detail_parts[:6]) or "无适用案例",
     }
 

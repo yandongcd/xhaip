@@ -128,3 +128,25 @@ def test_evolution_cycle_from_eval(mem):
     assert stats["record_case"] + stats["reflect"] == len(scs)
     assert stats["cases"] >= 0
     assert "verdicts" in stats
+
+
+def test_validate_undecidable_not_counted(mem):
+    """经验无关键词时: 无法判断的案例不计入 trials (防假阳性验证通过)."""
+    from haip.evolution.memory_base import CaseEntry, ExperienceEntry
+    for i in range(4):
+        mem.add_case(CaseEntry(
+            case_id=f"cu{i}", agent="orthopedic-surgery", task="t",
+            question=f"诊断: 髋部骨折 患者{i}",
+            answer={"urgency": "emergency"}, gold={"urgency": "emergency"},
+        ))
+    mem.add_experience(ExperienceEntry(
+        exp_id="e6", agent="orthopedic-surgery",
+        trigger="诊断: 髋部骨折",
+        rule="需复查", action="补充检查",  # 无 urgency 关键词
+        source_failure="", status="pending",
+    ))
+    from haip.evolution.validate import validate_experience
+    result = validate_experience("e6", memory=mem, min_trials=3, pass_rate=0.6)
+    assert result["verdict"] == "pending"  # 无法判断 → 不误判 validated
+    assert result["undecidable"] >= 3
+    assert result["trials"] == 0
