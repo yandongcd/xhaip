@@ -445,12 +445,14 @@ _load_llm_config._file_mtime: float = 0.0  # type: ignore[attr-defined]
 _load_llm_config._env_fingerprint = ("", "")  # type: ignore[attr-defined]
 
 
-def _build_loop_components(agent: str, perm_ctx: Any = None):
+def _build_loop_components(agent: str, perm_ctx: Any = None,
+                          llm_provider: Any = None):
     """构建 AgentLoop 所需组件 (共享逻辑).
 
     perm_ctx: ReAct 循环内 A2A 工具调用的身份上下文 (HTTP 路径由
     request.state.current_user 构造并透传; 引擎内部路径显式传
     internal_permission_context())。
+    llm_provider: 显式注入 LLMProvider (测试/CI 用; None=走 config).
     """
     plugin = get_agent(agent)
     if plugin is None:
@@ -462,19 +464,21 @@ def _build_loop_components(agent: str, perm_ctx: Any = None):
     ]
 
     from haip.llm import LLMProvider
-    llm_config = _load_llm_config()
-    if llm_config.get("provider", "mock") != "mock" and not llm_config.get("api_key"):
-        # config 声明的 fallback: 无 API key 时降级 MockProvider, 聊天离线可用
-        logger.warning("LLM api_key 未配置 (检查 DEEPSEEK_API_KEY), 降级 MockProvider 离线模式")
-        from haip.llm.mock import MockProvider
-        llm: LLMProvider = MockProvider({})
+    if llm_provider is not None:
+        llm = llm_provider
     else:
-        try:
-            llm = LLMProvider.from_config(llm_config)
-        except Exception as e:
-            logger.debug("LLM 初始化失败, 降级 MockProvider: %s", e)
+        llm_config = _load_llm_config()
+        if llm_config.get("provider", "mock") != "mock" and not llm_config.get("api_key"):
+            logger.warning("LLM api_key 未配置, 降级 MockProvider 离线模式")
             from haip.llm.mock import MockProvider
             llm = MockProvider({})
+        else:
+            try:
+                llm = LLMProvider.from_config(llm_config)
+            except Exception as e:
+                logger.debug("LLM 初始化失败, 降级 MockProvider: %s", e)
+                from haip.llm.mock import MockProvider
+                llm = MockProvider({})
 
     def _a2a_executor(tool_name: str, tool_args: dict) -> dict:
         return call(agent, tool_name, tool_args, perm_ctx=perm_ctx)
@@ -544,15 +548,15 @@ def call_with_loop(
     query: str,
     max_steps: int = 5,
     perm_ctx: Any = None,
+    llm_provider: Any = None,
     **kwargs,
 ) -> dict[str, Any]:
-    """ReAct AgentLoop — LLM 自主规划调用工具，多步推理。
+    """ReAct AgentLoop — LLM 自主规划调用工具，多步推理.
 
-    Agent 的 tools 通过 A2A call() 执行，而非全局 tool registry。
-    每次请求创建新的 AgentLoop 实例，无状态共享，无竞态风险。
+    llm_provider: 显式注入 LLMProvider (测试/CI 用; None=走 config).
     """
     try:
-        plugin, tools, llm, _a2a_executor = _build_loop_components(agent, perm_ctx)
+        plugin, tools, llm, _a2a_executor = _build_loop_components(agent, perm_ctx, llm_provider)
     except ValueError as e:
         return {"status": "error", "error": str(e)}
 
@@ -749,20 +753,7 @@ def reason(
 ) -> dict[str, Any]:
     """Agent 推理模式 — LLM 自主规划并调用工具 (L1 agentic upgrade).
 
-    与 call_with_loop 等价但接受可选 provider/perm_ctx:
-    - provider=None → 使用 config/llm.yaml 的默认 provider (生产)
-    - provider=MockProvider(...) → 测试/CI 可控
-    - perm_ctx 可用于注入权限上下文 (测试/emergency 模式)
-
-    Agent 的 prompt.system + tools 被注入 AgentLoop,
-    LLM 在 ReAct 循环中自主决定调用哪个工具、解读结果、迭代决策.
+    provider: 显式注入 LLMProvider (MockProvider/test/None=走config).
+    perm_ctx: 权限上下文 (web_server 注入).
     """
-    if provider is not None:
-        import haip.llm
-        orig = haip.llm.LLMProvider.from_config
-        haip.llm.LLMProvider.from_config = lambda cfg: provider  # type: ignore[method-assign,assignment]
-        try:
-            return call_with_loop(agent, query, max_steps=max_steps, perm_ctx=perm_ctx)
-        finally:
-            haip.llm.LLMProvider.from_config = orig  # type: ignore[method-assign,assignment]
-    return call_with_loop(agent, query, max_steps=max_steps, perm_ctx=perm_ctx)
+    return call_with_loop(agent, query, max_steps=max_steps, perm_ctx=perm_ctx, llm_provider=provider)
