@@ -265,7 +265,7 @@ def call(agent: str, tool: str, params: dict[str, Any] | None = None,
     else:
         result = {"status": "ok", "result": result, "agent": agent,
                   "elapsed_ms": round(elapsed, 2)}
-    _record(agent, tool, result.get("status", "ok"), "", elapsed, workflow_id)
+    _record(agent, tool, result.get("status", "ok"), "", elapsed, workflow_id, result=result)
     return result
 
 
@@ -307,7 +307,8 @@ def _find_tool(plugin, tool_name: str):
 
 
 def _record(agent: str, tool: str, status: str, error: str,
-            elapsed_ms: float, workflow_id: str = "") -> None:
+             elapsed_ms: float, workflow_id: str = "",
+             result: dict[str, Any] | None = None) -> None:
     entry: dict[str, Any] = {
         "agent": agent, "tool": tool, "status": status,
         "error": error, "elapsed_ms": round(elapsed_ms, 2),
@@ -357,6 +358,13 @@ def _record(agent: str, tool: str, status: str, error: str,
         pass
     except Exception:
         logger.debug("Audit logging 写入失败", exc_info=True)
+
+    # ── L6: Evolution production hook (fire-and-forget, 非阻塞) ──
+    try:
+        from haip.evolution.hook import evolution_hook
+        evolution_hook(agent, tool, status, result)
+    except Exception:
+        pass
 
 
 def get_history(limit: int = 20) -> list[dict[str, Any]]:
