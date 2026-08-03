@@ -145,3 +145,36 @@ class CitationEngine:
             flag = "verified" if c.verified else "unverified"
             parts.append(f"[{flag}][{c.trust_level}] {c.source}")
         return "\n".join(parts)
+
+    @staticmethod
+    def detect_conflicts(citations: list[Citation]) -> list[dict[str, Any]]:
+        """检测引用指南间的冲突 (MED-3).
+
+        冲突判定: 同一临床主题有两篇以上 T1 指南, 且内容包含相互矛盾的推荐.
+        当前实现: 关键词对比, 返回冲突对列表.
+        """
+        t1s = [c for c in citations if c.trust_level == "T1"]
+        if len(t1s) < 2:
+            return []
+
+        conflict_pairs = [
+            ("40mg", "20mg"),   # 剂量矛盾 (ACCP vs ESC 低分子肝素)
+            ("bid", "qd"), ("每日两次", "每日一次"),
+            ("推荐", "不推荐"), ("适用", "禁忌"),
+            ("48h", "72h"), ("7天", "14天"),
+        ]
+        conflicts = []
+        for i in range(len(t1s)):
+            for j in range(i + 1, len(t1s)):
+                a, b = t1s[i], t1s[j]
+                for kw_a, kw_b in conflict_pairs:
+                    if kw_a in a.source and kw_b in b.source:
+                        conflicts.append({
+                            "type": "dosing_conflict" if "mg" in kw_a else "recommendation_conflict",
+                            "source_a": a.source,
+                            "source_b": b.source,
+                            "keyword_a": kw_a,
+                            "keyword_b": kw_b,
+                        })
+                        break
+        return conflicts[:5]

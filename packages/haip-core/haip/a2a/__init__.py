@@ -366,6 +366,14 @@ def _record(agent: str, tool: str, status: str, error: str,
     except Exception:
         pass
 
+    # ── B3: TOGAF-AI 决策溯源记录 ──
+    try:
+        from haip.togaf.trace import build_trace_from_call
+        trace = build_trace_from_call(agent, "", {tool: result} if result else {})
+        entry["trace"] = trace
+    except Exception:
+        pass
+
 
 def get_history(limit: int = 20) -> list[dict[str, Any]]:
     with _cache_lock:

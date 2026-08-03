@@ -67,6 +67,15 @@ class MDTOrchestrator:
             participants=participants,
             timeout_seconds=timeout,
         )
+
+        # ── MED-6: 高危药物场景自动加入 pharmacy agent ──
+        drug_keywords = ["药物", "用药", "处方", "抗凝", "华法林", "低分子肝素", "抗生素",
+                         "剂量", "禁忌", "相互作用", "warfarin", "heparin", "drug", "medication"]
+        if any(kw in question.lower() or kw in str(context).lower() for kw in drug_keywords):
+            if "pharmacy" not in participants:
+                participants = list(participants) + ["pharmacy"]
+                session.participants = participants
+
         round_states: list[list[Any]] = []  # track divergence count per round
 
         # Phase 0: Register composite time window
