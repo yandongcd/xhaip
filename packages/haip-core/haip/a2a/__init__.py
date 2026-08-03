@@ -163,6 +163,16 @@ def call(agent: str, tool: str, params: dict[str, Any] | None = None,
     params = dict(params or {})
     t0 = time.perf_counter()
 
+    # ── L2 agentic 路由: tool 为空 / __reason__ / chat → LLM 推理模式下发 ──
+    if not tool or tool in ("__reason__", "chat"):
+        query = params.pop("query", "") or params.pop("message", "") or params.pop("prompt", "")
+        if not query:
+            # 无可读文本: 用 params JSON 作为推理输入
+            query = _json.dumps(params, ensure_ascii=False)
+        if not query:
+            return {"status": "error", "error": "agentic path 需要 query/message/prompt 参数"}
+        return reason(agent, query, max_steps=params.pop("max_steps", 5), perm_ctx=perm_ctx, provider=None)
+
     plugin = get_agent(agent)
     if plugin is None:
         err = {"status": "error", "error": f"Unknown agent: {agent}"}
