@@ -21,10 +21,11 @@ TrustTier = Literal["deep", "standard", "light"]  # v2.0: Agent分级体系
 @dataclass
 class ToolDef:
     name: str
-    description: str
-    handler: str
+    description: str = ""
+    handler: str = ""
     input: dict[str, str] = field(default_factory=dict)
     output: dict[str, str] = field(default_factory=dict)
+    inference_tier: str = "T0"
 
 
 @dataclass
@@ -198,9 +199,22 @@ _registry: dict[str, DomainPlugin] = {}
 _registry_lock = threading.Lock()
 
 
-def register(plugin: DomainPlugin) -> None:
+def register(plugin: DomainPlugin) -> bool:
+    """注册 Agent. 生产模式受 License max_agents 限制 — 超限拒绝注册并返回 False.
+
+    同名校注册视为覆盖更新 (不占新增名额). 开发模式恒放行。
+    """
     with _registry_lock:
+        if plugin.name in _registry:
+            _registry[plugin.name] = plugin
+            return True
+        from haip.licensing import check_agent_capacity
+        allowed, reason = check_agent_capacity(len(_registry))
+        if not allowed:
+            logger.error("[license] Agent '%s' 注册被拒绝: %s", plugin.name, reason)
+            return False
         _registry[plugin.name] = plugin
+        return True
 
 
 def get(name: str) -> DomainPlugin | None:
@@ -241,7 +255,8 @@ def _parse_and_register(yaml_file: Path, on_register) -> DomainPlugin | None:
     if not isinstance(data, dict) or "name" not in data:
         return None
     plugin = DomainPlugin.from_yaml(data)
-    register(plugin)
+    if not register(plugin):
+        return None
     if on_register is not None:
         try:
             on_register(plugin)
