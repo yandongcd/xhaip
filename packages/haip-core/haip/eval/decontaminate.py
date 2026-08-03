@@ -99,3 +99,62 @@ def check_corpus_against_refs(
                 })
                 break
     return flagged
+
+
+def ci_decontamination_gate(
+    corpus_paths: list[str] | None = None,
+    ref_paths: list[str] | None = None,
+    warn_threshold: float = 0.15,
+    fail_threshold: float = 0.30,
+) -> dict[str, Any]:
+    """CI 去污染门禁 (TST-5).
+
+    对评测场景集 vs 知识库做交叉去污染检测:
+    - jaccard >= warn_threshold → CI warning (标记)
+    - jaccard >= fail_threshold → CI failure (阻止合并)
+
+    Returns {passed, flagged, warnings, failures}.
+    """
+    from pathlib import Path
+    import yaml
+
+    # 默认: 指南 + 规则做参考集, 评测场景做被检集
+    knowledge_base = Path(__file__).resolve().parents[4] / "packages" / "haip-hospital" / "knowledge"
+
+    # 收集参考文本
+    references: list[str] = []
+    for ref_dir in ["guidelines", "rules"]:
+        rdir = knowledge_base / ref_dir
+        if rdir.is_dir():
+            for f in sorted(rdir.glob("*.yaml")):
+                try:
+                    with open(f, encoding="utf-8") as fh:
+                        references.append(fh.read()[:3000])
+                except Exception:
+                    continue
+
+    # 收集被检文本 (评测场景)
+    corpus: list[str] = []
+    task_dir = Path(__file__).resolve().parent / "tasks"
+    if task_dir.is_dir():
+        for f in task_dir.glob("*.yaml"):
+            try:
+                with open(f, encoding="utf-8") as fh:
+                    corpus.append(fh.read())
+            except Exception:
+                continue
+
+    flagged = check_corpus_against_refs(corpus, references, threshold=warn_threshold)
+    failures = [f for f in flagged if f["jaccard"] >= fail_threshold]
+    warnings = [f for f in flagged if f["jaccard"] < fail_threshold]
+
+    return {
+        "passed": len(failures) == 0,
+        "total_corpus": len(corpus),
+        "total_references": len(references),
+        "flagged": len(flagged),
+        "warnings": warnings,
+        "failures": failures,
+        "warn_threshold": warn_threshold,
+        "fail_threshold": fail_threshold,
+    }
