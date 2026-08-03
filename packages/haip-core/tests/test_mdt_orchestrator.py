@@ -148,6 +148,7 @@ def test_unresolvable_divergence_yields_empty_consensus():
     )
     assert session.divergences
     assert session.consensus == ""
+    assert session.status == MDTStatus.DEADLOCKED
 
 
 def test_default_agent_call_error_for_unknown_agent():

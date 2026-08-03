@@ -37,6 +37,8 @@ class MDTOrchestrator:
         context: dict[str, Any] | None = None,
         timeout: int = 300,
         agent_call_fn=None,
+        timeline_id: str | None = None,
+        sub_windows: list[Any] | None = None,
     ) -> MDTSession:
         """Run a complete MDT session.
 
@@ -48,6 +50,12 @@ class MDTOrchestrator:
             timeout: Max seconds for entire session
             agent_call_fn: Function(agent_name, patient_id, question) → dict
                           If None, uses A2A call.
+            timeline_id: Optional time-window parent timeline id (haip.time_window).
+                        When set, a composite window is registered for this session
+                        and the verdict is attached to the session on completion.
+            sub_windows: Optional list of SubWindowSpec per participant; defaults
+                        to one parallel sub-window per participant using the parent
+                        deadline.
 
         Returns:
             MDTSession with all opinions, divergences, and consensus.
@@ -59,6 +67,13 @@ class MDTOrchestrator:
             participants=participants,
             timeout_seconds=timeout,
         )
+
+        # Phase 0: Register composite time window (if timeline requested)
+        parent_token: str | None = None
+        if timeline_id:
+            parent_token = self._register_composite(
+                patient_id, participants, timeline_id, sub_windows,
+            )
 
         # Phase 1: Collect opinions in parallel
         session.status = MDTStatus.COLLECTING
@@ -81,9 +96,71 @@ class MDTOrchestrator:
             session.consensus = MDTProtocol.resolve(session)
 
         # Phase 4: Complete
-        session.status = MDTStatus.COMPLETED
+        if session.status != MDTStatus.DEADLOCKED:
+            session.status = MDTStatus.COMPLETED
         session.resolved_at = time.time()
+
+        # Phase 5: Resolve composite window verdict (time_window integration)
+        if parent_token:
+            self._resolve_composite_verdict(session, parent_token)
+
         return session
+
+    def _register_composite(
+        self,
+        patient_id: str,
+        participants: list[str],
+        timeline_id: str,
+        sub_windows: list[Any] | None,
+    ) -> str | None:
+        """Register a composite time window for this MDT session (best effort)."""
+        try:
+            from haip.time_window.engine import register_composite_window
+            from haip.time_window.models import CompositeWindowSpec, SubWindowMode, SubWindowSpec
+            from haip.time_window.registry import get_timeline
+
+            parent = get_timeline(timeline_id)
+            if parent is None:
+                return None  # unknown timeline — no window tracking
+
+            if sub_windows is None:
+                sub_windows = [
+                    SubWindowSpec(
+                        member_agent_id=agent,
+                        timeline_id=timeline_id,
+                        mode=SubWindowMode.PARALLEL,
+                        deadline_hours=parent.deadline.value,
+                    )
+                    for agent in participants
+                ]
+
+            composite = register_composite_window(
+                patient_id,
+                CompositeWindowSpec(
+                    parent_timeline_id=timeline_id,
+                    sub_windows=sub_windows,
+                ),
+            )
+            return composite.parent_token
+        except Exception:
+            return None
+
+    def _resolve_composite_verdict(self, session: MDTSession, parent_token: str) -> None:
+        """Attach time-window verdict to the session (best effort)."""
+        try:
+            from haip.time_window.engine import resolve_composite_verdict
+
+            high_risk = sum(1 for o in session.opinions if o.risks)
+            medium_risk = sum(1 for o in session.opinions if o.evidence_level in ("T2", "T3"))
+            verdict = resolve_composite_verdict(parent_token, high_risk, medium_risk)
+            if isinstance(verdict, dict) and "error" not in verdict:
+                session.window_verdict = verdict
+                session.window_escalated = (
+                    verdict.get("verdict") == "delayed"
+                    or bool(verdict.get("escalated_windows"))
+                )
+        except Exception:
+            pass
 
     def _collect_opinions(
         self, session: MDTSession, agent_call_fn=None
