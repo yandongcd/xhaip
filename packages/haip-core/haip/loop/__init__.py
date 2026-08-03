@@ -72,6 +72,7 @@ class AgentLoop:
         max_tokens: int = DEFAULT_MAX_TOKENS,
         max_total_tokens: int = 32000,
         agent_name: str = "default",
+        memory_injection: bool = False,
     ):
         self.llm = llm
         self.system_prompt = system_prompt
@@ -82,17 +83,28 @@ class AgentLoop:
         self.max_tokens = max_tokens
         self.max_total_tokens = max_total_tokens
         self.agent_name = agent_name
+        self.memory_injection = memory_injection
 
     def _get_temperature(self, step: int) -> float:
         idx = min(step, len(self.temperature_schedule) - 1)
         return self.temperature_schedule[idx]
 
+    def _inject_memory(self, query: str) -> str:
+        """检索多源上下文并注入 system_prompt (层2 记忆注入)."""
+        try:
+            from haip.loop.memory_inject import build_memory_context, inject_into_system_prompt
+            ctx = build_memory_context(query, self.agent_name)
+            return inject_into_system_prompt(self.system_prompt, ctx)
+        except Exception:
+            return self.system_prompt
+
     def run(self, query: str) -> LoopResult:
         t0 = time.perf_counter()
         result = LoopResult()
 
+        system_prompt = self._inject_memory(query) if self.memory_injection else self.system_prompt
         messages: list[dict[str, Any]] = [
-            {"role": "system", "content": self.system_prompt},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": query},
         ]
         tool_schemas = self._build_tool_schemas()
@@ -188,6 +200,109 @@ class AgentLoop:
             result.steps = self.max_steps
             result.error = "max_steps_exceeded"
 
+        result.duration_ms = (time.perf_counter() - t0) * 1000
+        return result
+
+    def run_planned(self, query: str, plan_template: list[str] | None = None,
+                    plan_prompt: str = "") -> LoopResult:
+        """Plan-then-Execute 模式 (层1) — 先规划再执行.
+
+        与 run() 的区别:
+        - 第一步让 LLM 生成结构化计划 (工具列表+原因)
+        - 按计划批量执行工具 (非逐步思考)
+        - 执行后综合推理产出最终回复
+        - plan_template 提供时, LLM 只需增删改 (医疗框架: 分诊→时机→分型...)
+
+        Returns LoopResult (tool_calls + reply).
+        """
+        t0 = time.perf_counter()
+        result = LoopResult()
+
+        system_prompt = self._inject_memory(query) if self.memory_injection else self.system_prompt
+        if plan_template:
+            system_prompt += (
+                "\n\n请按以下临床路径执行 (可增删工具但保持核心步骤):\n"
+                + "\n".join(f"- {t}" for t in plan_template)
+            )
+        elif plan_prompt:
+            system_prompt += f"\n\n{plan_prompt}"
+
+        messages: list[dict[str, Any]] = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": query},
+        ]
+        tool_schemas = self._build_tool_schemas()
+
+        # Phase 1: PLAN — LLM 生成工具调用序列 (一次多个 tool_calls = 计划)
+        try:
+            resp = self.llm.chat(
+                messages=messages,
+                tools=tool_schemas if tool_schemas else None,
+                temperature=0.2,
+                max_tokens=self.max_tokens,
+            )
+        except Exception as e:
+            result.error = str(e)
+            result.reply = f"LLM 计划生成失败: {e}"
+            result.duration_ms = (time.perf_counter() - t0) * 1000
+            return result
+
+        result.input_tokens += resp.input_tokens
+        result.output_tokens += resp.output_tokens
+
+        # 如果 LLM 直接回复 (无工具调用) → 单步完成
+        if not resp.tool_calls:
+            result.reply = resp.content
+            result.steps = 1
+            result.duration_ms = (time.perf_counter() - t0) * 1000
+            return result
+
+        # Phase 2: EXECUTE — 批量执行计划中的工具
+        for i, tc in enumerate(resp.tool_calls):
+            if result.input_tokens + result.output_tokens > self.max_total_tokens:
+                result.error = "token_budget_exceeded"
+                break
+
+            # 执行工具
+            if self.tool_executor is not None:
+                raw_result = self.tool_executor(tc.name, tc.arguments)
+                is_success = isinstance(raw_result, dict) and raw_result.get("status") != "error"
+                output_str = _summarize_tool_result(raw_result)
+            else:
+                from haip.tools.registry import execute as _global_exec
+                tr = _global_exec(tc.name, **tc.arguments)
+                is_success = tr.success
+                output_str = _summarize_tool_result(tr.output)
+
+            result.tool_calls.append({
+                "step": i + 1, "tool": tc.name, "args": tc.arguments,
+                "success": is_success, "output": output_str,
+            })
+            messages.append({
+                "role": "tool", "tool_call_id": tc.id, "content": output_str,
+            })
+            result.partial_summaries.append(f"[Step{i+1}] {tc.name}: {'✓' if is_success else '✗'}")
+
+        # Phase 3: SYNTHESIZE — 综合推理
+        synth_prompt = (
+            f"你已执行了 {len(result.tool_calls)} 个工具调用，结果如下。"
+            "请综合所有结果，给出最终的临床结论和建议。"
+        )
+        messages.append({"role": "user", "content": synth_prompt})
+        try:
+            final_resp = self.llm.chat(
+                messages=messages,
+                temperature=0.3,
+                max_tokens=self.max_tokens,
+            )
+            result.input_tokens += final_resp.input_tokens
+            result.output_tokens += final_resp.output_tokens
+            result.reply = final_resp.content
+        except Exception as e:
+            result.error = str(e)
+            result.reply = "\n".join(result.partial_summaries)
+
+        result.steps = len(result.tool_calls) + 1
         result.duration_ms = (time.perf_counter() - t0) * 1000
         return result
 

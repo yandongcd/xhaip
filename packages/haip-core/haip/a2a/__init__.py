@@ -557,11 +557,17 @@ def call_with_loop(
     max_steps: int = 5,
     perm_ctx: Any = None,
     llm_provider: Any = None,
+    plan_mode: bool = False,
+    plan_template: list[str] | None = None,
+    memory_injection: bool = False,
     **kwargs,
 ) -> dict[str, Any]:
     """ReAct AgentLoop — LLM 自主规划调用工具，多步推理.
 
     llm_provider: 显式注入 LLMProvider (测试/CI 用; None=走 config).
+    plan_mode: True → Plan-then-Execute (先规划再执行, 层1).
+    plan_template: 临床路径模板 (如 骨科 7 阶段), LLM 只需增删改.
+    memory_injection: True → 推理前检索案例库/KG/历史注入 prompt (层2).
     """
     try:
         plugin, tools, llm, _a2a_executor = _build_loop_components(agent, perm_ctx, llm_provider)
@@ -577,9 +583,13 @@ def call_with_loop(
         tools=tools,
         max_steps=max_steps,
         agent_name=agent,
+        memory_injection=memory_injection,
     )
     t0 = time.perf_counter()
-    result = loop.run(query)
+    if plan_mode:
+        result = loop.run_planned(query, plan_template=plan_template)
+    else:
+        result = loop.run(query)
     elapsed = round((time.perf_counter() - t0) * 1000, 2)
 
     guard_result = _run_guard(result.reply, result.tool_calls, plugin)

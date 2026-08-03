@@ -135,11 +135,25 @@ def run_consultation(patient: PatientAgent, agent_name: str, max_rounds: int = 3
     # 第1轮: 患者主诉
     complaint = patient.complain(provider)
 
-    # 医生推理 (agentic)
-    diagnosis_result = reason(agent_name, complaint, max_steps=3, provider=provider)
+    # 医生推理 (agentic); LLM 失败时回退到 T0 规则引擎 (确定性, 无需 LLM)
+    urgency = ""
+    diagnosis_result = {}
+    try:
+        diagnosis_result = reason(agent_name, complaint, max_steps=3, provider=provider)
+        urgency = diagnosis_result.get("urgency", "")
+    except Exception:
+        urgency = ""
+
+    if not urgency:
+        # T0 回退: 直接用规则引擎评估时机 (不依赖 LLM)
+        try:
+            from orthopedics.timing_engine import evaluate_timing
+            decision = evaluate_timing(patient.patient)
+            urgency = decision.get("urgency", "")
+        except Exception:
+            urgency = ""
 
     # 基于推理结果选择治疗方案
-    urgency = diagnosis_result.get("urgency", "")
     if urgency == "emergency":
         action = "急诊手术在48h内完成"
     elif urgency == "elective":
@@ -155,6 +169,7 @@ def run_consultation(patient: PatientAgent, agent_name: str, max_rounds: int = 3
         "patient": patient.summary(),
         "agent_response": diagnosis_result,
         "treatment_action": action,
+        "urgency": urgency,
         "new_state": new_state.value,
         "rule_applied": rule.rule_id if rule else "default",
         "guideline_ref": rule.guideline_ref if rule else "",
