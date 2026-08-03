@@ -113,10 +113,18 @@ class LicenseManager:
             info.error = f"License file read error: {e}"
             return info
 
+        if not isinstance(data, dict):
+            info.error = "License file must be a JSON object"
+            return info
+
         payload = data.get("payload", "")
         signature = data.get("signature", "")
         if not payload or not signature:
             info.error = "Missing license payload or signature"
+            return info
+
+        if not isinstance(payload, str):
+            info.error = "License payload must be a JSON string"
             return info
 
         try:
@@ -146,8 +154,12 @@ class LicenseManager:
 
         info.customer_name = claims.get("customer_name", "Trial")
         info.customer_code = claims.get("customer_code", "")
-        info.max_agents = int(claims.get("max_agents", 10))
-        info.max_users = int(claims.get("max_users", 50))
+        try:
+            info.max_agents = int(claims.get("max_agents", 10))
+            info.max_users = int(claims.get("max_users", 50))
+        except (TypeError, ValueError):
+            info.error = "License claims max_agents/max_users must be numeric"
+            return info
         info.expiry_date = claims.get("expiry_date", "")
         info.issued_date = claims.get("issued_date", "")
         features = claims.get("features", [])

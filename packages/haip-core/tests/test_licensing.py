@@ -8,8 +8,10 @@
 
 import json
 import tempfile
+from datetime import datetime
 from pathlib import Path
 
+import jwt
 import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -198,13 +200,65 @@ class TestLicenseManager:
         data = generate_license("原版", "ORIG01", max_agents=20, max_users=80)
         # 篡改签名中部字符 (末位字符落在 base64 padding 位, 不影响解码字节)
         mid = len(data["signature"]) // 2
-        data["signature"] = data["signature"][:mid] + "A" + data["signature"][mid + 1:]
+        replacement = "A" if data["signature"][mid] != "A" else "B"
+        data["signature"] = (
+            data["signature"][:mid] + replacement + data["signature"][mid + 1:]
+        )
         path = _write_to_temp(data)
         try:
             mgr = LicenseManager(path)
             info = mgr.validate()
             assert info.valid is False
             assert "signature" in info.error.lower()
+        finally:
+            Path(path).unlink(missing_ok=True)
+
+    def test_license_file_json_list_fails_closed(self, licensed_env):
+        """License 文件是 JSON 列表 (非 dict) → fail-closed, 不抛异常."""
+        path = tempfile.mktemp(suffix=".json")
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump([1, 2, 3], f)
+            mgr = LicenseManager(path)
+            assert mgr.is_valid() is False
+            info = mgr.validate()
+            assert info.valid is False
+        finally:
+            Path(path).unlink(missing_ok=True)
+
+    def test_payload_field_int_fails_closed(self, licensed_env):
+        """payload 字段是 int (非字符串) → fail-closed, 不抛异常."""
+        data = generate_license("畸形文件", "MAL01", max_agents=20, max_users=80)
+        data["payload"] = 12345
+        path = _write_to_temp(data)
+        try:
+            mgr = LicenseManager(path)
+            info = mgr.validate()
+            assert info.valid is False
+        finally:
+            Path(path).unlink(missing_ok=True)
+
+    def test_non_numeric_max_agents_claim_fails_closed(self, licensed_env):
+        """签名 claims 中 max_agents 非数字 → fail-closed, 不抛 ValueError."""
+        priv, _ = licensed_env
+        payload_data = {
+            "customer_name": "畸形上限",
+            "customer_code": "BADNUM01",
+            "max_agents": "abc",
+            "max_users": 50,
+            "expiry_date": "2027-12-31",
+            "issued_date": "2026-01-01",
+            "features": ["ai_suggestions"],
+            "exp": int(datetime.now().timestamp()) + 86400,
+        }
+        path = _write_to_temp({
+            "payload": json.dumps(payload_data, sort_keys=True),
+            "signature": jwt.encode(payload_data, priv, algorithm="RS256"),
+        })
+        try:
+            mgr = LicenseManager(path)
+            info = mgr.validate()
+            assert info.valid is False
         finally:
             Path(path).unlink(missing_ok=True)
 
