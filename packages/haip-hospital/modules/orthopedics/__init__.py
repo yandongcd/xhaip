@@ -43,7 +43,7 @@ from .his_adapter import query_imaging, query_labs, query_patient  # noqa: F401
 from .idata_adapter import list_categories, search_knowledge  # noqa: F401
 
 # Re-export new modules (v1.1: MDT + HIS Mock + iData Mock)
-from .mdt import mdt_aggregate, mdt_summary  # noqa: F401
+from .mdt import audit_stage, mdt_aggregate, mdt_summary  # noqa: F401
 
 EVIDENCE_REFS = {
     "general": [

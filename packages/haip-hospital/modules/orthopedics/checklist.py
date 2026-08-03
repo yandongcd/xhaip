@@ -1,7 +1,7 @@
-# @origin: haip-0710/src/agents/domains/haip/orthopedic_surgery/core/checklist.py
+﻿# @origin: haip-0710/src/agents/domains/haip/orthopedic_surgery/core/checklist.py
 # @origin_repo: https://github.com/yandongcd/haip
 # @ported_date: 2026-07-12
-# @status: REFERENCE — requires import adaptation for xhaip engine
+# @status: ADAPTED (imports rewritten for xhaip engine)
 #   Key deps to adapt:
 #     agents.domains.haip.core.* -> packages/haip-hospital/modules/shared/
 #     agents.harness.* -> packages/haip-core/haip/
@@ -14,8 +14,8 @@ Rule items are ortho-specific (11 items based on NICE NG37 / AAOS / NHC guidelin
 
 from __future__ import annotations
 
-from agents.domains.haip.core.triage_engine import evaluate_checklist
-from agents.domains.haip.rules.core.guidelines import available_guidelines
+from shared.guidelines import available_guidelines
+from shared.triage_engine import evaluate_checklist
 
 CHECKLIST_ITEMS = [
     {
@@ -143,10 +143,8 @@ def print_checklist(result: dict) -> None:
 
 def extract_keywords_from_patient(patient_dict: dict) -> list[dict]:
     """Auto-extract keywords from patient data using shared triage engine."""
-    from agents.domains.haip.core.triage_engine import (
-        extract_keywords_from_patient as _engine_extract,
-    )
-    from agents.domains.haip.rules.core.knowledge import check_range as _cr
+    from shared.knowledge import check_range as _cr
+    from shared.triage_engine import extract_keywords_from_patient as _engine_extract
     return _engine_extract(patient_dict, _cr)
 
 
@@ -156,7 +154,7 @@ def generate_checklist_from_keywords(keywords: list[dict]) -> dict:
     Uses checklist_item_ids to directly mark items as triggered,
     then falls back to text matching for any remaining unmatched items.
     """
-    from agents.domains.haip.core.triage_engine import evaluate_checklist as _eval
+    from shared.triage_engine import evaluate_checklist as _eval
     all_text_parts = []
     directly_triggered_ids: set[str] = set()
     for kw in keywords:

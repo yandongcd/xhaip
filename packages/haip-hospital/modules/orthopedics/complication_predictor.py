@@ -1,7 +1,7 @@
-# @origin: haip-0710/src/agents/domains/haip/orthopedic_surgery/core/complication_predictor.py
+﻿# @origin: haip-0710/src/agents/domains/haip/orthopedic_surgery/core/complication_predictor.py
 # @origin_repo: https://github.com/yandongcd/haip
 # @ported_date: 2026-07-12
-# @status: REFERENCE — requires import adaptation for xhaip engine
+# @status: ADAPTED (imports rewritten for xhaip engine)
 #   Key deps to adapt:
 #     agents.domains.haip.core.* -> packages/haip-hospital/modules/shared/
 #     agents.harness.* -> packages/haip-core/haip/
@@ -20,7 +20,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from .assets_loader import load_complication_rules
+from shared.assets_loader import load_complication_rules
 
 _LAB_ALIASES: dict[str, list[str]] = {
     "d_dimer": ["d-二聚体", "d二聚体", "ddimer"],

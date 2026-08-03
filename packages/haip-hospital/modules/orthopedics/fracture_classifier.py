@@ -1,7 +1,7 @@
-# @origin: haip-0710/src/agents/domains/haip/orthopedic_surgery/core/fracture_classifier.py
+﻿# @origin: haip-0710/src/agents/domains/haip/orthopedic_surgery/core/fracture_classifier.py
 # @origin_repo: https://github.com/yandongcd/haip
 # @ported_date: 2026-07-12
-# @status: REFERENCE — requires import adaptation for xhaip engine
+# @status: ADAPTED (imports rewritten for xhaip engine)
 #   Key deps to adapt:
 #     agents.domains.haip.core.* -> packages/haip-hospital/modules/shared/
 #     agents.harness.* -> packages/haip-core/haip/
@@ -21,16 +21,17 @@ from __future__ import annotations
 
 from typing import Any
 
-from agents.domains.haip.orthopedic_surgery.prompts.fracture_classify import (
+from shared.llm_adapter import call_llm_structured
+
+from .prompts.fracture_classify import (
     OUTPUT_SCHEMA as LLM_OUTPUT_SCHEMA,
 )
-from agents.domains.haip.orthopedic_surgery.prompts.fracture_classify import (
+from .prompts.fracture_classify import (
     SYSTEM_PROMPT as LLM_SYSTEM_PROMPT,
 )
-from agents.domains.haip.orthopedic_surgery.prompts.fracture_classify import (
+from .prompts.fracture_classify import (
     build_prompt as _build_llm_prompt,
 )
-from agents.harness.llm import call_llm_structured
 
 # 股骨颈骨折 Garden 分型（从高到低排序，避免子串误匹配）
 GARDEN_CLASSIFICATION: list[dict[str, Any]] = [

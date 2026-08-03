@@ -1,7 +1,7 @@
-# @origin: haip-0710/src/agents/domains/haip/orthopedic_surgery/core/timing_engine.py
+﻿# @origin: haip-0710/src/agents/domains/haip/orthopedic_surgery/core/timing_engine.py
 # @origin_repo: https://github.com/yandongcd/haip
 # @ported_date: 2026-07-12
-# @status: REFERENCE — requires import adaptation for xhaip engine
+# @status: ADAPTED (imports rewritten for xhaip engine)
 #   Key deps to adapt:
 #     agents.domains.haip.core.* -> packages/haip-hospital/modules/shared/
 #     agents.harness.* -> packages/haip-core/haip/
@@ -21,14 +21,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agents.domains.haip.core.ecg_analyzer import extract_ecg_keywords_from_exam
+from shared.ecg_analyzer import extract_ecg_keywords_from_exam
 
-# ─── 规则文件路径（旧格式兼容）───
-_RULES_PATH = Path(__file__).resolve().parent.parent.parent.parent.parent.parent.parent / "assets" / "rules" / "timing_rules.yaml"
+# ─── 规则文件路径（xhaip knowledge 资产）───
+_RULES_PATH = Path(__file__).resolve().parent.parent.parent / "knowledge" / "rules" / "timing_rules.yaml"
 
 # ─── 缓存 ───
 _RULES_CACHE: dict | None = None
-_RULE_SERVICE_AVAILABLE: bool | None = None
 
 # T2_OVERRIDE: 创伤骨科 T2 分层权重 | T1来源: NICE NG37/NHC 2022 | 场景: 手术时机评估
 # 高权重因子：任一触发 → 直接 MDT 延迟手术
@@ -44,62 +43,8 @@ _T2_FACTOR_NAMES: dict[str, str] = {
 }
 
 
-def _build_evaluation_context(patient: dict) -> dict:
-    """从患者数据构建规则引擎评估上下文."""
-    lab_map: dict[str, dict] = {}
-    for t in patient.get("lab_tests", []):
-        name = t.get("name", "")
-        if name:
-            lab_map[name] = t
-
-    def lv(names: list[str]) -> float | None:
-        for n in names:
-            t = lab_map.get(n)
-            if t:
-                v = t.get("value")
-                if v is not None:
-                    try:
-                        return float(v)
-                    except (ValueError, TypeError):
-                        pass
-        return None
-
-    exams = patient.get("examinations", [])
-    ecg_text = " ".join([e.get("description", "") for e in exams if "心电" in e.get("name", "")])
-
-    ctx = {
-        "troponin_I": lv(["肌钙蛋白I", "肌钙蛋白", "cTnI", "hs-cTnI"]) or 0,
-        "troponin_T": lv(["肌钙蛋白T", "cTnT", "hs-cTnT"]) or 0,
-        "ckmb": lv(["心型肌酸激酶", "CK-MB", "CKMB"]) or 0,
-        "INR": lv(["凝血酶原时间国际标准化比值", "INR", "PT-INR"]) or 0,
-        "hemoglobin": lv(["血红蛋白测定", "血红蛋白", "Hb", "Hgb"]) or 0,
-        "eGFR": lv(["肾小球滤过率", "eGFR", "估算肾小球滤过率"]) or 0,
-        "creatinine": lv(["肌酐", "Cr", "血肌酐"]) or 0,
-        "WBC": lv(["白细胞计数", "WBC", "白细胞"]) or 0,
-        "CRP": lv(["C反应蛋白", "CRP", "超敏C反应蛋白"]) or 0,
-        "glucose": lv(["葡萄糖", "血糖", "Glu"]) or 0,
-        "ecg_text": ecg_text,
-        "diagnosis": patient.get("diagnosis", ""),
-        "past_history": patient.get("past_history", ""),
-        "medications": patient.get("medications", ""),
-        "present_illness": patient.get("present_illness", ""),
-        "chief_complaint": patient.get("chief_complaint", ""),
-    }
-    return ctx
-
-
-def _rule_service_available() -> bool:
-    try:
-        from importlib.util import find_spec
-        return (
-            find_spec("agents.rules.models") is not None
-        )
-    except ImportError:
-        return False
-
-
 # ═══════════════════════════════════════════════════
-# 1. 规则加载（旧格式兼容）
+# 1. 规则加载（xhaip knowledge 资产）
 # ═══════════════════════════════════════════════════
 
 def load_timing_rules(path: str | Path | None = None) -> dict:
@@ -627,10 +572,10 @@ def evaluate_timing(
     patient: dict,
     rules_path: str | Path | None = None,
 ) -> dict:
-    """评估患者手术时机 — 主入口.
+    """评估患者手术时机 — 主入口 (v2.0 内联评估器 + T2 分层裁决).
 
-    优先通过 agents.rules 规则服务平台评估（v3.0），
-    回退到 v2.0 内联评估器。
+    注: haip-0710 的 v3.0 agents.rules 规则服务平台未移植到 xhaip
+    (xhaip 等价物为 haip.rules_engine, 接口不同), 统一走 v2.0 内联评估器.
 
     Args:
         patient: 患者数据字典
@@ -640,76 +585,7 @@ def evaluate_timing(
         TimingDecision 字典
     """
     patient_id = patient.get("patient_id", "") or patient.get("mrn", "")
-
-    # ── 尝试 v3.0 规则服务平台 ──
-    if _rule_service_available():
-        try:
-            return _evaluate_timing_v3(patient, patient_id)
-        except Exception:
-            pass
-
-    # ── 回退 v2.0 内联评估器 ──
     return _evaluate_timing_v2(patient, patient_id)
-
-
-def _evaluate_timing_v3(patient: dict, patient_id: str) -> dict:
-    """v3.0: 通过 agents.rules 规则服务平台 + T2 分层裁决."""
-    from agents.rules.arbitration_engine import evaluate_rules as engine_evaluate
-    from agents.rules.models import EvaluationContext
-    from agents.rules.rule_registry import find_rules
-
-    ctx_values = _build_evaluation_context(patient)
-    ctx = EvaluationContext(values=ctx_values)
-
-    delay_points = [
-        "cardiac_delay", "pulmonary_delay", "cerebral_delay",
-        "anticoagulation_delay", "anemia_delay",
-        "renal_delay", "infection_delay", "glucose_delay",
-    ]
-    delay_id_to_t2: dict[str, str] = {
-        "cardiac_delay": "cardiac", "pulmonary_delay": "pulmonary",
-        "cerebral_delay": "cerebral", "anticoagulation_delay": "anticoagulation",
-        "anemia_delay": "anemia", "renal_delay": "renal",
-        "infection_delay": "infection", "glucose_delay": "glucose",
-    }
-    results: dict[str, dict] = {}
-
-    for dp in delay_points:
-        rules = find_rules(dp, "hip_fracture_timing")
-        t2_id = delay_id_to_t2.get(dp, dp)
-        if not rules:
-            results[t2_id] = {"triggered": False, "evidence": "", "risk": "unknown", "optimization": ""}
-            continue
-        ar = engine_evaluate(rules, ctx)
-        triggered = ar.winner_rule_id != "" and "触发" in ar.conclusion
-        risk = "high" if "升高" in ar.conclusion or "高危" in ar.conclusion else \
-               "medium" if "可能" in ar.conclusion else "none"
-        results[t2_id] = {
-            "triggered": triggered,
-            "evidence": f"{ar.conclusion}; 来源: {'; '.join(ar.chain[:3])}" if ar.chain else ar.conclusion,
-            "risk": risk,
-            "optimization": _T2_FACTOR_NAMES.get(t2_id, t2_id) if triggered else "",
-        }
-
-    high_count, medium_count, conclusion, urgency, rule_id = _apply_t2_hierarchical_decision(results)
-    total_delay = high_count + medium_count
-
-    recs = _build_t2_recommendations(results, high_count, medium_count)
-
-    return {
-        "patient_id": patient_id,
-        "delay_factors": results,
-        "delay_factor_count": total_delay,
-        "high_weight_count": high_count,
-        "medium_weight_count": medium_count,
-        "timing_rule_applied": rule_id,
-        "timing_conclusion": conclusion,
-        "urgency": urgency,
-        "action": conclusion,
-        "recommendations": recs,
-        "guideline_refs": [],
-        "engine_version": "4.0",
-    }
 
 
 def _evaluate_timing_v2(patient: dict, patient_id: str) -> dict:

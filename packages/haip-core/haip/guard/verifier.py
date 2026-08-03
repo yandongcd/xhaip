@@ -63,11 +63,13 @@ class GuardVerifier:
         tool_results: list[dict] | None = None,
         cross_agent_outputs: list[str] | None = None,
         llm_temperature: float = 0.3,
+        stage_score: int | None = None,
     ) -> GuardResult:
         try:
             return self._verify_impl(
                 agent_output, scenario, agent_name,
                 tool_results, cross_agent_outputs, llm_temperature,
+                stage_score,
             )
         except Exception:
             logger.exception("Guard 验证管道内部异常, 阻断通过: agent=%s scenario=%s", agent_name, scenario)
@@ -81,9 +83,21 @@ class GuardVerifier:
         tool_results: list[dict] | None = None,
         cross_agent_outputs: list[str] | None = None,
         llm_temperature: float = 0.3,
+        stage_score: int | None = None,
     ) -> GuardResult:
         agent_output = agent_output.strip()
         result = GuardResult()
+
+        # Stage audit gate — 医院流程质控评分门控 (score = 100 - failed*30 - critical*50 - warnings*10)
+        #   <40 → 硬阻断 (存在 critical/failed 项)
+        #   40-59 → 需人工复核
+        if stage_score is not None:
+            if stage_score < 40:
+                result.passed = False
+                result.flags.append(f"阶段审计不达标 (评分 {stage_score}/100) — 存在危急/不合格项，阻断通过")
+            elif stage_score < 60:
+                result.requires_human_review = True
+                result.flags.append(f"阶段审计需优化 (评分 {stage_score}/100) — 建议人工复核")
 
         # Layer 1: Citation — always run (even for non-high-risk)
         citations = self.citation_engine.extract(agent_output)

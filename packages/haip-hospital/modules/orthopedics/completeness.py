@@ -1,7 +1,7 @@
-# @origin: haip-0710/src/agents/domains/haip/orthopedic_surgery/core/completeness.py
+﻿# @origin: haip-0710/src/agents/domains/haip/orthopedic_surgery/core/completeness.py
 # @origin_repo: https://github.com/yandongcd/haip
 # @ported_date: 2026-07-12
-# @status: REFERENCE — requires import adaptation for xhaip engine
+# @status: ADAPTED (imports rewritten for xhaip engine)
 #   Key deps to adapt:
 #     agents.domains.haip.core.* -> packages/haip-hospital/modules/shared/
 #     agents.harness.* -> packages/haip-core/haip/
@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from agents.domains.haip.orthopedic_surgery.core.assets_loader import load_completeness_rules
+from shared.assets_loader import load_completeness_rules
 
 
 # ASSET:rule-hip-fracture-completeness

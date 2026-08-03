@@ -76,6 +76,8 @@ class MDTSession:
     created_at: float = field(default_factory=time.time)
     resolved_at: float = 0.0
     timeout_seconds: int = 300                      # max wait for all agents
+    window_verdict: dict[str, Any] | None = None    # time-window composite verdict (haip time_window)
+    window_escalated: bool = False                  # True when window expired / parent deadline exceeded
 
     def add_opinion(self, opinion: MDTOpinion) -> None:
         self.opinions.append(opinion)
@@ -125,7 +127,7 @@ class MDTProtocol:
     @classmethod
     def detect_divergence(cls, session: MDTSession) -> list[MDTDivergenceReport]:
         """Detect clinical conflicts between agent opinions."""
-        reports = []
+        reports: list[MDTDivergenceReport] = []
         opinions = session.opinions
         if len(opinions) < 2:
             return reports

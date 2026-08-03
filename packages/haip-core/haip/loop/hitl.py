@@ -29,18 +29,38 @@ class HITLRequest:
 
 
 class HITLHook:
-    """HITL 钩子 — after_agent 阶段检查是否需要人工介入。"""
+    """HITL 钩子 — after_agent 阶段检查是否需要人工介入。
 
-    def __init__(self, required_below: float = 0.3) -> None:
+    触发条件（任一）:
+      - Guard 置信度低于 required_below
+      - Guard 阻断 (guard_blocked)
+      - 阶段审计评分低于 stage_required_below
+    """
+
+    def __init__(self, required_below: float = 0.3, stage_required_below: int = 60) -> None:
         self.required_below = required_below
+        self.stage_required_below = stage_required_below
 
     def check(self, ctx: HookContext, reply: str) -> str | None:
         """检查是否需要 HITL。返回修改后的 reply（含 HITL 标记）或 None（无需介入）。"""
         confidence = ctx.metadata.get("confidence", 1.0)
         guard_blocked = ctx.metadata.get("guard_blocked", False)
         guard_flags = ctx.metadata.get("guard_flags", [])
+        stage_score = ctx.metadata.get("stage_score")
+        stage_low = (
+            stage_score is not None
+            and isinstance(stage_score, (int, float))
+            and stage_score < self.stage_required_below
+        )
 
-        if confidence < self.required_below or guard_blocked:
+        if confidence < self.required_below or guard_blocked or stage_low:
+            reasons = []
+            if confidence < self.required_below:
+                reasons.append(f"置信度 {confidence:.2f} 低于阈值 {self.required_below}")
+            if guard_blocked:
+                reasons.append(f"存在高危标记: {', '.join(guard_flags)}")
+            if stage_low:
+                reasons.append(f"阶段审计评分 {stage_score} 低于阈值 {self.stage_required_below}")
             request = HITLRequest(
                 agent_name=ctx.agent_name,
                 query=ctx.metadata.get("query", ""),
@@ -53,9 +73,8 @@ class HITLHook:
             ctx.metadata["hitl_request"] = request
             ctx.metadata["hitl_pending"] = True
             return (
-                f"[HITL PENDING] Agent '{ctx.agent_name}' 置信度 {confidence:.2f}"
-                f" 低于阈值 {self.required_below}，"
-                f"或存在高危标记: {', '.join(guard_flags)}。"
+                f"[HITL PENDING] Agent '{ctx.agent_name}' 需要人工介入: "
+                f"{'; '.join(reasons)}。"
                 f"请人工审核以下输出:\n\n{reply}\n\n"
                 f"[提交确认或修改后的输出]"
             )

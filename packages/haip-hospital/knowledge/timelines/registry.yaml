@@ -1,0 +1,364 @@
+# ============================================================
+# 时间窗口注册表
+# 所有临床时间窗口的统一定义入口
+# ============================================================
+# category: emergency(急诊窗口) | urgent(限期窗口) | monitoring(监测窗口) | followup(随访窗口)
+# tier: L0(原始研究) | L1(国际指南) | L2(国家级) | L3(专家共识) | L5(院级)
+# ============================================================
+# ============================================================
+timelines:
+  # ── 骨科 — 急诊 ──
+  - id: timeline-hip-fracture-48h
+    name: "老年髋部骨折 — 48 小时急诊手术窗口"
+    abbr: "髋部骨折 48h"
+    category: emergency
+    department: orthopedic_surgery
+    start_event: admission_time
+    deadline:
+      value: 48
+      unit: hours
+    re_evaluation:
+      active_interval_hours: 12
+      escalation_threshold:
+        - at_remaining_hours: 12
+          level: warning
+        - at_remaining_hours: 4
+          level: critical
+    guideline_ref:
+      - nice-ng37
+      - aaos-2022
+      - paper-nice-hip-fracture-2011
+    trust_level: T1
+    owner: attending
+    status: active
+
+  - id: timeline-open-fracture-abx-1h
+    name: "开放骨折 — 首剂抗生素 1 小时窗口"
+    abbr: "开放骨折抗生素"
+    category: emergency
+    department: orthopedic_surgery
+    start_event: arrival_time
+    deadline:
+      value: 60
+      unit: minutes
+    re_evaluation:
+      active_interval_minutes: 10
+      escalation_threshold:
+        - at_remaining_minutes: 20
+          level: warning
+    guideline_ref: []
+    trust_level: T1
+    owner: attending
+    status: planned
+
+  - id: timeline-compartment-6h
+    name: "骨筋膜室综合征 — 6 小时筋膜切开窗口"
+    abbr: "筋膜切开 6h"
+    category: emergency
+    department: orthopedic_surgery
+    start_event: diagnosis_time
+    deadline:
+      value: 6
+      unit: hours
+    re_evaluation:
+      active_interval_minutes: 30
+      escalation_threshold:
+        - at_remaining_hours: 2
+          level: warning
+        - at_remaining_hours: 1
+          level: critical
+    guideline_ref:
+      - paper-mcqueen-1996
+    trust_level: T1
+    owner: attending
+    status: planned
+
+  - id: timeline-open-fracture-debridement-24h
+    name: "开放骨折 — 24 小时清创窗口"
+    abbr: "开放骨折清创"
+    category: urgent
+    department: orthopedic_surgery
+    start_event: arrival_time
+    deadline:
+      value: 24
+      unit: hours
+    re_evaluation:
+      active_interval_hours: 4
+      escalation_threshold:
+        - at_remaining_hours: 6
+          level: warning
+    guideline_ref: []
+    trust_level: T1
+    owner: attending
+    status: planned
+
+  # ── 骨科 — 限期 ──
+  - id: timeline-hip-fracture-urgent
+    name: "老年髋部骨折 — 3~7 天限期手术窗口"
+    abbr: "髋部骨折限期"
+    category: urgent
+    department: orthopedic_surgery
+    start_event: admission_time
+    deadline:
+      value: 7
+      unit: days
+    re_evaluation:
+      active_interval_hours: 24
+      escalation_threshold:
+        - at_remaining_hours: 48
+          level: warning
+        - at_remaining_hours: 24
+          level: critical
+    guideline_ref:
+      - weiwei-2022
+    trust_level: T1
+    owner: attending
+    status: active
+
+  # ── 骨科 — 随访 ──
+  - id: timeline-hip-followup-1m
+    name: "髋部骨折 — 术后 1 个月随访窗口"
+    abbr: "随访 1m"
+    category: followup
+    department: orthopedic_surgery
+    start_event: surgery_time
+    deadline:
+      value: 30
+      unit: days
+    re_evaluation:
+      active_interval_days: 7
+      escalation_threshold: []
+    guideline_ref:
+      - weiwei-2022
+    trust_level: T1
+    owner: attending
+    status: active
+
+  - id: timeline-hip-followup-3m
+    name: "髋部骨折 — 术后 3 个月随访窗口"
+    abbr: "随访 3m"
+    category: followup
+    department: orthopedic_surgery
+    start_event: surgery_time
+    deadline:
+      value: 90
+      unit: days
+    re_evaluation:
+      active_interval_days: 14
+      escalation_threshold: []
+    guideline_ref:
+      - weiwei-2022
+    trust_level: T1
+    owner: attending
+    status: active
+
+  - id: timeline-hip-followup-6m
+    name: "髋部骨折 — 术后 6 个月随访窗口"
+    abbr: "随访 6m"
+    category: followup
+    department: orthopedic_surgery
+    start_event: surgery_time
+    deadline:
+      value: 180
+      unit: days
+    re_evaluation:
+      active_interval_days: 30
+      escalation_threshold: []
+    guideline_ref:
+      - weiwei-2022
+    trust_level: T1
+    owner: attending
+    status: active
+
+  - id: timeline-hip-followup-12m
+    name: "髋部骨折 — 术后 12 个月随访窗口"
+    abbr: "随访 12m"
+    category: followup
+    department: orthopedic_surgery
+    start_event: surgery_time
+    deadline:
+      value: 365
+      unit: days
+    re_evaluation:
+      active_interval_days: 30
+      escalation_threshold: []
+    guideline_ref:
+      - weiwei-2022
+    trust_level: T1
+    owner: attending
+    status: active
+
+  # ── 心血管 — 急诊 ──
+  - id: timeline-stemi-d2b-90m
+    name: "STEMI — Door-to-Balloon 90 分钟窗口"
+    abbr: "D2B 90min"
+    category: emergency
+    department: cardiology
+    start_event: arrival_time
+    deadline:
+      value: 90
+      unit: minutes
+    re_evaluation:
+      active_interval_minutes: 10
+      escalation_threshold:
+        - at_remaining_minutes: 30
+          level: warning
+        - at_remaining_minutes: 15
+          level: critical
+    guideline_ref:
+      - paper-cannon-2000
+    trust_level: T1
+    owner: attending
+    status: planned
+
+  # ── 神经内科 — 急诊 ──
+  - id: timeline-stroke-tpa-4-5h
+    name: "急性缺血性卒中 — tPA 溶栓 4.5 小时窗口"
+    abbr: "卒中 tPA"
+    category: emergency
+    department: neurology
+    start_event: symptom_onset_time
+    deadline:
+      value: 4.5
+      unit: hours
+    re_evaluation:
+      active_interval_minutes: 15
+      escalation_threshold:
+        - at_remaining_minutes: 60
+          level: warning
+        - at_remaining_minutes: 30
+          level: critical
+    guideline_ref:
+      - paper-ninds-1995
+      - paper-ecass3-2008
+    trust_level: T1
+    owner: attending
+    status: planned
+
+  - id: timeline-stroke-thrombectomy-24h
+    name: "缺血性卒中 — 取栓 24 小时窗口（影像筛选）"
+    abbr: "取栓 24h"
+    category: emergency
+    department: neurology
+    start_event: symptom_onset_time
+    deadline:
+      value: 24
+      unit: hours
+    re_evaluation:
+      active_interval_hours: 1
+      escalation_threshold:
+        - at_remaining_hours: 4
+          level: warning
+        - at_remaining_hours: 2
+          level: critical
+    guideline_ref:
+      - paper-dawn-2018
+      - paper-defuse3-2018
+    trust_level: T1
+    owner: attending
+    status: planned
+
+  # ── 感染科 — 急诊 ──
+  - id: timeline-sepsis-abx-1h
+    name: "脓毒症休克 — 首剂抗生素 1 小时窗口"
+    abbr: "脓毒症抗生素"
+    category: emergency
+    department: infectious_disease
+    start_event: sepsis_recognition_time
+    deadline:
+      value: 60
+      unit: minutes
+    re_evaluation:
+      active_interval_minutes: 5
+      escalation_threshold:
+        - at_remaining_minutes: 20
+          level: warning
+        - at_remaining_minutes: 10
+          level: critical
+    guideline_ref:
+      - paper-kumar-2006
+      - paper-ssc-2021
+    trust_level: T1
+    owner: attending
+    status: planned
+
+  # ── 肾内科 — 监测 ──
+  - id: timeline-kdigo-aki-48h
+    name: "KDIGO AKI — 48 小时肌酐监控窗口"
+    abbr: "KDIGO 48h"
+    category: monitoring
+    department: nephrology
+    start_event: baseline_cr_time
+    deadline:
+      value: 48
+      unit: hours
+    re_evaluation:
+      active_interval_hours: 6
+      escalation_threshold: []
+    guideline_ref:
+      - paper-kdigo-aki-2012
+    trust_level: T1
+    owner: attending
+    status: planned
+
+  # ── 麻醉科 — 限期 ──
+  - id: timeline-sap-prophylaxis-30m
+    name: "外科抗生素预防 — 切皮前 30~60 分钟窗口"
+    abbr: "SAP 30min"
+    category: emergency
+    department: anesthesiology
+    start_event: incision_time
+    deadline:
+      value: 30
+      unit: minutes
+    re_evaluation:
+      active_interval_minutes: 5
+      escalation_threshold:
+        - at_remaining_minutes: 10
+          level: warning
+    guideline_ref: []
+    trust_level: T1
+    owner: attending
+    status: planned
+
+  # ── 脊柱外科 — 急诊 ──
+  - id: timeline-sci-decompression-24h
+    name: "不完全性脊髓损伤 — 24 小时减压窗口"
+    abbr: "SCI 减压"
+    category: emergency
+    department: spine_surgery
+    start_event: injury_time
+    deadline:
+      value: 24
+      unit: hours
+    re_evaluation:
+      active_interval_hours: 2
+      escalation_threshold:
+        - at_remaining_hours: 6
+          level: warning
+        - at_remaining_hours: 3
+          level: critical
+    guideline_ref: []
+    trust_level: T1
+    owner: attending
+    status: planned
+
+  # ── 产科 — 急诊 ──
+  - id: timeline-emergency-cs-30m
+    name: "紧急剖宫产 — 决策至切皮 30 分钟窗口"
+    abbr: "紧急剖宫产"
+    category: emergency
+    department: obstetrics
+    start_event: decision_time
+    deadline:
+      value: 30
+      unit: minutes
+    re_evaluation:
+      active_interval_minutes: 5
+      escalation_threshold:
+        - at_remaining_minutes: 10
+          level: critical
+    guideline_ref: []
+    trust_level: T1
+    owner: attending
+    status: planned
