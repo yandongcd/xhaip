@@ -1,4 +1,4 @@
-﻿name: orthopedic-surgery
+name: orthopedic-surgery
 cn_name: 老年髋部骨折精准治疗智能体
 version: 1.1.0
 type: business
@@ -31,23 +31,31 @@ depends_on:
   note: 教育技能 Agent (8772)
 tools:
 - name: classify_fracture
-  description: 骨折分型评估 (Garden/Evans/AO)
-  handler: orthopedics.assess
+  description: 'LLM增强骨折分型 (hybrid: LLM优先, 失败降级规则引擎) — L1 agentic upgrade'
+  handler: orthopedics.classify_fracture_llm
   input:
     patient_id: str
+    diagnosis: str
+    exam_result: str
     xray_findings: dict
+    age: int
+    gender: str
 - name: preop_assessment
   description: 术前综合评估 (合并症/药物/营养/认知)
   handler: orthopedics.evaluate
   input:
     patient_id: str
 - name: surgical_plan
-  description: 手术方案推荐 (THA/HA/PFNA/DHS)
-  handler: orthopedics.plan
+  description: LLM增强手术方案 (LLM优先, 失败降级规则决策树) — L1 agentic upgrade
+  handler: orthopedics.surgical_plan_llm
   input:
     patient_id: str
     fracture_type: str
     age: int
+    use_llm: bool
+    classification_type: str
+    stability: str
+    gender: str
 - name: complication_risk
   description: 并发症风险预测 (DVT/感染/心脏/跌倒谵妄 4维)
   handler: orthopedics.predict_complications
@@ -242,32 +250,49 @@ stages:
   id: preop-eval
   label: 术前评估
   desc: T2分层时机评估(8因素/48h窗口)、ASA分级、Caprini VTE风险、Harris评分基线、心肺功能
-  role_ids: [attending, resident, anesthesiologist]
+  role_ids:
+  - attending
+  - resident
+  - anesthesiologist
 - order: 2
   id: preop-prep
   label: 术前准备
   desc: 备血交叉配血、ERAS术前方案(禁食禁饮/预康复)、MDT会诊(≥75岁或≥3合并症触发)、疼痛管理
-  role_ids: [attending, resident, head_nurse]
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
 - order: 3
   id: surgery
   label: 手术执行
   desc: THA/HA/PFNA/DHS术式选择、术中监测、假体稳定性评估、出血量控制
-  role_ids: [attending, surgeon, anesthesiologist]
+  role_ids:
+  - attending
+  - surgeon
+  - anesthesiologist
 - order: 4
   id: postop-early
   label: 术后早期
   desc: VTE药物+物理预防、感染监测(CRP/WBC/切口)、疼痛管理(多模式镇痛)、电解质管理
-  role_ids: [attending, resident, head_nurse]
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
 - order: 5
   id: rehab
   label: 康复训练
   desc: 术后24h首次下床、Harris髋关节评分(1/3/6月评估)、骨质疏松治疗(FRAX评分)、防跌倒教育
-  role_ids: [attending, rehab_therapist, head_nurse]
+  role_ids:
+  - attending
+  - rehab_therapist
+  - head_nurse
 - order: 6
   id: followup
   label: 长期随访
   desc: Harris评分追踪、影像复查(X线/CT)、假体松动/磨损监测、术后1/3/6/12月随访
-  role_ids: [attending, rehab_therapist]
+  role_ids:
+  - attending
+  - rehab_therapist
 rag:
   enabled: true
   top_k: 5

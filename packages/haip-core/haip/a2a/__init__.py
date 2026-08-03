@@ -29,6 +29,78 @@ _call_history: list[dict[str, Any]] = []
 _cache_lock = threading.Lock()
 
 
+def _is_test_mode() -> bool:
+    return os.environ.get("HAIP_TEST_MODE", "").strip().lower() == "true"
+
+
+def permission_context_from_user(user: dict | None):
+    """把 HTTP 层的 current_user 映射为 A2A 执行身份 (PermissionContext).
+
+    user 形如 auth/middleware 注入的 dict:
+    {user_id, username, roles, permissions, tenant_id, ...}.
+    返回 None 表示无身份 — call() 将 fail-closed 拒绝。
+    """
+    if not user:
+        return None
+    try:
+        from haip.permission import PermissionContext
+    except ImportError:
+        return None
+    roles = user.get("roles") or []
+    role = str(roles[0]) if roles else ""
+    return PermissionContext(
+        user_id=str(user.get("user_id", "")),
+        role=role,
+        agent_id=str(user.get("user_id", "")),
+        department=str(user.get("department", "")),
+        is_emergency=bool(user.get("is_emergency", False)),
+    )
+
+
+def internal_permission_context():
+    """显式构造的引擎内部调用上下文 (免鉴权)。
+
+    仅供引擎内部路径使用 (orchestrator / pipeline / transport / CLI / MCP /
+    eval / meta_harness 等) — 这些路径的调用方身份已在入口层 (HTTP 中间件 /
+    显式启动命令) 校验, 内部编排不重复鉴权。生产 HTTP 路径禁止使用本上下文,
+    必须由 permission_context_from_user() 构造用户身份。
+    """
+    from haip.permission import PermissionContext
+    return PermissionContext(user_id="engine", role="admin", agent_id="engine")
+
+
+def _default_permission_context():
+    """perm_ctx=None 时的默认上下文。
+
+    仅测试模式返回显式 permissive 上下文 (与 auth/middleware 的 test-user
+    放行语义一致); 非测试模式返回 None → call() fail-closed 拒绝
+    (身份缺失不得静默放行)。
+    """
+    if _is_test_mode():
+        from haip.permission import PermissionContext
+        return PermissionContext(user_id="test-user", role="admin", agent_id="test")
+    return None
+
+
+def _enforce_permission(pc, agent: str, tool: str) -> str:
+    """A2A 权限校验 — fail-closed. 返回 "" 表示允许, 否则返回错误码。"""
+    try:
+        from haip.permission import PermissionContext, get_permission_manager
+        if isinstance(pc, dict):
+            pc = PermissionContext(**{k: pc.get(k, "") for k in
+                ("user_id", "role", "agent_id", "department", "is_emergency")})
+        pm = get_permission_manager()  # D2: 进程级单例, 审计落盘
+        if not pm.can_call_agent(pc, agent, tool):
+            pm.log_access(pc, "A2A_call", f"{agent}.{tool}", "deny", "no policy/role grant")
+            return "PERMISSION_DENIED"
+        pm.log_access(pc, "A2A_call", f"{agent}.{tool}", "allow")
+        return ""
+    except ImportError:
+        # fail-closed: 权限模块不可用绝不 allow-all
+        logger.error("Permission module not available — A2A call denied (fail-closed)")
+        return "PERMISSION_UNAVAILABLE"
+
+
 def _check_version(requirement: str, actual: str) -> bool:
     """简单的语义版本约束校验。支持 >=1.0, ==1.0, 1.0 (exact)."""
     req = requirement.strip()
@@ -105,26 +177,21 @@ def call(agent: str, tool: str, params: dict[str, Any] | None = None,
             _record(agent, tool, "error", verr, 0, workflow_id)
             return err
 
-    # Permission enforcement (A2A)
-    if perm_ctx is not None:
-        try:
-            from haip.permission import PermissionContext, get_permission_manager
-            if isinstance(perm_ctx, dict):
-                pc = PermissionContext(**{k: perm_ctx.get(k, "") for k in
-                    ("user_id", "role", "agent_id", "department", "is_emergency")})
-            else:
-                pc = perm_ctx
-            pm = get_permission_manager()  # D2: 进程级单例, 审计落盘
-            if not pm.can_call_agent(pc, agent, tool):
-                pm.log_access(pc, "A2A_call", f"{agent}.{tool}", "deny", "no policy/role grant")
-                err = {"status": "error", "error": "Permission denied",
-                       "code": "PERMISSION_DENIED",
-                       "detail": f"Cannot call {agent}.{tool}"}
-                _record(agent, tool, "error", "Permission denied", 0, workflow_id)
-                return err
-            pm.log_access(pc, "A2A_call", f"{agent}.{tool}", "allow")
-        except ImportError:
-            logger.debug("Permission module not available — allow all (dev mode)")
+    # Permission enforcement (A2A) — fail-closed
+    pc = perm_ctx if perm_ctx is not None else _default_permission_context()
+    if pc is None:
+        # 非测试模式且未提供身份 → 拒绝 (不得静默放行)
+        err = {"status": "error", "error": "Permission check unavailable: no identity context",
+               "code": "PERMISSION_REQUIRED",
+               "detail": f"Cannot call {agent}.{tool} without identity"}
+        _record(agent, tool, "error", "Permission denied", 0, workflow_id)
+        return err
+    perr = _enforce_permission(pc, agent, tool)
+    if perr:
+        err = {"status": "error", "error": "Permission denied", "code": perr,
+               "detail": f"Cannot call {agent}.{tool}"}
+        _record(agent, tool, "error", "Permission denied", 0, workflow_id)
+        return err
 
     tool_def = _find_tool(plugin, tool)
     if tool_def is None:
@@ -191,11 +258,12 @@ def call(agent: str, tool: str, params: dict[str, Any] | None = None,
     return result
 
 
-def call_batch(tasks: list[dict], max_workers: int = 8) -> list[dict]:
+def call_batch(tasks: list[dict], max_workers: int = 8, perm_ctx: Any = None) -> list[dict]:
     """批量并行调用。
 
     tasks: [{"agent": ..., "tool": ..., "params": {...}}, ...]
     max_workers: 线程池最大工作线程数 (默认 8)。
+    perm_ctx: 调用身份 (PermissionContext) — 与 call() 一致, 缺省时 fail-closed。
     """
     results: list[dict | None] = [None] * len(tasks)
 
@@ -205,6 +273,7 @@ def call_batch(tasks: list[dict], max_workers: int = 8) -> list[dict]:
             tool=task["tool"],
             params=task.get("params", {}),
             workflow_id=task.get("workflow_id", ""),
+            perm_ctx=perm_ctx,
         )
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -312,7 +381,7 @@ def _load_llm_config() -> dict[str, Any]:
         _load_llm_config._cache = {}  # type: ignore[attr-defined]
         _load_llm_config._file_mtime = 0.0  # type: ignore[attr-defined]
         _load_llm_config._cache_time = 0.0  # type: ignore[attr-defined]
-        setattr(_load_llm_config, "_env_fingerprint", env_fp)
+        _load_llm_config._env_fingerprint = env_fp  # type: ignore[attr-defined]
 
     candidates = [
         Path(__file__).resolve().parent.parent.parent.parent / "config" / "llm.yaml",
@@ -354,11 +423,16 @@ def _load_llm_config() -> dict[str, Any]:
 _load_llm_config._cache: dict[str, Any] = {}  # type: ignore[attr-defined]
 _load_llm_config._cache_time: float = 0.0  # type: ignore[attr-defined]
 _load_llm_config._file_mtime: float = 0.0  # type: ignore[attr-defined]
-_load_llm_config._env_fingerprint: tuple[str, str] = ("", "")  # type: ignore[attr-defined]
+_load_llm_config._env_fingerprint = ("", "")  # type: ignore[attr-defined]
 
 
-def _build_loop_components(agent: str):
-    """构建 AgentLoop 所需组件 (共享逻辑)."""
+def _build_loop_components(agent: str, perm_ctx: Any = None):
+    """构建 AgentLoop 所需组件 (共享逻辑).
+
+    perm_ctx: ReAct 循环内 A2A 工具调用的身份上下文 (HTTP 路径由
+    request.state.current_user 构造并透传; 引擎内部路径显式传
+    internal_permission_context())。
+    """
     plugin = get_agent(agent)
     if plugin is None:
         raise ValueError(f"Unknown agent: {agent}")
@@ -384,7 +458,7 @@ def _build_loop_components(agent: str):
             llm = MockProvider({})
 
     def _a2a_executor(tool_name: str, tool_args: dict) -> dict:
-        return call(agent, tool_name, tool_args)
+        return call(agent, tool_name, tool_args, perm_ctx=perm_ctx)
 
     return plugin, tools, llm, _a2a_executor
 
@@ -450,6 +524,7 @@ def call_with_loop(
     agent: str,
     query: str,
     max_steps: int = 5,
+    perm_ctx: Any = None,
     **kwargs,
 ) -> dict[str, Any]:
     """ReAct AgentLoop — LLM 自主规划调用工具，多步推理。
@@ -458,7 +533,7 @@ def call_with_loop(
     每次请求创建新的 AgentLoop 实例，无状态共享，无竞态风险。
     """
     try:
-        plugin, tools, llm, _a2a_executor = _build_loop_components(agent)
+        plugin, tools, llm, _a2a_executor = _build_loop_components(agent, perm_ctx)
     except ValueError as e:
         return {"status": "error", "error": str(e)}
 
@@ -513,10 +588,11 @@ async def call_with_loop_async(
     user_id: str = "default",
     use_session_service: bool = False,
     db_path: str = ":memory:",
+    perm_ctx: Any = None,
 ) -> dict[str, Any]:
     """异步 ReAct AgentLoop — 支持 state_delta + session 持久化."""
     try:
-        plugin, tools, llm, _a2a_executor = _build_loop_components(agent)
+        plugin, tools, llm, _a2a_executor = _build_loop_components(agent, perm_ctx)
     except ValueError as e:
         return {"status": "error", "error": str(e)}
 
@@ -564,15 +640,23 @@ async def call_with_loop_async(
     elapsed = round((time.perf_counter() - t0) * 1000, 2)
     guard_result = _run_guard(final_reply, [], plugin)
 
+    # Guard gating: 与同步 call_with_loop 一致 — 未通过则 status=blocked
+    if not guard_result["passed"]:
+        status = "blocked"
+        error = f"Guard verification failed: {'; '.join(guard_result['flags'])}"
+    else:
+        status = "ok"
+        error = final_error or None
+
     return {
-        "status": "ok",
+        "status": status,
         "reply": final_reply,
         "steps": steps,
         "duration_ms": elapsed,
         "events": events,
         "session_id": session_id,
         "invocation_id": invocation_id,
-        "error": final_error or None,
+        "error": error,
         "guard": guard_result,
     }
 
@@ -580,12 +664,17 @@ async def call_with_loop_async(
 async def stream_events(
     agent: str, query: str, max_steps: int = 5,
     session_id: str = "default", user_id: str = "default",
+    perm_ctx: Any = None,
 ):
-    """SSE 事件流生成器 — 每步实时推送 Event (state_delta + content)."""
+    """SSE 事件流生成器 — 每步实时推送 Event (state_delta + content).
+
+    Guard 门控: 最终助手回复产生时先跑与同步路径相同的 Guard 校验,
+    未通过则推送 guard_blocked 事件且不发送回复内容。
+    """
     import json as _json
 
     try:
-        plugin, tools, llm, _a2a_executor = _build_loop_components(agent)
+        plugin, tools, llm, _a2a_executor = _build_loop_components(agent, perm_ctx)
     except ValueError as e:
         yield f"data: {_json.dumps({'error': str(e)}, ensure_ascii=False)}\n\n"
         return
@@ -608,7 +697,54 @@ async def stream_events(
         max_steps=max_steps, agent_name=agent, ctx=ctx,
     )
 
+    tool_names: list[str] = []
     async for evt in loop.run(query):
-        yield f"data: {_json.dumps(evt.to_dict(), ensure_ascii=False)}\n\n"
+        evt_dict = evt.to_dict()
+        if evt.role == "assistant" and evt.turn_complete and evt.content:
+            # Guard gating: 与同步 call_with_loop 相同的校验 (含 citation 强制)
+            guard_result = _run_guard(evt.content, tool_names, plugin)
+            if not guard_result["passed"]:
+                reason = f"Guard verification failed: {'; '.join(guard_result['flags'])}"
+                evt_dict.update({
+                    "type": "guard_blocked",
+                    "reason": reason,
+                    "error": reason,
+                    "content": "",
+                    "guard": guard_result,
+                })
+                yield f"data: {_json.dumps(evt_dict, ensure_ascii=False)}\n\n"
+                break
+            evt_dict["guard"] = guard_result
+        elif evt.role == "tool":
+            tool_names.append(evt.tool_name)
+        yield f"data: {_json.dumps(evt_dict, ensure_ascii=False)}\n\n"
 
     session_svc.end_invocation(session)
+
+
+def reason(
+    agent: str,
+    query: str,
+    max_steps: int = 5,
+    provider: Any = None,
+    perm_ctx: Any = None,
+) -> dict[str, Any]:
+    """Agent 推理模式 — LLM 自主规划并调用工具 (L1 agentic upgrade).
+
+    与 call_with_loop 等价但接受可选 provider/perm_ctx:
+    - provider=None → 使用 config/llm.yaml 的默认 provider (生产)
+    - provider=MockProvider(...) → 测试/CI 可控
+    - perm_ctx 可用于注入权限上下文 (测试/emergency 模式)
+
+    Agent 的 prompt.system + tools 被注入 AgentLoop,
+    LLM 在 ReAct 循环中自主决定调用哪个工具、解读结果、迭代决策.
+    """
+    if provider is not None:
+        import haip.llm
+        orig = haip.llm.LLMProvider.from_config
+        haip.llm.LLMProvider.from_config = lambda cfg: provider  # type: ignore[method-assign,assignment]
+        try:
+            return call_with_loop(agent, query, max_steps=max_steps, perm_ctx=perm_ctx)
+        finally:
+            haip.llm.LLMProvider.from_config = orig  # type: ignore[method-assign,assignment]
+    return call_with_loop(agent, query, max_steps=max_steps, perm_ctx=perm_ctx)

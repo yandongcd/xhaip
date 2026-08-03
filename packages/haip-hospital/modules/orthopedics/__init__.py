@@ -624,3 +624,82 @@ def decide(patient_id: str = "", is_emergency: bool = False, **kwargs):
     if is_emergency:
         return {"patient_id": patient_id, "timing": "immediate", "sla": "即刻"}
     return evaluate_timing(patient_id=patient_id, **kwargs)
+
+
+# ═══════════════════════════════════════════════════════════
+# 6. LLM 增强版工具 (L1 agentic 接线)
+# ═══════════════════════════════════════════════════════════
+
+def classify_fracture_llm(
+    patient_id: str = "",
+    diagnosis: str = "",
+    exam_result: str = "",
+    xray_findings: dict | None = None,
+    age: int = 0,
+    gender: str = "",
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """LLM增强骨折分型 (hybrid: LLM优先, 失败降级规则).
+
+    适配现有 YAML 接口 (xray_findings dict), 内部桥接 LLM 函数签名.
+    本机无 LLM key 时 MockProvider 返回非 JSON → 自动降级规则引擎.
+    """
+    from .fracture_classifier import classify_hip_fracture_hybrid
+
+    exam = exam_result or ""
+    if xray_findings:
+        loc = xray_findings.get("location", "")
+        typ = str(xray_findings.get("type", ""))
+        exam = f"{loc} {typ}".strip() or exam
+    patient: dict[str, Any] = {
+        "age": age or kwargs.get("age", 0),
+        "gender": gender or str(kwargs.get("gender", "")),
+        "diagnosis": diagnosis or str(kwargs.get("diagnosis", "")),
+    }
+    result = classify_hip_fracture_hybrid(
+        diagnosis=diagnosis,
+        exam_result=exam,
+        patient=patient,
+        use_llm=True,
+    )
+    result.setdefault("patient_id", patient_id)
+    return result
+
+
+def surgical_plan_llm(
+    patient_id: str = "",
+    diagnosis: str = "",
+    fracture_type: str = "",
+    age: int = 0,
+    gender: str = "",
+    classification_type: str = "",
+    stability: str = "",
+    use_llm: bool = True,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """LLM增强手术方案推荐 (LLM优先, 失败降级决策树).
+
+    适配现有 YAML 接口 (fracture_type/age), 内部桥接 LLM 函数签名.
+    """
+    from .surgery_planner import recommend_surgery
+
+    patient: dict[str, Any] = {
+        "age": age,
+        "gender": gender or str(kwargs.get("gender", "")),
+        "diagnosis": diagnosis or str(kwargs.get("diagnosis", "")),
+        "functional_status": str(kwargs.get("functional_status", "")),
+        "past_history": str(kwargs.get("past_history", "")),
+        "lab_tests": kwargs.get("lab_tests", []),
+    }
+    fracture_info: dict[str, Any] = {
+        "type": fracture_type or diagnosis,
+        "classification_type": classification_type or "",
+        "stability": stability or "",
+    }
+    result = recommend_surgery(
+        patient=patient,
+        fracture_info=fracture_info,
+        use_llm=use_llm,
+    )
+    result.setdefault("patient_id", patient_id)
+    return result
