@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
+from typing import Any
 
 from haip.guard.citation import Citation, CitationEngine
 from haip.guard.confidence import ConfidenceScore, ConfidenceScorer
@@ -40,6 +41,9 @@ class GuardResult:
     requires_human_review: bool = False
     cross_validation_conflict: bool = False
     cross_validation_detail: str = ""
+    # ── MED-2: 审问式安全 (Phase1) ──
+    interrogated: bool = False
+    interrogation: Any = None  # InterrogationReport (lazy import to avoid circular)
 
 
 class GuardVerifier:
@@ -50,10 +54,12 @@ class GuardVerifier:
         citation_engine: CitationEngine | None = None,
         confidence_scorer: ConfidenceScorer | None = None,
         llm_provider: LLMProvider | None = None,
+        interrogation_enabled: bool = True,
     ):
         self.citation_engine = citation_engine or CitationEngine()
         self.confidence_scorer = confidence_scorer or ConfidenceScorer()
         self.llm = llm_provider
+        self._interrogation_enabled = interrogation_enabled
 
     def verify(
         self,
@@ -140,6 +146,27 @@ class GuardVerifier:
             corrected = self._auto_correct(agent_output, agent_name)
             if corrected and len(corrected) > 20 and corrected != agent_output:
                 result.corrected_output = corrected
+
+        # ── Layer 3.5: MED-2 审问式安全审核 ──
+        # 独立审问 agent 对输出做 9 维追问 (禁忌症/药物/剂量核心三维必过)
+        if self._interrogation_enabled and self.llm:
+            try:
+                from haip.guard.interrogate import interrogate as run_interrogate
+                report = run_interrogate(
+                    agent_output=result.corrected_output or agent_output,
+                    context=f"agent={agent_name} scenario={scenario}",
+                    provider=self.llm,
+                )
+                result.interrogated = True
+                result.interrogation = report
+                if not report.is_clean():
+                    result.flags.append(f"审问未通过 ({report.passed_dimensions}/9, 核心{report.core_passed}/3)")
+                    if report.requires_human_review:
+                        result.requires_human_review = True
+                else:
+                    result.flags.append(f"审问通过 ({report.passed_dimensions}/9)")
+            except Exception:
+                logger.debug("审问式 Guard 执行异常", exc_info=True)
 
         # Layer 4: Cross-validation
         if cross_agent_outputs:
