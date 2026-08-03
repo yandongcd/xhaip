@@ -19,3 +19,15 @@ python_version = "3.12"
 ignore_missing_imports = true
 warn_return_any = false
 warn_unused_ignores = false
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = ["-n", "auto", "--dist", "loadgroup", "-q"]
+markers = [
+    "fast: fast tests (<1s each, run first)",
+    "slow: slow tests (integration/LLM/togaf, run separately)",
+    "integration: integration tests requiring full agent loading",
+    "real_llm: tests requiring real LLM API calls (skip in CI)",
+]
+timeout = 120

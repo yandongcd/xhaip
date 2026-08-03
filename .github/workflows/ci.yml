@@ -123,7 +123,7 @@ sys.exit(errors)
       - name: Install dependencies
         run: pip install -e "packages/haip-core[dev]"
       - name: Contract + unit tests
-        run: python -m pytest packages/haip-core/tests/ tests/test_self_contained.py --tb=short
+        run: python -m pytest packages/haip-core/tests/ tests/test_self_contained.py --tb=short -n auto
 
   integration:
     name: "Integration tests"
@@ -137,7 +137,7 @@ sys.exit(errors)
       - name: Install dependencies
         run: pip install -e "packages/haip-core[dev]"
       - name: Run integration tests
-        run: python -m pytest tests/integration/ -v --tb=short
+        run: python -m pytest tests/integration/ -v --tb=short -n auto
 
   coverage:
     name: "Coverage (>=70%)"
