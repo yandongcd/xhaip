@@ -15,6 +15,7 @@ import contextlib
 import json
 import pathlib
 import sqlite3
+import threading
 import time
 from collections import Counter
 from typing import Any
@@ -28,10 +29,21 @@ class AgentMemory:
             self.db_path = pathlib.Path(db_path)
         else:
             self.db_path = pathlib.Path(__file__).resolve().parent.parent.parent.parent / "xhaip_memory.db"
+        self._lock = threading.Lock()
+        self._conn: sqlite3.Connection | None = None
         self._init_db()
 
     def _init_db(self):
-        with contextlib.closing(sqlite3.connect(str(self.db_path))) as conn:
+        self._get_conn()
+
+    def _get_conn(self) -> sqlite3.Connection:
+        """Lazily create and reuse a single connection (WAL, thread-safe via lock)."""
+        if self._conn is not None:
+            return self._conn
+        with self._lock:
+            if self._conn is not None:
+                return self._conn
+            conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
             conn.execute("PRAGMA journal_mode=WAL")
             from haip.schema_version import ensure_version
             ensure_version(conn, 1)
@@ -51,11 +63,14 @@ class AgentMemory:
             conn.execute("CREATE INDEX IF NOT EXISTS idx_dec_agent ON decisions(agent)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_dec_time ON decisions(timestamp)")
             conn.commit()
+            self._conn = conn
+        return self._conn
 
     def record(self, agent: str, patient_id: str, tool: str = "",
                params: dict | None = None, result: dict | None = None,
                status: str = "ok", confidence: float = 0.0):
-        with contextlib.closing(sqlite3.connect(str(self.db_path))) as conn:
+        with self._lock:
+            conn = self._get_conn()
             conn.execute(
                 "INSERT INTO decisions (agent, patient_id, tool, input_params, result, status, confidence, timestamp) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -69,7 +84,8 @@ class AgentMemory:
     def insights(self, agent: str, days: int = 30) -> dict[str, Any]:
         """Generate insights for an agent based on past decisions."""
         cutoff = time.time() - days * 86400
-        with contextlib.closing(sqlite3.connect(str(self.db_path))) as conn:
+        with self._lock:
+            conn = self._get_conn()
             conn.row_factory = sqlite3.Row
             rows = conn.execute(
                 "SELECT * FROM decisions WHERE agent = ? AND timestamp > ? ORDER BY timestamp DESC",
@@ -109,7 +125,8 @@ class AgentMemory:
 
     def global_insights(self) -> dict[str, Any]:
         """Cross-agent insights for TOGAF governance."""
-        with contextlib.closing(sqlite3.connect(str(self.db_path))) as conn:
+        with self._lock:
+            conn = self._get_conn()
             conn.row_factory = sqlite3.Row
             rows = conn.execute("SELECT agent, status, COUNT(*) as cnt FROM decisions GROUP BY agent, status").fetchall()
 

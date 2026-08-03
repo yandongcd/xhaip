@@ -9,6 +9,21 @@ from haip.llm.mock import MockProvider
 os.environ.setdefault("HAIP_TEST_MODE", "true")
 
 
+@pytest.fixture(autouse=True)
+def _restore_agent_registry():
+    """每个测试后恢复 agent 注册表快照.
+
+    修复 test_operations 等测试 `_registry.clear()` 后不恢复,
+    导致后续测试 (如 test_ui::test_all_agents_render) 遍历到残留
+    测试 agent (a1/v1/...) 而失败的跨测试污染.
+    """
+    from haip.agent import _registry
+    snapshot = dict(_registry)
+    yield
+    _registry.clear()
+    _registry.update(snapshot)
+
+
 @pytest.fixture
 def mock_llm() -> MockProvider:
     return MockProvider({

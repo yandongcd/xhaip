@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import pathlib
 import sqlite3
 import sys
@@ -45,7 +46,8 @@ from haip.harness_proposer import HarnessProposer, Proposal, apply_candidate
 class MetaHarness:
     """Unified self-improvement framework orchestrator (v3.0.0)."""
 
-    def __init__(self, project_root: str = ""):
+    def __init__(self, project_root: str = "", runtime_a2a_limit: int | None = None,
+                 a2a_timeout: int = 10):
         if project_root:
             self.root = pathlib.Path(project_root)
         else:
@@ -61,6 +63,13 @@ class MetaHarness:
         self._acceptance = HarnessAcceptance(project_root=str(self.root))
         self._snapshot = ScoreSnapshot(self.root / ".openharness" / "runtime" / "snapshots")
         self._a2a_executor = None  # shared ThreadPoolExecutor for Stage 9
+        # Runtime A2A 规模控制: None=全量(生产), 数值=最多 N 次调用(测试/CI)
+        self._runtime_a2a_limit = runtime_a2a_limit
+        if self._runtime_a2a_limit is None:
+            env_limit = os.environ.get("HAIP_RUNTIME_A2A_LIMIT", "")
+            if env_limit.isdigit():
+                self._runtime_a2a_limit = int(env_limit)
+        self._a2a_timeout = a2a_timeout
         self._ensure_import_path()
         self._ensure_agent_registry()
         self._load_agents()
@@ -320,6 +329,8 @@ class MetaHarness:
             tests.append({"agent": name, "test": "guard_triggers", "type": "guard"})
         return tests[:20]  # Cap per agent
 
+    _import_cache: dict[str, Any] = {}
+
     def _execute_test(self, test: dict) -> str:
         ttype = test["type"]
         detail = test["test"]
@@ -329,7 +340,10 @@ class MetaHarness:
             try:
                 mod, fn = handler.rsplit(".", 1)
                 import importlib
-                m = importlib.import_module(mod)
+                m = type(self)._import_cache.get(mod)
+                if m is None:
+                    m = importlib.import_module(mod)
+                    type(self)._import_cache[mod] = m
                 if hasattr(m, fn):
                     return "pass"
                 return "fail"
@@ -598,8 +612,12 @@ class MetaHarness:
         passed = 0
         failed = 0
         by_agent: dict[str, dict] = defaultdict(lambda: {"total": 0, "passed": 0, "failed": 0})
+        calls_made = 0
+        limit = self._runtime_a2a_limit
 
         for agent_name, agent in self._agents.items():
+            if limit is not None and calls_made >= limit:
+                break
             tools = agent.get("tools", [])
             if not tools:
                 continue
@@ -617,10 +635,13 @@ class MetaHarness:
                     continue
 
                 for patient in patients[:3]:
+                    if limit is not None and calls_made >= limit:
+                        break
+                    calls_made += 1
                     params = self._build_runtime_params(patient, tool)
                     t0 = time.time()
                     try:
-                        resp = self._a2a_call_with_timeout(agent_name, tool_name, params, timeout=10)
+                        resp = self._a2a_call_with_timeout(agent_name, tool_name, params, timeout=self._a2a_timeout)
                         elapsed = (time.time() - t0) * 1000
                         timing.append(elapsed)
                         result_entry = self._validate_runtime_response(resp, tool_name, agent_name, patient, elapsed)
@@ -660,6 +681,7 @@ class MetaHarness:
             },
             "failures": [r for r in results if r.get("status") not in ("pass", "ok")][:20],
             "by_agent": dict(by_agent),
+            "limited": limit is not None,
         }
 
     def _get_runtime_patients(self, agent_name: str) -> list[dict]:
@@ -999,17 +1021,31 @@ class MetaHarness:
     def _test_guard_scenario(self, agent_name: str, scenario: str) -> str:
         from concurrent.futures import ThreadPoolExecutor
         from concurrent.futures import TimeoutError as FutureTimeout
+
+        # 测试环境 (HAIP_TEST_MODE): 注入 MockProvider, 禁止打真实 LLM API
+        # (真实 DeepSeek key 无效时 400 重试风暴导致 CI 超时)
+        from haip import llm as haip_llm
+        orig_from_config = None
+        if os.environ.get("HAIP_TEST_MODE", "") == "true":
+            from haip.llm.mock import MockProvider
+            orig_from_config = haip_llm.LLMProvider.from_config
+            haip_llm.LLMProvider.from_config = lambda cfg: MockProvider({})
+
         def _call():
-            from haip.a2a import call_with_loop
-            result = call_with_loop(agent_name, scenario, max_steps=2)
-            guard = result.get("guard", {})
-            if guard.get("passed") is False:
-                return "blocked"
-            if result.get("status") == "blocked":
-                return "blocked"
-            if guard.get("checked") is False and not guard.get("flags"):
-                return "silent_bypass"
-            return "missed"
+            try:
+                from haip.a2a import call_with_loop
+                result = call_with_loop(agent_name, scenario, max_steps=2)
+                guard = result.get("guard", {})
+                if guard.get("passed") is False:
+                    return "blocked"
+                if result.get("status") == "blocked":
+                    return "blocked"
+                if guard.get("checked") is False and not guard.get("flags"):
+                    return "silent_bypass"
+                return "missed"
+            finally:
+                if orig_from_config is not None:
+                    haip_llm.LLMProvider.from_config = orig_from_config
         try:
             with ThreadPoolExecutor(max_workers=1) as executor:
                 future = executor.submit(_call)

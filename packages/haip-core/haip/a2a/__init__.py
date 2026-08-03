@@ -302,7 +302,18 @@ def _interpolate_env(value: Any) -> Any:
 
 
 def _load_llm_config() -> dict[str, Any]:
-    """加载 LLM 配置（从 config/llm.yaml, 含环境变量插值, mtime 缓存）。"""
+    """加载 LLM 配置（从 config/llm.yaml, 含环境变量插值, mtime 缓存）。
+
+    env 指纹: DEEPSEEK_API_KEY / HAIP_ENV 变化时立即失效缓存,
+    避免 TTL/mtime 缓存返回旧 env 插值 (测试与运行时切换 key 的 401 根因).
+    """
+    env_fp = (os.environ.get("DEEPSEEK_API_KEY", ""), os.environ.get("HAIP_ENV", ""))
+    if env_fp != getattr(_load_llm_config, "_env_fingerprint", ("", "")):
+        _load_llm_config._cache = {}  # type: ignore[attr-defined]
+        _load_llm_config._file_mtime = 0.0  # type: ignore[attr-defined]
+        _load_llm_config._cache_time = 0.0  # type: ignore[attr-defined]
+        setattr(_load_llm_config, "_env_fingerprint", env_fp)
+
     candidates = [
         Path(__file__).resolve().parent.parent.parent.parent / "config" / "llm.yaml",
         Path(__file__).resolve().parent.parent.parent.parent.parent / "config" / "llm.yaml",
@@ -340,9 +351,10 @@ def _load_llm_config() -> dict[str, Any]:
     return {"provider": "mock", "mock_responses": True}
 
 
-_load_llm_config._cache: dict[str, Any] = {}
-_load_llm_config._cache_time: float = 0.0
-_load_llm_config._file_mtime: float = 0.0
+_load_llm_config._cache: dict[str, Any] = {}  # type: ignore[attr-defined]
+_load_llm_config._cache_time: float = 0.0  # type: ignore[attr-defined]
+_load_llm_config._file_mtime: float = 0.0  # type: ignore[attr-defined]
+_load_llm_config._env_fingerprint: tuple[str, str] = ("", "")  # type: ignore[attr-defined]
 
 
 def _build_loop_components(agent: str):
