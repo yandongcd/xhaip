@@ -15,6 +15,8 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
+from haip.llm import DEFAULT_MAX_TOKENS
+
 
 @dataclass
 class LLMGatewayConfig:
@@ -138,7 +140,7 @@ class LLMGateway:
         *,
         tools: list | None = None,
         temperature: float = 0.3,
-        max_tokens: int = 4096,
+        max_tokens: int = DEFAULT_MAX_TOKENS,
         user_id: str = "default",
         use_cache: bool = True,
     ) -> dict[str, Any]:
@@ -228,7 +230,7 @@ class LLMGateway:
                 "api_key": "${DEEPSEEK_API_KEY}",
                 "api_base": "https://api.deepseek.com/v1",
                 "temperature": 0.3,
-                "max_tokens": 4096,
+                "max_tokens": DEFAULT_MAX_TOKENS,
             },
             "fail-closed": {
                 "provider": "fail-closed",
@@ -253,12 +255,10 @@ class LLMGateway:
 
 
 # Global singleton
-_llm_gateway: LLMGateway | None = None
+_singleton_state: dict = {}
 
 
 def get_llm_gateway() -> LLMGateway:
     """Get the global LLM gateway singleton."""
-    global _llm_gateway
-    if _llm_gateway is None:
-        _llm_gateway = LLMGateway()
-    return _llm_gateway
+    from haip._singleton import locked_singleton
+    return locked_singleton(LLMGateway, _singleton_state, "gateway")

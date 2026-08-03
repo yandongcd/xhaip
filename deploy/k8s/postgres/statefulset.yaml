@@ -44,7 +44,10 @@ spec:
               key: DATABASE_URL
               optional: true
         - name: POSTGRES_PASSWORD
-          value: "xhaip-pass"
+          valueFrom:
+            secretKeyRef:
+              name: xhaip-secret
+              key: POSTGRES_PASSWORD
         - name: POSTGRES_DB
           value: "xhaip"
         - name: PGDATA
@@ -116,7 +119,10 @@ spec:
               pg_dump -h postgres -U xhaip xhaip | gzip > /backup/xhaip-$(date +%Y%m%d).sql.gz
             env:
             - name: PGPASSWORD
-              value: "xhaip-pass"
+              valueFrom:
+                secretKeyRef:
+                  name: xhaip-secret
+                  key: POSTGRES_PASSWORD
             volumeMounts:
             - name: backup
               mountPath: /backup

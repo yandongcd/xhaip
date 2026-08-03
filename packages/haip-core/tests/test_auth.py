@@ -10,15 +10,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import pytest
 from fastapi.testclient import TestClient
 
-from haip.auth.models import (
-    UserCreateRequest,
-    UserLoginRequest,
-    UserInfo,
-    LoginResponse,
-    TokenRefreshRequest,
-    Permission,
-)
-from haip.auth.password import hash_password, verify_password, validate_password_strength
+from haip.auth import AuthService
 from haip.auth.jwt import (
     create_access_token,
     create_refresh_token,
@@ -26,16 +18,23 @@ from haip.auth.jwt import (
     refresh_access_token,
     revoke_refresh_token,
 )
+from haip.auth.models import (
+    LoginResponse,
+    Permission,
+    TokenRefreshRequest,
+    UserCreateRequest,
+    UserInfo,
+    UserLoginRequest,
+)
+from haip.auth.password import hash_password, validate_password_strength, verify_password
 from haip.auth.rbac import (
+    PREDEFINED_ROLES,
+    add_role,
     get_permissions_for_roles,
     has_permission,
-    add_role,
-    remove_role,
     list_roles,
-    PREDEFINED_ROLES,
+    remove_role,
 )
-from haip.auth import AuthService
-
 
 # ── Password Tests ──
 
@@ -228,9 +227,9 @@ class TestAuthService:
 
 class TestAuthAPI:
     @pytest.fixture(autouse=True)
-    def setup(self):
+    def setup(self, monkeypatch):
         """Ensure test mode is active."""
-        os.environ["HAIP_TEST_MODE"] = "true"
+        monkeypatch.setenv("HAIP_TEST_MODE", "true")
         from haip.web_server import app
         self.client = TestClient(app)
 
@@ -364,7 +363,7 @@ class TestAudit:
 
 class TestCrypto:
     def test_encrypt_decrypt(self):
-        from haip.crypto import encrypt_field, decrypt_field
+        from haip.crypto import decrypt_field, encrypt_field
         original = "张三"
         enc = encrypt_field(original)
         assert enc != original
@@ -372,12 +371,12 @@ class TestCrypto:
         assert dec == original
 
     def test_empty_value(self):
-        from haip.crypto import encrypt_field, decrypt_field
+        from haip.crypto import decrypt_field, encrypt_field
         assert encrypt_field("") == ""
         assert decrypt_field("") == ""
 
     def test_patient_record(self):
-        from haip.crypto import encrypt_patient_record, decrypt_patient_record
+        from haip.crypto import decrypt_patient_record, encrypt_patient_record
         record = {"name": "张三", "age": 45, "diagnosis": "高血压"}
         enc = encrypt_patient_record(record)
         assert enc["name"] != "张三"
@@ -416,8 +415,9 @@ class TestA2AAuth:
         )
 
     def test_expired_request(self):
-        from haip.a2a.auth import register_agent_secret, sign_a2a_request, verify_a2a_request
         import time
+
+        from haip.a2a.auth import register_agent_secret, sign_a2a_request, verify_a2a_request
         register_agent_secret("pharmacy")
         old_ts = int(time.time()) - 600  # 10 minutes ago
         headers = sign_a2a_request("pharmacy", "test_tool", {"p": "v"}, timestamp=old_ts)

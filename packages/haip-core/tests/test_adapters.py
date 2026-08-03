@@ -1,14 +1,16 @@
 """Tests for haip.adapters — HIS adapter abstraction."""
 
+import inspect
+
 import pytest
+
 from haip.adapters import (
-    MockHISAdapter,
     HISAdapterRegistry,
+    MockHISAdapter,
     PatientRecord,
     get_adapter_registry,
     get_his_adapter,
 )
-import inspect
 
 
 class TestPatientRecord:

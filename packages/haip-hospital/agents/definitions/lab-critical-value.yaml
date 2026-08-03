@@ -74,6 +74,8 @@ guard:
   - Hb<50 未在30分钟内完成输血评估
   - 新生儿总胆红素>342 未在2小时内启动换血评估
   - 血乳酸>4 脓毒症1小时集束化治疗未启动
+  citation:
+    required: true
 ui:
   template: chat-with-role-switcher
   roles:
@@ -86,6 +88,10 @@ ui:
     label: 临床护士
   - id: quality_manager
     label: 质控主管
+  - id: technician
+    label: 技师
+  - id: attending
+    label: 主治医师
   sidebar:
   - category: 危急值判定
     tools:
@@ -116,3 +122,13 @@ stages:
   desc: 处理合格率统计、延迟分析、改进措施
   role_ids:
   - attending
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: deep

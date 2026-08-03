@@ -94,7 +94,8 @@ class AgentTool:
             tool: 具体工具名 (single mode)
             **kwargs: 传递给工具的参数
         """
-        from haip.a2a import call as a2a_call, call_with_loop
+        from haip.a2a import call as a2a_call
+        from haip.a2a import call_with_loop
 
         if self.mode == "task":
             query = kwargs.get("query", "")

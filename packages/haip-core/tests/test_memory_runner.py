@@ -7,14 +7,14 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
-import pytest  # noqa: E402
-from haip.session.memory import MemoryService, MemoryEntry  # noqa: E402
-from haip.session.store import SessionService, Event, AgentSession  # noqa: E402
-from haip.loop.context import InvocationContext  # noqa: E402
-from haip.orchestrator.graph import ClinicalWorkflow, WorkflowBuilder, Node, NodeType  # noqa: E402
-from haip.orchestrator.runner import run_workflow_sync  # noqa: E402
-from haip.llm.mock import MockProvider  # noqa: E402
+import pytest
 
+from haip.llm.mock import MockProvider
+from haip.loop.context import InvocationContext
+from haip.orchestrator.graph import ClinicalWorkflow, Node, NodeType, WorkflowBuilder
+from haip.orchestrator.runner import run_workflow_sync
+from haip.session.memory import MemoryEntry, MemoryService
+from haip.session.store import AgentSession, Event, SessionService
 
 # ── MemoryService ──
 
@@ -180,7 +180,7 @@ class TestWorkflowRunner:
 
     def test_workflow_with_agent(self):
         """Agent 节点工作流."""
-        from haip.agent import DomainPlugin, register, list_all
+        from haip.agent import DomainPlugin, list_all, register
         list_all().clear()
 
         plugin = DomainPlugin(

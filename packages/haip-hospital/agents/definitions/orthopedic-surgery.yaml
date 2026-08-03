@@ -1,4 +1,4 @@
-name: orthopedic-surgery
+﻿name: orthopedic-surgery
 cn_name: 老年髋部骨折精准治疗智能体
 version: 1.1.0
 type: business
@@ -18,7 +18,7 @@ depends_on:
   version: '>=1.0'
 - agent: cardio-risk
   version: '>=1.0'
-- agent: anesthesia-risk
+- agent: anesthesia
   version: '>=1.0'
 - agent: mdt
   version: '>=1.0'
@@ -241,49 +241,49 @@ stages:
 - order: 1
   id: preop-eval
   label: 术前评估
-  desc: GCS/ASA评分、影像学评估、凝血功能、心肺功能筛查、麻醉评估
-  role_ids:
-  - attending
-  - resident
-  - anesthesiologist
+  desc: T2分层时机评估(8因素/48h窗口)、ASA分级、Caprini VTE风险、Harris评分基线、心肺功能
+  role_ids: [attending, resident, anesthesiologist]
 - order: 2
   id: preop-prep
   label: 术前准备
-  desc: 备血交叉配血、预防性抗生素、深静脉穿刺、导尿、备皮
-  role_ids:
-  - attending
-  - resident
-  - head_nurse
+  desc: 备血交叉配血、ERAS术前方案(禁食禁饮/预康复)、MDT会诊(≥75岁或≥3合并症触发)、疼痛管理
+  role_ids: [attending, resident, head_nurse]
 - order: 3
   id: surgery
   label: 手术执行
-  desc: 术中监测、出血量评估、冰冻病理、器械清点
-  role_ids:
-  - attending
-  - surgeon
-  - anesthesiologist
-  - instrument_nurse
+  desc: THA/HA/PFNA/DHS术式选择、术中监测、假体稳定性评估、出血量控制
+  role_ids: [attending, surgeon, anesthesiologist]
 - order: 4
-  id: postop-icu
-  label: 术后监护
-  desc: ICU监测、GCS追踪、ICP管理、引流管管理、电解质平衡
-  role_ids:
-  - attending
-  - icu_doctor
-  - head_nurse
+  id: postop-early
+  label: 术后早期
+  desc: VTE药物+物理预防、感染监测(CRP/WBC/切口)、疼痛管理(多模式镇痛)、电解质管理
+  role_ids: [attending, resident, head_nurse]
 - order: 5
-  id: ward-care
-  label: 病房管理
-  desc: 切口护理、活动指导、营养支持、VTE预防、疼痛管理
-  role_ids:
-  - attending
-  - resident
-  - head_nurse
+  id: rehab
+  label: 康复训练
+  desc: 术后24h首次下床、Harris髋关节评分(1/3/6月评估)、骨质疏松治疗(FRAX评分)、防跌倒教育
+  role_ids: [attending, rehab_therapist, head_nurse]
 - order: 6
   id: followup
-  label: 随访康复
-  desc: 神经功能评分、康复计划制定、术后1/3/6月随访、影像复查
-  role_ids:
-  - attending
-  - rehab_therapist
-  - head_nurse
+  label: 长期随访
+  desc: Harris评分追踪、影像复查(X线/CT)、假体松动/磨损监测、术后1/3/6/12月随访
+  role_ids: [attending, rehab_therapist]
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+debate:
+  enabled: true
+  competitors:
+  - cardio-risk
+  - anesthesia
+  - pain-management
+  - mdt
+  - pharmacy
+  mode: auto
+trust_tier: deep

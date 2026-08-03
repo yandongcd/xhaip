@@ -1,15 +1,17 @@
 """Tests for haip.licensing — license management."""
 
+import json
+import tempfile
+from pathlib import Path
+
 import pytest
+
 from haip.licensing import (
     LicenseInfo,
     LicenseManager,
     generate_license,
     write_license_file,
 )
-import json
-import tempfile
-from pathlib import Path
 
 
 class TestLicenseInfo:

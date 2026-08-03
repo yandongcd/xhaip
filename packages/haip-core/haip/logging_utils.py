@@ -53,9 +53,13 @@ def setup_logging(level: str = "INFO", json_format: bool = True):
             format="%(asctime)s %(levelname)-8s [%(name)s] %(message)s",
             stream=sys.stdout,
         )
+        # Apply sensitive field redaction to the root handler
+        root = logging.getLogger()
+        for handler in root.handlers:
+            handler.setFormatter(SensitiveFormatter(handler.formatter._fmt if handler.formatter else "%(message)s"))
 
 
-def get_logger(name: str = "xhaip") -> "structlog.stdlib.BoundLogger | logging.Logger":
+def get_logger(name: str = "xhaip") -> structlog.stdlib.BoundLogger | logging.Logger:
     """Get a logger instance. Returns structlog if available, else stdlib."""
     if STRUCTLOG_AVAILABLE:
         return structlog.get_logger(name)

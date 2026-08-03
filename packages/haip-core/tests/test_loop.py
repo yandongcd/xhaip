@@ -6,10 +6,10 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
-from haip.loop import AgentLoop, LoopResult  # noqa: E402
-from haip.llm.mock import MockProvider  # noqa: E402
-from haip.tools import BaseTool, ToolResult  # noqa: E402
-from haip.tools.registry import register, list_all  # noqa: E402
+from haip.llm.mock import MockProvider
+from haip.loop import AgentLoop, LoopResult
+from haip.tools import BaseTool, ToolResult
+from haip.tools.registry import list_all, register
 
 
 class EchoTool(BaseTool):

@@ -21,6 +21,7 @@ Usage:
 from __future__ import annotations
 
 import json
+import logging
 import pathlib
 import sqlite3
 import sys
@@ -28,6 +29,8 @@ import time
 from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 import yaml
 
@@ -72,7 +75,7 @@ class MetaHarness:
             from haip.agent import load_from_dir
             load_from_dir(str(self.agents_dir))
         except Exception:
-            pass
+            logger.warning("Agent registry load failed", exc_info=True)
 
     def run_full_cycle(self, run_proposer: bool = True) -> dict[str, Any]:
         """Execute all self-harness stages and return unified report."""
@@ -179,6 +182,7 @@ class MetaHarness:
                 ).fetchall()
             return [dict(r) for r in rows]
         except Exception:
+            logger.debug("Execution history DB read failed", exc_info=True)
             return []
 
     # ═══ STAGE 2: RLAIF Auditor (Constitutional AI-style) ═══
@@ -330,6 +334,7 @@ class MetaHarness:
                     return "pass"
                 return "fail"
             except Exception:
+                logger.debug("Handler import test failed: %s", handler, exc_info=True)
                 return "fail"
 
         if ttype == "stage":
@@ -424,7 +429,7 @@ class MetaHarness:
             if snap_file.exists():
                 return json.loads(snap_file.read_text(encoding="utf-8"))
         except Exception:
-            pass
+            logger.debug("Historical benchmark scores load failed", exc_info=True)
         return []
 
     # ═══ STAGE 5: Multi-Agent Review (AutoGen-style) ═══
@@ -662,6 +667,7 @@ class MetaHarness:
             from haip.patients import load_patients
             return load_patients(agent_name, limit=5, only_compatible=False)
         except Exception:
+            logger.debug("Load patients failed, falling back, agent=%s", agent_name, exc_info=True)
             return self._load_patients_fallback()
 
     def _load_patients_fallback(self) -> list[dict]:
@@ -673,6 +679,7 @@ class MetaHarness:
             all_pts = data.get("patients", []) if isinstance(data, dict) else data
             return all_pts[:5] if isinstance(all_pts, list) else []
         except Exception:
+            logger.warning("Patient JSON fallback parse failed", exc_info=True)
             return []
 
     def _build_runtime_params(self, patient: dict, tool: dict) -> dict:
@@ -763,7 +770,7 @@ class MetaHarness:
                 )
                 conn.commit()
         except Exception:
-            pass
+            logger.debug("Runtime results DB save failed", exc_info=True)
 
     @staticmethod
     def _is_input_validation_error(msg: str) -> bool:
@@ -838,7 +845,7 @@ class MetaHarness:
                         if isinstance(doc, dict) and "rules" in doc:
                             rules.extend(doc["rules"])
                 except Exception:
-                    pass
+                    logger.debug("YAML rules load failed: %s", rf, exc_info=True)
         return rules
 
     def _evaluate_rule_condition(self, rule: dict) -> bool | None:
@@ -870,6 +877,7 @@ class MetaHarness:
                 return self._check_patient_field_exists(field)
             return True
         except Exception:
+            logger.debug("Rule condition eval failed: %s", field, exc_info=True)
             return None
 
     def _ensure_patient_caches(self):
@@ -890,6 +898,7 @@ class MetaHarness:
             self._patient_lab_cache = lab_set
             self._patient_top_cache = top_set
         except Exception:
+            logger.warning("Patient cache build failed", exc_info=True)
             self._patient_lab_cache = set()
             self._patient_top_cache = set()
 
@@ -921,6 +930,7 @@ class MetaHarness:
                     labs_set.update(labs.keys())
             return labs_set
         except Exception:
+            logger.warning("Lab coverage build failed", exc_info=True)
             return set()
 
     # ═══ STAGE 11: Guard Effectiveness (Layer 3b) ═══
@@ -964,6 +974,7 @@ class MetaHarness:
                         silent_bypasses += 1
                         missed += 1
                 except Exception:
+                    logger.debug("Guard scenario test failed, agent=%s", agent_name, exc_info=True)
                     missed_blocks += 1
                     missed += 1
 
@@ -1006,6 +1017,7 @@ class MetaHarness:
         except (FutureTimeout, TimeoutError):
             return "missed"
         except Exception:
+            logger.debug("Guard execution failed", exc_info=True)
             return "missed"
 
     # ═══ STAGE 12: Quality Intelligence (Layer 4) ═══
@@ -1065,6 +1077,7 @@ class MetaHarness:
         try:
             history = json.loads(qpath.read_text(encoding="utf-8")) if qpath.exists() else []
         except Exception:
+            logger.debug("Quality trend JSON load failed", exc_info=True)
             history = []
         history.append(current)
         qpath.write_text(json.dumps(history[-20:], indent=2), encoding="utf-8")
@@ -1085,6 +1098,7 @@ class MetaHarness:
             history = json.loads(qpath.read_text(encoding="utf-8"))
             return history[-1] if history else {}
         except Exception:
+            logger.debug("Previous quality data load failed", exc_info=True)
             return {}
 
     # ═══ UTILITIES ═══
@@ -1219,14 +1233,12 @@ class MetaHarness:
 
 # ═══ API ═══
 
-_meta: MetaHarness | None = None
+_singleton_state: dict = {}
 
 
 def get_meta_harness() -> MetaHarness:
-    global _meta
-    if _meta is None:
-        _meta = MetaHarness()
-    return _meta
+    from haip._singleton import locked_singleton
+    return locked_singleton(MetaHarness, _singleton_state, "meta")
 
 
 if __name__ == "__main__":

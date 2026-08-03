@@ -326,8 +326,8 @@ def _bazett_qtc(qt_ms: float, hr: float) -> float:
 
 PHASE_3_AVAILABLE = False
 try:
-    from PIL import Image  # noqa: F811
     import numpy as np
+    from PIL import Image
     PHASE_3_AVAILABLE = True
 except ImportError:
     Image = None
@@ -517,8 +517,9 @@ def digitize_ecg_image(image_path: str, original_filename: str = "") -> dict[str
                 "signals": {}, "features": {}, "findings": []}
 
     try:
-        img = Image.open(image_path).convert("L")
-        arr = np.array(img)
+        with Image.open(image_path) as pil_img:
+            img = pil_img.convert("L")
+            arr = np.array(img)
         h, w = arr.shape
         binary = arr < 128
 

@@ -68,6 +68,6 @@ ui:
   template: chat-with-role-switcher
   roles:
   - id: attending
-    label: attending
+    label: 主治医师
   - id: nurse
-    label: nurse
+    label: 责任护士

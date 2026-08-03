@@ -1,4 +1,4 @@
-name: cardio-surgery
+﻿name: cardio-surgery
 cn_name: 心血管外科智能体
 version: 1.0.0
 type: business
@@ -70,51 +70,49 @@ ui:
     label: 康复师
 stages:
 - order: 1
-  id: preop-eval
-  label: 术前评估
-  desc: GCS/ASA评分、影像学评估、凝血功能、心肺功能筛查、麻醉评估
-  role_ids:
-  - attending
-  - resident
-  - anesthesiologist
+  id: cardiac-eval
+  label: 心脏评估
+  desc: EuroSCORE II评分、心功能(NYHA)评估、冠脉CTA/造影、颈动脉超声、抗凝方案评估
+  role_ids: [attending, resident, cardiologist]
 - order: 2
-  id: preop-prep
-  label: 术前准备
-  desc: 备血交叉配血、预防性抗生素、深静脉穿刺、导尿、备皮
-  role_ids:
-  - attending
-  - resident
-  - head_nurse
+  id: preop-optimize
+  label: 术前优化
+  desc: 抗凝桥接方案(华法林/NOAC/抗血小板)、血压血糖控制、贫血纠正、预康复训练
+  role_ids: [attending, resident, head_nurse]
 - order: 3
   id: surgery
   label: 手术执行
-  desc: 术中监测、出血量评估、冰冻病理、器械清点
-  role_ids:
-  - attending
-  - surgeon
-  - anesthesiologist
-  - instrument_nurse
+  desc: CPB管理(ACT/温度/流量)、心肌保护(停搏液选择)、血管吻合、止血关胸
+  role_ids: [attending, surgeon, anesthesiologist, perfusionist]
 - order: 4
   id: postop-icu
-  label: 术后监护
-  desc: ICU监测、GCS追踪、ICP管理、引流管管理、电解质平衡
-  role_ids:
-  - attending
-  - icu_doctor
-  - head_nurse
+  label: ICU监护
+  desc: 血流动力学监测、血管活性药管理、心包引流、心律失常管理、机械通气脱机
+  role_ids: [attending, icu_doctor, head_nurse]
 - order: 5
-  id: ward-care
-  label: 病房管理
-  desc: 切口护理、活动指导、营养支持、VTE预防、疼痛管理
-  role_ids:
-  - attending
-  - resident
-  - head_nurse
+  id: ward-recovery
+  label: 病房康复
+  desc: 切口护理、抗凝管理(INR/Anti-Xa监测)、心功能康复、VTE预防
+  role_ids: [attending, resident, head_nurse]
 - order: 6
   id: followup
-  label: 随访康复
-  desc: 神经功能评分、康复计划制定、术后1/3/6月随访、影像复查
-  role_ids:
-  - attending
-  - rehab_therapist
-  - head_nurse
+  label: 随访管理
+  desc: 抗凝方案长期管理、超声心动图复查、术后1/3/6/12月随访、瓣膜功能评估
+  role_ids: [attending, cardiologist]
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+debate:
+  enabled: true
+  competitors:
+  - cardio-risk
+  - anesthesia
+  - pharmacy
+  mode: auto
+trust_tier: deep

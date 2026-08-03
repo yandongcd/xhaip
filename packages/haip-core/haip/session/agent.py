@@ -6,11 +6,19 @@
 """
 
 from haip.session.store import (
-    Event, Session as AgentSession, SessionService, InMemorySessionService,
+    Event,
+    InMemorySessionService,
+    SessionService,
     events_to_messages,
+)
+from haip.session.store import (
+    Session as AgentSession,
 )
 
 __all__ = [
-    "Event", "AgentSession", "SessionService", "InMemorySessionService",
+    "AgentSession",
+    "Event",
+    "InMemorySessionService",
+    "SessionService",
     "events_to_messages",
 ]

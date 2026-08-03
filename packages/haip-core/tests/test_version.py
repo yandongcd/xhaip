@@ -2,8 +2,7 @@
 
 import yaml
 
-from haip.agent import CitationConfig, GuardConfig, DomainPlugin
-
+from haip.agent import CitationConfig, DomainPlugin, GuardConfig
 
 YAML_WITH_CITATION = """
 name: cardiology

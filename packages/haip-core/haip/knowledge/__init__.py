@@ -79,20 +79,23 @@ class KnowledgeStore:
             self.db.commit()
 
     def get_guideline(self, gid: str) -> dict | None:
-        row = self.db.execute("SELECT * FROM guidelines WHERE id = ?", (gid,)).fetchone()
+        with self._lock:
+            row = self.db.execute("SELECT * FROM guidelines WHERE id = ?", (gid,)).fetchone()
         return dict(row) if row else None
 
     def search_guidelines(self, keyword: str) -> list[dict]:
-        rows = self.db.execute(
-            "SELECT * FROM guidelines WHERE name LIKE ? OR abbr LIKE ? OR publisher LIKE ?",
-            (f"%{keyword}%", f"%{keyword}%", f"%{keyword}%"),
-        ).fetchall()
+        with self._lock:
+            rows = self.db.execute(
+                "SELECT * FROM guidelines WHERE name LIKE ? OR abbr LIKE ? OR publisher LIKE ?",
+                (f"%{keyword}%", f"%{keyword}%", f"%{keyword}%"),
+            ).fetchall()
         return [dict(r) for r in rows]
 
     def count_by_trust_level(self) -> dict[str, int]:
-        rows = self.db.execute(
-            "SELECT trust_level, COUNT(*) as cnt FROM guidelines GROUP BY trust_level"
-        ).fetchall()
+        with self._lock:
+            rows = self.db.execute(
+                "SELECT trust_level, COUNT(*) as cnt FROM guidelines GROUP BY trust_level"
+            ).fetchall()
         return {r["trust_level"]: r["cnt"] for r in rows}
 
     # ── 规则 ──
@@ -116,19 +119,21 @@ class KnowledgeStore:
             self.db.commit()
 
     def find_rules(self, decision_point: str) -> list[dict]:
-        rows = self.db.execute(
-            "SELECT * FROM rules WHERE decision_point = ? ORDER BY priority",
-            (decision_point,),
-        ).fetchall()
+        with self._lock:
+            rows = self.db.execute(
+                "SELECT * FROM rules WHERE decision_point = ? ORDER BY priority",
+                (decision_point,),
+            ).fetchall()
         return [dict(r) for r in rows]
 
     def count_rules(self, rule_set_id: str = "") -> int:
-        if rule_set_id:
-            row = self.db.execute(
-                "SELECT COUNT(*) as cnt FROM rules WHERE rule_set_id = ?", (rule_set_id,)
-            ).fetchone()
-        else:
-            row = self.db.execute("SELECT COUNT(*) as cnt FROM rules").fetchone()
+        with self._lock:
+            if rule_set_id:
+                row = self.db.execute(
+                    "SELECT COUNT(*) as cnt FROM rules WHERE rule_set_id = ?", (rule_set_id,)
+                ).fetchone()
+            else:
+                row = self.db.execute("SELECT COUNT(*) as cnt FROM rules").fetchone()
         return row["cnt"] if row else 0
 
     # ── YAML 同步 ──

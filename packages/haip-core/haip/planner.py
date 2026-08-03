@@ -12,9 +12,9 @@ Usage:
 from __future__ import annotations
 
 import pathlib
-import yaml
-from collections import defaultdict
 from typing import Any
+
+import yaml
 
 
 class WorkflowPlanner:
@@ -59,7 +59,7 @@ class WorkflowPlanner:
                 steps.append({
                     "order": i,
                     "agent": dep_agent,
-                    "action": f"协同评估",
+                    "action": "协同评估",
                     "reasoning": f"依赖{self._agent_registry[dep_agent].get('cn_name', dep_agent)}的数据支持",
                 })
 
@@ -133,11 +133,9 @@ class WorkflowPlanner:
         return related[:3]
 
 
-_planner: WorkflowPlanner | None = None
+_singleton_state: dict = {}
 
 
 def get_workflow_planner() -> WorkflowPlanner:
-    global _planner
-    if _planner is None:
-        _planner = WorkflowPlanner()
-    return _planner
+    from haip._singleton import locked_singleton
+    return locked_singleton(WorkflowPlanner, _singleton_state, "planner")

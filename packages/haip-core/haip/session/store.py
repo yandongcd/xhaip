@@ -365,9 +365,6 @@ class InMemorySessionService:
             self._sessions.pop(oldest, None)
             self._access_times.pop(oldest, None)
 
-    def _touch(self, session_id: str) -> None:
-        self._access_times[session_id] = time.time()
-
     def create_session(self, app_name="xhaip", user_id="default",
                        state=None, session_id=None) -> AgentSession:
         sid = session_id or f"ses_{uuid.uuid4().hex[:12]}"

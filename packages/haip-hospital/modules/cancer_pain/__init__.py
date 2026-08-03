@@ -7,6 +7,18 @@ from __future__ import annotations
 
 from typing import Any
 
+from haip.togaf.knowledge_agent import KnowledgeAgent
+
+_agent = KnowledgeAgent(agent_name="cancer-pain", department="疼痛科")
+_GUIDELINES = [
+    "WHO Analgesic Ladder 镇痛三阶梯 (2018)",
+    "NCCN Adult Cancer Pain Guidelines (2024)",
+    "EAPC 欧洲姑息治疗学会阿片类药物指南",
+    "中国癌症疼痛诊疗规范 (2023)",
+    "NMPA 麻醉药品/精神药品管理规范",
+]
+_agent.rule_engine.load_all()
+
 OPIOID_DRUGS = ["吗啡", "羟考酮", "芬太尼", "曲马多", "哌替啶", "美沙酮"]
 BENZO_DRUGS = ["地西泮", "阿普唑仑", "劳拉西泮", "咪达唑仑", "氯硝西泮"]
 NSAID_DRUGS = ["布洛芬", "双氯芬酸", "塞来昔布", "吲哚美辛", "萘普生", "洛索洛芬", "氟比洛芬"]

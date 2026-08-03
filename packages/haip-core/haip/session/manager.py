@@ -12,7 +12,7 @@ from __future__ import annotations
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -53,7 +53,7 @@ class SessionManager:
         username: str,
         ip_address: str = "",
         user_agent: str = "",
-        ttl: Optional[int] = None,
+        ttl: int | None = None,
     ) -> SessionRecord:
         self._maybe_cleanup()
 
@@ -81,7 +81,7 @@ class SessionManager:
         self._by_user.setdefault(user_id, []).append(session_id)
         return session
 
-    def get(self, session_id: str) -> Optional[SessionRecord]:
+    def get(self, session_id: str) -> SessionRecord | None:
         session = self._sessions.get(session_id)
         if session is None:
             return None

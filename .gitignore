@@ -19,5 +19,14 @@ xhaip.db
 .env
 .env.local
 .env.production
+docker/.env
 data/*.json
 data/*.db
+
+# runtime artifacts (derived)
+server.log
+server.err.log
+.openharness/runtime/
+xhaip_memory.db
+data/*.db-shm
+data/*.db-wal

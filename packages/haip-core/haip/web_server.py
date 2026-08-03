@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -18,9 +19,9 @@ sys.path.insert(0, str(PROJECT_ROOT / "packages" / "haip-hospital" / "modules"))
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from haip.a2a import call as a2a_call
@@ -202,7 +203,8 @@ async def lifespan(app: FastAPI):
     try:
         from haip.session import SessionService
         if hasattr(SessionService, 'close'):
-            await SessionService.close()  # type: ignore[union-attr]
+            if SessionService is not None:
+                await SessionService.close()
     except Exception:
         logger.debug("Session service 关闭异常", exc_info=True)
 
@@ -336,21 +338,19 @@ def meta_harness_report():
 
 # ---- Autonomous Decision ----
 @app.post("/api/decide/{agent_name}")
-async def decide(agent_name: str, request: Request):
+def decide(agent_name: str, payload: dict = Body(default_factory=dict)):
     """自主决策: POST patient data, get clinical decision."""
     from haip.decision import get_decision_engine
-    patient = await request.json()
     engine = get_decision_engine()
-    return engine.decide(agent_name, patient)
+    return engine.decide(agent_name, payload)
 
 # ---- Intelligent Planning ----
 @app.post("/api/plan/{agent_name}")
-async def plan_workflow(agent_name: str, request: Request):
+def plan_workflow(agent_name: str, payload: dict = Body(default_factory=dict)):
     """智能规划: POST patient data, get dynamic workflow plan."""
     from haip.planner import get_workflow_planner
-    patient = await request.json()
     planner = get_workflow_planner()
-    return planner.plan(agent_name, patient)
+    return planner.plan(agent_name, payload)
 
 # ---- Agent Memory & Insights ----
 @app.get("/api/memory/insights/{agent_name}")
@@ -369,16 +369,18 @@ def global_insights():
 _togaf_cache: dict | None = None
 _togaf_cache_time: float = 0.0
 _togaf_cache_ttl: float = 30.0
+_togaf_cache_lock = threading.Lock()
 
 
 @app.get("/api/togaf/governance")
 def togaf_governance():
-    """TOGAF架构治理视图 — Agent复用度、架构合规、原则应用 (30s mtime 缓存)."""
+    """TOGAF架构治理视图 — Agent复用度、架构合规、原则应用 (30s TTL 缓存)."""
     global _togaf_cache, _togaf_cache_time
 
     now = time.monotonic()
-    if _togaf_cache is not None and now - _togaf_cache_time < _togaf_cache_ttl:
-        return _togaf_cache
+    with _togaf_cache_lock:
+        if _togaf_cache is not None and now - _togaf_cache_time < _togaf_cache_ttl:
+            return _togaf_cache
 
     from collections import Counter
     from pathlib import Path as _Pth
@@ -426,8 +428,9 @@ def togaf_governance():
         "principles": principles,
         "compliance_score": 100,
     }
-    _togaf_cache = result
-    _togaf_cache_time = now
+    with _togaf_cache_lock:
+        _togaf_cache = result
+        _togaf_cache_time = now
     return result
 
 # ---- Health Check ----
@@ -493,8 +496,8 @@ def health_check():
     try:
         from haip.learning.store import FeedbackStore  # type: ignore[import-untyped]
         checks["learning"] = "ok" if getattr(FeedbackStore, '_writable', False) else "disabled"
-    except (ImportError, AttributeError, Exception):
-        pass
+    except (ImportError, AttributeError):
+        pass  # optional subsystem not installed / not yet initialized
 
     return checks
 
@@ -626,7 +629,7 @@ def agent_info(name: str):
 
 
 @app.post("/api/call")
-async def call_tool(body: CallRequest):
+def call_tool(body: CallRequest):
     """调用 Agent 工具。
 
     特殊工具名 "reason" 触发 ReAct AgentLoop 模式。
@@ -744,20 +747,19 @@ async def stream_call(body: StreamRequest):
 # ── Session API (v1.2) ──
 
 @app.post("/api/sessions")
-async def create_session(request: Request):
+def create_session(payload: dict = Body(default_factory=dict)):
     """创建新会话. POST body: {"user_id": "doctor1", "state": {...}}"""
     from haip.session.store import SessionService
-    data = await request.json()
     svc = SessionService(_get_session_db_path())
     s = svc.create_session(
-        user_id=data.get("user_id", "default"),
-        state=data.get("state"),
+        user_id=payload.get("user_id", "default"),
+        state=payload.get("state"),
     )
     return {"session_id": s.id, "created_at": s.last_update}
 
 
 @app.get("/api/sessions/{session_id}")
-async def get_session(session_id: str, user_id: str = "default"):
+def get_session(session_id: str, user_id: str = "default"):
     """获取会话详情（含 events 和 state）."""
     from haip.session.store import SessionService
     svc = SessionService(_get_session_db_path())
@@ -774,7 +776,7 @@ async def get_session(session_id: str, user_id: str = "default"):
 
 
 @app.get("/api/sessions")
-async def list_sessions(user_id: str = "default", limit: int = 20):
+def list_sessions(user_id: str = "default", limit: int = 20):
     """列出用户的会话列表."""
     from haip.session.store import SessionService
     svc = SessionService(_get_session_db_path())
@@ -782,15 +784,14 @@ async def list_sessions(user_id: str = "default", limit: int = 20):
 
 
 @app.post("/api/sessions/{session_id}/rewind")
-async def rewind_session(session_id: str, request: Request):
+def rewind_session(session_id: str, payload: dict = Body(default_factory=dict)):
     """回滚会话到指定事件数. POST body: {"keep_events": 5}"""
     from haip.session.store import SessionService
-    data = await request.json()
     svc = SessionService(_get_session_db_path())
     s = svc.get_session(session_id)
     if s is None:
         raise HTTPException(status_code=404, detail={"error": "Session not found"})
-    svc.rewind_session(s, data.get("keep_events", 0))
+    svc.rewind_session(s, payload.get("keep_events", 0))
     return {"session_id": s.id, "events_remaining": len(s.events)}
 
 
@@ -801,14 +802,14 @@ def _get_session_db_path() -> str:
 
 
 @app.post("/api/loop/demo")
-async def loop_demo(request: Request):
+def loop_demo():
     """Loop Engineering 演示 — 使用 Mock LLM 展示 ReAct 多步推理过程。
     
     返回每步的思考、工具调用和最终综合答案。
     """
     from haip.a2a import call as _a2a_call
     from haip.agent import get as _get_agent
-    from haip.llm import ChatResponse, ToolCall
+    from haip.llm import DEFAULT_MAX_TOKENS, ChatResponse, ToolCall
     from haip.llm.mock import MockProvider
 
     # 模拟 LLM 的多步推理
@@ -817,7 +818,7 @@ async def loop_demo(request: Request):
             super().__init__({})
             self._step = [0]
 
-        def chat(self, messages, tools=None, temperature=0.3, max_tokens=4096):
+        def chat(self, messages, tools=None, temperature=0.3, max_tokens=DEFAULT_MAX_TOKENS):
             step = self._step[0]
             self._step[0] += 1
             tool_names = [t["name"] for t in (tools or [])]
@@ -927,7 +928,7 @@ def _get_citation_engine():
 
 
 @app.post("/api/guard")
-async def guard_verify(body: GuardRequest):
+def guard_verify(body: GuardRequest):
     """对 Agent 输出执行 Guard 安全验证。需人工复核时自动创建签核单。"""
     output = body.output
     scenario = body.scenario
@@ -976,23 +977,22 @@ def signoff_by_patient(patient_id: str, limit: int = 100):
 
 
 @app.post("/api/signoff/{signoff_id}/decision")
-async def signoff_decide(signoff_id: str, request: Request):
+def signoff_decide(signoff_id: str, request: Request, payload: dict = Body(default_factory=dict)):
     """签核决定: {"decision": "approved|rejected", "reason": "..."}
 
     签核人身份强制取自认证上下文 (request.state.current_user), 请求体的
     reviewer_id 仅在无认证上下文时 (AUTH_ENABLED=false 的开发模式) 生效 —
     防止伪造签核人 (商用红线)。
     """
-    data = await request.json()
     user = getattr(request.state, "current_user", None) or {}
-    reviewer = user.get("user_id") or data.get("reviewer_id", "")
+    reviewer = user.get("user_id") or payload.get("reviewer_id", "")
     from haip.signoff import get_signoff_manager
     try:
         return get_signoff_manager().decide(
             signoff_id,
             reviewer_id=reviewer,
-            decision=data.get("decision", ""),
-            reason=data.get("reason", ""))
+            decision=payload.get("decision", ""),
+            reason=payload.get("reason", ""))
     except ValueError as e:
         raise HTTPException(status_code=404, detail={"error": str(e)})
 
@@ -1199,67 +1199,58 @@ def process_ui(request: Request, name: str):
 # ── Orthopedic v1 API ──
 
 @app.post("/api/v1/orthopedic/classify")
-async def ortho_classify(request: Request):
+def ortho_classify(payload: dict = Body(default_factory=dict)):
     """骨折分型 (Garden/Evans/AO)"""
-    data = await request.json()
     from modules.orthopedics import assess
-    return assess(**data)
+    return assess(**payload)
 
 @app.post("/api/v1/orthopedic/assess")
-async def ortho_assess(request: Request):
+def ortho_assess(payload: dict = Body(default_factory=dict)):
     """术前综合评估"""
-    data = await request.json()
     from modules.orthopedics import evaluate
-    return evaluate(**data)
+    return evaluate(**payload)
 
 @app.post("/api/v1/orthopedic/plan")
-async def ortho_plan(request: Request):
+def ortho_plan(payload: dict = Body(default_factory=dict)):
     """手术方案推荐"""
-    data = await request.json()
     from modules.orthopedics import plan
-    return plan(**data)
+    return plan(**payload)
 
 @app.post("/api/v1/orthopedic/timing")
-async def ortho_timing(request: Request):
+def ortho_timing(payload: dict = Body(default_factory=dict)):
     """T2 手术时机决策"""
-    data = await request.json()
     from modules.orthopedics import evaluate_timing
-    return evaluate_timing(**data)
+    return evaluate_timing(**payload)
 
 @app.post("/api/v1/orthopedic/complications")
-async def ortho_complications(request: Request):
+def ortho_complications(payload: dict = Body(default_factory=dict)):
     """并发症风险预测"""
-    data = await request.json()
     from modules.orthopedics import predict_complications
-    return predict_complications(**data)
+    return predict_complications(**payload)
 
 @app.post("/api/v1/orthopedic/mdt")
-async def ortho_mdt(request: Request):
+def ortho_mdt(payload: dict = Body(default_factory=dict)):
     """MDT 多学科会诊聚合"""
-    data = await request.json()
     from modules.orthopedics.mdt import mdt_aggregate
-    return mdt_aggregate(**data)
+    return mdt_aggregate(**payload)
 
 @app.post("/api/v1/orthopedic/pain")
-async def ortho_pain(request: Request):
+def ortho_pain(payload: dict = Body(default_factory=dict)):
     """疼痛评估"""
-    data = await request.json()
     from modules.pain_management import assess_pain
-    return assess_pain(**data)
+    return assess_pain(**payload)
 
 @app.post("/api/v1/orthopedic/rehab")
-async def ortho_rehab(request: Request):
+def ortho_rehab(payload: dict = Body(default_factory=dict)):
     """康复跟踪"""
-    data = await request.json()
     from modules.orthopedics.extended import rehab_track
-    return rehab_track(**data)
+    return rehab_track(**payload)
 
 @app.post("/api/v1/orthopedic/followup")
-async def ortho_followup(request: Request):
+def ortho_followup(payload: dict = Body(default_factory=dict)):
     """随访计划"""
-    data = await request.json()
     from modules.orthopedics import followup_plan
-    return followup_plan(**data)
+    return followup_plan(**payload)
 
 
 # ── TOGAF Architecture Dashboard ──

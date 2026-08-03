@@ -11,9 +11,12 @@ Strategies:
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import yaml
+
+logger = logging.getLogger(__name__)
 
 from haip.rules_engine.evaluator import evaluate
 from haip.rules_engine.models import (
@@ -80,6 +83,7 @@ def evaluate_rules(
             if matched:
                 applicable.append(rule)
         except Exception:
+            logger.debug("Rule matching failed: %s", rule.id, exc_info=True)
             continue
 
     if not applicable:
@@ -184,8 +188,7 @@ def _rank_rules(rules: list[Rule], context: EvaluationContext) -> list[Rule]:
             src = get_source(e.source_id)
             if src:
                 sp = src.admin_priority
-                if sp < source_priority:
-                    source_priority = sp
+                source_priority = min(source_priority, sp)
 
         return (source_priority, certainty_score, r.priority)
 

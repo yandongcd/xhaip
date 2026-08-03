@@ -25,9 +25,35 @@ PATIENTS_PATH = Path(__file__).parent.parent / 'packages' / 'haip-hospital' / 'd
 FEMALE_ONLY_DIAGNOSES = [
     '子宫肌瘤', '子宫肌瘤栓塞', '子宫肌瘤 UAE术后', '子宫肌瘤UAE术后',
     '异位妊娠', '宫外孕', '剖宫产', '卵巢囊肿', '卵巢肿瘤',
-    '宫颈癌', '宫颈病变', '子宫内膜癌', '盆腔炎',
-    '妊娠', '分娩', '流产', '月经', '更年期',
-    '子宫腺肌症', '子宫腺肌瘤',
+    '宫颈癌', '宫颈病变', '宫颈上皮内瘤变', '子宫内膜癌', '盆腔炎',
+    '妊娠', '分娩', '流产', '月经', '更年期', '产前检查', '产前保健',
+    '妊娠期高血压', '妊娠期糖尿病', '子宫腺肌症', '子宫腺肌瘤',
+]
+
+# Pregnancy-related diagnoses — patient must be female of reproductive age
+PREGNANCY_DIAGNOSES = [
+    '产前检查', '产前保健', '异位妊娠', '宫外孕', '妊娠期高血压',
+    '妊娠期糖尿病', '剖宫产', '分娩', '流产',
+]
+PREGNANCY_AGE_RANGE = (15, 50)
+
+# Gynecology diagnoses — female of reproductive age (15-49)
+GYNECOLOGY_AGE_RULES = [
+    ('宫颈上皮内瘤变', (15, 49)),
+    ('子宫肌瘤', (15, 49)),
+    ('卵巢囊肿', (15, 49)),
+    ('盆腔炎', (15, 49)),
+]
+
+# Geriatric diagnoses — patients must be older than the lower bound.
+# Ordered most-specific first: '老年' is the catch-all fallback.
+GERIATRIC_AGE_RULES = [
+    ('老年性白内障', (50, 95)),
+    ('年龄相关黄斑变性', (50, 95)),
+    ('骨质疏松症', (45, 95)),
+    ('股骨颈骨折', (55, 95)),
+    ('股骨转子间骨折', (55, 95)),
+    ('老年', (55, 95)),
 ]
 
 # Male breast cancer is possible (~1% of breast cancers)
@@ -57,6 +83,61 @@ def check_gender_diagnosis(patient):
         for keyword in FEMALE_ONLY_DIAGNOSES:
             if keyword in diagnosis:
                 return 'fail', f"Male patient with female-only diagnosis: {keyword}"
+
+    return 'pass', ''
+
+
+def check_age_diagnosis(patient):
+    """Check if age is plausible for the department and diagnosis."""
+    age = patient.get('age', 0)
+    diagnosis = str(patient.get('diagnosis', ''))
+    gender = patient.get('gender', '')
+
+    for keyword in PREGNANCY_DIAGNOSES:
+        if keyword in diagnosis:
+            lo, hi = PREGNANCY_AGE_RANGE
+            if gender != 'F':
+                return 'fail', f"Pregnancy diagnosis '{keyword}' with gender '{gender}'"
+            if not lo <= age <= hi:
+                return 'fail', f"Pregnancy diagnosis '{keyword}' at age {age} (out of range {lo}-{hi})"
+            return 'pass', ''
+
+    for keyword, (lo, hi) in GYNECOLOGY_AGE_RULES:
+        if keyword in diagnosis and not lo <= age <= hi:
+            return 'fail', f"Diagnosis '{keyword}' at age {age} (out of range {lo}-{hi})"
+
+    for keyword, (lo, hi) in GERIATRIC_AGE_RULES:
+        if keyword in diagnosis:
+            if not lo <= age <= hi:
+                return 'fail', f"Diagnosis '{keyword}' at age {age} (out of range {lo}-{hi})"
+            break
+
+    return 'pass', ''
+
+
+# Department age windows (by department name)
+DEPT_AGE_RULES = [
+    ('新生儿科', (0, 1)),
+    ('儿科', (0, 18)),
+    ('妇产科', (15, 49)),
+    ('老年病科', (55, 95)),
+]
+
+# Departments where patients must be female
+FEMALE_ONLY_DEPARTMENTS = ['妇产科']
+
+
+def check_age_department(patient):
+    """Check if age is plausible for the department."""
+    age = patient.get('age', 0)
+    department = str(patient.get('department', ''))
+
+    for dept, (lo, hi) in DEPT_AGE_RULES:
+        if department == dept and not lo <= age <= hi:
+            return 'fail', f"Department '{dept}' patient at age {age} (out of range {lo}-{hi})"
+
+    if department in FEMALE_ONLY_DEPARTMENTS and patient.get('gender', '') != 'F':
+        return 'fail', f"Department '{department}' patient with gender '{patient.get('gender', '')}'"
 
     return 'pass', ''
 
@@ -139,6 +220,8 @@ def main():
 
     checks = [
         ('gender-diagnosis', check_gender_diagnosis),
+        ('age-diagnosis', check_age_diagnosis),
+        ('age-department', check_age_department),
         ('template-residue', check_template_residue),
         ('date-consistency', check_date_consistency),
         ('lab-fields', check_lab_fields),

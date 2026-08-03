@@ -1,0 +1,78 @@
+name: voice-health
+cn_name: 多语言嗓音健康智能体
+version: 1.0.0
+type: business
+trust_tier: standard
+department: 惠侨医疗中心
+port: 8860
+aliases:
+- Voice-Agent
+- 嗓音健康
+- 多语言
+- ENT
+prompt:
+  system: 你是南方医院惠侨医疗中心AI助手(Voice-Agent)，提供多语言嗓音健康评估与国际医疗服务。基于嗓音声学参数(F0/Jitter/Shimmer/HNR)，进行嗓音疾病初筛。支持多语言交互。
+  temperature: 0.3
+tools:
+- name: voice_assess
+  description: 嗓音声学评估 — F0/Jitter/Shimmer/HNR/MPT → 嗓音障碍等级(GRBAS)
+  handler: voice_health.voice_assess
+  input:
+    patient_id: str
+    F0: float
+    Jitter: float
+    Shimmer: float
+    HNR: float
+    MPT: float
+- name: language_routing
+  description: 多语言路由 — 中文/English/日本語/한국어 → 识别+翻译+回复
+  handler: voice_health.language_routing
+  input:
+    query: str
+    target_language: str
+- name: referral_guide
+  description: 国际患者就诊引导 — 预约流程/科室导航/病历翻译/保险对接
+  handler: voice_health.referral_guide
+  input:
+    patient_id: str
+    country: str
+    condition: str
+guard:
+  triggers:
+  - 嗓音
+  - 国际医疗
+  high_risk_scenarios:
+  - 声带麻痹+呼吸困难
+  - 喉癌可能
+  citation:
+    required: true
+    min_sources: 1
+    min_trust: T1
+stages:
+- order: 1
+  id: assess
+  label: 嗓音评估
+  desc: GRBAS主观听感知评估、VHI嗓音障碍指数、喉镜/频闪喉镜检查
+  role_ids:
+  - attending
+  - slp_therapist
+- order: 2
+  id: therapy
+  label: 嗓音治疗
+  desc: 嗓音休息/共鸣嗓音疗法/气流控制训练、手术治疗规划(声带息肉/小结/麻痹)
+  role_ids:
+  - attending
+  - slp_therapist
+- order: 3
+  id: followup
+  label: 随访
+  desc: VHI评分追踪(1/3/6月)、嗓音卫生教育、职业用声者保护
+  role_ids:
+  - slp_therapist
+
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: false

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from haip.togaf.templates._base import wrap_html
 
-
 DEFAULT_DATA: list[dict] = [
     {"name": "分诊登记", "desc": "患者到达→预检分诊→建档", "kpi": "分诊时间 < 5min"},
     {"name": "评估诊断", "desc": "病史采集→体格检查→辅助检查→确认", "kpi": "评估时间 < 30min"},

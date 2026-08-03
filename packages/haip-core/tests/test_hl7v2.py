@@ -1,11 +1,12 @@
 """Tests for haip.hl7v2 — HL7 v2.x message parser."""
 
 import pytest
+
 from haip.hl7v2 import (
-    parse_hl7,
     HL7Message,
     build_hl7_adt,
     build_hl7_oru,
+    parse_hl7,
     validate_hl7,
 )
 

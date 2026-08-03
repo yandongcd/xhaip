@@ -62,6 +62,45 @@ diagnoses = {
 
 SURNAMES = '李王张刘陈杨赵黄周吴徐孙马胡朱郭何罗林郑梁谢宋唐韩冯于董萧程曹袁邓许傅沈曾彭吕苏卢蒋蔡贾丁魏薛叶阎余潘杜戴夏钟汪田任姜范方石姚谭廖邹熊金陆郝孔白崔康毛邱秦江史顾侯邵孟龙万段雷钱汤尹黎易常武乔贺赖龚文'
 
+# Obstetric diagnoses must be female and of reproductive age
+PREGNANCY_KEYWORDS = ['异位妊娠', '产前检查', '产前保健', '妊娠', '分娩', '剖宫产', '流产']
+# Gynecology diagnoses — female of reproductive age (15-49)
+GYNECOLOGY_AGE_RANGES = [
+    ('宫颈上皮内瘤变', (15, 49)),
+    ('子宫肌瘤', (15, 49)),
+    ('卵巢囊肿', (15, 49)),
+    ('盆腔炎', (15, 49)),
+]
+# Geriatric diagnoses — older patients only (most-specific first)
+GERIATRIC_AGE_RANGES = [
+    ('老年性白内障', (50, 95)),
+    ('年龄相关黄斑变性', (50, 95)),
+    ('骨质疏松症', (45, 95)),
+    ('股骨颈骨折', (55, 95)),
+    ('股骨转子间骨折', (55, 95)),
+    ('老年', (55, 95)),
+]
+
+def plausible_age_gender(dept_name: str, diagnosis: str) -> tuple[int, str]:
+    """Return (age, gender) plausible for the department and diagnosis."""
+    if dept_name == '新生儿科':
+        return random.randint(0, 1), random.choice(['M', 'F'])
+    if dept_name == '儿科':
+        return random.randint(0, 18), random.choice(['M', 'F'])
+    if dept_name == '妇产科':
+        if any(kw in diagnosis for kw in PREGNANCY_KEYWORDS):
+            return random.randint(18, 45), 'F'
+        for keyword, (lo, hi) in GYNECOLOGY_AGE_RANGES:
+            if keyword in diagnosis:
+                return random.randint(lo, hi), 'F'
+        return random.randint(15, 49), 'F'
+    if dept_name == '老年病科':
+        return random.randint(55, 95), random.choice(['M', 'F'])
+    for keyword, (lo, hi) in GERIATRIC_AGE_RANGES:
+        if keyword in diagnosis:
+            return random.randint(lo, hi), random.choice(['M', 'F'])
+    return random.randint(22, 84), random.choice(['M', 'F'])
+
 def random_labs(dept, dx):
     labs = {}
     base = {'Hb':(90,165,1),'WBC':(3.5,18,1),'CRP':(1,160,1),'ALT':(12,130,1),'Cr':(45,280,1),'GLU':(3.5,15,1),'K+':(3.3,5.9,1)}
@@ -110,8 +149,7 @@ for dept_name, agent_id in dept_agents.items():
     
     for i in range(needed):
         diagnosis = random.choice(dx_list)
-        age = random.randint(22, 84)
-        gender = random.choice(['M', 'F'])
+        age, gender = plausible_age_gender(dept_name, diagnosis)
         
         compat = [agent_id, 'medical-record']
         if any(k in dept_name for k in ['外科','移植','急诊','重症']):

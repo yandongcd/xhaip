@@ -1,59 +1,104 @@
-# Task 1 Report: 扩充 his_adapter 患者主数据到 5 位
+# Task 1 Report: 根目录 sitecustomize.py 自举 (TDD)
 
-## 实现摘要
+## What I implemented
 
-将 `MOCK_PATIENT_DB` 从 2 位扩展至 5 位患者 (P001-P005)，每患者补全 `labs`(8 项检验)、`conditions`、`meds`、`fracture_type`、`procedure` 结构化字段。
+- **`sitecustomize.py`** (repo root, sibling of `pyproject.toml`): Python startup hook that
+  inserts 3 internal package paths into `sys.path` in order, dedup-checking each and
+  skipping non-existent dirs:
+  `packages/haip-core`, `packages/haip-hospital`, `packages/haip-hospital/modules`.
+  Code is verbatim from the task brief (module docstring included, no extra comments).
+- **`tests/test_self_contained.py`**: new regression test file per the brief — includes the
+  scan infrastructure (`_FORBIDDEN_PATTERNS`, `_SKIP_DIRS`, `_SKIP_PREFIXES`,
+  `_TEXT_SUFFIXES`, `_iter_text_files`) that Task 7 will reuse, plus the single
+  injection-assertion test for this task:
+  `test_sitecustomize_injects_internal_paths` (import + reload `sitecustomize`, then assert
+  all 3 paths present in `sys.path`).
 
-## 文件变更
+## TDD Evidence
 
-| 文件 | 操作 | 说明 |
-|------|------|------|
-| `packages/haip-hospital/modules/orthopedics/his_adapter.py` | MODIFY | 替换 MOCK_PATIENT_DB (L25-86)，2 位 → 5 位 + 结构化字段 |
-| `tests/integration/test_ortho_portal.py` | CREATE | 6 个测试: 3 数据存在性 + 3 引擎断言 |
+### RED
 
-## TDD 证据
-
-### RED (Step 2)
+Command:
 ```
-python -m pytest tests/integration/test_ortho_portal.py::TestPatientData -q
-3 failed — P003 missing / labs key不存在
+python -m pytest tests/test_self_contained.py::test_sitecustomize_injects_internal_paths -q
+```
+Output:
+```
+F  [100%]
+E   ModuleNotFoundError: No module named 'sitecustomize'
+<frozen importlib._bootstrap>:1335: ModuleNotFoundError
+1 failed, 2 warnings in 0.14s
+```
+Why expected: `sitecustomize.py` did not exist in the repo root (verified with
+`Test-Path sitecustomize.py` → False), so `importlib.import_module("sitecustomize")`
+cannot resolve. The failure is at the exact intended line, confirming the test
+exercises the real mechanism.
+
+(Note: the 2 warnings were a pre-existing `.pytest_cache` WinError 183 race in this
+environment, unrelated to the task; failure cause was genuinely the ModuleNotFoundError.)
+
+### GREEN
+
+Command:
+```
+python -m pytest tests/test_self_contained.py::test_sitecustomize_injects_internal_paths -q -p no:cacheprovider
+```
+Output:
+```
+.  [100%]
+1 passed in 0.06s
 ```
 
-### GREEN (Step 5)
+### Zero-install bootstrap verification
+
+Command:
 ```
-python -m pytest tests/integration/test_ortho_portal.py::TestPatientData -q
-3 passed
+python -c "import haip; print(haip.__file__)"
+```
+Output:
+```
+D:\dst\projects\xhaip\packages\haip-core\haip\__init__.py
+```
+Confirmed `haip` resolves from the repo-internal path, not site-packages — i.e. the
+`pip install -e packages/haip-core` requirement is eliminated at runtime.
+
+### Quality gate
+
+```
+ruff check sitecustomize.py tests/test_self_contained.py
+→ All checks passed!
 ```
 
-### GREEN (Step 6 — urgency 断言)
-```
-python -m pytest tests/integration/test_ortho_portal.py -q
-6 passed
-```
+## Files changed
 
-引擎实测:
-```
-P001: urgency=emergency  overall_risk=moderate
-P002: urgency=emergency  overall_risk=moderate
-P003: urgency=elective   overall_risk=moderate
-P004: urgency=emergency  overall_risk=low
-P005: urgency=urgent     overall_risk=high
-```
-- P003 cTnI=0.08 > 0.04 → elective ✓
-- P005 高龄(85)+痴呆 → fall_delirium=high → overall_risk=high ✓
-- P002/P004 无触发器 → emergency ✓
+| File | Action |
+|------|--------|
+| `sitecustomize.py` | added (repo root) |
+| `tests/test_self_contained.py` | added |
 
-## query_patient 透传确认
+Commit: `6e99048` — "feat: 根目录 sitecustomize 自举, 免 pip install 即可运行 (self-contained)"
+(exact message from brief). Only these 2 files staged (`git add sitecustomize.py
+tests/test_self_contained.py`); the many pre-existing WIP changes were not touched.
 
-`query_patient`(L81-100) 使用 `return {**patient, ...}` 已自动透传全部新字段，无需修改。
+## Self-review
 
-## 自审
+- **Completeness:** all 6 brief steps executed: failing test → RED confirmed → implement →
+  GREEN confirmed → zero-install `import haip` verified → committed with exact message.
+- **Quality:** code is verbatim from the brief; no comments beyond the module docstring;
+  ruff clean (line length 100 honored — longest lines are the multi-line tuple literals).
+- **Discipline:** only the two task files staged/committed, no `-A`/`.`; working tree's
+  pre-existing WIP changes left untouched.
+- **Testing:** one focused test asserting all 3 internal dirs are injected after a reload,
+  which guards against both missing paths and stale-order regressions.
 
-- 代码遵循 `**patient` 展开模式，与现有风格一致
-- 患者数据覆盖 3 种 urgency 级别 (emergency/urgent/elective)
-- 并发症覆盖 3 种风险等级 (low/moderate/high)
-- P001 当前为 emergency（非 brief 标注的 urgent），brief Step 6 测试不含 P001=urgent 断言，数据满足全部 6 个测试要求
+## Issues / concerns
 
-## 隐患
-
-无。
+- `sitecustomize.py` only activates when the repo root is on `sys.path` (e.g. running
+  `python -m ...` or `python -c` from the root). This is inherent to the mechanism and
+  documented in the module docstring; Task 7's broader scan test will cover repo-wide
+  compliance, and the design doc's chosen approach (方案 A) already accounts for this.
+- Pre-existing `.pytest_cache` WinError 183 warning in this environment is unrelated to
+  this task (bypassed with `-p no:cacheprovider` for the GREEN run).
+- The test file currently contains the shared scan helpers (`_iter_text_files` etc.) that
+  only get exercised in Task 7 — deliberate per the brief's exact code block, so Task 7
+  only appends scan tests.

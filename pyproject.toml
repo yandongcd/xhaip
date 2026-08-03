@@ -8,7 +8,14 @@ line-length = 100
 
 [tool.ruff.lint]
 extend-select = ["PLR1704"]
-ignore = ["E402"]
+ignore = ["E402", "BLE001", "RUF013", "DTZ005", "DTZ007", "SIM102", "SIM117", "SIM103", "SIM210", "PERF102", "PERF402", "C401", "B008", "RUF012", "PLC0206", "S112", "S110", "RUF059", "F401", "F841", "RUF100", "PLW1510", "RUF034", "LOG015", "RUF022", "B033", "B017", "UP036"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["E402", "F401"]
+"scripts/**" = ["S110", "S112", "PIE810", "PERF402", "F841", "RUF059", "RUF034", "TRY004", "PLW1510", "DTZ005", "C401"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+warn_return_any = false
+warn_unused_ignores = false

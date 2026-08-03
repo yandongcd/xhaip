@@ -1,0 +1,219 @@
+# 临床检验危急值阈值规则 — 30项核心指标
+# 来源: WS/T 405-2012 临床检验危急值报告与处置规范
+# T1: 国家卫生行业标准 | T2: 南方医院检验科适配
+
+rule_type: alert
+department: 检验医学科
+capability: cap-l3-critical-value
+business_process: bp-critical-value-notification
+guideline: WS/T 405-2012 临床检验危急值报告与处置规范
+stakeholder: 检验科+临床科室+护理
+version: "1.0.0"
+
+rules:
+  # ── 电解质 ──
+  - id: cv-potassium
+    description: 血钾危急值
+    condition:
+      field: lab_results.K
+      operator: or_ranges
+    result:
+      thresholds:
+        low_lt_2_8: "🔴 危急值 — 严重低钾: <2.8 mmol/L → 心律失常/呼吸肌麻痹"
+        low_2_8_3_0: "🟡 低钾: 2.8-3.0 mmol/L → 需补钾"
+        high_gt_6_2: "🔴 危急值 — 严重高钾: >6.2 mmol/L → 心脏骤停风险"
+        high_5_8_6_2: "🟡 高钾: 5.8-6.2 mmol/L → 需降钾治疗"
+      action: 立即电话通知临床科室 + 10min内确认
+
+  - id: cv-sodium
+    description: 血钠危急值
+    condition:
+      field: lab_results.Na
+    result:
+      thresholds:
+        low_lt_120: "🔴 危急值: <120 mmol/L → 脑水肿风险"
+        high_gt_160: "🔴 危急值: >160 mmol/L → 高渗性脑损伤"
+      action: 立即通知
+
+  - id: cv-calcium
+    description: 血钙危急值
+    condition:
+      field: lab_results.Ca
+    result:
+      thresholds:
+        low_lt_1_5: "🔴 危急值: <1.5 mmol/L → 手足搐搦/喉痉挛"
+        high_gt_3_5: "🔴 危急值: >3.5 mmol/L → 高钙危象"
+      action: 立即通知
+
+  # ── 血气 ──
+  - id: cv-ph
+    description: pH危急值
+    condition:
+      field: lab_results.pH
+    result:
+      thresholds:
+        low_lt_7_20: "🔴 危急值: pH<7.20 → 严重酸中毒"
+        high_gt_7_60: "🔴 危急值: pH>7.60 → 严重碱中毒"
+      action: 立即通知
+
+  - id: cv-pco2
+    description: PaCO₂危急值
+    condition:
+      field: lab_results.pCO2
+    result:
+      thresholds:
+        low_lt_20: "🟡 PaCO₂<20 mmHg → 过度通气"
+        high_gt_70: "🔴 危急值: PaCO₂>70 mmHg → 呼吸衰竭"
+      action: 通知
+
+  - id: cv-po2
+    description: PaO₂危急值
+    condition:
+      field: lab_results.pO2
+    result:
+      thresholds:
+        low_lt_50: "🔴 危急值: PaO₂<50 mmHg → 严重低氧血症"
+      action: 立即通知
+
+  # ── 血常规 ──
+  - id: cv-hgb
+    description: 血红蛋白危急值
+    condition:
+      field: lab_results.Hb
+    result:
+      thresholds:
+        low_lt_60: "🔴 危急值: Hb<60 g/L → 重度贫血/活动性出血?"
+        low_60_80: "🟡 Hb 60-80 g/L → 需评估输血"
+      action: 立即通知(紧急输血可能)
+
+  - id: cv-plt
+    description: 血小板危急值
+    condition:
+      field: lab_results.PLT
+    result:
+      thresholds:
+        low_lt_20: "🔴 危急值: PLT<20×10⁹/L → 自发性出血风险"
+        low_20_30: "🟡 PLT 20-30×10⁹/L → 需评估血小板输注"
+      action: 立即通知
+
+  - id: cv-wbc
+    description: 白细胞危急值
+    condition:
+      field: lab_results.WBC
+    result:
+      thresholds:
+        low_lt_1_0: "🔴 危急值: WBC<1.0×10⁹/L → 粒缺/感染高风险"
+        high_gt_50: "🔴 危急值: WBC>50×10⁹/L → 白血病/类白血病反应?"
+      action: 通知
+
+  # ── 凝血 ──
+  - id: cv-pt
+    description: PT/INR危急值
+    condition:
+      field: lab_results.PT
+    result:
+      thresholds:
+        inr_gt_5: "🔴 危急值: INR>5 → 严重出血风险"
+        inr_3_5: "🟡 INR 3-5 → 需调整抗凝方案"
+      action: 立即通知
+
+  - id: cv-aptt
+    description: APTT危急值
+    condition:
+      field: lab_results.APTT
+    result:
+      thresholds:
+        gt_100: "🔴 危急值: APTT>100秒 → 严重出血风险(肝素过量?)"
+      action: 立即通知
+
+  # ── 肾功能 ──
+  - id: cv-creatinine
+    description: 肌酐危急值
+    condition:
+      field: lab_results.Cr
+    result:
+      thresholds:
+        gt_530: "🔴 危急值: Cr>530 μmol/L → 急性肾损伤/尿毒症"
+        gt_884: "🔴 最高危急: Cr>884 μmol/L → 需要紧急透析评估"
+      action: 立即通知肾内科
+
+  # ── 血糖 ──
+  - id: cv-glucose
+    description: 血糖危急值
+    condition:
+      field: lab_results.GLU
+    result:
+      thresholds:
+        low_lt_2_2: "🔴 危急值: GLU<2.2 mmol/L → 严重低血糖/意识障碍"
+        newborn_low_lt_2_0: "🔴 新生儿危急值: GLU<2.0 mmol/L"
+        high_gt_22_2: "🔴 危急值: GLU>22.2 mmol/L → 高血糖危象"
+        high_gt_33_3: "🔴 最高危急: GLU>33.3 mmol/L → 高渗性昏迷风险"
+      action: 立即通知
+
+  # ── 心肌标志物 ──
+  - id: cv-troponin
+    description: 高敏肌钙蛋白危急值
+    condition:
+      field: lab_results.hsTnI
+    result:
+      thresholds:
+        gt_0_5: "🔴 危急值: hs-TnI>0.5 ng/mL → 心肌损伤(心梗/心肌炎?)"
+        gt_5: "🔴 最高危急: hs-TnI>5.0 ng/mL → ST段抬高心梗高度可能"
+      action: 立即通知心内科+急诊
+
+  # ── 感染指标 ──
+  - id: cv-pct
+    description: 降钙素原危急值
+    condition:
+      field: lab_results.PCT
+    result:
+      thresholds:
+        gt_10: "🔴 危急值: PCT>10 ng/mL → 严重脓毒症/脓毒性休克高度可能"
+        gt_2: "🟡 PCT>2 ng/mL → 细菌感染可能性高"
+      action: 通知ICU
+
+  # ── 肝功能 ──
+  - id: cv-bilirubin
+    description: 总胆红素危急值(新生儿)
+    condition:
+      and:
+        - field: age_days
+          operator: "<="
+          value: 28
+        - field: lab_results.TBil
+    result:
+      thresholds:
+        gt_342: "🔴 新生儿危急值: TBil>342 μmol/L → 胆红素脑病危险, 需换血"
+        gt_256: "🟡 新生儿: TBil>256 μmol/L → 需光疗"
+      action: 立即通知儿科/NICU
+
+  # ── 血培养 ──
+  - id: cv-blood-culture
+    description: 血培养阳性危急值
+    condition:
+      field: lab_results.BloodCulture
+      operator: "=="
+      value: positive
+    result:
+      action: "🔴 危急值 — 立即电话通知: 菌名/革兰染色/药敏结果(如已知)"
+      escalation: "如需调整抗生素 → 通知临床药师"
+
+  # ── 通用规则 ──
+  - id: cv-routing
+    description: 危急值路由与升级
+    condition:
+      field: critical_value_triggered
+      operator: "=="
+      value: true
+    result:
+      routing:
+        primary: "值班医生/护士 (10min内确认)"
+        escalation: "10min未确认 → 科主任 (30min内)"
+        final: "30min未确认 → 医务处 (立即)"
+        icu: "ICU危急值 → 同时通知ICU值班医生"
+        er: "急诊危急值 → 同时通知急诊值班医生"
+      documentation:
+        - "通知时间"
+        - "接收人"
+        - "确认时间"
+        - "处置措施"

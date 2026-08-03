@@ -10,11 +10,13 @@ Exportable to JSON via ``export_landscape()``.
 from __future__ import annotations
 
 import json
+import logging
 import sys
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
+logger = logging.getLogger(__name__)
 
 # ── Project root discovery ──
 
@@ -190,6 +192,7 @@ def audit_environment(project_root: Path | None = None) -> dict[str, Any]:
         from haip.agent import list_all
         registry_size = len(list_all())
     except Exception:
+        logger.debug("Agent list_all failed", exc_info=True)
         registry_size = 0
 
     return {
@@ -536,9 +539,7 @@ def _build_relationships(landscape: ArchitectureLandscape) -> None:
                     f"{plugin.cn_name or agent_name} → A2A → {dep_name}",
                 )
     except Exception:
-        pass
-
-    # Parent/sub-agent relationships
+        logger.debug("Agent A2A edge build failed", exc_info=True)
     for node in landscape.nodes:
         sub_count = node.properties.get("sub_agents", "0")
         if sub_count == "0":
@@ -553,9 +554,7 @@ def _build_relationships(landscape: ArchitectureLandscape) -> None:
                         f"{node.label} 路由到 {sub_name}",
                     )
         except Exception:
-            pass
-
-    # Data entities → accessed by agents
+            logger.debug("Sub-agent edge build failed", exc_info=True)
     for node in landscape.nodes:
         if node.entity_type == "DataEntity":
             for agent_node in landscape.nodes:

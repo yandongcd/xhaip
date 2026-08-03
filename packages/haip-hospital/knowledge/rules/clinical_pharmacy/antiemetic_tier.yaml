@@ -1,0 +1,102 @@
+# 止吐药物分级预防规则
+# 来源: ASER/SAMBA 2020 / 中国麻醉学会PONV指南2025
+# T1: ASER/SAMBA | T2: 南方医院适配
+
+rule_type: treatment
+department: 药学部+麻醉科
+capability: cap-l3-antiemetic-prophylaxis
+business_process: bp-antiemetic
+guideline: ASER/SAMBA 2020 PONV Consensus / 中国麻醉学会2025
+stakeholder: 麻醉科+临床药师+外科
+version: "1.0.0"
+
+rules:
+  - id: aem-apfel-adult
+    description: Apfel简化评分 — 成人PONV风险
+    condition:
+      field: age
+      operator: ">="
+      value: 14
+    result:
+      scoring:
+        female: "+1"
+        nonsmoker: "+1"
+        ponv_history_or_motion_sickness: "+1"
+        postoperative_opioids: "+1"
+      interpretation:
+        "0-1": "低危 (PONV发生率 10-20%) → 单药预防"
+        "2": "中危 (PONV发生率 40%) → 两药联合预防"
+        "3-4": "高危 (PONV发生率 60-80%) → 三药联合预防 + 全凭静脉麻醉(TIVA)"
+
+  - id: aem-tier-1
+    description: 低危方案 — 单药预防
+    condition:
+      apfel_score:
+        operator: "<="
+        value: 1
+    result:
+      regimen:
+        - drug: 昂丹司琼 4mg IV (或格拉司琼 1mg IV)
+          timing: 手术结束前30min
+          class: 5-HT3拮抗剂
+        - drug: 地塞米松 4-8mg IV
+          timing: 麻醉诱导后
+          class: 糖皮质激素
+      note: 选择其中1种即可
+
+  - id: aem-tier-2
+    description: 中危方案 — 两药联合
+    condition:
+      apfel_score:
+        operator: "=="
+        value: 2
+    result:
+      regimen:
+        - "5-HT3拮抗剂 (昂丹司琼 4mg IV) + 地塞米松 4-8mg IV"
+        - or: "昂丹司琼 4mg + 氟哌利多 0.625-1.25mg IV (注意QTc延长)"
+      note: 两药不同作用机制联合
+
+  - id: aem-tier-3
+    description: 高危方案 — 三药联合 + TIVA
+    condition:
+      apfel_score:
+        operator: ">="
+        value: 3
+    result:
+      regimen:
+        - "5-HT3拮抗剂 + 地塞米松 + 氟哌利多 (或甲氧氯普胺)"
+        - "强烈推荐: 全凭静脉麻醉(TIVA) 丙泊酚维持"
+        - "避免吸入麻醉药(N₂O/七氟烷等)"
+      timing:
+        - "术后24h/48h持续监测"
+        - "PONV发生后立即启动补救治疗"
+
+  - id: aem-rescue
+    description: 补救治疗 — PONV已发生
+    condition:
+      ponv_occurred:
+        operator: "=="
+        value: true
+    result:
+      regimen:
+        - "选择与预防用药不同机制的药物"
+        - "昂丹司琼 4mg IV (如预防未用5-HT3)"
+        - "氟哌利多 0.625mg IV (如预防未用)"
+        - "异丙嗪 6.25-12.5mg IV (备选)"
+        - "氟哌啶醇 0.5-2mg IV (备选)"
+      escalation:
+        - "持续呕吐>2次/24h → 🟡 触发MDT会诊(麻醉+外科+药师)"
+        - "脱水/电解质紊乱 → 🔴 紧急补液+电解质纠正"
+
+  - id: aem-contraindications
+    description: 止吐药物禁忌
+    condition:
+      field: medications
+      operator: contains
+    result:
+      checks:
+        - "昂丹司琼: QTc延长综合征/同时使用延长QTc药物(禁忌)"
+        - "地塞米松: 未控制的糖尿病/全身真菌感染(相对禁忌)"
+        - "氟哌利多: QTc延长/帕金森病(禁忌)"
+        - "甲氧氯普胺: 肠梗阻/胃肠道出血/Pheochromocytoma(禁忌)"
+        - "阿瑞匹坦(NK1): 与华法林合用降低INR(需监测)"

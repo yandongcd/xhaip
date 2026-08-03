@@ -2,6 +2,7 @@ name: medical-docs
 cn_name: 病历书写辅助
 version: 1.0.0
 type: specialist
+port: 0
 department: 医务处
 aliases:
 - 病历助手
@@ -36,6 +37,8 @@ guard:
   - 药物交互
   high_risk_scenarios:
   - 病历文书未经医生签核直接归档
+  citation:
+    required: true
 stages:
 - order: 1
   id: review
@@ -54,6 +57,17 @@ ui:
   template: chat-with-role-switcher
   roles:
   - id: attending
-    label: attending
+    label: 主治医师
   - id: coder
-    label: coder
+    default: true
+    label: 病案编码员
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: light

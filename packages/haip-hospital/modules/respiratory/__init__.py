@@ -27,7 +27,7 @@ _agent.rule_engine.load_all()
 # ── Helpers ──────────────────────────────────────────────────────────────
 
 def _clinical_error(msg: str) -> dict:
-    return {"status": "error", "agent": _agent.agent_name, "error": msg}
+    return _agent.make_clinical_error(msg)
 
 
 def _get_nested(patient: dict, *keys, default=0):

@@ -44,6 +44,8 @@ tools:
 guard:
   triggers:
   - 药物交互
+  citation:
+    required: true
 ui:
   template: chat-with-role-switcher
   roles:
@@ -104,3 +106,13 @@ stages:
   role_ids:
   - attending
   - midwife
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: deep

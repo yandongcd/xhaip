@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import time
-from typing import Optional
 
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -14,7 +13,7 @@ from haip.audit import get_audit_logger
 class AuditMiddleware(BaseHTTPMiddleware):
     """Automatically records all API calls to the audit log."""
 
-    def __init__(self, app, exclude_paths: Optional[set[str]] = None):
+    def __init__(self, app, exclude_paths: set[str] | None = None):
         super().__init__(app)
         self.exclude_paths = exclude_paths or {
             "/api/health",

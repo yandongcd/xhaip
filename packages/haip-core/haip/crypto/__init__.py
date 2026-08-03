@@ -13,9 +13,12 @@ from __future__ import annotations
 import base64
 import hashlib
 import hmac
+import logging
 import os
 import secrets
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 _FERNET_AVAILABLE = False
 try:
@@ -135,6 +138,7 @@ class _Encryptor:
                 return self._fernet.decrypt(data).decode("utf-8")
             return _decrypt_stdlib(data, self._fallback_key).decode("utf-8")
         except Exception:
+            logger.warning("decrypt 失败, 回退原始值")
             return value
 
 

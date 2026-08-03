@@ -21,8 +21,8 @@ sys.path.insert(0, str(project_root / "packages" / "haip-hospital" / "modules"))
 import pytest
 from fastapi.testclient import TestClient
 
-from haip.web_server import app  # noqa: E402
-from haip.agent import load_from_dir, _registry  # noqa: E402
+from haip.agent import _registry, load_from_dir
+from haip.web_server import app
 
 client = TestClient(app)
 YAML_DIR = project_root / "packages" / "haip-hospital" / "agents" / "definitions"

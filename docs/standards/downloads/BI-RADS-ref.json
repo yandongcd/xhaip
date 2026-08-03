@@ -1,0 +1,10 @@
+{
+  "id": "BI-RADS",
+  "title": "ACR BI-RADS Atlas",
+  "priority": "P0",
+  "source": "acr",
+  "url": "https://www.acr.org/Clinical-Resources/Reporting-and-Data-Systems/Bi-Rads",
+  "note": "Free",
+  "downloaded": false,
+  "generated": "2026-07-26T23:45:17.607127"
+}

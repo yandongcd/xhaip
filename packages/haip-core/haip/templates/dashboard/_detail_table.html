@@ -1,0 +1,46 @@
+<h2 style="font-size:var(--text-lg);margin:var(--space-2xl) 0 var(--space-md)" x-show="!noResults">科室明细表</h2>
+
+<div class="table-wrap" x-show="!noResults">
+  <table>
+    <thead>
+      <tr>
+        <th @click="setSort('name')" x-bind:class="{ sorted: sortKey === 'name' }">
+          科室<span class="sort-indicator" x-html="sortIndicator('name')"></span>
+        </th>
+        <th>类型</th>
+        <th @click="setSort('score')" x-bind:class="{ sorted: sortKey === 'score' }">
+          评分<span class="sort-indicator" x-html="sortIndicator('score')"></span>
+        </th>
+        <th @click="setSort('stages')" x-bind:class="{ sorted: sortKey === 'stages' }">
+          阶段<span class="sort-indicator" x-html="sortIndicator('stages')"></span>
+        </th>
+        <th @click="setSort('roles')" x-bind:class="{ sorted: sortKey === 'roles' }">
+          角色<span class="sort-indicator" x-html="sortIndicator('roles')"></span>
+        </th>
+        <th>Agent</th>
+        <th>校验</th>
+        <th>Gap</th>
+      </tr>
+    </thead>
+    <tbody>
+      <template x-for="dept in filteredDepts" x-bind:key="dept.name">
+        <tr @click="selectDept(dept)" style="cursor:pointer">
+          <td style="font-weight:500" x-text="dept.name"></td>
+          <td x-text="dept.type"></td>
+          <td>
+            <span class="tier-badge" x-bind:class="tierClass(dept.score)" x-text="dept.score + ' ' + tierLabel(dept.score)"></span>
+          </td>
+          <td x-text="dept.stages"></td>
+          <td x-text="dept.roles"></td>
+          <td>
+            <span x-text="dept.has_agent ? dept.agent : '—'" x-bind:style="{color: dept.has_agent ? 'var(--success)' : 'var(--text-tertiary)'}"></span>
+          </td>
+          <td>
+            <span x-text="dept.validation_passed ? '通过' : '—'" x-bind:style="{color: dept.validation_passed ? 'var(--success)' : 'var(--text-tertiary)'}"></span>
+          </td>
+          <td style="font-size:var(--text-xs);color:var(--text-secondary);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" x-text="(dept.gaps || []).slice(0, 2).join(', ') || '—'"></td>
+        </tr>
+      </template>
+    </tbody>
+  </table>
+</div>

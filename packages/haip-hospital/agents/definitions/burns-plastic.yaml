@@ -1,4 +1,4 @@
-name: burns-plastic
+﻿name: burns-plastic
 cn_name: 烧伤整形科智能体
 version: 1.0.0
 type: business
@@ -54,6 +54,8 @@ tools:
 guard:
   triggers:
   - 手术决策
+  citation:
+    required: true
 ui:
   template: chat-with-role-switcher
   roles:
@@ -76,51 +78,48 @@ ui:
     label: 康复师
 stages:
 - order: 1
-  id: preop-eval
-  label: 术前评估
-  desc: GCS/ASA评分、影像学评估、凝血功能、心肺功能筛查、麻醉评估
-  role_ids:
-  - attending
-  - resident
-  - anesthesiologist
+  id: burn-eval
+  label: 烧伤评估
+  desc: 烧伤深度(I/II/III°)、TBSA计算(Parkland公式)、吸入性损伤评估、电烧伤CK监测
+  role_ids: [attending, resident, emergency_doctor]
 - order: 2
-  id: preop-prep
-  label: 术前准备
-  desc: 备血交叉配血、预防性抗生素、深静脉穿刺、导尿、备皮
-  role_ids:
-  - attending
-  - resident
-  - head_nurse
+  id: resuscitation
+  label: 液体复苏
+  desc: Parkland公式补液(4mL×kg×%TBSA 前8h半量)、电解质监测、尿量目标0.5mL/kg/h
+  role_ids: [attending, icu_doctor, head_nurse]
 - order: 3
-  id: surgery
-  label: 手术执行
-  desc: 术中监测、出血量评估、冰冻病理、器械清点
-  role_ids:
-  - attending
-  - surgeon
-  - anesthesiologist
-  - instrument_nurse
+  id: debridement
+  label: 清创手术
+  desc: 焦痂切开减张、深度烧伤削痂、负压封闭引流(VSD)、生物敷料覆盖
+  role_ids: [attending, surgeon, anesthesiologist]
 - order: 4
-  id: postop-icu
-  label: 术后监护
-  desc: ICU监测、GCS追踪、ICP管理、引流管管理、电解质平衡
-  role_ids:
-  - attending
-  - icu_doctor
-  - head_nurse
+  id: grafting
+  label: 植皮重建
+  desc: 自体皮片移植(刃厚/中厚)、网状制皮(1:1.5~1:3)、Integra真皮替代物
+  role_ids: [attending, surgeon, instrument_nurse]
 - order: 5
-  id: ward-care
-  label: 病房管理
-  desc: 切口护理、活动指导、营养支持、VTE预防、疼痛管理
-  role_ids:
-  - attending
-  - resident
-  - head_nurse
+  id: scar-mgmt
+  label: 瘢痕管理
+  desc: VSS温哥华瘢痕评分、压力衣治疗(20-30mmHg 23h/d)、硅酮凝胶、康复训练
+  role_ids: [attending, rehab_therapist, head_nurse]
 - order: 6
   id: followup
-  label: 随访康复
-  desc: 神经功能评分、康复计划制定、术后1/3/6月随访、影像复查
-  role_ids:
-  - attending
-  - rehab_therapist
-  - head_nurse
+  label: 长期随访
+  desc: 瘢痕成熟度评估、关节功能康复、心理支持、术后3/6/12月随访
+  role_ids: [attending, rehab_therapist]
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+debate:
+  enabled: true
+  competitors:
+  - anesthesia
+  - dermatology
+  mode: auto
+trust_tier: light

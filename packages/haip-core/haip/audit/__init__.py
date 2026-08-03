@@ -19,11 +19,12 @@ from __future__ import annotations
 import atexit
 import json
 import sqlite3
+import threading
 import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 _DEFAULT_AUDIT_DB = Path("data/audit.db")
 
@@ -56,6 +57,7 @@ class AuditLogger:
         self._max_events = max_events
         self._db_path: Path | None = None
         self._db_conn: sqlite3.Connection | None = None
+        self._lock = threading.Lock()
 
         if db_path:
             self._init_db(Path(db_path))
@@ -124,21 +126,23 @@ class AuditLogger:
             ip_address=ip_address,
             session_id=session_id,
         )
-        self._events.append(event)
-        if len(self._events) > self._max_events:
-            self._events = self._events[-self._max_events // 2:]
+        with self._lock:
+            self._events.append(event)
+            if len(self._events) > self._max_events:
+                self._events = self._events[-self._max_events // 2:]
 
         # Persist to SQLite if enabled
         if self._db_conn:
             try:
-                self._db_conn.execute(
-                    "INSERT INTO audit_events (event_id, timestamp, action, user_id, username, resource, status, detail, ip_address, session_id) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    (event.event_id, event.timestamp, event.action, event.user_id, event.username,
-                     event.resource, event.status, json.dumps(event.detail, ensure_ascii=False),
-                     event.ip_address, event.session_id),
-                )
-                self._db_conn.commit()
+                with self._lock:
+                    self._db_conn.execute(
+                        "INSERT INTO audit_events (event_id, timestamp, action, user_id, username, resource, status, detail, ip_address, session_id) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        (event.event_id, event.timestamp, event.action, event.user_id, event.username,
+                         event.resource, event.status, json.dumps(event.detail, ensure_ascii=False),
+                         event.ip_address, event.session_id),
+                    )
+                    self._db_conn.commit()
             except sqlite3.IntegrityError:
                 pass  # duplicate event_id, skip
 
@@ -155,27 +159,28 @@ class AuditLogger:
     ) -> list[AuditEvent]:
         """Query audit events with filters. Prefers DB query if persistent."""
         if self._db_conn:
-            conditions = ["1=1"]
-            params: list[Any] = []
-            if user_id:
-                conditions.append("user_id = ?")
-                params.append(user_id)
-            if action:
-                conditions.append("action = ?")
-                params.append(action)
-            if resource:
-                conditions.append("resource LIKE ?")
-                params.append(f"%{resource}%")
-            if status:
-                conditions.append("status = ?")
-                params.append(status)
-            if since:
-                conditions.append("timestamp > ?")
-                params.append(since)
+            with self._lock:
+                conditions = ["1=1"]
+                params: list[Any] = []
+                if user_id:
+                    conditions.append("user_id = ?")
+                    params.append(user_id)
+                if action:
+                    conditions.append("action = ?")
+                    params.append(action)
+                if resource:
+                    conditions.append("resource LIKE ?")
+                    params.append(f"%{resource}%")
+                if status:
+                    conditions.append("status = ?")
+                    params.append(status)
+                if since:
+                    conditions.append("timestamp > ?")
+                    params.append(since)
 
-            sql = f"SELECT * FROM audit_events WHERE {' AND '.join(conditions)} ORDER BY timestamp DESC LIMIT ?"
-            params.append(limit)
-            rows = self._db_conn.execute(sql, params).fetchall()
+                sql = f"SELECT * FROM audit_events WHERE {' AND '.join(conditions)} ORDER BY timestamp DESC LIMIT ?"
+                params.append(limit)
+                rows = self._db_conn.execute(sql, params).fetchall()
             return [
                 AuditEvent(
                     event_id=r[1], timestamp=r[2], action=r[3],
@@ -187,7 +192,8 @@ class AuditLogger:
             ]
 
         # Fallback to in-memory
-        results = self._events
+        with self._lock:
+            results = list(self._events)
         if user_id:
             results = [e for e in results if e.user_id == user_id]
         if action:
@@ -203,13 +209,14 @@ class AuditLogger:
     def stats(self) -> dict[str, Any]:
         """Get audit statistics."""
         if self._db_conn:
-            total = self._db_conn.execute("SELECT COUNT(*) FROM audit_events").fetchone()[0]
-            failures = self._db_conn.execute(
-                "SELECT COUNT(*) FROM audit_events WHERE status IN ('failure', 'denied')"
-            ).fetchone()[0]
-            action_rows = self._db_conn.execute(
-                "SELECT action, COUNT(*) as cnt FROM audit_events GROUP BY action"
-            ).fetchall()
+            with self._lock:
+                total = self._db_conn.execute("SELECT COUNT(*) FROM audit_events").fetchone()[0]
+                failures = self._db_conn.execute(
+                    "SELECT COUNT(*) FROM audit_events WHERE status IN ('failure', 'denied')"
+                ).fetchone()[0]
+                action_rows = self._db_conn.execute(
+                    "SELECT action, COUNT(*) as cnt FROM audit_events GROUP BY action"
+                ).fetchall()
             actions = {r[0]: r[1] for r in action_rows}
         else:
             total = len(self._events)
@@ -227,13 +234,15 @@ class AuditLogger:
 
     def clear(self):
         """Clear all audit events (memory only; DB records preserved for compliance)."""
-        self._events.clear()
+        with self._lock:
+            self._events.clear()
 
     def export_jsonl(self, output_path: str | Path) -> int:
         """Export all persisted events to JSONL for archiving."""
         if not self._db_conn:
             return 0
-        rows = self._db_conn.execute("SELECT * FROM audit_events ORDER BY timestamp").fetchall()
+        with self._lock:
+            rows = self._db_conn.execute("SELECT * FROM audit_events ORDER BY timestamp").fetchall()
         path = Path(output_path)
         count = 0
         with open(path, "w", encoding="utf-8") as f:

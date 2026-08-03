@@ -15,7 +15,7 @@ import sqlite3
 import threading
 import uuid
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
@@ -88,7 +88,7 @@ class AuthService:
         self.backend = backend
         self._users: dict[str, dict[str, Any]] = {}
         self._conn: sqlite3.Connection | None = None
-        self._db_lock = threading.Lock()
+        self._db_lock = threading.RLock()
         if backend == "sqlite":
             self.db_path = db_path or _default_db_path()
             if self.db_path != ":memory:":
@@ -181,9 +181,6 @@ class AuthService:
         roles: list[str] | None = None,
     ) -> dict[str, Any]:
         """Create a new user account."""
-        if username in self._users:
-            raise ValueError(f"User '{username}' already exists")
-
         is_strong, msg = validate_password_strength(password)
         if not is_strong:
             raise ValueError(msg)
@@ -203,8 +200,11 @@ class AuthService:
             "created_at": "",
             "is_active": True,
         }
-        self._users[username] = user
-        self._persist_user(user)
+        with self._db_lock:
+            if username in self._users:
+                raise ValueError(f"User '{username}' already exists")
+            self._users[username] = user
+            self._persist_user(user)
         return {
             "id": user_id,
             "username": username,
@@ -231,6 +231,7 @@ class AuthService:
         if not demo_password:
             if os.environ.get("HAIP_ENV") == "production":
                 raise ValueError("HAIP_DEMO_PASSWORD 未设置，生产环境必须通过环境变量配置")
+            logger.warning("HAIP_DEMO_PASSWORD 未设置, 使用默认密码 (安全风险!)")
             demo_password = "Demo@123456"
         created = 0
         for identity, role in PORTAL_IDENTITY_ROLES.items():

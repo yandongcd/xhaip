@@ -18,6 +18,13 @@ from typing import Any
 from haip.togaf.knowledge_agent import KnowledgeAgent
 
 _agent = KnowledgeAgent(agent_name="cardio-risk", department="cardio_risk")
+_GUIDELINES = [
+    "RCRI 围术期心血管风险评估 (Lee et al. 1999, ACC/AHA 2014, ESC 2022)",
+    "4th Universal Definition of Myocardial Infarction (2018)",
+    "中国高血压防治指南 (2024年修订版)",
+    "ACC/AHA 2014 非心脏手术围术期心血管评估与管理指南",
+    "ESC 2022 非心脏手术心血管评估与管理指南",
+]
 _agent.rule_engine.load_all()
 
 

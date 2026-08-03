@@ -10,8 +10,8 @@ sys.path.insert(0, str(project_root / "packages" / "haip-hospital" / "modules"))
 sys.path.insert(0, str(project_root / "packages" / "haip-hospital"))
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
-from haip.agent import _registry, load_from_dir  # noqa: E402
-from haip.a2a import clear_history  # noqa: E402
+from haip.a2a import clear_history
+from haip.agent import _registry, load_from_dir
 
 YAML_DIR = project_root / "packages" / "haip-hospital" / "agents" / "definitions"
 

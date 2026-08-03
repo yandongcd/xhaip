@@ -1,4 +1,4 @@
-name: cosmetic-surgery
+﻿name: cosmetic-surgery
 cn_name: 整形美容科智能体
 version: 1.0.0
 type: business
@@ -54,6 +54,8 @@ tools:
 guard:
   triggers:
   - 手术决策
+  citation:
+    required: true
 ui:
   template: chat-with-role-switcher
   roles:
@@ -124,3 +126,18 @@ stages:
   - attending
   - rehab_therapist
   - head_nurse
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+debate:
+  enabled: true
+  competitors:
+  - anesthesia
+  mode: auto
+trust_tier: light

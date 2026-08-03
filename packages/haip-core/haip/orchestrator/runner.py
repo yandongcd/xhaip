@@ -10,13 +10,14 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
-from haip.session.store import Event
 from haip.llm import LLMProvider
 from haip.loop.context import InvocationContext
 from haip.loop.hooks import HookChain
 from haip.orchestrator.graph import ClinicalWorkflow, Node, NodeType
+from haip.session.store import Event
 
 
 async def run_workflow(
@@ -156,8 +157,8 @@ async def _execute_node_async(
     # Agent 节点 — 通过 AsyncAgentLoop 执行
     if node.node_type == NodeType.AGENT and node.agent_name:
         from haip.a2a import call_with_loop
-        from haip.loop import AsyncAgentLoop
         from haip.agent import get as get_agent
+        from haip.loop import AsyncAgentLoop
 
         plugin = get_agent(node.agent_name)
         if plugin is None:

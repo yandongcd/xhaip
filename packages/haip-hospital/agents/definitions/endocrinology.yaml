@@ -41,6 +41,26 @@ tools:
   handler: endocrinology.bp_followup
   input:
     patient_id: str
+- name: assess_diabetes
+  description: 糖尿病综合评估(HbA1c目标分层+低血糖分级+并发症筛查)
+  handler: endocrinology.assess_diabetes
+  input:
+    patient_id: str
+- name: assess_thyroid
+  description: 甲状腺评估(TSH解读+ATA TI-RADS结节风险分层)
+  handler: endocrinology.assess_thyroid
+  input:
+    patient_id: str
+- name: assess_metabolic
+  description: 代谢综合征筛查(IDF诊断标准/5项达标)
+  handler: endocrinology.assess_metabolic
+  input:
+    patient_id: str
+- name: assess_osteoporosis
+  description: 骨质疏松风险评估(简化FRAX)
+  handler: endocrinology.assess_osteoporosis
+  input:
+    patient_id: str
 ui:
   template: chat-with-role-switcher
   roles:
@@ -101,3 +121,15 @@ guard:
   triggers:
   - 诊断决策
   - 治疗方案
+  citation:
+    required: true
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: standard

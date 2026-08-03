@@ -1,4 +1,4 @@
-name: emergency
+﻿name: emergency
 cn_name: 急诊科智能体
 version: 1.0.0
 type: business
@@ -39,6 +39,8 @@ tools:
 guard:
   triggers:
   - 手术决策
+  citation:
+    required: true
 ui:
   template: chat-with-role-switcher
   roles:
@@ -88,3 +90,20 @@ stages:
   desc: 收入院/留观/转ICU/离院评估、交接记录
   role_ids:
   - attending
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+debate:
+  enabled: true
+  competitors:
+  - cardio-risk
+  - anesthesia
+  - icu
+  mode: auto
+trust_tier: deep

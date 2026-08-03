@@ -17,7 +17,6 @@ import time
 import webbrowser
 from typing import Any
 
-
 DEFAULT_PORTS: dict[str, int] = {
     "pharmacy": 8770, "orthopedic-surgery": 8765, "cardio-surgery": 8768,
     "pediatrics": 8820, "pain-hub": 8840, "acute-pain": 8841,
@@ -119,5 +118,5 @@ def _port_in_use(host: str, port: int) -> bool:
             s.settimeout(0.5)
             s.connect((host, port))
             return True
-    except (socket.timeout, ConnectionRefusedError, OSError):
+    except (TimeoutError, ConnectionRefusedError, OSError):
         return False

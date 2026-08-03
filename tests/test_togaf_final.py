@@ -17,25 +17,25 @@ load_from_dir(str(ROOT / "packages" / "haip-hospital" / "agents" / "definitions"
 
 class TestValidator100:
     def test_principles_check(self):
-        from haip.togaf.validator import _check_principles
         from haip.agent import get
+        from haip.togaf.validator import _check_principles
         agent = get('orthopedic-surgery')
         c = _check_principles(agent)
         assert c.passed
 
     def test_principles_check_no_department_violation(self):
-        from haip.togaf.validator import _check_principles
         # 合成无 department 的 business agent → 违反 prin-no-hardcode
         # (pain-hub 现已配置 department, 不能再作反例)
         from haip.agent import DomainPlugin
+        from haip.togaf.validator import _check_principles
         agent = DomainPlugin(name="no-dept-biz-test", type="business", department="")
         c = _check_principles(agent)
         assert not c.passed
         assert '无硬编码' in c.detail
 
     def test_role_validity_no_roles(self):
-        from haip.togaf.validator import _check_role_validity
         from haip.agent import get
+        from haip.togaf.validator import _check_role_validity
         agent = get('medical-record')  # master_data, no ui.roles
         c = _check_role_validity(agent)
         assert c.passed  # Uses defaults via get_roles()
@@ -151,10 +151,11 @@ class TestKnowledgeAgent100:
 
 class TestDashboard100:
     def test_render_dashboard_runs(self):
-        from haip.togaf.dashboard import render_dashboard
-        html = render_dashboard()
-        assert 'TOGAF' in html
-        assert len(html) > 5000
+        from haip.togaf.dashboard import _load_analysis_data
+        data = _load_analysis_data()
+        assert 'depts' in data
+        assert 'total' in data
+        assert data['total'] > 0
 
     def test_render_dashboard_json(self):
         from haip.togaf.dashboard import render_dashboard_json

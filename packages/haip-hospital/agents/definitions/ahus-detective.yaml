@@ -1,0 +1,88 @@
+name: ahus-detective
+cn_name: aHUS早期识别及主动推理AI智能体 v2.0
+version: 1.1.0
+type: business
+trust_tier: deep
+department: 肾内科
+port: 8855
+aliases: [aHUS, TMA, 血栓性微血管病, 补体, 依库珠单抗]
+prompt:
+  system: |
+    你是aHUS Detective v2.0，南方医院肾内科AI助手，负责非典型溶血尿毒综合征(aHUS)的早期识别、排除诊断与主动推理。
+
+    核心能力: TMA三联征快速筛查(PLT+MAHA+AKI)、PLASMIC评分(TTP预测)、补体通路鉴别(经典/旁路/终末)、遗传风险分层(CFH/CFI/MCP/C3/CFB/DGKE)、依库珠单抗治疗决策、aHUS全周期监测方案(急性期/稳定期/长期)。
+
+    主动推理范式: "假设→验证→自我反思" — TMA筛查阳性 → 排除TTP(STEC-ADAMTS13) → 补体评估 → 基因Panel → 治疗决择。
+
+    约束: 所有诊断须经肾内科/血液科医师复核; 依库珠单抗处方须经多学科讨论; TTP危急(PLT<30+神经症状)立即启动血浆置换。
+  temperature: 0.2
+tools:
+- name: tma_triad
+  description: TMA三联征筛查 — PLASMIC评分+AKI分期+破碎红细胞/触珠蛋白
+  handler: ahus_detective.tma_triad
+  input: {patient_id: str}
+- name: differential_diagnosis
+  description: 排除诊断 — TTP(ADAMTS13<10%) vs STEC-HUS vs aHUS(C3/C4/sc5b9) vs 继发性TMA
+  handler: ahus_detective.differential_diagnosis
+  input: {patient_id: str, ADAMTS13: float, STEC_test: str, complement_panel: dict, clinical_context: str}
+- name: risk_stratify
+  description: 遗传风险分层 — 8基因Panel+依库珠单抗决策+肾移植评估
+  handler: ahus_detective.risk_stratify
+  input: {patient_id: str, genetic_results: dict, sc5b9: float, anti_cfh: float, age_at_onset: int, renal_biopsy: str}
+- name: monitoring_plan
+  description: 全周期监测方案 — 急性期(每日)/稳定期(2-4w)/长期(1-3m) + 依库珠单抗管理
+  handler: ahus_detective.monitoring_plan
+  input: {patient_id: str, phase: str, on_eculizumab: bool}
+guard:
+  triggers: [TMA, aHUS, 补体, 依库珠单抗, 血浆置换]
+  high_risk_scenarios: [PLT<30+神经症状, Cr快速上升+少尿, ADAMTS13正常+TMA, 依库珠单抗漏用]
+  citation: {required: true, min_sources: 2, min_trust: T1}
+depends_on: [{agent: lab-critical-value, version: '>=1.0', note: PLT/Cr/LDH危急值}]
+stages:
+- order: 1
+  id: screening
+  label: TMA快速筛查
+  desc: PLASMIC评分+AKI分期(KDIGO)+MAHA证据(破碎红细胞/触珠蛋白/LDH)
+  role_ids: [attending, resident]
+- order: 2
+  id: emergency-labs
+  label: 急救检验
+  desc: ADAMTS13活性+STEC PCR+外周血涂片(急诊回报)
+  role_ids: [attending, technician]
+- order: 3
+  id: complement-panel
+  label: 补体通路评估
+  desc: C3/C4/sC5b-9/CFH/CFI/CH50 → 旁路vs经典vs终末通路鉴别
+  role_ids: [attending, pharmacist]
+- order: 4
+  id: genetic-testing
+  label: 基因检测
+  desc: 补体基因Panel(CFH/CFI/MCP/CD46/C3/CFB/THBD/DGKE)+抗CFH抗体
+  role_ids: [attending]
+- order: 5
+  id: treatment-decision
+  label: 治疗决策
+  desc: 依库珠单抗适应证+血浆置换+免疫抑制+脑膜炎球菌疫苗
+  role_ids: [attending, pharmacist]
+- order: 6
+  id: longterm-monitor
+  label: 长期监测
+  desc: CKD分期进展+补体活性追踪+停药评估+肾移植规划
+  role_ids: [attending, head_nurse]
+ui:
+  template: chat-with-role-switcher
+  roles:
+  - id: attending
+    label: 肾内科医师
+    default: true
+  - id: resident
+    label: 住院医师
+  - id: pharmacist
+    label: 临床药师
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply: [citation_new, route_adj]
+  prompt_a_b: true

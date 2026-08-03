@@ -9,7 +9,11 @@ from __future__ import annotations
 from haip.togaf.knowledge_agent import KnowledgeAgent
 
 _agent = KnowledgeAgent(agent_name="medical-record", department="全院")
-_guidelines = ['病历管理规范', '患者数据标准']
+_GUIDELINES = [
+    "病历管理规范 (国家卫健委)",
+    "患者数据标准 (HL7 FHIR R4)",
+    "SNOMED CT 临床术语标准",
+]
 
 def get_patient(**kwargs) -> dict:
     """Get Patient"""
@@ -19,7 +23,7 @@ def get_patient(**kwargs) -> dict:
         return {"status": "error", "error": f"Patient {pid} not found", "found": False}
 
     dx = patient.get("diagnosis", "")
-    guides = _agent.search_guidelines(dx) or _guidelines
+    guides = _agent.search_guidelines(dx) or _GUIDELINES
     vitals = _agent.assess_vitals(patient)
     alerts = vitals.get("alerts", [])
 
@@ -41,7 +45,7 @@ def get_labs(**kwargs) -> dict:
         return {"status": "error", "error": f"Patient {pid} not found"}
 
     dx = patient.get("diagnosis", "")
-    guides = _agent.search_guidelines(dx) or _guidelines
+    guides = _agent.search_guidelines(dx) or _GUIDELINES
     vitals = _agent.assess_vitals(patient)
     alerts = vitals.get("alerts", [])
 
@@ -60,7 +64,7 @@ def get_exams(**kwargs) -> dict:
         return {"status": "error", "error": f"Patient {pid} not found"}
 
     dx = patient.get("diagnosis", "")
-    guides = _agent.search_guidelines(dx) or _guidelines
+    guides = _agent.search_guidelines(dx) or _GUIDELINES
     vitals = _agent.assess_vitals(patient)
     alerts = vitals.get("alerts", [])
 

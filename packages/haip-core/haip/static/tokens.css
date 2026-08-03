@@ -1,0 +1,234 @@
+/* ═══════════════════════════════════════════════════════════════════
+   xHAIP Design Tokens v2.0 — "Clinical Precision" 临床精准美学
+
+   Single source of truth for all xHAIP UI surfaces.
+   Replaces agent.css, process.css, and per-page inline styles.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Spacing Scale (8px base) ── */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* ── Type Scale (1.2 ratio, calibrated for zh-CN medical UI) ── */
+  --text-2xs: 11px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+
+  /* ── Font Families ── */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-display: 'DM Sans', 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', Consolas, monospace;
+  --font-serif-cn: 'Noto Serif SC', 'STSong', 'SimSun', serif;
+
+  /* ── Font Weights ── */
+  --fw-light: 300;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* ── Line Heights ── */
+  --lh-tight: 1.25;
+  --lh-normal: 1.5;
+  --lh-relaxed: 1.65;
+
+  /* ── Border Radius ── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* ── Shadows (layered, realistic) ── */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.04);
+  --shadow-xl: 0 20px 48px rgba(0,0,0,0.12);
+  --shadow-glow-brand: 0 0 0 3px var(--color-brand-subtle);
+  --shadow-glow-danger: 0 0 0 3px var(--color-danger-subtle);
+
+  /* ── Transitions ── */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  /* ── Z-Index Scale ── */
+  --z-dropdown: 50;
+  --z-sticky: 100;
+  --z-overlay: 200;
+  --z-modal: 300;
+  --z-toast: 400;
+
+  /* ── Layout ── */
+  --header-height: 56px;
+  --sidebar-width: 240px;
+  --sidebar-collapsed: 36px;
+  --content-max: 1440px;
+}
+
+/* ═══════════════════════════════════════════════
+   Light Theme — Warm & Trustworthy
+   ═══════════════════════════════════════════════ */
+:root {
+  /* Primary — surgical teal */
+  --color-brand: #0D7377;
+  --color-brand-hover: #095B5F;
+  --color-brand-subtle: #E6FFFA;
+  --color-brand-muted: #B2F5EA;
+
+  /* Background hierarchy */
+  --color-bg: #F7F8FA;
+  --color-bg-elevated: #FFFFFF;
+  --color-bg-overlay: #F1F3F5;
+  --color-bg-inset: #E9ECEF;
+
+  /* Text hierarchy */
+  --color-text: #1A202C;
+  --color-text-secondary: #4A5568;
+  --color-text-tertiary: #5B6878;
+  --color-text-inverse: #FFFFFF;
+  --color-text-placeholder: #66707E;
+
+  /* Semantic — calibrated for medical context */
+  --color-danger: #C53030;
+  --color-danger-hover: #9B2C2C;
+  --color-danger-subtle: #FFF5F5;
+  --color-danger-border: #FEB2B2;
+
+  --color-warning: #C05621;
+  --color-warning-hover: #9C4221;
+  --color-warning-subtle: #FFFAF0;
+  --color-warning-border: #FBD38D;
+
+  --color-success: #2F855A;
+  --color-success-hover: #276749;
+  --color-success-subtle: #F0FFF4;
+  --color-success-border: #9AE6B4;
+
+  --color-info: #2B6CB0;
+  --color-info-subtle: #EBF8FF;
+  --color-info-border: #90CDF4;
+
+  /* Borders & separators */
+  --color-border: #E2E8F0;
+  --color-border-strong: #CBD5E0;
+  --color-divider: #EDF2F7;
+
+  /* Interactive surfaces */
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F7F8FA;
+  --color-surface-active: #EDF2F7;
+  --color-surface-selected: #E6FFFA;
+
+  /* Header */
+  --color-header-bg: #0D7377;
+  --color-header-text: #FFFFFF;
+  --color-header-text-secondary: rgba(255,255,255,0.72);
+
+  /* Scrollbar */
+  --color-scrollbar-thumb: #A0AEC0;
+  --color-scrollbar-track: transparent;
+
+  /* Chat */
+  --color-chat-user-bubble: var(--color-brand);
+  --color-chat-user-text: #FFFFFF;
+  --color-chat-ai-bubble: var(--color-surface);
+  --color-chat-ai-border: var(--color-border);
+
+  /* Shadow strength adjustment */
+  --shadow-opacity-base: 0.06;
+  --shadow-color: 0, 0, 0;
+}
+
+/* ═══════════════════════════════════════════════
+   Dark Theme — Deep, Calm, Low-glare
+   Designed independently from light (not simple inversion).
+   ═══════════════════════════════════════════════ */
+[data-theme="dark"] {
+  /* Primary — brighter teal for dark surfaces */
+  --color-brand: #2DD4BF;
+  --color-brand-hover: #5EEAD4;
+  --color-brand-subtle: #134E4A;
+  --color-brand-muted: #0F766E;
+
+  /* Background hierarchy — deep slate with warm undertone */
+  --color-bg: #0B1120;
+  --color-bg-elevated: #111827;
+  --color-bg-overlay: #1A2235;
+  --color-bg-inset: #070C16;
+
+  /* Text hierarchy */
+  --color-text: #F1F5F9;
+  --color-text-secondary: #94A3B8;
+  --color-text-tertiary: #64748B;
+  --color-text-inverse: #0B1120;
+  --color-text-placeholder: #475569;
+
+  /* Semantic — softer for dark */
+  --color-danger: #FC8181;
+  --color-danger-hover: #FEB2B2;
+  --color-danger-subtle: #451A1A;
+  --color-danger-border: #742A2A;
+
+  --color-warning: #FBD38D;
+  --color-warning-hover: #FEEBC8;
+  --color-warning-subtle: #442A10;
+  --color-warning-border: #744210;
+
+  --color-success: #68D391;
+  --color-success-hover: #9AE6B4;
+  --color-success-subtle: #1A3A2A;
+  --color-success-border: #276749;
+
+  --color-info: #90CDF4;
+  --color-info-subtle: #1A365D;
+  --color-info-border: #2A4365;
+
+  /* Borders */
+  --color-border: #1E293B;
+  --color-border-strong: #334155;
+  --color-divider: #1A2235;
+
+  /* Interactive surfaces */
+  --color-surface: #111827;
+  --color-surface-hover: #1A2235;
+  --color-surface-active: #1E293B;
+  --color-surface-selected: #134E4A;
+
+  /* Header */
+  --color-header-bg: #0A1628;
+  --color-header-text: #F1F5F9;
+  --color-header-text-secondary: #94A3B8;
+
+  /* Scrollbar */
+  --color-scrollbar-thumb: #334155;
+  --color-scrollbar-track: transparent;
+
+  /* Chat */
+  --color-chat-user-bubble: #0F766E;
+  --color-chat-user-text: #F1F5F9;
+  --color-chat-ai-bubble: #1A2235;
+  --color-chat-ai-border: var(--color-border);
+
+  /* Shadow strength */
+  --shadow-opacity-base: 0.3;
+  --shadow-color: 0, 0, 0;
+}

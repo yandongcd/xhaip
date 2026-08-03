@@ -5,6 +5,17 @@ Port from haip-0705-2 v0.2.0.
 
 from __future__ import annotations
 
+from haip.togaf.knowledge_agent import KnowledgeAgent
+
+_agent = KnowledgeAgent(agent_name="pain-rehab", department="疼痛科")
+_GUIDELINES = [
+    "IASP 慢性疼痛康复指南",
+    "ACSM 运动处方指南",
+    "中国疼痛康复专家共识",
+    "生物心理社会模型 (BPS Model)",
+]
+_agent.rule_engine.load_all()
+
 from typing import Any
 
 EXERCISES_BY_REGION = {

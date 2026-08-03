@@ -1,0 +1,87 @@
+name: cardiovascular-monitor
+cn_name: 心脑血管疾病智能监测与随访平台
+version: 1.0.0
+type: business
+trust_tier: deep
+department: 医院感染管理科(公共卫生科)
+port: 8845
+aliases:
+- 心脑血管监测
+- 慢病管理
+- 随访平台
+- CVD monitor
+prompt:
+  system: 你是南方医院公共卫生科AI助手，负责心脑血管疾病的全周期智能监测、预警与随访。基于国家慢性病防控规范，覆盖院前风险预警→院中事件识别→院后随访管理全流程。所有建议须经公卫医师审核确认。
+  temperature: 0.3
+tools:
+- name: event_identify
+  description: 心脑血管事件识别 — ICD-10编码映射+检验/影像证据验证+排除规则+去重
+  handler: cardiovascular_monitor.event_identify
+  input:
+    patient_id: str
+- name: risk_stratify
+  description: 风险分层 — 结合病史/检验/生活方式/遗传 → 低/中/高危分层 + 风险评分
+  handler: cardiovascular_monitor.risk_stratify
+  input:
+    patient_id: str
+- name: followup_plan
+  description: 个体化随访计划 — 基于风险分层的随访频率/检查项目/干预目标
+  handler: cardiovascular_monitor.followup_plan
+  input:
+    patient_id: str
+    risk_level: str
+    event_type: str
+- name: public_health_report
+  description: 公卫上报 — 心脑血管事件报告卡自动填报 + 慢病管理报表
+  handler: cardiovascular_monitor.public_health_report
+  input:
+    patient_id: str
+    event_type: str
+    event_date: str
+guard:
+  triggers:
+  - 心血管事件
+  - 慢病管理
+  - 公卫上报
+  high_risk_scenarios:
+  - 急性心梗+未启动二级预防
+  - 卒中复发高危+未抗凝
+  - 心衰再入院预警
+  citation:
+    required: true
+    min_sources: 2
+    min_trust: T1
+stages:
+- order: 1
+  id: identify
+  label: 事件识别
+  desc: ICD-10编码匹配、实验室/影像证据验证、排除规则、去重
+  role_ids:
+  - attending
+  - cardiologist
+- order: 2
+  id: stratify
+  label: 风险分层
+  desc: 病史+实验室+生活方式+遗传+风险评分→低/中/高危
+  role_ids:
+  - attending
+  - cardiologist
+- order: 3
+  id: plan
+  label: 随访计划
+  desc: 风险分层→随访频率/检查项目/干预目标
+  role_ids:
+  - attending
+- order: 4
+  id: report
+  label: 报告输出
+  desc: CVD事件报告卡自动填写、慢病管理报告、公共卫生上报
+  role_ids:
+  - attending
+
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: false

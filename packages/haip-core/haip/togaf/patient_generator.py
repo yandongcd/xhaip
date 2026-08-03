@@ -93,8 +93,9 @@ def _random_lab(diagnosis: str, dept_keys: list[str]) -> dict:
 
 def generate_patients(output_path: str = "") -> list[dict]:
     """Generate 5-8 patients per department with realistic data."""
-    from haip.togaf.organization import list_orgs
     import yaml
+
+    from haip.togaf.organization import list_orgs
 
     all_orgs = list_orgs()
     clinical = [o for o in all_orgs if o.type == "clinical" and o.parent]

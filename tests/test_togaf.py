@@ -12,7 +12,6 @@ sys.path.insert(0, str(ROOT / "packages" / "haip-hospital"))
 
 import pytest
 
-
 # ── metamodel ──
 
 class TestMetamodel:
@@ -64,7 +63,7 @@ class TestOrganization:
         assert len(clinical) >= 39
 
     def test_list_roles(self):
-        from haip.togaf.organization import list_roles, ROLES
+        from haip.togaf.organization import ROLES, list_roles
         roles = list_roles()
         assert len(roles) >= 180
         assert len(ROLES) >= 180
@@ -275,7 +274,7 @@ class TestAudit:
 
 class TestRoles:
     def test_list_roles(self):
-        from haip.togaf.roles import list_roles, get_role
+        from haip.togaf.roles import get_role, list_roles
         roles = list_roles()
         assert len(roles) == 8
         r = get_role('attending')
@@ -369,7 +368,7 @@ class TestGovernance:
         assert isinstance(r.all_passed, bool)
 
     def test_load_governance_rules(self):
-        from haip.togaf.governance import load_governance_rules, get_bp_governance_rules
+        from haip.togaf.governance import get_bp_governance_rules, load_governance_rules
         rules = load_governance_rules()
         # Returns dict with governance_rules key
         assert isinstance(rules, (dict, list))
@@ -381,34 +380,34 @@ class TestGovernance:
 
 class TestTemplates:
     def test_list_templates(self):
-        from haip.togaf.templates import list_templates, TEMPLATE_MANIFEST
+        from haip.togaf.templates import TEMPLATE_MANIFEST, list_templates
         tmpl = list_templates()
         assert len(tmpl) >= 4
         assert 'capability_heatmap' in str(TEMPLATE_MANIFEST)
 
     def test_render_heatmap(self):
-        from haip.togaf.templates.capability_heatmap import render, DEFAULT_DATA
+        from haip.togaf.templates.capability_heatmap import DEFAULT_DATA, render
         html = render(DEFAULT_DATA, full_page=True)
         assert '<table' in html
         assert '成熟度' in html or 'maturity' in html.lower()
 
     def test_render_app_landscape(self):
-        from haip.togaf.templates.app_landscape import render, DEFAULT_DATA
+        from haip.togaf.templates.app_landscape import DEFAULT_DATA, render
         html = render(DEFAULT_DATA, full_page=True)
         assert '<table' in html or '<div' in html
 
     def test_render_stakeholder_map(self):
-        from haip.togaf.templates.stakeholder_map import render, DEFAULT_DATA
+        from haip.togaf.templates.stakeholder_map import DEFAULT_DATA, render
         html = render(DEFAULT_DATA, full_page=True)
         assert len(html) > 100
 
     def test_render_roadmap(self):
-        from haip.togaf.templates.roadmap import render, DEFAULT_DATA
+        from haip.togaf.templates.roadmap import DEFAULT_DATA, render
         html = render(DEFAULT_DATA, full_page=True)
         assert len(html) > 100
 
     def test_render_value_stream(self):
-        from haip.togaf.templates.value_stream_map import render, DEFAULT_DATA
+        from haip.togaf.templates.value_stream_map import DEFAULT_DATA, render
         html = render(DEFAULT_DATA, full_page=True)
         assert len(html) > 100
 

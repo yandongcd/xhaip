@@ -1,0 +1,69 @@
+# 老年髋部骨折分型规则 — Garden / AO / Evans
+# 来源: 国家卫健委《老年髋部骨折诊疗与管理指南(2022)》
+# T1: 国家指南 | T2: 南方医院适配
+
+rule_type: diagnosis
+department: 创伤骨科
+capability: cap-l3-fracture-classification
+business_process: bp-hip-fracture-diagnosis
+guideline: 国家卫健委《老年髋部骨折诊疗与管理指南(2022年版)》
+stakeholder: 骨科主治医师
+version: "1.0.0"
+
+rules:
+  - id: fx-garden-femoral-neck
+    description: Garden分型 — 股骨颈骨折
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 股骨颈骨折
+    result:
+      classification: Garden分型
+      subtypes:
+        - Garden I: 不完全骨折/外展嵌插型 → 保守治疗或内固定
+        - Garden II: 完全骨折无移位 → 空心螺钉内固定
+        - Garden III: 完全骨折部分移位 → 半髋/全髋关节置换
+        - Garden IV: 完全骨折完全移位 → 全髋关节置换
+
+  - id: fx-ao-intertrochanteric
+    description: AO分型 — 转子间骨折 (31A)
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 转子间骨折
+    result:
+      classification: AO/OTA分型
+      subtypes:
+        - "31A1: 简单两部分(稳定型) → 滑动髋螺钉(DHS)或髓内钉"
+        - "31A2: 粉碎性(内侧壁缺损/不稳定型) → 髓内钉(PFNA/Gamma)"
+        - "31A3: 反斜型或横向(不稳定型) → 髓内钉(PFNA)"
+
+  - id: fx-evans-subtrochanteric
+    description: Evans分型 — 转子下骨折
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 转子下骨折
+    result:
+      classification: Evans分型
+      subtypes:
+        - "Type I: 无移位 → 髓内钉"
+        - "Type II: 移位型 → 长髓内钉"
+        - "复杂粉碎型 → 长髓内钉 + 必要时环扎钢丝"
+
+  - id: fx-red-flags
+    description: 骨折红旗征 — 必须紧急处理
+    condition:
+      and:
+        - field: age
+          operator: ">="
+          value: 65
+        - field: diagnosis
+          operator: contains
+          value: 髋部骨折
+    result:
+      alerts:
+        - "⚠️ 老年髋部骨折 → 力争48h内手术"
+        - "⚠️ 24h内启动术前评估(心/肺/脑/凝血)"
+        - "⚠️ 卧床>48h → DVT/PE/肺炎/压疮风险显著升高"
+      action: trigger_48h_window_protocol

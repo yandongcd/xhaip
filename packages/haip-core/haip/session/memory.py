@@ -14,10 +14,12 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import sqlite3
 import time
 import uuid
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -76,6 +78,7 @@ class MemoryService:
 
     def __init__(self, db_path: str | Path = ":memory:"):
         self._db_path = str(db_path)
+        self._mem_conn: sqlite3.Connection | None = None
         self._init_db()
 
     def _init_db(self):
@@ -100,10 +103,20 @@ class MemoryService:
         conn.row_factory = sqlite3.Row
         return conn
 
+    @contextlib.contextmanager
+    def _conn(self) -> Iterator[sqlite3.Connection]:
+        """上下文管理器: 文件 DB 用完即关闭, :memory: DB 复用同一连接."""
+        conn = self._get_conn()
+        try:
+            yield conn
+        finally:
+            if self._db_path != ":memory:":
+                conn.close()
+
     # ── CRUD ──
 
     def add_memory(self, entry: MemoryEntry) -> str:
-        with self._get_conn() as conn:
+        with self._conn() as conn:
             conn.execute(
                 """INSERT INTO memories(id, content, category, importance, tags_json,
                    source_session_id, user_id, created_at, last_accessed, access_count,
@@ -121,7 +134,7 @@ class MemoryService:
         return entry.id
 
     def get_memory(self, memory_id: str) -> MemoryEntry | None:
-        with self._get_conn() as conn:
+        with self._conn() as conn:
             row = conn.execute("SELECT * FROM memories WHERE id = ?", (memory_id,)).fetchone()
             if row is None:
                 return None
@@ -144,7 +157,7 @@ class MemoryService:
         limit: int = 10,
     ) -> list[MemoryEntry]:
         """搜索记忆 (全文搜索 + 关键词回退)."""
-        with self._get_conn() as conn:
+        with self._conn() as conn:
             # Try FTS5 first
             try:
                 rows = conn.execute(
@@ -182,7 +195,7 @@ class MemoryService:
 
     def list_by_category(self, category: str, user_id: str = "default",
                          limit: int = 50) -> list[MemoryEntry]:
-        with self._get_conn() as conn:
+        with self._conn() as conn:
             rows = conn.execute(
                 "SELECT * FROM memories WHERE category = ? AND user_id = ? ORDER BY created_at DESC LIMIT ?",
                 (category, user_id, limit),
@@ -190,13 +203,13 @@ class MemoryService:
             return [self._row_to_entry(r) for r in rows]
 
     def delete_memory(self, memory_id: str) -> bool:
-        with self._get_conn() as conn:
+        with self._conn() as conn:
             cur = conn.execute("DELETE FROM memories WHERE id = ?", (memory_id,))
             conn.commit()
             return cur.rowcount > 0
 
     def clear_user(self, user_id: str) -> int:
-        with self._get_conn() as conn:
+        with self._conn() as conn:
             cur = conn.execute("DELETE FROM memories WHERE user_id = ?", (user_id,))
             conn.commit()
             return cur.rowcount
@@ -256,7 +269,7 @@ class MemoryService:
     def consolidate(self, user_id: str = "default") -> int:
         """合并重复/相似记忆，返回合并数量."""
         # 简单实现: 完全相同内容的记忆去重
-        with self._get_conn() as conn:
+        with self._conn() as conn:
             rows = conn.execute(
                 """SELECT content, COUNT(*) as cnt, GROUP_CONCAT(id) as ids
                    FROM memories WHERE user_id = ?
@@ -275,7 +288,7 @@ class MemoryService:
         return count
 
     def stats(self, user_id: str = "default") -> dict[str, Any]:
-        with self._get_conn() as conn:
+        with self._conn() as conn:
             total = conn.execute(
                 "SELECT COUNT(*) FROM memories WHERE user_id = ?", (user_id,)
             ).fetchone()[0]

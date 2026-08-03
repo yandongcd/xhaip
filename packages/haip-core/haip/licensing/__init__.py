@@ -23,7 +23,7 @@ import json
 import os
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -50,10 +50,10 @@ class LicenseManager:
     """Validates and enforces license constraints."""
 
     def __init__(self, license_file: str = ""):
-        self._license: Optional[LicenseInfo] = None
+        self._license: LicenseInfo | None = None
         self._license_file = license_file or self._find_license_file()
         self._public_key = self._load_public_key()
-        self._last_warning_days: Optional[int] = None
+        self._last_warning_days: int | None = None
 
     def _find_license_file(self) -> str:
         """Find the license file from config or environment."""
@@ -62,7 +62,7 @@ class LicenseManager:
             os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "license.key"),
         )
 
-    def _load_public_key(self) -> Optional[bytes]:
+    def _load_public_key(self) -> bytes | None:
         """Load the embedded public key for license verification."""
         # Built-in public key (would be replaced with real RSA keypair)
         return hashlib.sha256(b"xhaip-license-public-key-v1").digest()
@@ -143,7 +143,7 @@ class LicenseManager:
             self.validate()
         return self._license is not None and self._license.valid
 
-    def get_info(self) -> Optional[LicenseInfo]:
+    def get_info(self) -> LicenseInfo | None:
         """Get current license info."""
         if self._license is None:
             self.validate()
@@ -156,7 +156,7 @@ class LicenseManager:
             return False
         return feature in info.features
 
-    def check_expiry_warning(self) -> Optional[str]:
+    def check_expiry_warning(self) -> str | None:
         """Check if license is approaching expiry and return warning message.
 
         Returns warning message if within 30 days of expiry, None otherwise.
@@ -176,8 +176,6 @@ class LicenseManager:
             warning = f"License expires TODAY ({info.expiry_date})"
         elif days_left <= 7:
             warning = f"License expires in {days_left} days ({info.expiry_date})"
-        elif days_left <= 14:
-            warning = f"License expires in {days_left} days"
         elif days_left <= 30:
             warning = f"License expires in {days_left} days"
 
@@ -204,7 +202,7 @@ def generate_license(
     max_agents: int = 48,
     max_users: int = 100,
     expiry_days: int = 365,
-    features: Optional[list[str]] = None,
+    features: list[str] | None = None,
     secret_key: str = "xhaip-license-secret-v1",
 ) -> dict[str, Any]:
     """Generate a license key file (offline tool for admins/vendors).

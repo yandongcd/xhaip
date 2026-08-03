@@ -5,8 +5,8 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
-from haip.loop import AgentLoop
 from haip.llm.mock import MockProvider
+from haip.loop import AgentLoop
 
 
 class TestToolSchema:

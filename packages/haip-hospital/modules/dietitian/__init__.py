@@ -18,8 +18,20 @@ Guidelines referenced:
 
 from __future__ import annotations
 
-from typing import Any
+from haip.togaf.knowledge_agent import KnowledgeAgent
 
+_agent = KnowledgeAgent(agent_name="dietitian", department="营养科")
+_GUIDELINES = [
+    "ESPEN 欧洲临床营养与代谢学会指南 (2023)",
+    "CSPEN 中国肠外肠内营养指南 (2023)",
+    "GLIM Criteria for Malnutrition (2019)",
+    "NICE CG32 Nutrition Support for Adults (2017)",
+    "ASPEN Guidelines for Refeeding Syndrome (2020)",
+    "中国营养学会 中国居民膳食营养素参考摄入量 (2023)",
+]
+_agent.rule_engine.load_all()
+
+from typing import Any
 
 # ═══════════════════════════════════════════════════════════
 # 1. NRS2002 营养风险筛查

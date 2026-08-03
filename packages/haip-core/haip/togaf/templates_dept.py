@@ -278,6 +278,10 @@ _GUIDELINE_REGISTRY: dict[str, list[dict]] = {
     "obgyn": [
         {"name": "中华妇产科杂志 产前检查与诊疗指南 (2022)", "chapters": 6, "vs": 5, "bp": 6},
     ],
+    "pediatrics": [
+        {"name": "WHO IMCI 儿童疾病综合管理指南 (2024)", "chapters": 6, "vs": 5, "bp": 6},
+        {"name": "中华儿科杂志 儿童生长发育指南 (2023)", "chapters": 5, "vs": 5, "bp": 6},
+    ],
     "neonatology": [
         {"name": "中华儿科杂志 新生儿诊疗规范 (2022)", "chapters": 5, "vs": 5, "bp": 6},
     ],
@@ -314,6 +318,13 @@ _GUIDELINE_REGISTRY: dict[str, list[dict]] = {
     "health_mgmt": [
         {"name": "中华健康管理学杂志 健康体检指南 (2022)", "chapters": 5, "vs": 4, "bp": 5},
     ],
+    "huigiao": [
+        {"name": "国际医疗中心管理规范 (2023)", "chapters": 5, "vs": 5, "bp": 6},
+    ],
+    "cosmetic_surgery": [
+        {"name": "中国整形外科杂志 整形美容诊疗规范 (2022)", "chapters": 5, "vs": 5, "bp": 6},
+    ],
+
 }
 
 _TEMPLATE_REGISTRY: dict[str, DeptTemplate] = {

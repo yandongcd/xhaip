@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import json
+import logging
 import time
-from typing import Any, Iterator
+from collections.abc import Iterator
+from typing import Any
 
 import httpx
 
-from haip.llm import ChatResponse, LLMProvider, ToolCall
+from haip.llm import DEFAULT_MAX_TOKENS, ChatResponse, LLMProvider, ToolCall
+
+logger = logging.getLogger(__name__)
 
 
 class DeepSeekProvider(LLMProvider):
@@ -56,7 +60,7 @@ class DeepSeekProvider(LLMProvider):
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
         temperature: float = 0.3,
-        max_tokens: int = 4096,
+        max_tokens: int = DEFAULT_MAX_TOKENS,
     ) -> ChatResponse:
         body = self._build_body(messages, tools, temperature, max_tokens, stream=False)
         url = f"{self.base_url}/chat/completions"
@@ -77,8 +81,11 @@ class DeepSeekProvider(LLMProvider):
                 return self._parse_response(data)
             except Exception as e:
                 last_error = str(e)
+                logger.warning("DeepSeek API call failed (attempt %d/%d): %s",
+                               attempt + 1, self.max_retries, last_error)
                 if attempt < self.max_retries - 1:
                     time.sleep(min(2 ** attempt, 8))
+        logger.error("DeepSeek API call exhausted retries: %s", last_error)
         return ChatResponse(content=f"LLM error after {self.max_retries} retries: {last_error}")
 
     def _parse_response(self, data: dict[str, Any]) -> ChatResponse:
@@ -111,7 +118,7 @@ class DeepSeekProvider(LLMProvider):
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
         temperature: float = 0.3,
-        max_tokens: int = 4096,
+        max_tokens: int = DEFAULT_MAX_TOKENS,
     ) -> Iterator[ChatResponse]:
         body = self._build_body(messages, tools, temperature, max_tokens, stream=True)
         url = f"{self.base_url}/chat/completions"

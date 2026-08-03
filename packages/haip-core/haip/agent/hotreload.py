@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import threading
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 class HotReloadWatcher:
@@ -66,4 +69,4 @@ class HotReloadWatcher:
             try:
                 self._scan()
             except Exception:
-                pass
+                logger.debug("Watch loop scan failed", exc_info=True)

@@ -1,5 +1,6 @@
 """测试热重载 + 可观测性 + 并行编排."""
 
+import os
 import sys
 import tempfile
 import time
@@ -34,9 +35,8 @@ class TestHotReload:
             test_file.write_text("version: '1.0'\n", encoding="utf-8")
             w = HotReloadWatcher(d, interval=0.1)
             w._mtimes = w._build_snapshot()
-            time.sleep(0.3)
             test_file.write_text("version: '2.0'\n", encoding="utf-8")
-            time.sleep(0.3)
+            os.utime(test_file, (time.time() + 10, time.time() + 10))
             changed = w._scan()
             assert len(changed) >= 1
 
@@ -47,9 +47,8 @@ class TestHotReload:
             test_file.write_text("version: '1.0'\n", encoding="utf-8")
             w = HotReloadWatcher(d, interval=0.1)
             w._mtimes = w._build_snapshot()
-            time.sleep(0.3)
             test_file.write_text("version: '2.0'\n", encoding="utf-8")
-            time.sleep(0.3)
+            os.utime(test_file, (time.time() + 10, time.time() + 10))
             changed = w._scan()
             assert len(changed) >= 1
 
@@ -71,8 +70,8 @@ class TestHotReload:
             test_file.write_text("name: config\n", encoding="utf-8")
             w = HotReloadWatcher(d, interval=0.1)
             w._mtimes = w._build_snapshot()
-            time.sleep(0.1)
             test_file.write_text("name: config_v2\n", encoding="utf-8")
+            os.utime(test_file, (time.time() + 10, time.time() + 10))
             changed = w._scan()
             assert "agent_config.yaml" in str(changed) or any("agent_config.yaml" in c for c in changed)
 
@@ -101,7 +100,10 @@ class TestObservability:
 class TestParallelOrchestrator:
     def test_independent_nodes_all_called(self):
         from haip.orchestrator import (
-            A2AOrchestrator, TaskNode, TaskDAG, MockTransport,
+            A2AOrchestrator,
+            MockTransport,
+            TaskDAG,
+            TaskNode,
         )
         transport = MockTransport({
             "a/t": {"status": "ok", "output": "a"},

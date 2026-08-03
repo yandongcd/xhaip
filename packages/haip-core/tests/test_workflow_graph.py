@@ -6,16 +6,21 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
-import pytest  # noqa: E402
-from haip.orchestrator.graph import (  # noqa: E402
-    ClinicalWorkflow, Node, NodeType, WorkflowBuilder,
-)
-from haip.orchestrator.agent_tool import (  # noqa: E402
-    AgentTool, build_agent_tools, get_agent_tool_schemas,
-    create_agent_tool_executor,
-)
-from haip.session.store import Event  # noqa: E402
+import pytest
 
+from haip.orchestrator.agent_tool import (
+    AgentTool,
+    build_agent_tools,
+    create_agent_tool_executor,
+    get_agent_tool_schemas,
+)
+from haip.orchestrator.graph import (
+    ClinicalWorkflow,
+    Node,
+    NodeType,
+    WorkflowBuilder,
+)
+from haip.session.store import Event
 
 # ── Workflow DSL 基本测试 ──
 
@@ -133,7 +138,7 @@ class TestAgentTool:
     def test_basic_schema(self):
         """单个 AgentTool 生成正确的 schema."""
         # Mock 一个 agent 注册
-        from haip.agent import DomainPlugin, register, list_all
+        from haip.agent import DomainPlugin, list_all, register
         list_all().clear()
 
         plugin = DomainPlugin(

@@ -25,7 +25,7 @@ def get_api_key() -> str:
             data = json.loads(_PERSIST_FILE.read_text(encoding="utf-8"))
             return data.get("api_key", "")
     except Exception:
-        pass
+        logger.debug("API key 文件读取失败", exc_info=True)
     return ""
 
 

@@ -146,8 +146,9 @@ class TestDeepSeekProvider:
 
     def test_chat_mocked_http(self, mocker):
         import json as _json
-        from haip.llm.deepseek import DeepSeekProvider
+
         from haip.llm import ChatResponse
+        from haip.llm.deepseek import DeepSeekProvider
 
         mock_response = mocker.MagicMock()
         mock_response.raise_for_status = mocker.MagicMock()
@@ -166,8 +167,9 @@ class TestDeepSeekProvider:
 
     def test_chat_stream_mocked(self, mocker):
         import json as _json
-        from haip.llm.deepseek import DeepSeekProvider
+
         from haip.llm import ChatResponse
+        from haip.llm.deepseek import DeepSeekProvider
 
         def fake_lines():
             yield 'data: {"choices":[{"message":{"content":"Hello"},"finish_reason":"stop"}],"model":"test"}'
@@ -187,8 +189,8 @@ class TestDeepSeekProvider:
         mock_stream.assert_called_once()
 
     def test_chat_stream_malformed_json_line(self, mocker):
-        from haip.llm.deepseek import DeepSeekProvider
         from haip.llm import ChatResponse
+        from haip.llm.deepseek import DeepSeekProvider
 
         def fake_lines():
             yield 'data: {"choices":[{"message":{"content":"ok"},"finish_reason":"stop"}]}'
@@ -247,8 +249,8 @@ class TestDeepSeekProvider:
         assert len(chunks) >= 1
 
     def test_chat_timeout_retries_then_error(self, mocker):
-        from haip.llm.deepseek import DeepSeekProvider
         from haip.llm import ChatResponse
+        from haip.llm.deepseek import DeepSeekProvider
 
         mock_post = mocker.patch("httpx.post", side_effect=Exception("timeout"))
 

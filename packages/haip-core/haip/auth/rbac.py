@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import threading
 
-from haip.auth.models import Permission, PREDEFINED_ROLES
-
+from haip.auth.models import PREDEFINED_ROLES, Permission
 
 # In-memory role-permission store (PostgreSQL-backed in P1)
 _role_permissions: dict[str, set[Permission]] = {
@@ -12,54 +12,61 @@ _role_permissions: dict[str, set[Permission]] = {
 }
 # Custom roles added at runtime
 _custom_roles: dict[str, set[Permission]] = {}
+_rbac_lock = threading.Lock()
 
 
 def get_permissions_for_roles(roles: list[str]) -> list[str]:
     """Get all permissions granted to a set of roles."""
     all_perms: set[str] = set()
-    for role_name in roles:
-        perms = _role_permissions.get(role_name) or _custom_roles.get(role_name)
-        if perms:
-            all_perms.update(p.value for p in perms)
+    with _rbac_lock:
+        for role_name in roles:
+            perms = _role_permissions.get(role_name) or _custom_roles.get(role_name)
+            if perms:
+                all_perms.update(p.value for p in perms)
     return sorted(all_perms)
 
 
 def has_permission(roles: list[str], permission: Permission) -> bool:
     """Check if any of the given roles grant the specified permission."""
-    for role_name in roles:
-        perms = _role_permissions.get(role_name) or _custom_roles.get(role_name)
-        if perms and permission in perms:
-            return True
+    with _rbac_lock:
+        for role_name in roles:
+            perms = _role_permissions.get(role_name) or _custom_roles.get(role_name)
+            if perms and permission in perms:
+                return True
     return False
 
 
 def add_role(name: str, permissions: list[Permission]) -> None:
     """Add or update a custom role."""
-    _custom_roles[name] = set(permissions)
+    with _rbac_lock:
+        _custom_roles[name] = set(permissions)
 
 
 def remove_role(name: str) -> bool:
     """Remove a custom role. Returns True if successful."""
-    if name in _custom_roles:
-        del _custom_roles[name]
-        return True
+    with _rbac_lock:
+        if name in _custom_roles:
+            del _custom_roles[name]
+            return True
     return False
 
 
 def list_roles() -> dict[str, list[str]]:
     """List all roles and their permissions."""
     result: dict[str, list[str]] = {}
-    for name, perms in {**_role_permissions, **_custom_roles}.items():
-        result[name] = sorted(p.value for p in perms)
+    with _rbac_lock:
+        for name, perms in {**_role_permissions, **_custom_roles}.items():
+            result[name] = sorted(p.value for p in perms)
     return result
 
 
 def add_permission_to_role(role_name: str, permission: Permission) -> bool:
     """Add a permission to an existing role. Returns True if successful."""
-    role = _custom_roles.get(role_name) or _role_permissions.get(role_name)
-    if role is None:
-        return False
-    role.add(permission)
+    with _rbac_lock:
+        role = _custom_roles.get(role_name) or _role_permissions.get(role_name)
+        if role is None:
+            return False
+        role.add(permission)
     return True
 
 

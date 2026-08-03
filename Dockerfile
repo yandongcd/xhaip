@@ -20,6 +20,10 @@ RUN python -c "import sys; sys.path.insert(0,'packages/haip-core'); sys.path.ins
 
 EXPOSE 8769
 
+# Run as non-root user
+RUN useradd --create-home --shell /bin/bash appuser
+USER appuser
+
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8769/api/health')" || exit 1
 

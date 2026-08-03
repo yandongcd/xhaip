@@ -1,0 +1,100 @@
+name: infection-control
+cn_name: 医院感染监测智能体
+version: 1.0.0
+type: specialist
+trust_tier: deep
+department: 医院感染管理科
+port: 8821
+aliases:
+- 院感
+- 感控
+- 医院感染
+- HAI
+- infection-control
+prompt:
+  system: 你是南方医院医院感染管理科AI助手，负责全院医院感染监测、多重耐药菌预警、手术部位感染监测和感染暴发早期识别。所有监测结果须经院感专职人员复核确认后执行干预措施。
+  temperature: 0.2
+tools:
+- name: mdro_surveillance
+  description: 多重耐药菌主动监测 — 从LIS实时订阅微生物培养+药敏结果，自动标记MRSA/VRE/CRE/CRAB/CRPA/MDR-TB，按科室/时间/菌种三维统计
+  handler: infection_control.mdro_surveillance
+  input:
+    time_range: str
+    department: str
+- name: outbreak_detection
+  description: 医院感染暴发检测 — 基于时空聚类算法，同一病区7天内≥3例同源MDRO自动触发橙色预警
+  handler: infection_control.outbreak_detection
+  input:
+    cases: list
+    time_window: int
+- name: ssi_monitor
+  description: 手术部位感染(SSI)监测 — 基于NHSN定义，对接手术记录+术后30天再入院+切口分泌物培养
+  handler: infection_control.ssi_monitor
+  input:
+    surgery_records: list
+- name: hai_bundle_compliance
+  description: 院感集束化措施依从性 — CLABSI/CAUTI/VAP每日评估+手卫生依从率+隔离措施执行率
+  handler: infection_control.hai_bundle_compliance
+  input:
+    department: str
+    date: str
+- name: environmental_surveillance
+  description: 环境卫生学监测 — 手术室/ICU/NICU空气培养+物表采样+内镜洗消追溯
+  handler: infection_control.environmental_surveillance
+  input:
+    location: str
+    sample_type: str
+guard:
+  triggers:
+  - 院感暴发
+  - 多重耐药菌
+  - 手术部位感染
+  high_risk_scenarios:
+  - 同病区≥3例同源MDRO
+  - CRE检出
+  - SSI率超NHSN基准
+  citation:
+    required: true
+    min_sources: 2
+    min_trust: T1
+depends_on:
+- agent: lab-critical-value
+  version: '>=1.0'
+  note: 检验危急值数据源
+- agent: medical-record
+  version: '>=1.0'
+  note: 患者病历/手术记录/导管记录
+stages:
+- order: 1
+  id: surveillance
+  label: 主动监测
+  desc: MDRO筛查(MRSA/VRE/CRE/CRAB/CRPA/MDR-TB)、LIS数据自动抓取
+  role_ids:
+  - infection_control
+  - microbiologist
+- order: 2
+  id: detect
+  label: 暴发检测
+  desc: 时空聚集分析(≥3例同病区7d→橙色预警,≥5例→红色预警)、调查启动
+  role_ids:
+  - infection_control
+- order: 3
+  id: bundle
+  label: 集束化依从
+  desc: CLABSI 5项/CAUTI 4项/VAP 5项每日评估、手卫生依从性、隔离合规
+  role_ids:
+  - infection_control
+  - nurse
+- order: 4
+  id: report
+  label: 报告与改进
+  desc: SSI监测(NHSN定义)、环境监测(GB15982)、季度报告、PDCA改进
+  role_ids:
+  - infection_control
+
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: false

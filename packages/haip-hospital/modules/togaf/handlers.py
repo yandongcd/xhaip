@@ -11,7 +11,6 @@ from typing import Any
 
 from haip.togaf.templates import render_template as _render_template
 
-
 # ── metamodel_list ────────────────────────────────────────────────────────────
 
 def metamodel_list(entity_type: str = "", **kwargs: Any) -> dict[str, Any]:
@@ -112,7 +111,8 @@ def _render_template_real(name: str, dept: str = "orthopedic") -> str:
     nodes = arch_data.get("nodes", [])
 
     if name == "capability_heatmap":
-        from haip.togaf.templates.capability_heatmap import render as render_heatmap, DEFAULT_DATA
+        from haip.togaf.templates.capability_heatmap import DEFAULT_DATA
+        from haip.togaf.templates.capability_heatmap import render as render_heatmap
         capabilities = [
             {"capability": n["name"], "maturity": min(5, 3 + n.get("properties", {}).get("stage", 0)),
              "criticality": 4 if n["layer"] == "Business" else 3, "coverage": 0.75}
@@ -120,7 +120,8 @@ def _render_template_real(name: str, dept: str = "orthopedic") -> str:
         ]
         html = render_heatmap(capabilities or DEFAULT_DATA)
     elif name == "app_landscape":
-        from haip.togaf.templates.app_landscape import render as render_app, DEFAULT_DATA
+        from haip.togaf.templates.app_landscape import DEFAULT_DATA
+        from haip.togaf.templates.app_landscape import render as render_app
         apps = [
             {"name": n["name"], "type": n["type"], "status": "active",
              "version": "1.0", "owner": n.get("properties", {}).get("owner", dept)}
@@ -128,7 +129,8 @@ def _render_template_real(name: str, dept: str = "orthopedic") -> str:
         ]
         html = render_app(apps or DEFAULT_DATA)
     elif name == "value_stream":
-        from haip.togaf.templates.value_stream_map import render as render_vs, DEFAULT_DATA
+        from haip.togaf.templates.value_stream_map import DEFAULT_DATA
+        from haip.togaf.templates.value_stream_map import render as render_vs
         stages = [{"name": n["name"], "order": n.get("properties", {}).get("stage", 0)}
                   for n in nodes if n["type"] == "BusinessService"]
         html = render_vs(stages or DEFAULT_DATA)

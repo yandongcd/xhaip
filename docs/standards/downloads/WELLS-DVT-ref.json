@@ -1,0 +1,10 @@
+{
+  "id": "WELLS-DVT",
+  "title": "Wells Score for DVT Clinical Prediction",
+  "priority": "P1",
+  "source": "wells",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/12900679/",
+  "note": "Free",
+  "downloaded": false,
+  "generated": "2026-07-26T23:45:17.598057"
+}

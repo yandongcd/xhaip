@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from haip.togaf.templates._base import wrap_html
 
-
 DEFAULT_DATA: list[dict] = [
     {"capability": "临床诊疗", "maturity": 4, "criticality": 5, "coverage": 0.85},
     {"capability": "影像诊断", "maturity": 4, "criticality": 5, "coverage": 0.90},

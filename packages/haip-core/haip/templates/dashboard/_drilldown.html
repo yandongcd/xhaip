@@ -1,0 +1,103 @@
+<div class="drilldown" x-bind:class="{ open: selectedDept }">
+  <template x-if="selectedDept">
+    <div>
+      <div class="drilldown-header">
+        <h3>
+          <span x-text="selectedDept.name"></span>
+          <span style="color:var(--text-secondary);font-weight:400;margin-left:8px;font-size:var(--text-sm)" x-text="'· ' + selectedDept.type"></span>
+        </h3>
+        <div style="display:flex;align-items:center;gap:var(--space-sm)">
+          <button class="btn btn-sm" @click="toggleDimensionsTab()" x-text="showDimensions ? '返回智能体' : '能力维度'"></button>
+          <button class="drilldown-close" @click="closeDrilldown()" aria-label="关闭详情">&times;</button>
+        </div>
+      </div>
+
+      <template x-if="!showDimensions">
+        <div>
+          <h4 style="font-size:var(--text-sm);font-weight:600;color:var(--text-secondary);margin-bottom:var(--space-md);text-transform:uppercase;letter-spacing:0.5px" x-show="deptAgents.length">
+            智能体 <span style="font-weight:400" x-text="'(' + deptAgents.length + ')'"></span>
+          </h4>
+
+          <div class="dd-agent-grid" x-show="deptAgents.length">
+            <template x-for="agent in deptAgents" x-bind:key="agent.name">
+              <div class="dd-agent-card" @click="goToAgent(agent)" role="button" tabindex="0"
+                   @keydown.enter="goToAgent(agent)"
+                   x-bind:aria-label="'打开智能体 ' + agent.cn_name">
+                <div class="dd-agent-card-header">
+                  <span class="dd-agent-name" x-text="agent.cn_name"></span>
+                  <span class="agent-type-tag" x-bind:class="'tag-' + agent.type" x-text="agent.name"></span>
+                </div>
+                <div class="dd-agent-card-body">
+                  <div class="dd-agent-meta">
+                    <span>端口</span>
+                    <strong x-text="agent.port"></strong>
+                  </div>
+                  <div class="dd-agent-meta">
+                    <span>类型</span>
+                    <strong x-text="agent.type"></strong>
+                  </div>
+                </div>
+                <div class="dd-agent-arrow">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <div class="dd-agent-empty" x-show="!deptAgents.length">
+            <div class="dd-agent-empty-icon">—</div>
+            <p>该科室暂无智能体</p>
+          </div>
+        </div>
+      </template>
+
+      <template x-if="showDimensions">
+        <div>
+          <div class="drilldown-grid">
+            <template x-for="(val, key) in selectedDept.dimensions" x-bind:key="key">
+              <div x-show="key !== 'total' && key !== 'tier'">
+                <div class="dimension-item">
+                  <div class="dimension-label">
+                    <span class="dimension-name" x-text="key"></span>
+                    <span class="dimension-value" x-bind:class="val >= 80 ? 'high' : val >= 50 ? 'medium' : 'low'" x-text="val + '%'"></span>
+                  </div>
+                  <div class="dimension-bar">
+                    <div class="dimension-fill" x-bind:class="val >= 80 ? 'high' : val >= 50 ? 'medium' : 'low'" x-bind:style="{ width: val + '%' }"></div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <div class="drilldown-info">
+            <div class="drilldown-info-item">
+              <strong>Agent</strong>
+              <span x-text="selectedDept.has_agent ? selectedDept.agent : '—'"></span>
+            </div>
+            <div class="drilldown-info-item">
+              <strong>阶段</strong>
+              <span x-text="selectedDept.stages"></span>
+            </div>
+            <div class="drilldown-info-item">
+              <strong>角色</strong>
+              <span x-text="selectedDept.roles"></span>
+            </div>
+            <div class="drilldown-info-item">
+              <strong>校验</strong>
+              <span x-text="selectedDept.validation_passed ? '通过' : '—'"></span>
+            </div>
+          </div>
+
+          <div class="drilldown-gaps" x-show="selectedDept.gaps && selectedDept.gaps.length">
+            <h4>待改进项</h4>
+            <ul>
+              <template x-for="g in selectedDept.gaps" x-bind:key="g">
+                <li x-text="g"></li>
+              </template>
+            </ul>
+          </div>
+        </div>
+      </template>
+    </div>
+  </template>
+</div>

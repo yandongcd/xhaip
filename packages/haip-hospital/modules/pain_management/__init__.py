@@ -7,6 +7,18 @@
 
 from __future__ import annotations
 
+from haip.togaf.knowledge_agent import KnowledgeAgent
+
+_agent = KnowledgeAgent(agent_name="pain-management", department="疼痛科")
+_GUIDELINES = [
+    "VAS/NRS 疼痛评估量表",
+    "多模式镇痛 (Multimodal Analgesia) 指南",
+    "ASA 急性疼痛管理实践指南 (2022)",
+    "中国术后疼痛管理专家共识",
+    "无痛化病房质控标准",
+]
+_agent.rule_engine.load_all()
+
 from typing import Any
 
 PAIN_MEDICATIONS = {

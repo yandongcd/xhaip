@@ -12,7 +12,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-
 # ─── Dataclasses (from haip-0710) ──────────────────────────────────────
 
 

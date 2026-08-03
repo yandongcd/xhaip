@@ -1,0 +1,10 @@
+{
+  "id": "SNOMED-CT",
+  "title": "SNOMED CT",
+  "priority": "P0",
+  "source": "snomed",
+  "url": "https://www.snomed.org/",
+  "note": "Free for member countries via NLM",
+  "downloaded": false,
+  "generated": "2026-07-26T23:45:17.567115"
+}

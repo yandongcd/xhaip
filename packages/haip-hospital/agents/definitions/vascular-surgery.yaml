@@ -1,4 +1,4 @@
-name: vascular-surgery
+﻿name: vascular-surgery
 cn_name: 血管外科智能体
 version: 1.0.0
 type: business
@@ -57,6 +57,8 @@ guard:
   high_risk_scenarios:
   - 手术并发症
   - 药物不良反应
+  citation:
+    required: true
 ui:
   template: chat-with-role-switcher
   roles:
@@ -79,51 +81,48 @@ ui:
     label: 康复师
 stages:
 - order: 1
-  id: preop-eval
-  label: 术前评估
-  desc: GCS/ASA评分、影像学评估、凝血功能、心肺功能筛查、麻醉评估
-  role_ids:
-  - attending
-  - resident
-  - anesthesiologist
+  id: vascular-eval
+  label: 血管评估
+  desc: Rutherford PAD分级(0-6)、ABI测量、NASCET/ECST颈动脉狭窄度、Wells DVT评分、CEAP静脉分级
+  role_ids: [attending, resident, cardiologist]
 - order: 2
-  id: preop-prep
-  label: 术前准备
-  desc: 备血交叉配血、预防性抗生素、深静脉穿刺、导尿、备皮
-  role_ids:
-  - attending
-  - resident
-  - head_nurse
+  id: preop-plan
+  label: 术前规划
+  desc: 抗凝方案(ACT>250肝素化)、AAA直径监测(男>55/女>50mm)、EVAR vs OR决策、移植血管选择
+  role_ids: [attending, surgeon, anesthesiologist]
 - order: 3
   id: surgery
-  label: 手术执行
-  desc: 术中监测、出血量评估、冰冻病理、器械清点
-  role_ids:
-  - attending
-  - surgeon
-  - anesthesiologist
-  - instrument_nurse
+  label: 手术/介入执行
+  desc: CEA纵切/外翻式、EVAR支架释放、血管吻合、远端灌注监测(踝部多普勒)
+  role_ids: [attending, surgeon, anesthesiologist]
 - order: 4
-  id: postop-icu
-  label: 术后监护
-  desc: ICU监测、GCS追踪、ICP管理、引流管管理、电解质平衡
-  role_ids:
-  - attending
-  - icu_doctor
-  - head_nurse
+  id: postop-monitor
+  label: 术后监测
+  desc: 外周动脉搏动监测(q15min→q1h)、缺血再灌注疼痛管理、移植物血栓筛查、抗凝管理
+  role_ids: [attending, resident, head_nurse]
 - order: 5
-  id: ward-care
-  label: 病房管理
-  desc: 切口护理、活动指导、营养支持、VTE预防、疼痛管理
-  role_ids:
-  - attending
-  - resident
-  - head_nurse
+  id: recovery
+  label: 康复期
+  desc: 抗血小板/抗凝长期方案、血压控制(目标<130/80)、血脂管理、戒烟辅导
+  role_ids: [attending, resident, head_nurse]
 - order: 6
   id: followup
-  label: 随访康复
-  desc: 神经功能评分、康复计划制定、术后1/3/6月随访、影像复查
-  role_ids:
-  - attending
-  - rehab_therapist
-  - head_nurse
+  label: 随访监测
+  desc: DUS超声(1/6/12月→年度)、PSV比值>2.5提示>50%再狭窄、移植物通畅率、AAA瘤囊回缩
+  role_ids: [attending, resident]
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+debate:
+  enabled: true
+  competitors:
+  - cardio-risk
+  - anesthesia
+  mode: auto
+trust_tier: deep

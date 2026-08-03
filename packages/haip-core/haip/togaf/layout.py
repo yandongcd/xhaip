@@ -104,8 +104,7 @@ def compute_layout(
                 if j <= i:
                     continue
                 d = _dist(pid1, pid2)
-                if d < 1:
-                    d = 1
+                d = max(d, 1)
                 fx = (positions[pid1][0] - positions[pid2][0]) / d
                 fy = (positions[pid1][1] - positions[pid2][1]) / d
                 f = repulsion / (d * d)
@@ -118,8 +117,7 @@ def compute_layout(
         for pid, neighbors in adjacency.items():
             for nb in neighbors:
                 d = _dist(pid, nb)
-                if d < 1:
-                    d = 1
+                d = max(d, 1)
                 fx = (positions[nb][0] - positions[pid][0]) / d
                 fy = (positions[nb][1] - positions[pid][1]) / d
                 f = attraction * d

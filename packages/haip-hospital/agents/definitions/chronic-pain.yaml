@@ -54,6 +54,6 @@ ui:
   template: chat-with-role-switcher
   roles:
   - id: attending
-    label: attending
+    label: 主治医师
   - id: therapist
-    label: therapist
+    label: 治疗师

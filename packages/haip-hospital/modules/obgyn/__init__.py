@@ -27,7 +27,7 @@ _agent.rule_engine.load_all()
 
 
 def _clinical_error(msg: str) -> dict:
-    return {"status": "error", "agent": _agent.agent_name, "error": msg}
+    return _agent.make_clinical_error(msg)
 
 
 # ── Clinical Scoring Systems ─────────────────────────────────────────
@@ -74,6 +74,8 @@ def _preeclampsia_criteria(sbp: int, dbp: int, proteinuria_mg24h: float = 0,
             "diagnosis": "Gestational hypertension" if hypertensive and weeks < 20 else "Normal",
             "preeclampsia": False, "severe": False, "hellp": False,
             "bp": f"{sbp}/{dbp}", "proteinuria": f"{proteinuria_mg24h}mg/24h",
+            "severe_features": [],
+            "magnesium_sulfate": False,
             "management": "Routine antenatal care"
         }
 

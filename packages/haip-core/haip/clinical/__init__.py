@@ -9,13 +9,14 @@ Provides:
     - Clinical indicators (lab reference ranges)
 """
 
-from haip.clinical.nutrition import assess as nrs2002_assess, NRS2002Result
-from haip.clinical.drug_compat import check_compatibility, check_cation_limits, CompatibilityResult
+from haip.clinical.drug_compat import CompatibilityResult, check_cation_limits, check_compatibility
+from haip.clinical.nutrition import NRS2002Result
+from haip.clinical.nutrition import assess as nrs2002_assess
 
 __all__ = [
-    "nrs2002_assess",
-    "NRS2002Result",
-    "check_compatibility",
-    "check_cation_limits",
     "CompatibilityResult",
+    "NRS2002Result",
+    "check_cation_limits",
+    "check_compatibility",
+    "nrs2002_assess",
 ]

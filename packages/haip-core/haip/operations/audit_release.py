@@ -24,6 +24,7 @@ from __future__ import annotations
 import difflib
 import hashlib
 import json
+import logging
 import os
 import shutil
 import subprocess
@@ -31,6 +32,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 def _find_project_root() -> Path:
@@ -219,8 +222,8 @@ class AuditEngine:
                     "timestamp": data.get("timestamp", ""),
                     "agents": len(data.get("agents", {})),
                 })
-            except Exception:
-                pass
+            except (json.JSONDecodeError, OSError):
+                logger.warning("跳过损坏的 agent 快照: %s", f.name)
         return result
 
     # ── Diff ───────────────────────────────────────────────────────

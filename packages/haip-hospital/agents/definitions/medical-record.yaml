@@ -1,57 +1,91 @@
 name: medical-record
 cn_name: 患者数据中心
-version: "1.0.0"
+version: 1.0.0
 type: master_data
 department: 全院
 port: 8766
-aliases: [病历, 患者数据, medical-record]
-
+aliases:
+- 病历
+- 患者数据
+- medical-record
 prompt:
-  system: |
-    你是患者数据中心，作为全院患者数据的单一真相源。
+  system: '你是患者数据中心，作为全院患者数据的单一真相源。
+
     提供患者基本信息、病历、检验检查结果的统一查询服务。
+
+    '
   temperature: 0.1
-
 tools:
-  - name: get_patient
-    description: 获取患者基本信息与病历摘要
-    handler: medical_record.get_patient
-    input: {patient_id: str}
-
-  - name: get_labs
-    description: 获取患者检验结果
-    handler: medical_record.get_labs
-    input: {patient_id: str, days: int}
-
-  - name: get_exams
-    description: 获取患者影像检查报告
-    handler: medical_record.get_exams
-    input: {patient_id: str}
-
+- name: get_patient
+  description: 获取患者基本信息与病历摘要
+  handler: medical_record.get_patient
+  input:
+    patient_id: str
+- name: get_labs
+  description: 获取患者检验结果
+  handler: medical_record.get_labs
+  input:
+    patient_id: str
+    days: int
+- name: get_exams
+  description: 获取患者影像检查报告
+  handler: medical_record.get_exams
+  input:
+    patient_id: str
 ui:
   template: chat-with-role-switcher
   roles:
-    - {id: data_admin, label: 数据管理员, default: true}
-    - {id: data_analyst, label: 数据分析师}
-    - {id: dept_head, label: 科主任}
-    - {id: nurse, label: 临床护士}
-
+  - id: data_admin
+    label: 数据管理员
+    default: true
+  - id: data_analyst
+    label: 数据分析师
+  - id: dept_head
+    label: 科主任
+  - id: nurse
+    label: 临床护士
 stages:
-  - order: 1
-    id: collect
-    label: 数据汇集
-    desc: "多源数据采集、格式标准化、质量校验"
-    role: 数据管理员
-    role_ids: [data_admin, data_analyst]
-  - order: 2
-    id: analyze
-    label: 数据分析
-    desc: "统计指标计算、趋势对比分析、异常模式检测"
-    role: 数据分析师
-    role_ids: [data_admin, data_analyst, dept_head]
-  - order: 3
-    id: report
-    label: 报告分发
-    desc: "指标看板生成、分析报告输出、数据下发配置"
-    role: 数据分析师 / 科主任
-    role_ids: [data_admin, data_analyst, dept_head]
+- order: 1
+  id: collect
+  label: 数据汇集
+  desc: 多源数据采集、格式标准化、质量校验
+  role: 数据管理员
+  role_ids:
+  - data_admin
+  - data_analyst
+- order: 2
+  id: analyze
+  label: 数据分析
+  desc: 统计指标计算、趋势对比分析、异常模式检测
+  role: 数据分析师
+  role_ids:
+  - data_admin
+  - data_analyst
+  - dept_head
+- order: 3
+  id: report
+  label: 报告分发
+  desc: 指标看板生成、分析报告输出、数据下发配置
+  role: 数据分析师 / 科主任
+  role_ids:
+  - data_admin
+  - data_analyst
+  - dept_head
+guard:
+  triggers:
+  - 患者数据错误
+  - 病史遗漏
+  - 过敏史缺失
+  high_risk_scenarios:
+  - 过敏史未记录+用药
+  - 关键检验缺失
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: light

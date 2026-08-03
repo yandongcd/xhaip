@@ -1,0 +1,115 @@
+# 48h手术窗口期评估规则 — 8因素T2层次决策
+# 来源: NICE NG37 / AAOS 2022 / 卫健委指南2022
+# T1: 国际指南 | T2: 南方医院5项差异
+
+rule_type: treatment
+department: 创伤骨科
+capability: cap-l3-surgical-timing
+business_process: bp-hip-fracture-timing
+guideline: NICE NG37 (2023) / AAOS 2022
+stakeholder: 骨科主任+心内科+麻醉科
+version: "1.0.0"
+
+rules:
+  - id: timing-48h-window
+    description: 48h手术窗口期判定 — 入院即启动
+    condition:
+      and:
+        - field: age
+          operator: ">="
+          value: 65
+        - field: diagnosis
+          operator: contains
+          value: 髋部骨折
+    result:
+      target: 48h内手术
+      protocol: |
+        1. 入院即启动绿色通道
+        2. 24h内完成: ECG/胸片/心超/凝血/血常规/肝肾功/血糖
+        3. 24h内完成: 心内科+麻醉科+老年科会诊
+        4. 48h前完成: 手术方案确定+术前准备
+      metrics:
+        - door_to_decision: "<24h"
+        - door_to_surgery: "<48h"
+
+  - id: timing-high-risk-delay
+    description: 高危因素 → 术前优化 → 手术时机评估
+    condition:
+      and:
+        - field: age
+          operator: ">="
+          value: 65
+    result:
+      risk_factors:
+        cardiac:
+          - field: 心功能不全/不稳定心绞痛/严重心律失常
+            action: 心内科急会诊 + 心脏超声 + 心肌酶 + BNP
+            delay: 24-48h优化后手术
+        pulmonary:
+          - field: 严重COPD/低氧血症(SpO2<90%)
+            action: 呼吸科会诊 + 肺功能 + 血气分析
+            delay: 24-48h优化后手术
+        cerebral:
+          - field: 近期卒中(<3月)/严重颈动脉狭窄
+            action: 神经内科会诊 + 颈动脉超声 + 头颅MRI
+            delay: 个体化评估
+        anticoagulation:
+          - field: 双抗(阿司匹林+氯吡格雷)/华法林/DOAC
+            action: 麻醉科评估桥接方案
+            delay: 按药物半衰期+出血风险评估
+        anemia:
+          - field: "Hb < 80 g/L"
+            action: 输血至Hb≥80g/L
+            delay: 12-24h
+        renal:
+          - field: "eGFR < 30 mL/min"
+            action: 肾内科会诊 + 调整药物剂量
+            delay: 12-24h
+        infection:
+          - field: WBC > 12 OR PCT > 0.5
+            action: 抗感染治疗 + 明确感染源
+            delay: 24-72h(感染控制后手术)
+        glucose:
+          - field: 随机血糖 > 16.7 mmol/L OR HbA1c > 10%
+            action: 内分泌科会诊 + 胰岛素泵
+            delay: 24-48h(血糖达标后手术)
+
+  - id: timing-no-delay
+    description: 无高危因素 → 直接进入手术流程
+    condition:
+      and:
+        - field: age
+          operator: ">="
+          value: 65
+        - operator: not
+          conditions:
+            - field: cardiac_risk
+              operator: "=="
+              value: high
+            - field: anticoagulation
+              operator: "=="
+              value: active
+            - field: hb
+              operator: "<"
+              value: 80
+    result:
+      recommendation: 绿色通道 → 24h内完成检查 → 48h内手术
+      priority: high
+
+  - id: timing-emergency
+    description: 急诊手术指征 — 不可延迟
+    condition:
+      or:
+        - field: 开放性骨折
+          operator: "=="
+          value: true
+        - field: 合并血管损伤
+          operator: "=="
+          value: true
+        - field: 骨筋膜室综合征
+          operator: "=="
+          value: true
+    result:
+      recommendation: 急诊手术(6h内)
+      priority: critical
+      alert: 🔴 不可因术前检查延迟手术 — 边手术边纠正

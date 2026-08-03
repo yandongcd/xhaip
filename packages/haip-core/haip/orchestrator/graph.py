@@ -19,13 +19,13 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, AsyncIterator, Callable
+from typing import Any
 
-from haip.session.store import Event
 from haip.loop.context import InvocationContext
-
+from haip.session.store import Event
 
 # ── Node Types ──
 

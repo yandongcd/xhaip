@@ -1,4 +1,4 @@
-name: thoracic-surgery
+﻿name: thoracic-surgery
 cn_name: 胸外科智能体
 version: 1.0.0
 type: business
@@ -57,6 +57,8 @@ guard:
   high_risk_scenarios:
   - 手术并发症
   - 药物不良反应
+  citation:
+    required: true
 ui:
   template: chat-with-role-switcher
   roles:
@@ -79,51 +81,49 @@ ui:
     label: 康复师
 stages:
 - order: 1
-  id: preop-eval
-  label: 术前评估
-  desc: GCS/ASA评分、影像学评估、凝血功能、心肺功能筛查、麻醉评估
-  role_ids:
-  - attending
-  - resident
-  - anesthesiologist
+  id: pulmonary-eval
+  label: 肺功能评估
+  desc: ppoFEV1%计算、DLCO可切除性评估、TNM 8th分期、心肺运动试验
+  role_ids: [attending, resident, anesthesiologist]
 - order: 2
-  id: preop-prep
-  label: 术前准备
-  desc: 备血交叉配血、预防性抗生素、深静脉穿刺、导尿、备皮
-  role_ids:
-  - attending
-  - resident
-  - head_nurse
+  id: preop-optimize
+  label: 术前优化
+  desc: 肺康复训练(激励性肺量计)、戒烟≥4周、营养支持、VTE预防(Caprini评分)
+  role_ids: [attending, resident, head_nurse, rehab_therapist]
 - order: 3
   id: surgery
   label: 手术执行
-  desc: 术中监测、出血量评估、冰冻病理、器械清点
-  role_ids:
-  - attending
-  - surgeon
-  - anesthesiologist
-  - instrument_nurse
+  desc: VATS单孔/多孔 vs 开胸入路、淋巴结清扫、支气管残端处理、胸管放置
+  role_ids: [attending, surgeon, anesthesiologist, instrument_nurse]
 - order: 4
-  id: postop-icu
-  label: 术后监护
-  desc: ICU监测、GCS追踪、ICP管理、引流管管理、电解质平衡
-  role_ids:
-  - attending
-  - icu_doctor
-  - head_nurse
+  id: postop-care
+  label: 术后管理
+  desc: 胸管管理(水封/气泡监测)、疼痛管理(硬膜外镇痛)、肺漏气分级、心律失常监测
+  role_ids: [attending, resident, head_nurse]
 - order: 5
-  id: ward-care
-  label: 病房管理
-  desc: 切口护理、活动指导、营养支持、VTE预防、疼痛管理
-  role_ids:
-  - attending
-  - resident
-  - head_nurse
+  id: recovery
+  label: 康复出院
+  desc: 拔管指征评估、呼吸功能锻炼、活动指导、VTE预防、食管吻合口管理(食管手术)
+  role_ids: [attending, resident, head_nurse, rehab_therapist]
 - order: 6
   id: followup
-  label: 随访康复
-  desc: 神经功能评分、康复计划制定、术后1/3/6月随访、影像复查
-  role_ids:
-  - attending
-  - rehab_therapist
-  - head_nurse
+  label: 随访监测
+  desc: 肿瘤标志物监测、LDCT定期复查(Fleishner结节标准)、肺功能随访、术后3/6/12月
+  role_ids: [attending, resident]
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+debate:
+  enabled: true
+  competitors:
+  - cardio-risk
+  - anesthesia
+  - respiratory
+  mode: auto
+trust_tier: deep

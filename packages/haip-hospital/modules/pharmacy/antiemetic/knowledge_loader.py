@@ -4,9 +4,12 @@ YAML 知识库加载器 (knowledge_loader)
 从 xhaip knowledge/ 目录加载围术期止吐相关的 YAML 知识文件
 """
 
-import yaml
+import logging
 from pathlib import Path
 
+import yaml
+
+logger = logging.getLogger(__name__)
 
 _KNOWLEDGE_BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent / "knowledge"
 _ASSETS_CACHE: dict = {}
@@ -31,6 +34,7 @@ def _load_yaml(filename: str) -> dict:
             _ASSETS_CACHE[filename] = data
             return data
 
+    logger.warning("知识文件未找到: %s (路径: %s)", filename, path)
     return {}
 
 

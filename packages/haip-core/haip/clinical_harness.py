@@ -2,10 +2,14 @@
 from __future__ import annotations
 
 import json
+import logging
 import pathlib
-import yaml
 from collections import defaultdict
 from typing import Any
+
+import yaml
+
+logger = logging.getLogger(__name__)
 
 
 class ClinicalHarness:
@@ -186,7 +190,7 @@ class ClinicalHarness:
                 if data and "id" in data:
                     guidelines[data["id"]] = data
             except Exception:
-                pass
+                logger.debug("Guideline YAML load failed: %s", yf, exc_info=True)
         return guidelines
 
     def _load_rules(self) -> dict[str, dict]:
@@ -201,7 +205,7 @@ class ClinicalHarness:
                             if doc and "rules" in doc:
                                 rules[f"{rd.name}/{rf.stem}"] = doc
                 except Exception:
-                    pass
+                    logger.debug("Rule YAML load failed: %s", rf, exc_info=True)
         return rules
 
 

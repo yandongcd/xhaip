@@ -1,0 +1,90 @@
+name: pc-aki
+cn_name: 对比剂急性肾损伤筛查智能体
+version: 1.0.0
+type: business
+trust_tier: deep
+department: 心内科
+port: 8841
+aliases:
+- PC-AKI
+- 对比剂肾病
+- 造影剂肾病
+- contrast-induced AKI
+prompt:
+  system: 你是南方医院心内科对比剂安全评估AI助手。请基于JBI循证标准、KDIGO指南和ESUR对比剂安全指南，对拟行造影剂暴露的患者进行PC-AKI风险筛查和管理。所有建议须经主治医师确认后方可执行。
+  temperature: 0.2
+tools:
+- name: risk_screen
+  description: PC-AKI高危因素筛查 — 年龄≥60/糖尿病/高血压用药/二甲双胍/肾病史 → JBI 5项
+  handler: pc_aki.risk_screen
+  input:
+    patient_id: str
+- name: renal_assess
+  description: 肾功能评估 — eGFR计算 + 肌酐基线/变化 + AKI分期(KDIGO)
+  handler: pc_aki.renal_assess
+  input:
+    patient_id: str
+    pre_creatinine: float
+    post_creatinine: float
+- name: prevention_plan
+  description: 预防管理方案 — 水化方案/药物调整(二甲双胍/ACEI/NSAIDs)/24h重复造影提醒
+  handler: pc_aki.prevention_plan
+  input:
+    patient_id: str
+    eGFR: float
+    risk_level: str
+    contrast_dose: float
+- name: nursing_checklist
+  description: 护理执行清单 — 筛查核对/水化执行/术后监测/宣教/交班
+  handler: pc_aki.nursing_checklist
+  input:
+    patient_id: str
+    risk_level: str
+guard:
+  triggers:
+  - 对比剂肾病
+  - 造影剂安全
+  - eGFR<30
+  high_risk_scenarios:
+  - eGFR<30+造影剂
+  - 二甲双胍未停药+造影剂
+  - 72h内重复造影
+  citation:
+    required: true
+    min_sources: 2
+    min_trust: T1
+depends_on:
+- agent: lab-critical-value
+  version: '>=1.0'
+  note: 检验危急值(S Cr)数据源
+- agent: medical-record
+  version: '>=1.0'
+  note: 患者病史/用药史/过敏史
+stages:
+- order: 1
+  id: screen
+  label: 风险筛查
+  desc: JBI 5项筛查(年龄≥60/DM/HTN药物/二甲双胍/肾病史)、eGFR计算
+  role_ids:
+  - attending
+  - nurse
+- order: 2
+  id: prevent
+  label: 预防方案
+  desc: 水化方案(NS 1mL/kg/h×12h)、药物调整(二甲双胍停用/ACEI/ARB/NSAIDs)、对比剂选择(等渗/低渗)
+  role_ids:
+  - attending
+- order: 3
+  id: monitor
+  label: 术后监测
+  desc: 48-72h肌酐复查、KDIGO AKI分期、尿量监测
+  role_ids:
+  - attending
+  - nurse
+
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: false

@@ -10,7 +10,7 @@ import yaml
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
-from haip.knowledge import KnowledgeStore  # noqa: E402
+from haip.knowledge import KnowledgeStore
 
 
 class TestKnowledgeStore:

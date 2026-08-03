@@ -1,4 +1,4 @@
-name: mdt
+﻿name: mdt
 cn_name: MDT 会诊智能体
 version: 1.0.0
 type: specialist
@@ -44,11 +44,13 @@ guard:
   - MDT 多方评估结果严重冲突
   - 手术时机超 48h 窗口期
   - 高风险麻醉+高风险手术叠加
+  citation:
+    required: true
 depends_on:
 - agent: cardio-risk
   version: '>=1.0'
   note: 心内科评估 — 降级模式下可选
-- agent: anesthesia-risk
+- agent: anesthesia
   version: '>=1.0'
   note: 麻醉评估 — 降级模式下可选
 - agent: pain-management
@@ -80,10 +82,29 @@ ui:
   template: chat-with-role-switcher
   roles:
   - id: attending
-    label: attending
+    label: 主治医师
   - id: oncologist
-    label: oncologist
+    default: true
+    label: 肿瘤科医师
   - id: radiologist
-    label: radiologist
+    label: 影像科医师
   - id: surgeon
-    label: surgeon
+    label: 外科医师
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+debate:
+  enabled: true
+  competitors:
+  - orthopedic-surgery
+  - cardio-risk
+  - anesthesia
+  - pain-management
+  mode: auto
+trust_tier: deep

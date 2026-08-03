@@ -1,0 +1,91 @@
+name: endo-insight
+cn_name: 内镜洞察智能体 v2.0
+version: 1.1.0
+type: business
+trust_tier: deep
+department: 消化内科
+port: 8853
+aliases: [EndoInsight, 内镜, 消化内镜, endoscopy]
+prompt:
+  system: |
+    你是EndoInsight v2.0，南方医院消化内科AI助手，负责消化内镜报告的智能解读与辅助决策。
+
+    核心能力: 内镜报告结构化解析(Paris/Forrest/JNET/LST分型)、术后风险评估(出血/穿孔/感染三轴)、个体化术后管理(饮食进阶/活动/PPI策略)、ESGE/JGES指南导向的随访规划、去术语化患者宣教。
+
+    约束: 所有诊疗建议须经消化内科医师复核; 患者端输出必须注明"具体请以主治医生意见为准"; 术后出血/穿孔等紧急情况立即触发人工干预流程。
+  temperature: 0.2
+tools:
+- name: report_parse
+  description: 内镜报告结构化解析 — Paris/Forrest/JNET分型 + HP + 部位 + 活检
+  handler: endo_insight.report_parse
+  input: {patient_id: str, report_text: str}
+- name: risk_assessment
+  description: 术后风险评估 — 出血/穿孔/感染三轴 + 抗凝管理
+  handler: endo_insight.risk_assessment
+  input: {patient_id: str, findings: dict, procedure_type: str, anticoagulation: str}
+- name: post_procedure_plan
+  description: 术后管理方案 — 饮食进阶(0-2h/2-6h/6-24h/24h+) + PPI + 活动
+  handler: endo_insight.post_procedure_plan
+  input: {patient_id: str, procedure_type: str, findings: dict, biopsy: bool}
+- name: followup_reminder
+  description: 随访提醒 — ESGE/JGES指南导向的个体化复查间隔(息肉/腺瘤/早癌/萎缩/Barrett)
+  handler: endo_insight.followup_reminder
+  input: {patient_id: str, pathology: str, procedure_date: str, polyp_count: int, polyp_size_mm: str}
+- name: patient_education
+  description: 患者宣教 — 去术语化翻译 + 个性化饮食指导 + 危险征象告知
+  handler: endo_insight.patient_education
+  input: {patient_id: str, findings: dict, procedure_type: str}
+guard:
+  triggers: [内镜, 出血, 穿孔, 感染, 癌]
+  high_risk_scenarios: [术后出血(Hb下降>2g/dL), 穿孔(游离气体), ESD/EMR术后]
+  citation: {required: true, min_sources: 1, min_trust: T1}
+stages:
+- order: 1
+  id: preparation
+  label: 术前准备
+  desc: 肠道准备评估(Boston BBPS≥6) + 抗凝管理 + 知情同意
+  role_ids: [attending, resident, nurse]
+- order: 2
+  id: procedure
+  label: 内镜检查
+  desc: 胃镜/肠镜操作 + 白光+NBI/染色内镜观察 + 活检
+  role_ids: [attending, technician]
+- order: 3
+  id: report-parsing
+  label: 报告解析
+  desc: Paris/Forrest/JNET/LST分型 + 部位定位 + HP检测
+  role_ids: [attending, resident]
+- order: 4
+  id: risk-assessment
+  label: 风险评估
+  desc: 出血/穿孔/感染三轴分层 + 抗凝管理决策
+  role_ids: [attending, pharmacist]
+- order: 5
+  id: post-procedure
+  label: 术后管理
+  desc: 饮食进阶(0-24h) + PPI策略 + 活动限制 + 出院标准
+  role_ids: [attending, resident, nurse]
+- order: 6
+  id: followup
+  label: 随访规划
+  desc: ESGE/JGES指南导向的个体化复查间隔 + 患者宣教
+  role_ids: [attending, nurse]
+ui:
+  template: chat-with-role-switcher
+  roles:
+  - id: attending
+    label: 消化内科医师
+    default: true
+  - id: resident
+    label: 住院医师
+  - id: nurse
+    label: 内镜护士
+  - id: pharmacist
+    label: 临床药师
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply: [citation_new, route_adj]
+  prompt_a_b: true

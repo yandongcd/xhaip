@@ -1,0 +1,10 @@
+{
+  "id": "SOFA-SCORE",
+  "title": "SOFA - Sequential Organ Failure Assessment",
+  "priority": "P1",
+  "source": "esicm",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/8844239/",
+  "note": "Free",
+  "downloaded": false,
+  "generated": "2026-07-26T23:45:17.600863"
+}

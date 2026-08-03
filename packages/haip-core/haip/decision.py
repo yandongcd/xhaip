@@ -11,12 +11,13 @@ Usage:
 
 from __future__ import annotations
 
-import json
+import logging
 import pathlib
-from collections import defaultdict
 from typing import Any
 
 import yaml
+
+logger = logging.getLogger(__name__)
 
 
 class DecisionEngine:
@@ -91,7 +92,7 @@ class DecisionEngine:
                             if doc and "rules" in doc:
                                 rules.extend(doc["rules"])
                 except Exception:
-                    pass
+                    logger.debug("Rule YAML load failed: %s", rf, exc_info=True)
 
         self._rule_cache[agent_name] = rules
         return rules
@@ -123,17 +124,17 @@ class DecisionEngine:
                 return False
 
         if operator == "==":
-            return value == expected
-        elif operator == "!=":
-            return value != expected
-        elif operator == ">":
-            return value > expected
-        elif operator == "<":
-            return value < expected
-        elif operator == ">=":
-            return value >= expected
-        elif operator == "<=":
-            return value <= expected
+            return value == expected  # type: ignore[operator]
+        if operator == "!=":
+            return value != expected  # type: ignore[operator]
+        if operator in (">", "gt"):
+            return value > expected  # type: ignore[operator]
+        if operator in ("<", "lt"):
+            return value < expected  # type: ignore[operator]
+        if operator in (">=", "gte"):
+            return value >= expected  # type: ignore[operator]
+        if operator in ("<=", "lte"):
+            return value <= expected  # type: ignore[operator]
         return False
 
     def _fallback_decision(self, agent_name: str, patient: dict) -> dict[str, Any]:
@@ -150,11 +151,9 @@ class DecisionEngine:
 
 
 # Singleton
-_engine: DecisionEngine | None = None
+_singleton_state: dict = {}
 
 
 def get_decision_engine() -> DecisionEngine:
-    global _engine
-    if _engine is None:
-        _engine = DecisionEngine()
-    return _engine
+    from haip._singleton import locked_singleton
+    return locked_singleton(DecisionEngine, _singleton_state, "engine")

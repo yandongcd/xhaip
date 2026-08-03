@@ -6,7 +6,9 @@ from pathlib import Path
 import pytest
 
 from haip.permission import (
-    PermissionManager, PermissionContext, get_permission,
+    PermissionContext,
+    PermissionManager,
+    get_permission,
 )
 
 

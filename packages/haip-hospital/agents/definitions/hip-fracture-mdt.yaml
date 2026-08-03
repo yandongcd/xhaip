@@ -1,0 +1,112 @@
+name: hip-fracture-mdt
+cn_name: 老年髋部骨折围术期多学科管理智能体
+version: 1.0.0
+type: business
+trust_tier: deep
+department: 创伤骨科
+port: 8843
+aliases:
+- 髋部骨折MDT
+- 老年髋部骨折
+- hip fracture
+- 髋部骨折多学科
+prompt:
+  system: 你是南方医院创伤骨科AI助手，专注老年髋部骨折(≥65岁)围术期多学科管理。请基于国家卫健委2022版指南、NICE NG37和AAOS 2022标准，从急诊接诊→术前评估→手术决策→术后康复→出院随访进行全流程管理。所有建议须经MDT团队审核确认后方可执行。
+  temperature: 0.2
+tools:
+- name: fracture_classify
+  description: 骨折分型 — Garden(股骨颈)/AO(转子间31A)/Evans(转子下) + 手术方案关联
+  handler: hip_fracture_mdt.fracture_classify
+  input:
+    patient_id: str
+    xray_findings: str
+- name: surgical_timing
+  description: 48h手术窗口评估 — T2 8因素(心脏/肺/脑/抗凝/贫血/肾/感染/血糖)层次决策
+  handler: hip_fracture_mdt.surgical_timing
+  input:
+    patient_id: str
+- name: mdt_coordinate
+  description: MDT多学科协调 — 并行调用心内/麻醉/老年/护理 Agent, 聚合意见+冲突检测
+  handler: hip_fracture_mdt.mdt_coordinate
+  input:
+    patient_id: str
+    question: str
+- name: perioperative_plan
+  description: 围术期综合方案 — 手术+麻醉+护理+康复四维方案
+  handler: hip_fracture_mdt.perioperative_plan
+  input:
+    patient_id: str
+    fracture_type: str
+    asa_level: int
+- name: followup_schedule
+  description: 术后随访计划 — Harris评分(D30/D90/D180/D365) + VTE监测 + 骨质疏松管理
+  handler: hip_fracture_mdt.followup_schedule
+  input:
+    patient_id: str
+    surgery_date: str
+guard:
+  triggers:
+  - 手术时机
+  - 48小时窗口
+  - MDT会诊
+  - 抗凝管理
+  high_risk_scenarios:
+  - ASA≥4+急诊手术
+  - 双抗未停药+48h窗口
+  - eGFR<30+骨科手术
+  citation:
+    required: true
+    min_sources: 2
+    min_trust: T1
+depends_on:
+- agent: cardio-risk
+  version: '>=1.0'
+  note: 围术期心血管风险评估
+- agent: anesthesia
+  version: '>=1.0'
+  note: ASA分级+麻醉方案+抗凝桥接
+- agent: pain-management
+  version: '>=1.0'
+  note: 术后镇痛管理
+- agent: mdt
+  version: '>=1.0'
+  note: MDT会诊协议
+stages:
+- order: 1
+  id: classify
+  label: 骨折分型
+  desc: Garden I-IV / AO 31A分型→手术方案映射
+  role_ids:
+  - attending
+  - orthopedic_surgeon
+- order: 2
+  id: timing
+  label: 手术时机
+  desc: T2 8因素分层(48h窗口)→紧急/限期/择期、MDT启动条件
+  role_ids:
+  - attending
+  - cardiologist
+  - anesthesiologist
+- order: 3
+  id: mdt-plan
+  label: MDT方案
+  desc: 多学科并行评估→手术+麻醉+护理+康复综合方案
+  role_ids:
+  - attending
+  - anesthesiologist
+  - geriatrician
+  - rehab_therapist
+- order: 4
+  id: followup
+  label: 随访康复
+  desc: Harris评分(1/3/6月)、骨质疏松治疗(FRAX)、跌倒预防
+  role_ids:
+  - attending
+  - rehab_therapist
+
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: false

@@ -1,4 +1,4 @@
-name: general-surgery
+﻿name: general-surgery
 cn_name: 普通外科智能体
 version: 1.0.0
 type: business
@@ -57,6 +57,8 @@ guard:
   high_risk_scenarios:
   - 手术并发症
   - 药物不良反应
+  citation:
+    required: true
 ui:
   template: chat-with-role-switcher
   roles:
@@ -81,7 +83,7 @@ stages:
 - order: 1
   id: preop-eval
   label: 术前评估
-  desc: GCS/ASA评分、影像学评估、凝血功能、心肺功能筛查、麻醉评估
+  desc: ASA分级、Alvarado/Tokyo指南评估、心肺功能筛查、麻醉评估、ERAS宣教
   role_ids:
   - attending
   - resident
@@ -89,7 +91,7 @@ stages:
 - order: 2
   id: preop-prep
   label: 术前准备
-  desc: 备血交叉配血、预防性抗生素、深静脉穿刺、导尿、备皮
+  desc: 备血交叉配血、预防性抗生素、ERAS禁食禁饮方案、VTE预防(Caprini评分)
   role_ids:
   - attending
   - resident
@@ -97,24 +99,24 @@ stages:
 - order: 3
   id: surgery
   label: 手术执行
-  desc: 术中监测、出血量评估、冰冻病理、器械清点
+  desc: 术中监测、出血量评估、腹腔镜/开放入路决策、吻合口质量评估、器械清点
   role_ids:
   - attending
   - surgeon
   - anesthesiologist
   - instrument_nurse
 - order: 4
-  id: postop-icu
-  label: 术后监护
-  desc: ICU监测、GCS追踪、ICP管理、引流管管理、电解质平衡
+  id: postop-care
+  label: 术后管理
+  desc: 引流管管理、切口护理、肠功能恢复(肠鸣音/排气)、电解质平衡、ERAS早期进食
   role_ids:
   - attending
-  - icu_doctor
+  - resident
   - head_nurse
 - order: 5
-  id: ward-care
-  label: 病房管理
-  desc: 切口护理、活动指导、营养支持、VTE预防、疼痛管理
+  id: ward-recovery
+  label: 病房康复
+  desc: 活动指导(术后24h下床)、营养支持、VTE预防、疼痛管理(多模式镇痛)、并发症筛查(吻合口漏/SSI)
   role_ids:
   - attending
   - resident
@@ -122,8 +124,24 @@ stages:
 - order: 6
   id: followup
   label: 随访康复
-  desc: 神经功能评分、康复计划制定、术后1/3/6月随访、影像复查
+  desc: 肿瘤标志物(CEA/CA19-9)随访、疝复发监测、术后1/3/6月随访、影像复查
   role_ids:
   - attending
-  - rehab_therapist
   - head_nurse
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+debate:
+  enabled: true
+  competitors:
+  - cardio-risk
+  - anesthesia
+  - pharmacy
+  mode: auto
+trust_tier: deep

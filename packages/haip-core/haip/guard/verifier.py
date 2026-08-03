@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 
 from haip.guard.citation import Citation, CitationEngine
 from haip.guard.confidence import ConfidenceScore, ConfidenceScorer
-from haip.llm import LLMProvider
+from haip.llm import DEFAULT_MAX_TOKENS, LLMProvider
 
 logger = logging.getLogger(__name__)
 
@@ -159,10 +159,11 @@ class GuardVerifier:
                     {"role": "user", "content": f"Agent [{agent_name}] 输出:\n{output}"},
                 ],
                 temperature=0.05,
-                max_tokens=4096,
+                max_tokens=DEFAULT_MAX_TOKENS,
             )
             return resp.content.strip()
         except Exception:
+            logger.warning("LLM 审查失败, agent=%s", agent_name, exc_info=True)
             return ""
 
     @staticmethod

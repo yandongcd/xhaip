@@ -8,8 +8,8 @@ sys.path.insert(0, str(project_root / "packages" / "haip-hospital" / "modules"))
 sys.path.insert(0, str(project_root / "packages" / "haip-hospital"))
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
-from haip.agent import _registry, DomainPlugin, ToolDef, register  # noqa: E402
-from haip.a2a import call, clear_history, _agent_cache  # noqa: E402
+from haip.a2a import _agent_cache, call, clear_history
+from haip.agent import DomainPlugin, ToolDef, _registry, register
 
 
 class TestPainHub:

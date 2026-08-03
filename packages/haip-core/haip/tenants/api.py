@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from haip.auth.middleware import get_current_user
-from haip.auth.rbac import has_permission, Permission
+from haip.auth.rbac import Permission, has_permission
 from haip.tenants import get_tenant_manager
 
 tenant_router = APIRouter(prefix="/api/tenants", tags=["tenants"])

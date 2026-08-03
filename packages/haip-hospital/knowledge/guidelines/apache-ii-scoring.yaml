@@ -1,0 +1,7 @@
+name: APACHE II 急性生理与慢性健康评分
+category: scoring
+source: Knaus et al. 1985
+reference_count: 7
+trust_level: T1
+status: baseline-stub
+note: 自动生成于 2026-07-26 | 7份需求文档引用

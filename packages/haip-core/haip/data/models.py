@@ -12,7 +12,6 @@ All models can be created by `database.create_tables()` or Alembic migration.
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Optional
 
 from sqlalchemy import (
     Date,
@@ -44,9 +43,9 @@ class PatientInfo(Base):
     mrn: Mapped[str] = mapped_column(String(20), nullable=False)
     inpatient_no: Mapped[str] = mapped_column(String(20), nullable=False)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
-    gender: Mapped[Optional[str]] = mapped_column(String(4))
-    age: Mapped[Optional[float]] = mapped_column(Numeric(5, 1))
-    ethnicity: Mapped[Optional[str]] = mapped_column(String(20))
+    gender: Mapped[str | None] = mapped_column(String(4))
+    age: Mapped[float | None] = mapped_column(Numeric(5, 1))
+    ethnicity: Mapped[str | None] = mapped_column(String(20))
     dept_code: Mapped[str] = mapped_column(String(50), nullable=False)
     dept_name: Mapped[str] = mapped_column(String(50), nullable=False)
 
@@ -63,15 +62,15 @@ class VisitRecord(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     patient_id: Mapped[str] = mapped_column(String(20), ForeignKey("his.patient_info.patient_id"), nullable=False)
     admission_date: Mapped[date] = mapped_column(Date, nullable=False)
-    discharge_date: Mapped[Optional[date]] = mapped_column(Date)
-    admission_type: Mapped[Optional[str]] = mapped_column(String(20))
-    insurance_type: Mapped[Optional[str]] = mapped_column(String(30))
-    bed_no: Mapped[Optional[str]] = mapped_column(String(20))
-    diet_order: Mapped[Optional[str]] = mapped_column(String(30))
-    attending_physician: Mapped[Optional[str]] = mapped_column(String(20))
-    icd_code: Mapped[Optional[str]] = mapped_column(String(20))
-    billing_category: Mapped[Optional[str]] = mapped_column(String(10))
-    estimated_cost: Mapped[Optional[float]] = mapped_column(Numeric(12, 2))
+    discharge_date: Mapped[date | None] = mapped_column(Date)
+    admission_type: Mapped[str | None] = mapped_column(String(20))
+    insurance_type: Mapped[str | None] = mapped_column(String(30))
+    bed_no: Mapped[str | None] = mapped_column(String(20))
+    diet_order: Mapped[str | None] = mapped_column(String(30))
+    attending_physician: Mapped[str | None] = mapped_column(String(20))
+    icd_code: Mapped[str | None] = mapped_column(String(20))
+    billing_category: Mapped[str | None] = mapped_column(String(10))
+    estimated_cost: Mapped[float | None] = mapped_column(Numeric(12, 2))
 
 
 class Registration(Base):
@@ -86,10 +85,10 @@ class Registration(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     patient_id: Mapped[str] = mapped_column(String(20), ForeignKey("his.patient_info.patient_id"), nullable=False)
     registration_date: Mapped[date] = mapped_column(Date, nullable=False)
-    dept_name: Mapped[Optional[str]] = mapped_column(String(50))
-    visit_number: Mapped[Optional[str]] = mapped_column(String(30))
-    appointment_type: Mapped[Optional[str]] = mapped_column(String(20))
-    payment_method: Mapped[Optional[str]] = mapped_column(String(20))
+    dept_name: Mapped[str | None] = mapped_column(String(50))
+    visit_number: Mapped[str | None] = mapped_column(String(30))
+    appointment_type: Mapped[str | None] = mapped_column(String(20))
+    payment_method: Mapped[str | None] = mapped_column(String(20))
 
 
 class Diagnosis(Base):
@@ -103,9 +102,9 @@ class Diagnosis(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     patient_id: Mapped[str] = mapped_column(String(20), ForeignKey("his.patient_info.patient_id"), nullable=False)
-    diagnosis_name: Mapped[Optional[str]] = mapped_column(Text)
-    icd10_code: Mapped[Optional[str]] = mapped_column(String(20))
-    diagnosis_date: Mapped[Optional[date]] = mapped_column(Date)
+    diagnosis_name: Mapped[str | None] = mapped_column(Text)
+    icd10_code: Mapped[str | None] = mapped_column(String(20))
+    diagnosis_date: Mapped[date | None] = mapped_column(Date)
     diagnosis_type: Mapped[str] = mapped_column(String(20), default="入院诊断")
 
 
@@ -123,16 +122,16 @@ class AdmissionNote(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     patient_id: Mapped[str] = mapped_column(String(20), nullable=False)
-    admission_date: Mapped[Optional[date]] = mapped_column(Date)
-    chief_complaint: Mapped[Optional[str]] = mapped_column(Text)
-    present_illness: Mapped[Optional[str]] = mapped_column(Text)
-    past_history: Mapped[Optional[str]] = mapped_column(Text)
-    allergy_history: Mapped[Optional[str]] = mapped_column(Text)
-    physical_exam: Mapped[Optional[str]] = mapped_column(Text)
-    diagnosis: Mapped[Optional[str]] = mapped_column(String(200))
-    icd10: Mapped[Optional[str]] = mapped_column(String(20))
-    height_cm: Mapped[Optional[float]] = mapped_column(Numeric(6, 1))
-    weight_kg: Mapped[Optional[float]] = mapped_column(Numeric(6, 1))
+    admission_date: Mapped[date | None] = mapped_column(Date)
+    chief_complaint: Mapped[str | None] = mapped_column(Text)
+    present_illness: Mapped[str | None] = mapped_column(Text)
+    past_history: Mapped[str | None] = mapped_column(Text)
+    allergy_history: Mapped[str | None] = mapped_column(Text)
+    physical_exam: Mapped[str | None] = mapped_column(Text)
+    diagnosis: Mapped[str | None] = mapped_column(String(200))
+    icd10: Mapped[str | None] = mapped_column(String(20))
+    height_cm: Mapped[float | None] = mapped_column(Numeric(6, 1))
+    weight_kg: Mapped[float | None] = mapped_column(Numeric(6, 1))
 
 
 class ProgressNote(Base):
@@ -148,10 +147,10 @@ class ProgressNote(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     patient_id: Mapped[str] = mapped_column(String(20), nullable=False)
     note_date: Mapped[date] = mapped_column(Date, nullable=False)
-    note_time: Mapped[Optional[str]] = mapped_column(String(10))
+    note_time: Mapped[str | None] = mapped_column(String(10))
     note_type: Mapped[str] = mapped_column(String(20), nullable=False, default="日常病程记录")
-    doctor: Mapped[Optional[str]] = mapped_column(String(20))
-    content: Mapped[Optional[str]] = mapped_column(Text)
+    doctor: Mapped[str | None] = mapped_column(String(20))
+    content: Mapped[str | None] = mapped_column(Text)
 
 
 class DischargeSummary(Base):
@@ -165,13 +164,13 @@ class DischargeSummary(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     patient_id: Mapped[str] = mapped_column(String(20), nullable=False)
-    admission_date: Mapped[Optional[date]] = mapped_column(Date)
-    discharge_date: Mapped[Optional[date]] = mapped_column(Date)
-    admitting_diagnosis: Mapped[Optional[str]] = mapped_column(String(200))
-    discharge_diagnosis: Mapped[Optional[str]] = mapped_column(String(200))
-    treatment_summary: Mapped[Optional[str]] = mapped_column(Text)
-    follow_up_advice: Mapped[Optional[str]] = mapped_column(String(200))
-    doctor: Mapped[Optional[str]] = mapped_column(String(20))
+    admission_date: Mapped[date | None] = mapped_column(Date)
+    discharge_date: Mapped[date | None] = mapped_column(Date)
+    admitting_diagnosis: Mapped[str | None] = mapped_column(String(200))
+    discharge_diagnosis: Mapped[str | None] = mapped_column(String(200))
+    treatment_summary: Mapped[str | None] = mapped_column(Text)
+    follow_up_advice: Mapped[str | None] = mapped_column(String(200))
+    doctor: Mapped[str | None] = mapped_column(String(20))
 
 
 class MedicationOrder(Base):
@@ -186,9 +185,9 @@ class MedicationOrder(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     patient_id: Mapped[str] = mapped_column(String(20), nullable=False)
     medication_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    dose: Mapped[Optional[str]] = mapped_column(String(50))
-    route: Mapped[Optional[str]] = mapped_column(String(20))
-    start_date: Mapped[Optional[date]] = mapped_column(Date)
+    dose: Mapped[str | None] = mapped_column(String(50))
+    route: Mapped[str | None] = mapped_column(String(20))
+    start_date: Mapped[date | None] = mapped_column(Date)
     order_status: Mapped[str] = mapped_column(String(20), default="住院医嘱")
 
 
@@ -206,11 +205,11 @@ class LabOrder(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     patient_id: Mapped[str] = mapped_column(String(20), nullable=False)
-    order_date: Mapped[Optional[date]] = mapped_column(Date)
-    test_item: Mapped[Optional[str]] = mapped_column(String(100))
-    specimen_type: Mapped[Optional[str]] = mapped_column(String(50))
+    order_date: Mapped[date | None] = mapped_column(Date)
+    test_item: Mapped[str | None] = mapped_column(String(100))
+    specimen_type: Mapped[str | None] = mapped_column(String(50))
     order_status: Mapped[str] = mapped_column(String(20), default="已申请")
-    ordering_physician: Mapped[Optional[str]] = mapped_column(String(20))
+    ordering_physician: Mapped[str | None] = mapped_column(String(20))
 
 
 class LabResult(Base):
@@ -226,12 +225,12 @@ class LabResult(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     patient_id: Mapped[str] = mapped_column(String(20), nullable=False)
     test_item: Mapped[str] = mapped_column(String(100), nullable=False)
-    test_result: Mapped[Optional[float]] = mapped_column(Numeric(10, 2))
-    unit: Mapped[Optional[str]] = mapped_column(String(20))
-    reference_min: Mapped[Optional[float]] = mapped_column(Numeric(10, 2))
-    reference_max: Mapped[Optional[float]] = mapped_column(Numeric(10, 2))
-    abnormal_flag: Mapped[Optional[str]] = mapped_column(String(5))
-    result_date: Mapped[Optional[date]] = mapped_column(Date)
+    test_result: Mapped[float | None] = mapped_column(Numeric(10, 2))
+    unit: Mapped[str | None] = mapped_column(String(20))
+    reference_min: Mapped[float | None] = mapped_column(Numeric(10, 2))
+    reference_max: Mapped[float | None] = mapped_column(Numeric(10, 2))
+    abnormal_flag: Mapped[str | None] = mapped_column(String(5))
+    result_date: Mapped[date | None] = mapped_column(Date)
 
 
 # ── PACS: Imaging ──
@@ -248,9 +247,9 @@ class ImagingExam(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     patient_id: Mapped[str] = mapped_column(String(20), nullable=False)
-    exam_type: Mapped[Optional[str]] = mapped_column(String(50))
-    body_part: Mapped[Optional[str]] = mapped_column(String(50))
-    exam_date: Mapped[Optional[date]] = mapped_column(Date)
+    exam_type: Mapped[str | None] = mapped_column(String(50))
+    body_part: Mapped[str | None] = mapped_column(String(50))
+    exam_date: Mapped[date | None] = mapped_column(Date)
     exam_status: Mapped[str] = mapped_column(String(20), default="已登记")
 
 
@@ -265,11 +264,11 @@ class ImagingReport(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     patient_id: Mapped[str] = mapped_column(String(20), nullable=False)
-    exam_id: Mapped[Optional[int]] = mapped_column(ForeignKey("pacs.imaging_exam.id"))
-    report_content: Mapped[Optional[str]] = mapped_column(Text)
-    impression: Mapped[Optional[str]] = mapped_column(Text)
-    radiologist: Mapped[Optional[str]] = mapped_column(String(20))
-    report_date: Mapped[Optional[date]] = mapped_column(Date)
+    exam_id: Mapped[int | None] = mapped_column(ForeignKey("pacs.imaging_exam.id"))
+    report_content: Mapped[str | None] = mapped_column(Text)
+    impression: Mapped[str | None] = mapped_column(Text)
+    radiologist: Mapped[str | None] = mapped_column(String(20))
+    report_date: Mapped[date | None] = mapped_column(Date)
 
 
 # ── NIS: Nursing Information System ──
@@ -286,15 +285,15 @@ class VitalSigns(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     patient_id: Mapped[str] = mapped_column(String(20), nullable=False)
-    record_time: Mapped[Optional[datetime]] = mapped_column()
-    temperature: Mapped[Optional[float]] = mapped_column(Numeric(4, 1))
-    heart_rate: Mapped[Optional[int]] = mapped_column(Integer)
-    respiratory_rate: Mapped[Optional[int]] = mapped_column(Integer)
-    systolic_bp: Mapped[Optional[int]] = mapped_column(Integer)
-    diastolic_bp: Mapped[Optional[int]] = mapped_column(Integer)
-    spo2: Mapped[Optional[int]] = mapped_column(Integer)
-    pain_score: Mapped[Optional[int]] = mapped_column(Integer)
-    nurse_id: Mapped[Optional[str]] = mapped_column(String(20))
+    record_time: Mapped[datetime | None] = mapped_column()
+    temperature: Mapped[float | None] = mapped_column(Numeric(4, 1))
+    heart_rate: Mapped[int | None] = mapped_column(Integer)
+    respiratory_rate: Mapped[int | None] = mapped_column(Integer)
+    systolic_bp: Mapped[int | None] = mapped_column(Integer)
+    diastolic_bp: Mapped[int | None] = mapped_column(Integer)
+    spo2: Mapped[int | None] = mapped_column(Integer)
+    pain_score: Mapped[int | None] = mapped_column(Integer)
+    nurse_id: Mapped[str | None] = mapped_column(String(20))
 
 
 class NursingAssessment(Base):
@@ -308,12 +307,12 @@ class NursingAssessment(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     patient_id: Mapped[str] = mapped_column(String(20), nullable=False)
-    assessment_date: Mapped[Optional[date]] = mapped_column(Date)
-    fall_risk: Mapped[Optional[str]] = mapped_column(String(20))
-    pressure_ulcer_risk: Mapped[Optional[str]] = mapped_column(String(20))
-    nutrition_risk: Mapped[Optional[str]] = mapped_column(String(20))
-    barthel_index: Mapped[Optional[int]] = mapped_column(Integer)
-    nurse_id: Mapped[Optional[str]] = mapped_column(String(20))
+    assessment_date: Mapped[date | None] = mapped_column(Date)
+    fall_risk: Mapped[str | None] = mapped_column(String(20))
+    pressure_ulcer_risk: Mapped[str | None] = mapped_column(String(20))
+    nutrition_risk: Mapped[str | None] = mapped_column(String(20))
+    barthel_index: Mapped[int | None] = mapped_column(Integer)
+    nurse_id: Mapped[str | None] = mapped_column(String(20))
 
 
 # ── All model tables ──

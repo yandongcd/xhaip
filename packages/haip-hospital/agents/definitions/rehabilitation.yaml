@@ -55,20 +55,34 @@ stages:
   - attending
   - therapist
 - order: 2
+  id: exam
+  label: 辅助检查
+  desc: 肌力MMT/ROM评估/平衡步态/专项量表
+  role_ids:
+  - attending
+  - therapist
+- order: 3
+  id: diagnosis
+  label: 诊断分级
+  desc: ICF功能分级、康复潜力评估、预后分组
+  role_ids:
+  - attending
+  - head_nurse
+- order: 4
   id: treatment
   label: 康复治疗
   desc: 物理治疗/作业治疗/言语治疗/心理康复
   role_ids:
   - therapist
   - nurse
-- order: 3
+- order: 5
   id: progress
   label: 进展评估
   desc: 功能改善评分、方案调整、并发症预防
   role_ids:
   - attending
   - therapist
-- order: 4
+- order: 6
   id: discharge
   label: 出院计划
   desc: 家庭康复指导、辅助器具配置、社区康复衔接
@@ -80,3 +94,15 @@ guard:
   triggers:
   - 诊断决策
   - 治疗方案
+  citation:
+    required: true
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: standard

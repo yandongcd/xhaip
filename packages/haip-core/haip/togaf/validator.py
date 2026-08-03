@@ -22,7 +22,6 @@ from pathlib import Path
 from haip.togaf.metamodel import ENTITY_TYPES
 from haip.togaf.organization import ROLE_BY_ID, ROLE_BY_ORG, list_orgs
 
-
 # ── Agent Type → TOGAF Entity Type Mapping ──
 
 _AGENT_TYPE_TO_ENTITY: dict[str, str] = {
@@ -51,18 +50,46 @@ _AGENT_TYPE_TO_ORG_TYPE: dict[str, str] = {
 
 # Known English role ID → Chinese level mappings (for cross-referencing YAML ↔ TOGAF org)
 _ROLE_ID_TO_LEVEL: dict[str, str] = {
+    # 科主任 variants
+    "dept_head": "科主任",
+    "head": "科主任",
+    "quality_director": "科主任",
+    # 主治医师 variants
     "attending": "主治医师",
     "surgeon": "主治医师",
+    "cardiologist": "主治医师",
+    "emergency_doctor": "主治医师",
+    "icu_doctor": "主治医师",
+    "immunologist": "主治医师",
+    "neonatologist": "主治医师",
+    "oncologist": "主治医师",
+    "radiologist": "主治医师",
+    # 住院医师
     "resident": "住院医师",
+    # 麻醉医师
     "anesthesiologist": "麻醉医师",
+    # 护士长
     "head_nurse": "护士长",
+    # 责任护士 variants
     "staff_nurse": "责任护士",
-    "dept_head": "科主任",
+    "nurse": "责任护士",
+    "instrument_nurse": "责任护士",
+    "triage_nurse": "责任护士",
+    "midwife": "责任护士",
+    "coordinator": "责任护士",
+    # 临床药师 variants
     "pharmacist": "临床药师",
     "clinical_pharmacist": "临床药师",
     "review_pharmacist": "临床药师",
     "iv_compounding_pharmacist": "临床药师",
     "dietitian": "责任护士",
+    # 技师 variants
+    "technician": "技师",
+    "therapist": "技师",
+    "rehab_therapist": "技师",
+    "coder": "技师",
+    "data_admin": "技师",
+    "data_analyst": "技师",
 }
 
 

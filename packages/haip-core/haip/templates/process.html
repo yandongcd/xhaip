@@ -1,0 +1,44 @@
+{% extends "_base.html" %}
+{% block title %}{{ agent.cn_name }} · Process — xHAIP{% endblock %}
+{% block breadcrumb %}<span class="breadcrumb"> / <a href="/">Portal</a> / <a href="/agent/{{ agent.name }}">{{ agent.cn_name }}</a> / 流程</span>{% endblock %}
+
+{% block content %}
+<div class="process-page" x-data="processPage">
+  <div class="process-header">
+    <h2>{{ agent.cn_name }} · 诊疗流程</h2>
+    <span class="text-secondary">{{ stages|length }} 个阶段</span>
+  </div>
+
+  <div class="stage-carousel" @wheel.prevent="$el.scrollLeft += $event.deltaY">
+    {% for s in stages %}
+    <div class="stage-card" :class="{ completed: {{ 'true' if s.progress >= 100 else 'false' }}, active: currentStage === {{ loop.index0 }} }"
+         role="button" tabindex="0" @click="currentStage = {{ loop.index0 }}">
+      <div class="stage-order">{{ s.order }}</div>
+      <div class="stage-label">{{ s.label }}</div>
+      <div class="stage-desc">{{ s.desc[:60] }}{% if s.desc|length > 60 %}...{% endif %}</div>
+      <div class="stage-meta">
+        <span class="risk-tag {{ s.risk }}">{{ {'high':'高','medium':'中','low':'低'}.get(s.risk, '低') }}</span>
+        <span>{{ s.tasks }} 项待办</span>
+      </div>
+      <div class="stage-roles">{% for rid in s.role_ids[:3] %}<span class="role-chip">{{ rid }}</span>{% endfor %}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="stage-indicators" role="progressbar" aria-valuenow="{{ stages|length }}" aria-valuemin="0" aria-valuemax="{{ stages|length }}">
+    {% for s in stages %}<span class="stage-dot {{ 'active' if loop.index0 == current_step else ('done' if loop.index0 < current_step else '') }}"></span>{% endfor %}
+  </div>
+
+  <progress class="process-bar" value="{{ ((current_step + 1) / (stages|length or 1) * 100) | int }}" max="100"></progress>
+  <span class="text-secondary">{{ ((current_step + 1) / (stages|length or 1) * 100) | int }}% 完成</span>
+</div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+  Alpine.data('processPage', () => ({
+    stages: {{ stages | tojson | safe }},
+    currentStage: {{ current_step }},
+  }));
+});
+</script>
+{% endblock %}

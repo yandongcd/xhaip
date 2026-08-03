@@ -35,35 +35,32 @@ class TestValidatorEdge:
         assert isinstance(r.warnings, list)
 
     def test_type_compliance_all_types(self):
-        from haip.togaf.validator import _check_type_compliance
         # Load a real agent for testing
         from haip.agent import get as get_agent
-        for agent_type in ['business', 'specialist', 'master_data', 'architecture']:
-            # Create a minimal mock-like test
-            pass
+        from haip.togaf.validator import _check_type_compliance
         agent = get_agent('orthopedic-surgery')
         c = _check_type_compliance(agent)
         assert c.passed
         assert 'ApplicationComponent' in c.detail
 
     def test_check_org_affiliation_empty(self):
-        from haip.togaf.validator import _check_org_affiliation
         # 合成无 department 的 agent (acute-pain 现已配置 department, 不能再作反例)
         from haip.agent import DomainPlugin
+        from haip.togaf.validator import _check_org_affiliation
         agent = DomainPlugin(name="no-dept-test", type="specialist", department="")
         c = _check_org_affiliation(agent)
         assert not c.passed  # No department set
 
     def test_check_dependency_graph_empty(self):
-        from haip.togaf.validator import _check_dependency_graph
         from haip.agent import get as get_agent
+        from haip.togaf.validator import _check_dependency_graph
         agent = get_agent('acute-pain')
         c = _check_dependency_graph(agent, {})
         assert c.passed  # No deps → passes
 
     def test_check_tool_service_empty(self):
-        from haip.togaf.validator import _check_tool_service_mapping
         from haip.agent import get as get_agent
+        from haip.togaf.validator import _check_tool_service_mapping
         agent = get_agent('pain-hub')
         c = _check_tool_service_mapping(agent)
         assert c.passed  # 2 tools with handlers
@@ -164,6 +161,7 @@ class TestRolesAllViews:
 class TestGovernanceEdge:
     def test_validate_with_project_root(self):
         from pathlib import Path
+
         from haip.togaf.governance import validate_business_processes
         r = validate_business_processes()
         assert r.checks_total > 0
@@ -276,9 +274,10 @@ class TestAuditEdge:
         assert len(agent_nodes) >= 40
 
     def test_export_landscape(self):
-        from haip.togaf.audit import export_landscape
-        import tempfile
         import os
+        import tempfile
+
+        from haip.togaf.audit import export_landscape
         tmp = os.path.join(tempfile.gettempdir(), 'landscape_test.json')
         path = export_landscape(tmp)
         assert os.path.exists(path)
@@ -392,8 +391,9 @@ class TestPatientGenerator:
         assert 3.5 <= labs['WBC'] <= 18.0  # type: ignore[operator]
 
     def test_generate_with_output_path(self, tmp_path):
-        from haip.togaf.patient_generator import generate_patients
         import json
+
+        from haip.togaf.patient_generator import generate_patients
         out = tmp_path / "patients_test.json"
         new = generate_patients(str(out))
         assert isinstance(new, list)
@@ -402,7 +402,7 @@ class TestPatientGenerator:
         assert 'patients' in data or 'total' in data
 
     def test_random_lab_all_departments(self):
-        from haip.togaf.patient_generator import _random_lab, _LAB_TEMPLATES
+        from haip.togaf.patient_generator import _LAB_TEMPLATES, _random_lab
         for dept_id, keys in list(_LAB_TEMPLATES.items())[:5]:
             labs = _random_lab('test diagnostic', keys)
             assert isinstance(labs, dict)
@@ -483,8 +483,9 @@ class TestAgentGeneratorExtended:
 
 class TestAuditExtended:
     def test_export_landscape_to_temp(self, tmp_path):
-        from haip.togaf.audit import export_landscape
         import json
+
+        from haip.togaf.audit import export_landscape
         out = tmp_path / "landscape.json"
         export_landscape(str(out))
         assert out.exists()
@@ -509,7 +510,7 @@ class TestAuditExtended:
         assert landscape.node_by_id('nonexistent_node') is None
 
     def test_landscape_serialization(self):
-        from haip.togaf.audit import auto_discover, _landscape_to_dict, _landscape_from_dict
+        from haip.togaf.audit import _landscape_from_dict, _landscape_to_dict, auto_discover
         landscape = auto_discover()
         data = _landscape_to_dict(landscape)
         assert 'nodes' in data
@@ -533,7 +534,11 @@ class TestAuditExtended:
         assert len(landscape.nodes) >= 2
 
     def test_discover_knowledge_assets_helper(self):
-        from haip.togaf.audit import ArchitectureLandscape, _discover_knowledge_assets, _find_project_root
+        from haip.togaf.audit import (
+            ArchitectureLandscape,
+            _discover_knowledge_assets,
+            _find_project_root,
+        )
         landscape = ArchitectureLandscape()
         root = _find_project_root()
         _discover_knowledge_assets(landscape, set(), root)
@@ -555,7 +560,13 @@ class TestAuditExtended:
         assert landscape.nodes == []
 
     def test_landscape_to_dict_roundtrip(self):
-        from haip.togaf.audit import ArchitectureLandscape, ArchNode, ArchEdge, _landscape_to_dict, _landscape_from_dict
+        from haip.togaf.audit import (
+            ArchEdge,
+            ArchitectureLandscape,
+            ArchNode,
+            _landscape_from_dict,
+            _landscape_to_dict,
+        )
         landscape = ArchitectureLandscape(name='Test')
         landscape.nodes.append(ArchNode(id='n1', label='N1', entity_type='T', domain='d'))
         landscape.edges.append(ArchEdge(source='n1', target='n2', relationship_type='r'))
@@ -578,34 +589,34 @@ class TestAuditExtended:
         assert defs.exists()
 
     def test_knowledge_dir_helper(self):
-        from haip.togaf.audit import _knowledge_dir, _find_project_root
+        from haip.togaf.audit import _find_project_root, _knowledge_dir
         root = _find_project_root()
         kd = _knowledge_dir(root)
         assert kd.exists()
 
     def test_report_text(self):
-        from haip.togaf.audit import auto_discover, _report_text
+        from haip.togaf.audit import _report_text, auto_discover
         landscape = auto_discover()
         text = _report_text(landscape)
         assert 'xHAIP' in text
         assert len(text) > 100
 
     def test_main_cli_audit(self):
-        from haip.togaf.audit import main_cli, audit_environment
+        from haip.togaf.audit import audit_environment, main_cli
         result = audit_environment()
         assert 'stats' in result
         assert 'nodes_total' in result
         assert result['nodes_total'] > 0
 
     def test_main_cli_show(self):
-        from haip.togaf.audit import main_cli, auto_discover, _report_text
+        from haip.togaf.audit import _report_text, auto_discover, main_cli
         landscape = auto_discover()
         report = _report_text(landscape)
         assert 'xHAIP' in report
         assert len(report) > 100
 
     def test_main_cli_stats(self):
-        from haip.togaf.audit import main_cli, audit_environment
+        from haip.togaf.audit import audit_environment, main_cli
         result = audit_environment()
         assert 'nodes_total' in result
         assert 'edges_total' in result
@@ -624,8 +635,8 @@ class TestAuditExtended:
         assert out.exists()
 
     def test_merge_registry_props(self):
-        from haip.togaf.audit import ArchNode, _merge_registry_props
         from haip.agent import DomainPlugin
+        from haip.togaf.audit import ArchNode, _merge_registry_props
         node = ArchNode(id='test', label='Test', entity_type='T', domain='d',
                         properties={'port': '0', 'tools': '0'})
         plugin = DomainPlugin(name='test', type='business', port=9999, cn_name='Test Agent')
@@ -670,8 +681,9 @@ class TestPatientGeneratorExtended:
             assert 'compatible_agents' in p
 
     def test_generate_patients_with_output(self, tmp_path):
-        from haip.togaf.patient_generator import generate_patients
         import json
+
+        from haip.togaf.patient_generator import generate_patients
         out = tmp_path / "patients_out.json"
         generate_patients(str(out))
         assert out.exists()

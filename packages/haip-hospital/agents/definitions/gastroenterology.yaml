@@ -41,6 +41,21 @@ tools:
   handler: gastroenterology.bp_followup
   input:
     patient_id: str
+- name: assess_liver
+  description: Child-Pugh+MELD肝功能评估
+  handler: gastroenterology.assess_liver
+  input:
+    patient_id: str
+- name: assess_ibd
+  description: Mayo UC评分+IBD活动度
+  handler: gastroenterology.assess_ibd
+  input:
+    patient_id: str
+- name: assess_ibs
+  description: Rome IV IBS诊断辅助
+  handler: gastroenterology.assess_ibs
+  input:
+    patient_id: str
 ui:
   template: chat-with-role-switcher
   roles:
@@ -101,3 +116,15 @@ guard:
   triggers:
   - 诊断决策
   - 治疗方案
+  citation:
+    required: true
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: standard

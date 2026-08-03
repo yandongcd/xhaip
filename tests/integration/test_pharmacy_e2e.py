@@ -14,13 +14,17 @@ sys.path.insert(0, str(project_root / "packages" / "haip-hospital" / "modules"))
 sys.path.insert(0, str(project_root / "packages" / "haip-hospital"))
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
-from haip.agent import load_from_dir, _registry, get as get_agent, DomainPlugin, ToolDef, register  # noqa: E402
-from haip.a2a import call, clear_history, get_history  # noqa: E402
-from haip.guard.verifier import GuardVerifier  # noqa: E402
-from haip.orchestrator import (  # noqa: E402
-    A2AOrchestrator, TaskNode, TaskDAG, MockTransport, OrchestrationMode,
+from haip.a2a import call, clear_history, get_history
+from haip.agent import DomainPlugin, ToolDef, _registry, load_from_dir, register
+from haip.agent import get as get_agent
+from haip.guard.verifier import GuardVerifier
+from haip.orchestrator import (
+    A2AOrchestrator,
+    MockTransport,
+    OrchestrationMode,
+    TaskDAG,
+    TaskNode,
 )
-
 
 YAML_DIR = project_root / "packages" / "haip-hospital" / "agents" / "definitions"
 

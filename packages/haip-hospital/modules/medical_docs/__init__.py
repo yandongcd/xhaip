@@ -12,6 +12,17 @@ import json
 from datetime import datetime
 from typing import Any
 
+from haip.togaf.knowledge_agent import KnowledgeAgent
+
+_agent = KnowledgeAgent(agent_name="medical-docs", department="全院")
+_GUIDELINES = [
+    "电子病历应用管理规范 (2023)",
+    "医疗机构病历管理规定 (2013)",
+    "国家卫健委 病历书写基本规范",
+    "ICD-10 疾病分类与代码",
+]
+_agent.rule_engine.load_all()
+
 _DISCLAIMER = "本文书为 AI 辅助生成草稿, 须经医生审核修改并签核后方可归入病历。"
 
 _INCOMPLETE_MARKERS = ("待补充", "待明确", "待完善", "请医生")
@@ -28,14 +39,14 @@ def _completeness(sections: dict) -> tuple[float, list[str]]:
 
 def _load_patient(patient_id: str) -> dict:
     try:
-        from haip.patients import PATIENTS_FILE
-        data = json.loads(PATIENTS_FILE.read_text(encoding="utf-8"))
-        pts = data.get("patients", []) if isinstance(data, dict) else data
-        for p in pts:
+        from haip.patients import load_all_patients
+        for p in load_all_patients():
             if p.get("patient_id") == patient_id:
                 return p
-    except Exception:  # noqa: BLE001 — 数据不可用时走占位, warnings 提示
-        pass
+        return {}
+    except Exception:  # noqa: BLE001 — 数据不可用时走占位
+        import logging
+        logging.getLogger(__name__).warning("_load_patient 失败: patient_id=%s", patient_id, exc_info=True)
     return {}
 
 

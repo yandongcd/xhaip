@@ -12,7 +12,7 @@
 
 /* ===== Gold Standard Design Tokens (radiology-cockpit SKILL) ===== */
 
-:root{--bg:#1c1c1e;--card-bg:#2c2c2e;--text:#f5f5f7;--text-secondary:#a1a1a6;--accent:#0a84ff;--danger:#ff453a;--warning:#ff9f0a;--success:#30d158;--purple:#bf5af2;--green:#30d158;--yellow:#ff9f0a;--red:#ff453a;--border:#38383a;--glow:rgba(10,132,255,.08);--bg-gradient:radial-gradient(ellipse at 50% 0%,var(--card-bg) 0%,var(--bg) 60%)}
+:root{--bg:var(--color-bg);--card-bg:var(--color-surface);--text:var(--color-text);--text2:var(--color-text-secondary);--accent:var(--color-brand);--danger:var(--color-danger);--warning:var(--color-warning);--success:var(--color-success);--green:var(--color-success);--red:var(--color-danger);--border:var(--color-border)}
 
 body.light{--bg:#f2f2f7;--card-bg:#ffffff;--text:#1c1c1e;--text-secondary:#6e6e73;--accent:#007aff;--danger:#ff3b30;--warning:#ff9500;--success:#34c759;--purple:#af52de;--green:#34c759;--yellow:#ff9500;--red:#ff3b30;--border:#e5e5ea;--bg-gradient:radial-gradient(ellipse at 50% 0%,#ffffff 0%,#f2f2f7 60%)}
 
@@ -109,7 +109,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text'
 
 <div class="sidebar">
 
-  <h2>🏥 创伤骨科智能体</h2>
+  <h2>🏥 老年髋部骨折精准治疗智能体</h2>
 
   <div class="meta">orthopedic-surgery | business | port:8765</div>
 
@@ -131,13 +131,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text'
 
           <div class="tab" onclick="showTab('checklist')">11项术前检查清?/div>
 
-          <div class="tab" onclick="showTab('completeness')">14项术前检查完备性评?/div>
+          <div class="tab" onclick="showTab('completeness')">14项术前检查完备性评估</div>
 
-          <div class="tab" onclick="showTab('rehab_track')">4阶段康复跟踪 + ?/div>
+          <div class="tab" onclick="showTab('rehab_track')">4阶段康复跟踪 + Harris 评分</div>
 
-          <div class="tab" onclick="showTab('osteoporosis_mgmt')">FRAX评估 + 骨?/div>
+          <div class="tab" onclick="showTab('osteoporosis_mgmt')">FRAX评估 + 骨质疏松治疗</div>
 
-          <div class="tab" onclick="showTab('analyze_xray')">X光骨折分?/div>
+          <div class="tab" onclick="showTab('analyze_xray')">X光骨折分析</div>
 
           <div class="tab" onclick="showTab('parse_clinical')">自然语言临床文本解析</div>
 
@@ -151,7 +151,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text'
 
 <div class="main">
 
-  <div class="main-h"><span id="panel-title">classify_fracture</span><div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--text-secondary)">创伤骨科智能体 工作台</span><button class="header-btn" onclick="toggleTheme()" id="btn-theme">🌙 黑夜</button></div></div>
+  <div class="main-h"><span id="panel-title">classify_fracture</span><div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--text-secondary)">创伤骨科智能体 · 工作台</span><button class="header-btn" onclick="toggleTheme()" id="btn-theme">🌙 黑夜</button></div></div>
 
   <div class="content">
 
@@ -209,7 +209,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text'
 
           <h3>并发症风险预测</h3>
 
-          <p class="ortho-desc">并发症风险预测 (DVT/感染/心脏/跌倒谵妄 4维)</p>
+          <p class="ortho-desc">并发症风险预 (DVT/感染/心脏/跌倒谵妄 4维)</p>
 
           <div class="form-group"><label>patient_id</label><input class="inp-complication_risk" data-field="patient_id" value="str"></div>
 
@@ -319,15 +319,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text'
 
         <div class="panel" id="panel-completeness">
 
-          <h3>14项术前检查完备性评估</h3>
+          <h3>14项术前检查完备性评估"/h3>
 
-          <p class="ortho-desc">14项术前检查完备性评估</p>
+          <p class="ortho-desc">14项术前检查完备性评估"/p>
 
           <div class="form-group"><label>patient_id</label><input class="inp-completeness" data-field="patient_id" value="str"></div>
 
           <div class="form-group"><label>completed_tests</label><input class="inp-completeness" data-field="completed_tests" value="list"></div>
 
-          <div class="row"><button class="btn btn-primary" onclick="callTool('completeness')">执行 14项术前检查完备性评估</button><button class="btn btn-secondary" onclick="runGuard('completeness')">Guard</button></div>
+          <div class="row"><button class="btn btn-primary" onclick="callTool('completeness')">执行 14项术前检查完备性评估"/button><button class="btn btn-secondary" onclick="runGuard('completeness')">Guard</button></div>
 
           <div class="result-box" id="result-completeness">点击执行...</div>
 
@@ -335,7 +335,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text'
 
         <div class="panel" id="panel-rehab_track">
 
-          <h3>4阶段康复跟踪 + …</h3>
+          <h3>4阶段康复跟踪 + Harris 评分</h3>
 
           <p class="ortho-desc">4阶段康复跟踪 + Harris 评分</p>
 
@@ -343,7 +343,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text'
 
           <div class="form-group"><label>procedure</label><input class="inp-rehab_track" data-field="procedure" value="str"></div>
 
-          <div class="row"><button class="btn btn-primary" onclick="callTool('rehab_track')">执行 4阶段康复跟踪 + …</button><button class="btn btn-secondary" onclick="runGuard('rehab_track')">Guard</button></div>
+          <div class="row"><button class="btn btn-primary" onclick="callTool('rehab_track')">执行 4阶段康复跟踪 + Harris 评分</button><button class="btn btn-secondary" onclick="runGuard('rehab_track')">Guard</button></div>
 
           <div class="result-box" id="result-rehab_track">点击执行...</div>
 
@@ -351,7 +351,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text'
 
         <div class="panel" id="panel-osteoporosis_mgmt">
 
-          <h3>FRAX评估 + 骨…</h3>
+          <h3>FRAX评估 + 骨质疏松治疗</h3>
 
           <p class="ortho-desc">FRAX评估 + 骨质疏松治疗方案</p>
 
@@ -363,7 +363,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text'
 
           <div class="form-group"><label>conditions</label><input class="inp-osteoporosis_mgmt" data-field="conditions" value="list"></div>
 
-          <div class="row"><button class="btn btn-primary" onclick="callTool('osteoporosis_mgmt')">执行 FRAX评估 + 骨…</button><button class="btn btn-secondary" onclick="runGuard('osteoporosis_mgmt')">Guard</button></div>
+          <div class="row"><button class="btn btn-primary" onclick="callTool('osteoporosis_mgmt')">执行 FRAX评估 + 骨质疏松治疗</button><button class="btn btn-secondary" onclick="runGuard('osteoporosis_mgmt')">Guard</button></div>
 
           <div class="result-box" id="result-osteoporosis_mgmt">点击执行...</div>
 

@@ -7,6 +7,18 @@ from __future__ import annotations
 
 from typing import Any
 
+from haip.togaf.knowledge_agent import KnowledgeAgent
+
+_agent = KnowledgeAgent(agent_name="chronic-pain", department="疼痛科")
+_GUIDELINES = [
+    "WHO Analgesic Ladder 镇痛三阶梯",
+    "IASP 慢性疼痛分类 (ICD-11)",
+    "生物心理社会模型 (BPS Model)",
+    "中国慢性疼痛管理指南",
+    "NICE CG173 神经病理性疼痛管理",
+]
+_agent.rule_engine.load_all()
+
 
 def assess(pain_duration_months: int = 0, vas_score: int = 0, nrs_score: int = 0,
            diagnosis: str = "", phq9_score: int = 0, gad7_score: int = 0,

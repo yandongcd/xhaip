@@ -16,7 +16,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class TenantStatus(str, Enum):
@@ -72,7 +72,7 @@ class TenantManager:
 
     def __init__(self):
         self._tenants: dict[str, Tenant] = {}
-        self._default_tenant: Optional[Tenant] = None
+        self._default_tenant: Tenant | None = None
 
     def create(self, name: str, hospital_name: str = "", **kwargs) -> Tenant:
         """Create a new tenant."""
@@ -88,11 +88,11 @@ class TenantManager:
             self._default_tenant = tenant
         return tenant
 
-    def get(self, tenant_id: str) -> Optional[Tenant]:
+    def get(self, tenant_id: str) -> Tenant | None:
         """Get a tenant by ID."""
         return self._tenants.get(tenant_id)
 
-    def get_default(self) -> Optional[Tenant]:
+    def get_default(self) -> Tenant | None:
         """Get the default tenant."""
         return self._default_tenant
 

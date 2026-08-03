@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>xHAIP 诊疗规范遗漏矩阵 - 10轮专家评审</title>
+<style>
+:root {
+  --bg: #0a0e14; --card-bg: #141a22; --border: #1e293b;
+  --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff;
+  --p0: #f85149; --p1: #d29922; --p2: #3fb950;
+  --p0-bg: #f851491a; --p1-bg: #d299221a; --p2-bg: #3fb9501a;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, system-ui, sans-serif; background:var(--bg); color:var(--text); padding:20px; }
+h1 { font-size:1.6rem; color:#e6edf3; margin-bottom:4px; }
+.subtitle { color:var(--muted); font-size:0.85rem; margin-bottom:20px; }
+.stats { display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap; }
+.stat-card { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:14px 18px; min-width:130px; text-align:center; }
+.stat-card .num { font-size:1.8rem; font-weight:700; }
+.stat-card .label { font-size:0.78rem; color:var(--muted); margin-top:2px; }
+.p0-num { color:var(--p0); } .p1-num { color:var(--p1); } .p2-num { color:var(--p2); }
+.legend { display:flex; gap:16px; margin-bottom:16px; font-size:0.8rem; }
+.legend span { display:flex; align-items:center; gap:4px; }
+.dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+.dot-p0 { background:var(--p0); } .dot-p1 { background:var(--p1); } .dot-p2 { background:var(--p2); }
+table { width:100%; border-collapse:collapse; background:var(--card-bg); border:1px solid var(--border); border-radius:8px; overflow:hidden; font-size:0.82rem; }
+th { background:#1a2230; padding:10px 12px; text-align:left; font-weight:600; color:#e6edf3; border-bottom:2px solid var(--border); position:sticky; top:0; }
+td { padding:8px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+tr:hover { background:#1a2230; }
+.sev-high { border-left:3px solid var(--p0); }
+.sev-mid { border-left:3px solid var(--p1); }
+.sev-low { border-left:3px solid var(--p2); }
+.badge { font-size:0.7rem; padding:2px 7px; border-radius:10px; font-weight:600; }
+.badge-p0 { background:var(--p0-bg); color:var(--p0); }
+.badge-p1 { background:var(--p1-bg); color:var(--p1); }
+.badge-p2 { background:var(--p2-bg); color:var(--p2); }
+.badge-gap { background:#f8514910; color:#f85149; } /* for docs with zero refs */
+.section { margin-top:28px; }
+.section h2 { font-size:1.15rem; color:#e6edf3; margin-bottom:12px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+.mono { font-family: 'Cascadia Code', 'Fira Code', monospace; font-size:0.78rem; }
+</style>
+</head>
+<body>
+
+<h1>xHAIP 诊疗规范遗漏矩阵</h1>
+<p class="subtitle">10轮迭代评审 · 44科室 · 82份文档 · 555项遗漏 · 2026-07-26</p>
+
+<div class="stats">
+  <div class="stat-card"><div class="num p0-num">114</div><div class="label">P0 关键缺失</div></div>
+  <div class="stat-card"><div class="num p1-num">318</div><div class="label">P1 重要遗漏</div></div>
+  <div class="stat-card"><div class="num p2-num">123</div><div class="label">P2 建议补充</div></div>
+  <div class="stat-card"><div class="num" style="color:#e6edf3">555</div><div class="label">遗漏总计</div></div>
+  <div class="stat-card"><div class="num" style="color:#58a6ff">82</div><div class="label">评审文档</div></div>
+  <div class="stat-card"><div class="num" style="color:#58a6ff">10</div><div class="label">迭代轮次</div></div>
+</div>
+
+<div class="legend">
+  <span><span class="dot dot-p0"></span> P0-关键缺失</span>
+  <span><span class="dot dot-p1"></span> P1-重要遗漏</span>
+  <span><span class="dot dot-p2"></span> P2-建议补充</span>
+  <span>✱ 泛称引用</span>
+</div>
+
+<div class="section">
+  <h2>一、各科室遗漏总表</h2>
+  <table>
+    <thead>
+      <tr><th>科室</th><th>文档</th><th>P0</th><th>P1</th><th>P2</th><th>引用质量</th><th>主要缺口类型</th></tr>
+    </thead>
+    <tbody>
+      <tr class="sev-high"><td>病理科</td><td>A1</td><td><span class="badge badge-p0">3</span></td><td><span class="badge badge-p1">6</span></td><td><span class="badge badge-p2">4</span></td><td>⚠ 泛称</td><td>CAP方案/ICCR/ISO15189/分子检测</td></tr>
+      <tr class="sev-high"><td>创伤骨科</td><td>A2</td><td><span class="badge badge-p0">2</span></td><td><span class="badge badge-p1">9</span></td><td><span class="badge badge-p2">4</span></td><td>⚠ 仅1条具名</td><td>AAOS/NICE/SIGN/老年评估</td></tr>
+      <tr class="sev-mid"><td>儿童中心</td><td>A3,A5,A6,A7,A32,A77</td><td><span class="badge badge-p0">3</span></td><td><span class="badge badge-p1">10</span></td><td><span class="badge badge-p2">3</span></td><td>⚠ A5弱</td><td>WHO ENCC/ELSO/新生儿专项</td></tr>
+      <tr class="sev-mid"><td>放疗科</td><td>A8,A9,A10,A11,A12,A13</td><td><span class="badge badge-p0">4</span></td><td><span class="badge badge-p1">9</span></td><td><span class="badge badge-p2">4</span></td><td>⚠ 物理好/临床弱</td><td>ICRU/ASTRO/ESTRO/NI-RADS</td></tr>
+      <tr class="sev-high"><td>妇产科</td><td>A14,A15,A16</td><td><span class="badge badge-p0">9</span></td><td><span class="badge badge-p1">7</span></td><td><span class="badge badge-p2">3</span></td><td>🔴 零具名</td><td>FIGO/NCCN/WHO分类/ACOG</td></tr>
+      <tr class="sev-high"><td>肝胆外科</td><td>A17</td><td><span class="badge badge-p0">5</span></td><td><span class="badge badge-p1">5</span></td><td><span class="badge badge-p2">3</span></td><td>🔴 零具名</td><td>CNLC/BCLC/EASL/AASLD</td></tr>
+      <tr class="sev-low"><td>肝脏肿瘤中心</td><td>A18</td><td><span class="badge badge-p0">2</span></td><td><span class="badge badge-p1">5</span></td><td><span class="badge badge-p2">2</span></td><td>✅ 充分</td><td>BCLC/mRECIST/LI-RADS</td></tr>
+      <tr class="sev-high"><td>呼吸科·呼吸内科</td><td>A19,A78</td><td><span class="badge badge-p0">5</span></td><td><span class="badge badge-p1">7</span></td><td><span class="badge badge-p2">4</span></td><td>🔴 零具名</td><td>GOLD/GINA/NCCN/Lung-RADS</td></tr>
+      <tr class="sev-high"><td>护理部</td><td>A20</td><td><span class="badge badge-p0">3</span></td><td><span class="badge badge-p1">5</span></td><td><span class="badge badge-p2">1</span></td><td>🔴 零具名</td><td>护理质控/Braden/Morse</td></tr>
+      <tr class="sev-mid"><td>惠侨医疗中心</td><td>A21,A22,A23,A24</td><td><span class="badge badge-p0">6</span></td><td><span class="badge badge-p1">10</span></td><td><span class="badge badge-p2">5</span></td><td>⚠ A22/A23弱</td><td>AAO-HNS/IHR/JCI/ESMO</td></tr>
+      <tr class="sev-high"><td>急诊科/信息中心</td><td>A25</td><td><span class="badge badge-p0">4</span></td><td><span class="badge badge-p1">5</span></td><td><span class="badge badge-p2">0</span></td><td>🔴 零具名</td><td>急诊分诊/ESI/胸痛卒中标准</td></tr>
+      <tr class="sev-mid"><td>检验科·检验医学科</td><td>A26,A27,A28,A29,A44,A79</td><td><span class="badge badge-p0">7</span></td><td><span class="badge badge-p1">8</span></td><td><span class="badge badge-p2">3</span></td><td>✅ A79好</td><td>ISO15189/EUCAST/LOINC</td></tr>
+      <tr class="sev-high"><td>口腔科</td><td>A30,A31,A32,A33,A34,A35</td><td><span class="badge badge-p0">5</span></td><td><span class="badge badge-p1">7</span></td><td><span class="badge badge-p2">4</span></td><td>🔴 泛称</td><td>各亚专科指南/感控规范</td></tr>
+      <tr class="sev-high"><td>老年病科</td><td>A36</td><td><span class="badge badge-p0">4</span></td><td><span class="badge badge-p1">5</span></td><td><span class="badge badge-p2">2</span></td><td>🔴 零具名</td><td>ADA老年/CGA/Beers/衰弱</td></tr>
+      <tr class="sev-mid"><td>内分泌代谢科</td><td>A44,A45</td><td><span class="badge badge-p0">5</span></td><td><span class="badge badge-p1">9</span></td><td><span class="badge badge-p2">4</span></td><td>⚠ A44弱</td><td>ESH/PA共识/PPGL/动态血压</td></tr>
+      <tr class="sev-mid"><td>皮肤科</td><td>A46,A47</td><td><span class="badge badge-p0">5</span></td><td><span class="badge badge-p1">6</span></td><td><span class="badge badge-p2">4</span></td><td>⚠ 量表好/指南弱</td><td>AAD/NRS/中国玫瑰痤疮指南</td></tr>
+      <tr class="sev-high"><td>普通外科</td><td>A48,A49</td><td><span class="badge badge-p0">7</span></td><td><span class="badge badge-p1">8</span></td><td><span class="badge badge-p2">3</span></td><td>⚠ A48弱</td><td>CSCO胃癌/ESMO/日本指南</td></tr>
+      <tr class="sev-low"><td>综合病区</td><td>A50</td><td><span class="badge badge-p0">2</span></td><td><span class="badge badge-p1">5</span></td><td><span class="badge badge-p2">2</span></td><td>✅ 法规好/临床弱</td><td>抗肿瘤药指导/MASCC指南</td></tr>
+      <tr class="sev-high"><td>乳腺科</td><td>A51</td><td><span class="badge badge-p0">7</span></td><td><span class="badge badge-p1">7</span></td><td><span class="badge badge-p2">3</span></td><td>⚠ 仅1条具名</td><td>NCCN/St.Gallen/ASCO/BI-RADS</td></tr>
+      <tr class="sev-mid"><td>神经内科</td><td>A52,A80</td><td><span class="badge badge-p0">3</span></td><td><span class="badge badge-p1">7</span></td><td><span class="badge badge-p2">3</span></td><td>✅ A80好</td><td>AHA/ASA/ESO/TOAST</td></tr>
+      <tr class="sev-high"><td>神经外科</td><td>A53</td><td><span class="badge badge-p0">4</span></td><td><span class="badge badge-p1">4</span></td><td><span class="badge badge-p2">1</span></td><td>🔴 零具名</td><td>WFNS/Hunt-Hess/GCS/胶质瘤</td></tr>
+      <tr class="sev-low"><td>肾内科</td><td>A54</td><td><span class="badge badge-p0">0</span></td><td><span class="badge badge-p1">3</span></td><td><span class="badge badge-p2">1</span></td><td>⭐ 样板</td><td>KDIGO鉴别/NICE</td></tr>
+      <tr class="sev-mid"><td>消化内科</td><td>A55,A56,A57</td><td><span class="badge badge-p0">8</span></td><td><span class="badge badge-p1">7</span></td><td><span class="badge badge-p2">5</span></td><td>⚠ A57弱</td><td>ASGE/BSG/Rome IV/ASA禁食</td></tr>
+      <tr class="sev-high"><td>心血管内科</td><td>A58,A59</td><td><span class="badge badge-p0">8</span></td><td><span class="badge badge-p1">8</span></td><td><span class="badge badge-p2">3</span></td><td>🔴 全泛称</td><td>ESC/AHA/HCM/AF指南</td></tr>
+      <tr class="sev-high"><td>心血管外科</td><td>A60</td><td><span class="badge badge-p0">3</span></td><td><span class="badge badge-p1">4</span></td><td><span class="badge badge-p2">2</span></td><td>🔴 全泛称</td><td>ESC/EACTS/AHA瓣膜指南</td></tr>
+      <tr class="sev-mid"><td>血管与介入科</td><td>A61,A62,A63,A81</td><td><span class="badge badge-p0">6</span></td><td><span class="badge badge-p1">12</span></td><td><span class="badge badge-p2">4</span></td><td>⚠ A63零指南</td><td>ESUV/KDIGO/ESVS/IFU</td></tr>
+      <tr class="sev-low"><td>眼科</td><td>A64</td><td><span class="badge badge-p0">1</span></td><td><span class="badge badge-p1">2</span></td><td><span class="badge badge-p2">1</span></td><td>✅ 充分</td><td>AAO PPP/EGS</td></tr>
+      <tr class="sev-low"><td>药学部</td><td>A65,A66</td><td><span class="badge badge-p0">4</span></td><td><span class="badge badge-p1">5</span></td><td><span class="badge badge-p2">2</span></td><td>✅ 充分</td><td>ISMP/WFH/ASHP</td></tr>
+      <tr class="sev-low"><td>药学部静配中心</td><td>A67,A68,A69</td><td><span class="badge badge-p0">2</span></td><td><span class="badge badge-p1">6</span></td><td><span class="badge badge-p2">2</span></td><td>⭐ A67样板</td><td>ASCO止吐/MASCC/PIVAS规范</td></tr>
+      <tr class="sev-low"><td>医疗管理部</td><td>A70</td><td><span class="badge badge-p0">1</span></td><td><span class="badge badge-p1">2</span></td><td><span class="badge badge-p2">1</span></td><td>✅ 法规好</td><td>手术分级办法/JCI</td></tr>
+      <tr class="sev-low"><td>医疗质量管理科</td><td>A71</td><td><span class="badge badge-p0">0</span></td><td><span class="badge badge-p1">3</span></td><td><span class="badge badge-p2">1</span></td><td>✅ 充分</td><td>WHO核查表/SQUIRE/IHI</td></tr>
+      <tr class="sev-low"><td>院感管理科</td><td>A72</td><td><span class="badge badge-p0">1</span></td><td><span class="badge badge-p1">4</span></td><td><span class="badge badge-p2">1</span></td><td>⚠ 泛称</td><td>WHO HEARTS/AHA预防</td></tr>
+      <tr class="sev-low"><td>影像诊断科</td><td>A73,A74,A75</td><td><span class="badge badge-p0">1</span></td><td><span class="badge badge-p1">6</span></td><td><span class="badge badge-p2">3</span></td><td>⭐ A75样板</td><td>ACR标准/结构化报告/RADS</td></tr>
+      <tr class="sev-mid"><td>肿瘤科</td><td>A76,A82</td><td><span class="badge badge-p0">2</span></td><td><span class="badge badge-p1">7</span></td><td><span class="badge badge-p2">4</span></td><td>✅ 基本充分</td><td>ASCO化疗安全/ESMO irAE</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h2>二、跨领域系统性遗漏 TOP 10</h2>
+  <table>
+    <thead><tr><th>#</th><th>遗漏类别</th><th>覆盖文档</th><th>严重度</th><th>关键标准</th></tr></thead>
+    <tbody>
+      <tr class="sev-high"><td>1</td><td>AI器械法规合规</td><td class="mono">80/82 (98%缺失)</td><td><span class="badge badge-p0">P0</span></td><td>ISO 14971, IEC 62304, AI注册指导原则</td></tr>
+      <tr class="sev-high"><td>2</td><td>临床数据互操作</td><td class="mono">81-82/82</td><td><span class="badge badge-p0">P0</span></td><td>FHIR R4, SNOMED CT, LOINC</td></tr>
+      <tr class="sev-high"><td>3</td><td>AI研究报告标准</td><td class="mono">82/82 (100%缺失)</td><td><span class="badge badge-p0">P0</span></td><td>CONSORT-AI, SPIRIT-AI, TRIPOD+AI</td></tr>
+      <tr class="sev-high"><td>4</td><td>AI伦理治理</td><td class="mono">82/82 (100%缺失)</td><td><span class="badge badge-p0">P0</span></td><td>WHO AI伦理指南, 科技伦理审查办法</td></tr>
+      <tr class="sev-high"><td>5</td><td>泛称引用</td><td class="mono">~25/82 (30%)</td><td><span class="badge badge-p0">P0</span></td><td>需替换为 ≥3 具名指南/文档</td></tr>
+      <tr class="sev-high"><td>6</td><td>ACR RADS影像标准</td><td class="mono">5/10 RADS已引</td><td><span class="badge badge-p0">P0</span></td><td>LI-RADS, VI-RADS, Lung-RADS, CAD-RADS, NI-RADS</td></tr>
+      <tr class="sev-high"><td>7</td><td>CAP/ICCR病理方案</td><td class="mono">10+/82 (零引用)</td><td><span class="badge badge-p0">P0</span></td><td>CAP Cancer Protocols, ICCR Datasets</td></tr>
+      <tr class="sev-high"><td>8</td><td>麻醉科全链路</td><td class="mono">~15/82</td><td><span class="badge badge-p0">P0</span></td><td>ASA术前禁食, ASA分级, Mallampati</td></tr>
+      <tr class="sev-mid"><td>9</td><td>国际指南配对</td><td class="mono">~35/82 (40%)</td><td><span class="badge badge-p1">P1</span></td><td>国内+国际指南互补引用</td></tr>
+      <tr class="sev-mid"><td>10</td><td>核心评分量表</td><td class="mono">~20/82</td><td><span class="badge badge-p1">P1</span></td><td>CHA₂DS₂-VASc, HAS-BLED, Mehran, TOAST等</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h2>三、10轮迭代跟踪</h2>
+  <table>
+    <thead><tr><th>轮次</th><th>名称</th><th>产出</th><th>新增遗漏</th><th>累计</th></tr></thead>
+    <tbody>
+      <tr><td>R1</td><td>专科初审</td><td>22份独立评审报告</td><td>410</td><td>410</td></tr>
+      <tr><td>R2</td><td>交叉互审</td><td>6组互审报告</td><td>18</td><td>428</td></tr>
+      <tr><td>R3</td><td>MDT链路</td><td>3条链路审查</td><td>18</td><td>446</td></tr>
+      <tr><td>R4</td><td>辅诊专项</td><td>影像/病理/检验三合一</td><td>32</td><td>478</td></tr>
+      <tr><td>R5</td><td>药学营养专项</td><td>药学+营养二合一</td><td>19</td><td>497</td></tr>
+      <tr><td>R6</td><td>质控法规</td><td>法规/质控/感控三合一</td><td>26</td><td>523</td></tr>
+      <tr><td>R7</td><td>AI合规伦理</td><td>AI注册/数据/伦理/验证</td><td>32</td><td>555</td></tr>
+      <tr><td>R8</td><td>矛盾消解</td><td>5条矛盾共识</td><td>0 (去重)</td><td>555</td></tr>
+      <tr><td>R9</td><td>优先级矩阵</td><td>P0/P1/P2分级</td><td>0</td><td>555</td></tr>
+      <tr><td>R10</td><td>终审报告</td><td>终审报告+矩阵HTML</td><td>0</td><td><strong>555</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p style="margin-top:24px; color:var(--muted); font-size:0.75rem; text-align:center;">
+Generated by xHAIP 10-Round Delphi Expert Review · 3 Hospitals · 44 Specialties · 54 Experts · 2026-07-26
+</p>
+
+</body>
+</html>

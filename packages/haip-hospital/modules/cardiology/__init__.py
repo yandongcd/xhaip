@@ -158,9 +158,7 @@ def classify_killip(has_rales: bool = False,
     """Killip classification for acute MI prognosis."""
     if has_shock_signs and sbp < 90:
         klass = 4
-    elif has_pulmonary_edema:
-        klass = 3
-    elif has_rales and rales_extent_pct >= 50:
+    elif has_pulmonary_edema or has_rales and rales_extent_pct >= 50:
         klass = 3
     elif has_rales and rales_extent_pct < 50:
         klass = 2
@@ -557,8 +555,8 @@ def bp_plan(**kwargs) -> dict:
                               f"{', '.join(has_bled['modifiable_factors'][:3])}")
 
     # GDMT
-    if gdmt["gdmt_applicable"]:
-        plan_items.append(f"HFrEF GDMT {gdmt['total_pillars']}/4 pillars:")
+    if gdmt.get("gdmt_applicable"):
+        plan_items.append(f"HFrEF GDMT {gdmt.get('total_pillars', 0)}/4 pillars:")
         for p in gdmt["pillars"]:
             plan_items.append(f"  {p['sequence']}. {p['class']} → {p['target_dose']}")
     else:
@@ -580,7 +578,7 @@ def bp_plan(**kwargs) -> dict:
     guides = _agent.search_guidelines(dx) or _GUIDELINES
     rules = _agent.search_rules("心血管内科")
     return _agent.clinical_result(
-        summary=f"治疗方案 — GDMT {gdmt['total_pillars']}/4 pillars + {'OAC' if chads['anticoagulation_recommended'] else 'no OAC'}",
+        summary=f"治疗方案 — GDMT {gdmt.get('total_pillars', 0)}/4 pillars + {'OAC' if chads.get('anticoagulation_recommended') else 'no OAC'}",
         patient=p, guidelines=guides, rules=rules,
         alerts=vitals.get("alerts", []),
     )

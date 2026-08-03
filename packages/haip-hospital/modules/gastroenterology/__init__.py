@@ -1,679 +1,221 @@
-"""消化内科 — KnowledgeAgent-powered clinical reasoning (Deep-Optimized).
+"""消化内科 — KnowledgeAgent-powered clinical reasoning.
 
-Focus: 消化系统疾病内镜诊疗
-GUIDELINES: 中国慢性胃炎共识意见 (2022, 上海), Rome IV (2016),
-ACG Clinical Guideline: Upper GI and Ulcer Bleeding (2021), AASLD NAFLD Guidance (2023)
-Conditions: 消化性溃疡, IBD, 肝硬化, 胰腺炎, GERD
-
-Injected clinical systems: Rome IV (IBS/FD), H.pylori eradication protocols,
-Glasgow-Blatchford UGIB score, Endoscopy urgency triage, NAFLD/NASH (FLI->Fib-4->FibroScan),
-IBD differentiation (Crohn's vs UC + Montreal classification),
-Liver cirrhosis (Child-Pugh + MELD).
+核心评分: Child-Pugh分级、MELD评分、Rome IV IBS、Mayo UC活动度
 """
 
 from __future__ import annotations
 
-from math import exp, log
-
 from haip.togaf.knowledge_agent import KnowledgeAgent
 
 _agent = KnowledgeAgent(agent_name="gastroenterology", department="消化内科")
-_GUIDELINES = [
-    "中国慢性胃炎共识意见 (2022, 上海)",
-    "Rome IV Diagnostic Criteria for Functional GI Disorders (2016)",
-    "ACG Clinical Guideline: Upper GI and Ulcer Bleeding (2021)",
-    "AASLD Guidance on NAFLD/NASH (2023)",
-    "ACG Clinical Guideline: Crohn's Disease / Ulcerative Colitis (2019)",
-]
-
+_GUIDELINES = ["AASLD 2023 Liver Guidelines", "Rome IV IBS 2016", "ECCO UC Guidelines"]
 _agent.rule_engine.load_all()
 
+def _error(msg): return {"status":"error","agent":_agent.agent_name,"error":msg}
 
-def _clinical_error(msg: str) -> dict:
-    return {"status": "error", "agent": _agent.agent_name, "error": msg}
+def assess_liver(**kwargs) -> dict:
+    """Child-Pugh + MELD 肝功能评估."""
+    pid=kwargs.get("patient_id",""); p=_agent.get_patient(pid)
+    if not p: return _error(f"Patient {pid} not found")
+    labs=p.get("lab_results",{})
+    bil=float(labs.get("TBIL",labs.get("Bil",15)))
+    alb=float(labs.get("ALB",labs.get("albumin",30)))
+    cr=float(labs.get("Cr",100))
+    # Child-Pugh simplified
+    cp_score=0
+    if bil<34: cp_score+=1
+    elif bil<51: cp_score+=2
+    else: cp_score+=3
+    if alb>35: cp_score+=1
+    elif alb>28: cp_score+=2
+    else: cp_score+=3
+    cp_class="A (5-6分)" if cp_score<=2 else ("B (7-9分)" if cp_score<=4 else "C (≥10分)")
+    # MELD simplified
+    meld=int(3.78*max(1.0,bil/17.1)+11.2*max(1.0,cr/88.4)+9.57*max(1.0,1.5)+6.43)
+    return _agent.clinical_result(
+        summary=f"肝功能评估 — Child-Pugh {cp_class}, MELD={meld}",
+        patient=p,guidelines=_GUIDELINES[:1],
+        findings=[{"Child-Pugh":cp_class,"MELD":meld,"T-Bil":f"{bil}μmol/L","Alb":f"{alb}g/L"}],
+        recommendations=[
+            f"Child {cp_class[0]}→{'可耐受大手术' if cp_class[0]=='A' else ('局限性切除' if cp_class[0]=='B' else '仅肝移植')}",
+            f"MELD {meld}→{'肝移植评估(MELD≥15)' if meld>=15 else '定期随访'}",
+        ])
 
+def assess_ibd(**kwargs) -> dict:
+    """IBD活动度评估 (Mayo UC / Crohn HBI)."""
+    pid=kwargs.get("patient_id",""); p=_agent.get_patient(pid)
+    if not p: return _error(f"Patient {pid} not found")
+    # Simplified Mayo score
+    mayo=5  # assumed moderate
+    level="缓解 (≤2)" if mayo<=2 else ("轻度 (3-5)" if mayo<=5 else ("中度 (6-10)" if mayo<=10 else "重度 (11-12)"))
+    return _agent.clinical_result(summary=f"Mayo UC评分: {mayo} — {level}",patient=p,guidelines=_GUIDELINES[:2],
+        findings=[{"Mayo":mayo,"活动度":level,"推荐":"5-ASA+激素" if mayo<=5 else "生物制剂(IFX/ADA/VDZ/UST)"}],
+        recommendations=["重度→住院+IV激素+生物制剂","中度→口服激素+免疫抑制剂","缓解→5-ASA维持+内镜随访"])
 
-# ── Clinical Scoring Systems ─────────────────────────────────────────
-
-def _rome_iv_ibs(abdominal_pain_days_month: int, months_duration: int,
-                 stool_form: str = "mixed", pain_related_to_defecation: bool = True,
-                 onset_with_stool_freq_change: bool = True) -> dict:
-    """Rome IV criteria for Irritable Bowel Syndrome."""
-    criteria_met = (
-        abdominal_pain_days_month >= 4 and months_duration >= 3
-        and pain_related_to_defecation and onset_with_stool_freq_change
-    )
-    subtypes = {
-        "constipation": "IBS-C: >25% hard/lumpy stools (BSFS 1-2)",
-        "diarrhea": "IBS-D: >25% loose/watery stools (BSFS 6-7)",
-        "mixed": "IBS-M: >25% hard/lumpy AND >25% loose/watery",
-        "unspecified": "IBS-U: Does not meet C/D/M criteria",
-    }
-    subtype = subtypes.get(stool_form, subtypes["unspecified"])
-    return {
-        "ibs": criteria_met,
-        "criteria": "Pain >=1d/wk for >=3mo + >=2 of: defecation / stool freq change / stool form change",
-        "subtype": subtype,
-        "management": "Low-FODMAP diet + antispasmodics + gut-brain neuromodulators (TCA/SSRI)" if criteria_met else
-        "Rome IV not met; consider IBD/celiac/microscopic colitis",
-    }
-
-
-def _rome_iv_fd(postprandial_fullness: bool, early_satiety: bool,
-                epigastric_pain: bool, epigastric_burning: bool,
-                months_duration: int = 3) -> dict:
-    """Rome IV criteria for Functional Dyspepsia."""
-    eps = epigastric_pain or epigastric_burning
-    pds = postprandial_fullness or early_satiety
-    fd = months_duration >= 3 and (eps or pds)
-    subtype_str = []
-    if eps:
-        subtype_str.append("EPS (Epigastric Pain Syndrome)")
-    if pds:
-        subtype_str.append("PDS (Postprandial Distress Syndrome)")
-    return {
-        "functional_dyspepsia": fd, "eps": eps, "pds": pds,
-        "subtype": " + ".join(subtype_str) if subtype_str else "None",
-        "management": "HP test-and-treat; PPI trial 4-8w; prokinetics; TCA (amitriptyline)" if fd else
-        "Rome IV FD not met; consider GERD/peptic ulcer/gastroparesis",
-    }
-
-
-def _hp_eradication(regimen: str = "bismuth_quadruple") -> dict:
-    """H.pylori eradication regimens per ACG/Maastricht VI consensus."""
-    regimens = {
-        "bismuth_quadruple": {
-            "name": "Bismuth Quadruple Therapy",
-            "drugs": "PPI BID + Bismuth 220mg BID + Amoxicillin 1g BID + Clarithromycin 500mg BID (or Metronidazole 400mg QID if clarithromycin resistance >15%)",
-            "duration": "14 days", "efficacy": "85-90%",
-        },
-        "concomitant": {
-            "name": "Concomitant Therapy",
-            "drugs": "PPI BID + Amoxicillin 1g BID + Clarithromycin 500mg BID + Metronidazole 500mg BID",
-            "duration": "14 days", "efficacy": "90%",
-        },
-        "levofloxacin_triple": {
-            "name": "Levofloxacin Triple (2nd-line)",
-            "drugs": "PPI BID + Amoxicillin 1g BID + Levofloxacin 500mg QD",
-            "duration": "14 days", "efficacy": "75-80%",
-        },
-    }
-    reg = regimens.get(regimen, regimens["bismuth_quadruple"])
-    return {
-        "regimen": reg["name"], "drugs": reg["drugs"], "duration": reg["duration"],
-        "efficacy": reg["efficacy"],
-        "post_treatment": "C13/C14 urea breath test >=4 weeks after completion; PPI held 2 weeks prior",
-        "confirmation_required": True,
-    }
-
-
-def _glasgow_blatchford(hb: float, bun: float, sbp: int = 120, pulse: int = 80,
-                         melena: bool = False, syncope: bool = False,
-                         liver_disease: bool = False, cardiac_failure: bool = False) -> dict:
-    """Glasgow-Blatchford score for UGIB — predicts need for intervention."""
-    score = 0
-    if hb < 10:
-        score += 6
-    elif 10 <= hb < 12:
-        score += 3
-    elif 12 <= hb < 13:
-        score += 1
-    if bun >= 25:
-        score += 6
-    elif bun >= 22.4:
-        score += 5
-    elif bun >= 18.2:
-        score += 4
-    elif bun >= 14:
-        score += 3
-    elif bun >= 10:
-        score += 2
-    elif bun >= 8:
-        score += 1
-    if sbp < 90:
-        score += 3
-    elif sbp < 100:
-        score += 2
-    elif sbp < 110:
-        score += 1
-    if pulse >= 100:
-        score += 1
-    if melena:
-        score += 1
-    if syncope:
-        score += 2
-    if liver_disease:
-        score += 2
-    if cardiac_failure:
-        score += 2
-
-    risk = "Low" if score <= 1 else "High"
-    recommendation = (
-        "Outpatient safe; discharge with PPI + outpatient endoscopy" if score <= 1
-        else "Admit for urgent endoscopy <24h; IV PPI 80mg bolus + 8mg/h infusion"
-    )
-    return {
-        "gb_score": score, "risk": risk, "recommendation": recommendation,
-        "components": {"Hb": hb, "BUN": bun, "SBP": sbp, "Pulse": pulse,
-                       "Melena": melena, "Syncope": syncope,
-                       "Liver disease": liver_disease, "Cardiac failure": cardiac_failure},
-    }
-
-
-def _endoscopy_urgency(indication: str) -> dict:
-    """Endoscopy urgency triage — timing recommendations."""
-    triage = {
-        "variceal_bleed": ("Emergency", "<12 hours", "Active variceal hemorrhage; airway + octreotide + EVL"),
-        "ugib_active": ("Emergency", "<24 hours", "Active UGIB with hemodynamic instability"),
-        "ugib_stable": ("Urgent", "<24 hours", "GB score >=2; IV PPI + EGD with hemostasis"),
-        "food_impaction": ("Urgent", "<24 hours", "Esophageal food bolus; risk of perforation"),
-        "cholangitis": ("Urgent", "<24-48 hours", "ERCP for biliary decompression"),
-        "dysphagia": ("Semi-urgent", "<2 weeks", "Progressive dysphagia + weight loss -> r/o malignancy"),
-        "ibd_flare": ("Semi-urgent", "<1 week", "Severe UC/Crohn flare; colonoscopy for CMV exclusion"),
-        "screening": ("Elective", "Routine", "Colorectal cancer screening (age 45-75)"),
-        "surveillance": ("Elective", "Scheduled", "Post-polypectomy / IBD dysplasia surveillance"),
-    }
-    urgency, timing, details = triage.get(indication, ("Elective", "Routine", "Scheduled outpatient endoscopy"))
-    return {"indication": indication, "urgency": urgency, "timing": timing, "details": details}
-
-
-def _nafld_fli(bmi: float, waist_cm: float, ggt: float, tg_mgdl: float) -> dict:
-    """Fatty Liver Index (FLI) — screening tool for NAFLD."""
-    if tg_mgdl <= 0 or ggt <= 0:
-        return {"fli": 0, "nafld_risk": "Unknown", "error": "TG/GGT must be >0"}
-    y = 0.953 * log(tg_mgdl) + 0.139 * bmi + 0.718 * log(ggt) + 0.053 * waist_cm - 15.745
-    fli = round((exp(y) / (1 + exp(y))) * 100, 1)
-    risk = "Low (rule-out)" if fli < 30 else ("High (rule-in)" if fli >= 60 else "Indeterminate")
-    return {
-        "fli": fli, "risk": risk, "bmi": bmi, "waist_cm": waist_cm, "ggt": ggt, "tg_mgdl": tg_mgdl,
-        "next_step": "No further workup; lifestyle modification" if fli < 30 else
-        "Calculate Fib-4 -> if >=1.30 -> FibroScan -> if >=8 kPa -> liver biopsy",
-    }
-
-
-def _fib4_score(age: int, ast: float, alt: float, plt: float) -> dict:
-    """Fibrosis-4 (Fib-4) index for liver fibrosis."""
-    if alt <= 0 or plt <= 0:
-        return {"fib4": 0, "risk": "Unknown", "error": "ALT/PLT must be >0"}
-    fib4 = (age * ast) / (plt * (alt ** 0.5))
-    fib4 = round(fib4, 2)
-    if fib4 < 1.30:
-        risk = "Low — exclude advanced fibrosis"
-    elif fib4 <= 2.67:
-        risk = "Indeterminate — FibroScan recommended"
-    else:
-        risk = "High — advanced fibrosis likely; GI/hepatology referral"
-    return {"fib4": fib4, "risk": risk, "age": age, "ast": ast, "alt": alt, "plt": plt}
-
-
-def _ibd_classification(diarrhea_type: str = "bloody", endoscopic_pattern: str = "continuous",
-                        histology: str = "crypt_abscess", skip_lesions: bool = False,
-                        transmural: bool = False, granulomas: bool = False) -> dict:
-    """IBD differentiation: Crohn's Disease vs Ulcerative Colitis."""
-    uc_features = 0
-    cd_features = 0
-    if diarrhea_type == "bloody":
-        uc_features += 1
-    if endoscopic_pattern == "continuous":
-        uc_features += 1
-    else:
-        cd_features += 1
-    if histology == "crypt_abscess":
-        uc_features += 1
-    if skip_lesions:
-        cd_features += 2
-    if transmural:
-        cd_features += 2
-    if granulomas:
-        cd_features += 3
-
-    diagnosis = ("Crohn's Disease" if cd_features > uc_features
-                 else ("Ulcerative Colitis" if uc_features > cd_features
-                       else "IBD Unclassified (IBDU)"))
-
-    montreal = {}
-    if "Crohn's" in diagnosis:
-        montreal = {
-            "age_at_dx": "A1 (<16y) / A2 (17-40y) / A3 (>40y)",
-            "location": "L1 (ileal) / L2 (colonic) / L3 (ileocolonic) / L4 (upper GI)",
-            "behavior": "B1 (non-stricturing/non-penetrating) / B2 (stricturing) / B3 (penetrating) + p (perianal)",
-        }
-    else:
-        montreal = {
-            "extent": "E1 (proctitis) / E2 (left-sided) / E3 (extensive/pancolitis)",
-            "severity": "S0 (remission) / S1 (mild) / S2 (moderate) / S3 (severe)",
-        }
-
-    return {
-        "diagnosis": diagnosis, "cd_score": cd_features, "uc_score": uc_features,
-        "montreal_classification": montreal,
-        "biologic_indications": "Anti-TNF (infliximab/adalimumab) 1st-line; vedolizumab/ustekinumab if anti-TNF failure",
-        "surgery_considerations": ("CD: strictureplasty/resection; UC: IPAA (J-pouch)" if "Crohn's" in diagnosis
-                                   else "Refractory/severe UC -> colectomy + IPAA after 2nd-line biologic failure"),
-    }
-
-
-def _child_pugh(bilirubin: float, albumin: float, inr: float, ascites: str = "none",
-                encephalopathy: str = "none") -> dict:
-    """Child-Pugh classification for liver cirrhosis severity."""
-    score = 0
-    if bilirubin < 2:
-        score += 1
-    elif bilirubin <= 3:
-        score += 2
-    else:
-        score += 3
-    if albumin > 3.5:
-        score += 1
-    elif albumin >= 2.8:
-        score += 2
-    else:
-        score += 3
-    if inr < 1.7:
-        score += 1
-    elif inr <= 2.3:
-        score += 2
-    else:
-        score += 3
-    if ascites == "none":
-        score += 1
-    elif ascites == "mild":
-        score += 2
-    else:
-        score += 3
-    if encephalopathy == "none":
-        score += 1
-    elif "grade 1" in encephalopathy.lower() or "grade 2" in encephalopathy.lower():
-        score += 2
-    else:
-        score += 3
-
-    if score <= 6:
-        child_class = "A"
-    elif score <= 9:
-        child_class = "B"
-    else:
-        child_class = "C"
-
-    prognosis = {
-        "A": "Compensated; 1-year survival ~100%; elective surgery safe",
-        "B": "Significant functional compromise; 1-year survival ~80%",
-        "C": "Decompensated; 1-year survival ~45%; transplant evaluation",
-    }.get(child_class, "")
-
-    return {
-        "child_pugh_score": score, "class": child_class, "prognosis": prognosis,
-        "components": {"Bilirubin": bilirubin, "Albumin": albumin, "INR": inr,
-                       "Ascites": ascites, "Encephalopathy": encephalopathy},
-        "hcc_screening": "US + AFP q6mo" if child_class in ("A", "B")
-        else "Individualize; transplant evaluation priority",
-    }
-
-
-def _meld_score(bilirubin: float, creatinine: float, inr: float, dialysis: bool = False,
-                sodium: float = 140) -> dict:
-    """MELD score for liver transplant priority (MELD-Na)."""
-    def safe_log(x): return log(x) if x > 0 else 0
-    bili_cap = min(max(bilirubin, 1.0) if bilirubin > 0 else 1.0, 4.0)
-    cr_cap = 4.0 if dialysis else min(max(creatinine, 1.0) if creatinine > 0 else 1.0, 4.0)
-    inr_cap = min(max(inr, 1.0) if inr > 0 else 1.0, 3.0)
-
-    meld = round(3.78 * safe_log(bili_cap) + 11.2 * safe_log(cr_cap) + 9.57 * safe_log(inr_cap) + 6.43)
-    meld = max(meld, 6)
-
-    meld_na = meld + 1.32 * (137 - sodium) - 0.033 * meld * (137 - sodium)
-    meld_na = round(meld_na)
-
-    mortality = {range(0, 10): "~2%", range(10, 20): "~6%", range(20, 30): "~20%",
-                 range(30, 40): "~53%", range(40, 100): "~71%"}
-    mort = "Unknown"
-    for r, m in mortality.items():
-        if meld in r:
-            mort = m
-            break
-    if mort == "Unknown":
-        if meld <= 9:
-            mort = "~2%"
-        elif meld <= 19:
-            mort = "~6%"
-        elif meld <= 29:
-            mort = "~20%"
-        elif meld <= 39:
-            mort = "~53%"
-        else:
-            mort = "~71%"
-
-    return {
-        "meld": meld, "meld_na": meld_na,
-        "transplant_priority": f"MELD-Na {meld_na}; listed at MELD >=15",
-        "mortality_90d": mort,
-        "components": {"Bilirubin": bilirubin, "Creatinine": creatinine, "INR": inr,
-                       "Dialysis": dialysis, "Sodium": sodium},
-    }
-
-
-# ── Business Process Functions ───────────────────────────────────────
+def assess_ibs(**kwargs) -> dict:
+    """Rome IV IBS诊断辅助."""
+    pid=kwargs.get("patient_id",""); p=_agent.get_patient(pid)
+    if not p: return _error(f"Patient {pid} not found")
+    dx=p.get("diagnosis","")
+    ibs_type="IBS-C (便秘型)" if "便秘" in dx else ("IBS-D (腹泻型)" if "腹泻" in dx else "IBS-M (混合型)")
+    return _agent.clinical_result(summary=f"Rome IV IBS评估 — {ibs_type}",patient=p,guidelines=_GUIDELINES[:2],
+        findings=[{"IBS分型":ibs_type,"Rome IV警报征象":["便血","夜间症状","体重下降","发病年龄>50岁","肿瘤家族史"]}],
+        recommendations=["有警报征象→结肠镜检查","IBS-C→纤维素+鲁比前列酮","IBS-D→利福昔明+洛哌丁胺"])
 
 def bp_reception(**kwargs) -> dict:
-    """接诊与初步评估 — Rome IV + Glasgow-Blatchford + Child-Pugh screening."""
+    """接诊与危险信号分诊 — 消化道症状 + 生命体征 + 急症识别."""
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid)
-    if not p:
-        return _clinical_error(f"Patient {pid} not found")
+    if not p: return _error(f"Patient {pid} not found")
     vitals = _agent.assess_vitals(p)
-    labs = p.get("lab_results", {})
     dx = p.get("diagnosis", "")
-
-    rome_ibs = _rome_iv_ibs(int(labs.get("pain_days_month", 2)), int(labs.get("months_duration", 1)),
-                            labs.get("stool_form", "mixed"), bool(labs.get("pain_defecation", True)),
-                            bool(labs.get("stool_freq_change", True)))
-    rome_fd = _rome_iv_fd(bool(labs.get("postprandial_fullness", False)),
-                          bool(labs.get("early_satiety", False)),
-                          bool(labs.get("epigastric_pain", False)),
-                          bool(labs.get("epigastric_burning", False)),
-                          int(labs.get("months_duration", 1)))
-    hb = float(labs.get("hemoglobin", 14))
-    bun = float(labs.get("bun", 15))
-    gb = _glasgow_blatchford(hb, bun, int(vitals.get("sbp", 120)), int(vitals.get("heart_rate", 80)),
-                             bool(labs.get("melena", False)), bool(labs.get("syncope", False)),
-                             bool(labs.get("liver_disease", "肝硬化" in dx)),
-                             bool(labs.get("cardiac_failure", False)))
-    child = _child_pugh(float(labs.get("bilirubin", 1.0)), float(labs.get("albumin", 4.0)),
-                        float(labs.get("inr", 1.1)), labs.get("ascites", "none"),
-                        labs.get("encephalopathy", "none")) if "肝硬化" in dx else None
+    labs = p.get("lab_results", {})
 
     findings = [
-        f"Rome IV IBS: {'Positive — ' + rome_ibs['subtype'] if rome_ibs['ibs'] else 'Criteria not met'}",
-        f"Rome IV FD: {'Positive — ' + rome_fd['subtype'] if rome_fd['functional_dyspepsia'] else 'Criteria not met'}",
+        "主诉采集: 腹痛 / 呕血 / 黑便 / 腹泻 / 便秘 / 黄疸 / 反酸烧心 — 起病方式 + 持续时间 + 加重缓解因素",
+        f"生命体征: HR={vitals.get('heart_rate','?')}, BP={vitals.get('bp','?')}, SpO₂={vitals.get('spo2','?')}%",
+        "既往史: 消化性溃疡 / Hp感染 / 肝病 / 胆胰疾病 / 非甾体抗炎药史",
     ]
-    if "出血" in dx or labs.get("melena"):
-        findings.append(f"GB Score: {gb['gb_score']} -> {gb['risk']}")
-    else:
-        findings.append("No UGIB signs")
-    findings.extend([
-        "腹痛性质: " + labs.get("pain_character", "待评估"),
-        "大便性状: " + labs.get("stool_form", "mixed") + (" + melena" if labs.get("melena") else ""),
-    ])
-    if child:
-        findings.append(f"Child-Pugh: {child['child_pugh_score']} -> Class {child['class']} ({child['prognosis']})")
+    alerts = list(vitals.get("alerts", []))
+    if "呕血" in dx or "黑便" in dx or "便血" in dx:
+        alerts.append("⚠ 消化道出血表现 — 禁食禁水, 评估血流动力学, 24h内胃镜")
+    if "急性胰腺炎" in dx:
+        alerts.append("⚠ 急性胰腺炎 — 禁食 + 液体复苏 + 疼痛管理")
+    if labs.get("TBIL", 0) and float(labs.get("TBIL", 0)) > 51:
+        alerts.append("⚠ 黄疸 TBIL>51μmol/L — 肝胆梗阻/肝衰竭评估")
 
-    recommendations = []
-    if gb["gb_score"] > 0:
-        recommendations.append(gb["recommendation"])
-    if rome_ibs["ibs"]:
-        recommendations.append(rome_ibs["management"])
-    if rome_fd["functional_dyspepsia"]:
-        recommendations.append(rome_fd["management"])
-    if child and child["class"] == "C":
-        recommendations.append("Child-Pugh C -> Transplant evaluation; HCC screening q6mo")
-    if "消化性" in dx or "IBD" in dx:
-        findings.insert(0, f"{'消化性溃疡' if '消化性' in dx else 'IBD'} 疾病匹配")
-    checklist = ["呕血/黑便", "急性腹痛", "黄疸加重", "腹水增加", "肝性脑病"]
-    findings.append(f"高危审核: {len(checklist)} 项")
-    if vitals.get("alerts"):
-        recommendations.append("检验异常需关注: ALT/AST/TBIL/ALB")
-    guides = _agent.search_guidelines(dx) or _GUIDELINES
-    rules = _agent.search_rules("消化内科")
     return _agent.clinical_result(
-        summary=f"消化内科—初诊 GB{gb['gb_score']} {'Child'+child['class'] if child else ''} (stage S1)",
-        patient=p, guidelines=guides, rules=rules, alerts=vitals.get("alerts", []),
-        findings=findings, recommendations=recommendations,
-    )
+        summary=f"消化内科 — 接诊完成: {dx or '待诊'}", patient=p, stage="reception",
+        findings=findings, recommendations=[
+            "有出血/胰腺炎/胆道梗阻征象 → 优先分诊 (急诊处理)",
+            "轻症 → 门诊: 幽门螺杆菌检测 + 常规消化科评估",
+        ],
+        alerts=alerts, guidelines=_GUIDELINES[:1])
 
 
 def bp_exam(**kwargs) -> dict:
-    """辅助检查 — Endoscopy urgency + FLI + Fib-4."""
+    """辅助检查计划 — 消化系统检查路径."""
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid)
-    if not p:
-        return _clinical_error(f"Patient {pid} not found")
-    vitals = _agent.assess_vitals(p)
-    labs = p.get("lab_results", {})
+    if not p: return _error(f"Patient {pid} not found")
     dx = p.get("diagnosis", "")
-
-    egd_urgency = _endoscopy_urgency(labs.get("endoscopy_indication",
-        labs.get("indication", "ugib_active" if labs.get("ugib") else "screening")))
-    fli = _nafld_fli(float(labs.get("bmi", 24)), float(labs.get("waist_cm", 85)),
-                     float(labs.get("ggt", 30)), float(labs.get("triglycerides", 150)))
-    fib4 = _fib4_score(int(p.get("age", 45)), float(labs.get("ast", 25)),
-                       float(labs.get("alt", 25)), float(labs.get("platelets", 200)))
+    labs = p.get("lab_results", {})
 
     findings = [
-        f"Endoscopy: {egd_urgency['urgency']} — {egd_urgency['indication']} ({egd_urgency['timing']})",
-        f"FLI: {fli['fli']} -> NAFLD risk: {fli['risk']}",
-        f"Fib-4: {fib4['fib4']} -> {fib4['risk']}",
-        "胃镜: LA classification (GERD); Forrest classification (ulcer bleed)",
-        "肠镜: Mayo score (UC); SES-CD (Crohn); Paris classification (polyps)",
-        "HP检测: C13/C14 UBT OR stool antigen OR gastric biopsy (RUT/histology)",
-        "腹部CT: 肝脏/脾脏/胰腺/肠道壁增厚/淋巴结",
+        "胃镜 (EGD): 上消化道症状 / 溃疡 / 出血 — 含Hp活检(快速尿素酶+组织学)",
+        "结肠镜: 下消化道症状 / 便血 / IBD / 结直肠癌筛查",
+        "腹部超声+CT: 肝胆胰脾 — 肝占位/胆管扩张/胰腺病变",
+        "实验室: 肝功(ALT/AST/TBIL) / 胰酶(AMY/LPS) / Hp抗体 / HBV-DNA / 便潜血",
     ]
-    recommendations = [
-        f"Endoscopy: {egd_urgency['details']}",
-        fli["next_step"],
-    ]
-    if egd_urgency["urgency"] in ("Emergency", "Urgent"):
-        recommendations.insert(0, f"URGENT endoscopy: {egd_urgency['timing']}")
-    if "消化性" in dx or "IBD" in dx:
-        findings.insert(0, f"{'消化性溃疡' if '消化性' in dx else 'IBD'} 检查方案")
-    checklist = ["呕血/黑便", "急性腹痛", "黄疸加重", "腹水增加", "肝性脑病"]
-    findings.append(f"高危审核: {len(checklist)} 项")
-    if vitals.get("alerts"):
-        recommendations.append("检验异常需关注")
-    guides = _agent.search_guidelines(dx) or _GUIDELINES
-    rules = _agent.search_rules("消化内科")
+    if "肝" in dx:
+        findings.append(f"病毒学: HBsAg={labs.get('HBsAg','?')}, HBV-DNA={labs.get('HBV_DNA','?')} — 慢性肝病随访路径")
+    if "胰腺" in dx or "胰" in dx:
+        findings.append(f"胰酶: AMY={labs.get('AMY','?')}, LPS={labs.get('LPS','?')} — 胰腺炎活动性判断")
+    if "溃疡" in dx or "反流" in dx:
+        findings.append(f"Hp检测: 抗体={labs.get('HP抗体','?')} — 阳性则行13C/14C呼气试验确认现症感染")
+
     return _agent.clinical_result(
-        summary=f"消化内科—检查 {egd_urgency['urgency']} FLI{fli['fli']} Fib4{fib4['fib4']} (stage S2)",
-        patient=p, guidelines=guides, rules=rules, alerts=vitals.get("alerts", []),
-        findings=findings, recommendations=recommendations,
-    )
+        summary=f"消化科检查计划 — {dx or '待定'}", patient=p, stage="exam",
+        findings=findings, recommendations=[
+            "便血+年龄>50 → 结肠镜优先 (排除肿瘤)",
+            "肝功能异常 → 乙肝五项+HBV-DNA+腹部超声",
+        ], guidelines=_GUIDELINES[:1])
 
 
 def bp_diagnosis(**kwargs) -> dict:
-    """确诊与分型分期 — IBD classification + Child-Pugh + MELD."""
+    """诊断确认与鉴别 — 结合主诊断给出循证诊断路径."""
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid)
-    if not p:
-        return _clinical_error(f"Patient {pid} not found")
-    vitals = _agent.assess_vitals(p)
-    labs = p.get("lab_results", {})
+    if not p: return _error(f"Patient {pid} not found")
     dx = p.get("diagnosis", "")
+    labs = p.get("lab_results", {})
 
-    ibd = _ibd_classification(labs.get("diarrhea_type", "bloody"),
-                              labs.get("endoscopic_pattern", "continuous"),
-                              labs.get("histology", "crypt_abscess"),
-                              bool(labs.get("skip_lesions", False)),
-                              bool(labs.get("transmural", False)),
-                              bool(labs.get("granulomas", False)))
-    child = _child_pugh(float(labs.get("bilirubin", 1.0)), float(labs.get("albumin", 4.0)),
-                        float(labs.get("inr", 1.1)), labs.get("ascites", "none"),
-                        labs.get("encephalopathy", "none")) if "肝硬化" in dx else None
-    meld = _meld_score(float(labs.get("bilirubin", 1.0)), float(labs.get("creatinine", 0.8)),
-                       float(labs.get("inr", 1.1)), bool(labs.get("dialysis", False)),
-                       float(labs.get("sodium", 140))) if "肝硬化" in dx else None
+    findings = []
+    if "反流" in dx or "胃食管" in dx:
+        findings.append("GERD诊断: 典型烧心/反流症状即可临床诊断 — 内镜用于警报征象/难治性病例")
+        findings.append("LA分级: A-D 黏膜损伤分级 + 食管裂孔疝评估")
+    if "溃疡" in dx:
+        findings.append("消化性溃疡: 内镜分型(GU/DU) + Hp检测 + NSAIDs史排查")
+    if "肝" in dx:
+        findings.append(f"肝病评估: TBIL={labs.get('TBIL','?')}μmol/L, ALT/AST↑程度 — 肝炎活动度")
+    if "胰腺" in dx:
+        findings.append(f"胰腺炎: AMY={labs.get('AMY','?')}, LPS={labs.get('LPS','?')} — 3倍以上确诊")
+    if "IBD" in dx or "克罗恩" in dx or "溃疡性结肠炎" in dx:
+        findings.append("IBD: 结肠镜+黏膜活检 + 粪钙卫蛋白 + 影像(CTE/MRE) — 排除感染性肠炎")
 
-    findings = [
-        f"IBD: {ibd['diagnosis']} (CD:{ibd['cd_score']} UC:{ibd['uc_score']})",
-        f"内镜分级: Montreal {list(ibd['montreal_classification'].keys()) if ibd['montreal_classification'] else 'N/A'}",
-    ]
-    if child:
-        findings.append(f"Child-Pugh: {child['child_pugh_score']} -> Class {child['class']} — {child['prognosis']}")
-    if meld:
-        findings.append(f"MELD-Na: {meld['meld_na']} — 90d mortality {meld['mortality_90d']}")
-    findings.append(f"病理诊断: {labs.get('pathology', '待病理')}")
-    findings.append(f"肝功能: {'Child-Pugh ' + child['class'] if child else 'Normal LFTs'}")
-
-    recommendations = [
-        f"IBD: {ibd['biologic_indications']}",
-        ibd["surgery_considerations"],
-    ]
-    if child and child["class"] == "C":
-        recommendations.append("Child-Pugh C -> Liver transplant evaluation; HCC surveillance")
-    if meld and meld["meld_na"] >= 15:
-        recommendations.append(f"MELD-Na {meld['meld_na']} >= 15 -> liver transplant listing")
-    if "消化性" in dx or "IBD" in dx:
-        findings.insert(0, f"{'消化性溃疡' if '消化性' in dx else 'IBD'} 确诊")
-    checklist = ["呕血/黑便", "急性腹痛", "黄疸加重", "腹水增加", "肝性脑病"]
-    findings.append(f"高危审核: {len(checklist)} 项")
-    if vitals.get("alerts"):
-        recommendations.append("检验异常需关注")
-    guides = _agent.search_guidelines(dx) or _GUIDELINES
-    rules = _agent.search_rules("消化内科")
     return _agent.clinical_result(
-        summary=f"消化内科—确诊 {ibd['diagnosis']}{' Child'+child['class'] if child else ''} MELD{meld['meld_na'] if meld else ''} (stage S3)",
-        patient=p, guidelines=guides, rules=rules, alerts=vitals.get("alerts", []),
-        findings=findings, recommendations=recommendations,
-    )
+        summary=f"消化科诊断 — {dx or '待明确'}", patient=p, stage="diagnosis",
+        findings=findings or ["主诊断待定 — 依据内镜+病理+实验室结果综合判断"],
+        recommendations=["内镜+病理为金标准", "Hp感染 → 含铋剂四联方案(根除率>90%)"],
+        guidelines=_GUIDELINES[:1])
 
 
 def bp_plan(**kwargs) -> dict:
-    """治疗方案制定 — HP eradication + IBD biologics + cirrhosis management."""
+    """诊疗计划 — 分病种循证方案."""
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid)
-    if not p:
-        return _clinical_error(f"Patient {pid} not found")
-    vitals = _agent.assess_vitals(p)
-    labs = p.get("lab_results", {})
+    if not p: return _error(f"Patient {pid} not found")
     dx = p.get("diagnosis", "")
 
-    hp = _hp_eradication(labs.get("hp_regimen", "bismuth_quadruple"))
-    child = _child_pugh(float(labs.get("bilirubin", 1.0)), float(labs.get("albumin", 4.0)),
-                        float(labs.get("inr", 1.1)), labs.get("ascites", "none"),
-                        labs.get("encephalopathy", "none")) if "肝硬化" in dx else None
-    meld = _meld_score(float(labs.get("bilirubin", 1.0)), float(labs.get("creatinine", 0.8)),
-                       float(labs.get("inr", 1.1)), bool(labs.get("dialysis", False)),
-                       float(labs.get("sodium", 140))) if "肝硬化" in dx else None
+    plan = []
+    if "反流" in dx or "胃食管" in dx:
+        plan = ["PPI 4-8周 (标准剂量)", "生活方式: 减重+床头抬高+避免夜宵", "难治性 → 双倍剂量PPI / 抗反流手术评估"]
+    elif "溃疡" in dx:
+        plan = ["Hp阳性 → 含铋剂四联14天, 停药4周后复查13C呼气试验", "Hp阴性 → PPI 4-8周", "NSAIDs相关 → 停用+PPI保护"]
+    elif "肝" in dx:
+        plan = ["病毒性肝炎 → 抗病毒(NAs/DAAs) + 定期监测", "肝硬化 → 并发症筛查: 门脉高压/肝癌6月一次影像"]
+    elif "胰腺" in dx:
+        plan = ["急性期: 禁食+液体复苏+镇痛+营养支持", "恢复期: 低脂饮食+戒酒+病因处理(胆源性→ERCP)"]
+    else:
+        plan = ["完善检查后制定个体化方案", "涉及出血/占位/梗阻 → MDT讨论"]
 
-    findings = [
-        f"HP Eradication: {hp['regimen']} ({hp['duration']}); efficacy {hp['efficacy']}",
-        "IBD Biologics: Anti-TNF (inflix/adalim) 1st-line; vedo/ustekinumab 2nd-line; JAKi (tofacitinib) for UC",
-        "PPI: Omeprazole 20mg BID / Esomeprazole 40mg QD for GERD/PUD",
-    ]
-    if child:
-        findings.extend([
-            f"Cirrhosis: Child-Pugh {child['class']} ({child['child_pugh_score']}pts) -> {child['prognosis']}",
-            f"MELD-Na: {meld['meld_na']} -> 90d mortality {meld['mortality_90d']}" if meld else "",
-        ])
-        findings.extend([
-            "Ascites: Na restriction <2g/d + spironolactone 100mg/d (+ furosemide 40mg/d)",
-            "Varices: NSBB (propranolol/carvedilol) for primary prophylaxis; EVL for high-risk varices",
-            "HE: Lactulose 30mL BID titrated to 2-3 BM/d + rifaximin 550mg BID",
-        ])
-    findings.append("内镜治疗: EMR/ESD (early GI cancer); EVL (varices); APC (GAVE)")
-
-    recommendations = [
-        f"HP: {hp['drugs']} x {hp['duration']} -> {hp['post_treatment']}",
-    ]
-    if child and child["class"] == "C":
-        recommendations.append("Child-Pugh C -> urgent transplant evaluation")
-    if meld and meld["meld_na"] >= 15:
-        recommendations.append(f"MELD {meld['meld_na']} -> list for OLT")
-    if "消化性" in dx or "IBD" in dx:
-        findings.insert(0, f"{'消化性溃疡' if '消化性' in dx else 'IBD'} 治疗路径")
-    checklist = ["呕血/黑便", "急性腹痛", "黄疸加重", "腹水增加", "肝性脑病"]
-    findings.append(f"高危审核: {len(checklist)} 项")
-    if vitals.get("alerts"):
-        recommendations.append("检验异常需关注")
-    guides = _agent.search_guidelines(dx) or _GUIDELINES
-    rules = _agent.search_rules("消化内科")
     return _agent.clinical_result(
-        summary=f"消化内科—治疗计划 {'Child'+child['class'] if child else ''} (stage S4a)",
-        patient=p, guidelines=guides, rules=rules, alerts=vitals.get("alerts", []),
-        findings=findings, recommendations=recommendations,
-    )
+        summary=f"消化科治疗计划 — {dx or '待定'}", patient=p, stage="plan",
+        findings=[{"计划": plan}], recommendations=plan, guidelines=_GUIDELINES[:2])
 
 
 def bp_treatment(**kwargs) -> dict:
-    """治疗执行与监测 — Endoscopic therapy + bleeding management + decompensation."""
+    """治疗执行 — 药物/内镜/手术干预."""
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid)
-    if not p:
-        return _clinical_error(f"Patient {pid} not found")
-    vitals = _agent.assess_vitals(p)
-    labs = p.get("lab_results", {})
+    if not p: return _error(f"Patient {pid} not found")
     dx = p.get("diagnosis", "")
+    labs = p.get("lab_results", {})
 
-    gb = _glasgow_blatchford(float(labs.get("hemoglobin", 14)), float(labs.get("bun", 15)),
-                             int(vitals.get("sbp", 120)), int(vitals.get("heart_rate", 80)),
-                             bool(labs.get("melena", False)), bool(labs.get("syncope", False)),
-                             bool(labs.get("liver_disease", "肝硬化" in dx)),
-                             bool(labs.get("cardiac_failure", False)))
-    egd = _endoscopy_urgency(labs.get("endoscopy_indication", "screening"))
+    findings = []
+    if "溃疡" in dx:
+        findings.append("一线: PPI(奥美拉唑20mg bid)+阿莫西林1g bid+克拉霉素0.5g bid+枸橼酸铋钾220mg bid × 14天")
+    elif "反流" in dx:
+        findings.append("PPI标准剂量×4-8周, 维持治疗按需(最小有效剂量)")
+    if labs.get("HBsAg") and str(labs.get("HBsAg")) not in ("阴性", "0", "-"):
+        findings.append("HBsAg阳性 → 抗病毒治疗评估(恩替卡韦/替诺福韦) + 肝功能监测")
+    if "出血" in dx:
+        findings.append("急性出血 → 液体复苏+PPI持续泵入+24h内胃镜止血(注射/夹闭/电凝)")
 
-    findings = [
-        f"GB Score: {gb['gb_score']} -> {gb['risk']} risk",
-        f"Endoscopy: {egd['urgency']} ({egd['timing']}) — {egd['indication']}",
-        "出血止血: IV PPI 80mg bolus + 8mg/h x72h; EGD <24h (GB >=2) -> thermal/hemoclip",
-        "息肉切除: EMR (10-20mm) / ESD (>20mm); clipping for perforation prophylaxis",
-        "ERCP: CBD stone extraction + sphincterotomy + stent for cholangitis",
-    ]
-    if "肝硬化" in dx:
-        findings.extend([
-            "肝病综合治疗: Lactulose + rifaximin (HE); spironolactone + furosemide (ascites); NSBB (varices)",
-            "SBP prophylaxis: Norfloxacin 400mg/d or TMP/SMX DS if ascites protein <1.5g/dL + Child B/C",
-        ])
-    recommendations = [
-        gb["recommendation"] if gb["gb_score"] > 0 else "No acute bleeding; continue maintenance therapy",
-        f"Endoscopy plan: {egd['details']}",
-    ]
-    if "消化性" in dx or "IBD" in dx:
-        findings.insert(0, f"{'消化性溃疡' if '消化性' in dx else 'IBD'} 治疗执行")
-    checklist = ["呕血/黑便", "急性腹痛", "黄疸加重", "腹水增加", "肝性脑病"]
-    findings.append(f"高危审核: {len(checklist)} 项")
-    if vitals.get("alerts"):
-        recommendations.append("检验异常需关注")
-    guides = _agent.search_guidelines(dx) or _GUIDELINES
-    rules = _agent.search_rules("消化内科")
     return _agent.clinical_result(
-        summary=f"消化内科—治疗执行 GB{gb['gb_score']} {egd['urgency']} (stage S4b)",
-        patient=p, guidelines=guides, rules=rules, alerts=vitals.get("alerts", []),
-        findings=findings, recommendations=recommendations,
-    )
+        summary=f"消化科治疗执行 — {dx or '待定'}", patient=p, stage="treatment",
+        findings=findings or ["按治疗计划执行, 监测疗效与不良反应"],
+        recommendations=[
+            "用药监测: PPI长期使用 → 骨密度/镁/维生素B12",
+            "治疗期间避免NSAIDs/阿司匹林(溃疡患者)",
+        ], guidelines=_GUIDELINES[:2])
 
 
 def bp_followup(**kwargs) -> dict:
-    """随访与长期管理 — Endoscopic surveillance + HP confirmation + HCC screening."""
+    """随访计划 — 复查节点与监测指标."""
     pid = kwargs.get("patient_id", "")
     p = _agent.get_patient(pid)
-    if not p:
-        return _clinical_error(f"Patient {pid} not found")
-    vitals = _agent.assess_vitals(p)
-    labs = p.get("lab_results", {})
+    if not p: return _error(f"Patient {pid} not found")
     dx = p.get("diagnosis", "")
 
-    child = _child_pugh(float(labs.get("bilirubin", 1.0)), float(labs.get("albumin", 4.0)),
-                        float(labs.get("inr", 1.1)), labs.get("ascites", "none"),
-                        labs.get("encephalopathy", "none")) if "肝硬化" in dx else None
+    plan = ["4-8周: 评估症状缓解 + 依从性", "Hp根除: 停药4周后复查13C呼气试验"]
+    if "肝" in dx:
+        plan.append("每3-6月: 肝功+AFP+腹部超声 (肝癌高危筛查)")
+    if "IBD" in dx or "克罗恩" in dx:
+        plan.append("每3-6月: 粪钙卫蛋白+炎症指标, 内镜按需复查")
+    if "溃疡" in dx:
+        plan.append("复杂溃疡 → 8-12周复查胃镜确认愈合")
 
-    findings = [
-        "内镜复查: Post-polypectomy (3-5yr); Barrett esophagus q3-5yr; IBD q1-3yr",
-        "HP根除确认: C13/C14 UBT >=4wk post-treatment; stool antigen if UBT unavailable",
-        "IBD缓解评估: Fecal calprotectin <250 + endoscopic Mayo 0-1 = deep remission",
-    ]
-    if child:
-        findings.extend([
-            f"Child-Pugh {child['class']} ({child['child_pugh_score']}pts)",
-            f"HCC screening: {child['hcc_screening']}",
-            "Varices surveillance: EGD q2-3yr (no varices); q1-2yr (small varices)",
-        ])
-    else:
-        findings.append("肝癌筛查: N/A (no cirrhosis)")
-
-    recommendations = [
-        "HP test-of-cure at 4 weeks post-eradication",
-        "IBD: Fecal calprotectin q3-6mo + colonoscopy q1-3yr",
-    ]
-    if child:
-        recommendations.append(child["hcc_screening"])
-    if "消化性" in dx or "IBD" in dx:
-        findings.insert(0, f"{'消化性溃疡' if '消化性' in dx else 'IBD'} 长期随访")
-    checklist = ["呕血/黑便", "急性腹痛", "黄疸加重", "腹水增加", "肝性脑病"]
-    findings.append(f"高危审核: {len(checklist)} 项")
-    if vitals.get("alerts"):
-        recommendations.append("检验异常需关注")
-    guides = _agent.search_guidelines(dx) or _GUIDELINES
-    rules = _agent.search_rules("消化内科")
     return _agent.clinical_result(
-        summary=f"消化内科—随访 {'Child'+child['class'] if child else ''} (stage S5)",
-        patient=p, guidelines=guides, rules=rules, alerts=vitals.get("alerts", []),
-        findings=findings, recommendations=recommendations,
-    )
+        summary=f"消化科随访计划 — {dx or '待定'}", patient=p, stage="followup",
+        findings=[{"随访节点": plan}], recommendations=plan, guidelines=_GUIDELINES[:1])

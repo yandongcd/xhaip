@@ -40,7 +40,8 @@ prompt:
   max_tokens: 4096
 tools:
 - name: braden_score
-  description: 'Braden压疮风险评估 — 6项评分(感知能力/潮湿程度/活动能力/移动能力/营养/摩擦力剪切力 各1-4分)， 总分6-23分，≤9极高危, 10-12高危, 13-14中危, 15-18低危, ≥19无风险。
+  description: 'Braden压疮风险评估 — 6项评分(感知能力/潮湿程度/活动能力/移动能力/营养/摩擦力剪切力 各1-4分)， 总分6-23分，≤9极高危,
+    10-12高危, 13-14中危, 15-18低危, ≥19无风险。
 
     '
   handler: nurse_general.braden_score
@@ -52,7 +53,8 @@ tools:
     nutrition: str
     friction: str
 - name: morse_fall_score
-  description: 'Morse跌倒风险评估 — 6个因子(跌倒史/次要诊断/步行辅助/静脉输液/步态/精神状态)， 总分0-125分，<25低危, 25-45中危, >45高危，含分级防跌措施清单。
+  description: 'Morse跌倒风险评估 — 6个因子(跌倒史/次要诊断/步行辅助/静脉输液/步态/精神状态)， 总分0-125分，<25低危, 25-45中危,
+    >45高危，含分级防跌措施清单。
 
     '
   handler: nurse_general.morse_fall_score
@@ -85,7 +87,8 @@ tools:
     age: int
     conditions: list
 - name: handover_summary
-  description: 'SBAR交班摘要生成 — Situation/Background/Assessment/Recommendation四段式结构， 输入患者关键字段 → 生成结构化SBAR文本。
+  description: 'SBAR交班摘要生成 — Situation/Background/Assessment/Recommendation四段式结构，
+    输入患者关键字段 → 生成结构化SBAR文本。
 
     '
   handler: nurse_general.handover_summary
@@ -141,6 +144,8 @@ ui:
     label: ICU护士
   - id: operating_nurse
     label: 手术室护士
+  - id: nurse
+    label: 护士
   sidebar:
   - category: 风险评估
     tools:
@@ -180,3 +185,13 @@ stages:
   desc: 健康宣教、随访计划、社区衔接
   role_ids:
   - nurse
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: standard

@@ -7,6 +7,16 @@ from __future__ import annotations
 
 from typing import Any
 
+from haip.togaf.knowledge_agent import KnowledgeAgent
+
+_agent = KnowledgeAgent(agent_name="education", department="全院")
+_GUIDELINES = [
+    "国家住院医师规范化培训标准",
+    "医学教育标准 (WFME 2020)",
+    "SPICES 医学教育模型",
+]
+_agent.rule_engine.load_all()
+
 SYNTHETIC_CASES = {
     "femoral_neck": {
         "basic": {
@@ -123,7 +133,7 @@ def case_teaching(*, fracture_type: str = "femoral_neck",
     }
 
 
-def decision_review(*, case_id: str, ai_recommendation: dict | None = None,
+def decision_review(*, case_id: str = "", ai_recommendation: dict | None = None,
                     actual_decision: dict | None = None, **kwargs: Any) -> dict[str, Any]:
     """决策复盘 — 智能体推荐 vs 实际临床决策对比.
 

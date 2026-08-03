@@ -11,7 +11,6 @@ Electrolyte emergencies (K+ / Na+).
 
 from __future__ import annotations
 
-
 from haip.togaf.knowledge_agent import KnowledgeAgent
 
 _agent = KnowledgeAgent(agent_name="nephrology", department="肾内科")
@@ -25,7 +24,7 @@ _agent.rule_engine.load_all()
 
 
 def _clinical_error(msg: str) -> dict:
-    return {"status": "error", "agent": _agent.agent_name, "error": msg}
+    return _agent.make_clinical_error(msg)
 
 
 # ── Clinical Scoring Systems ─────────────────────────────────────────
@@ -217,6 +216,14 @@ def _electrolyte_emergency(k: float, na: float, ca: float = 2.3, mg: float = 1.8
 
 # ── Business Process Functions ───────────────────────────────────────
 
+
+def _safe_float(val, default=0.0):
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return default
+
+
 def bp_reception(**kwargs) -> dict:
     """接诊与初步评估 — eGFR + KDIGO heatmap + AKI screening."""
     pid = kwargs.get("patient_id", "")
@@ -230,14 +237,14 @@ def bp_reception(**kwargs) -> dict:
     # ── Injected clinical scoring ──
     age = int(p.get("age", 55))
     sex = p.get("sex", "male")
-    cr = float(labs.get("creatinine", 1.0))
+    cr = _safe_float(labs.get("creatinine", 1.0))
     egfr_result = _ckd_epi_egfr(age, sex, cr)
     alb = labs.get("albuminuria_stage", "A1")
     heatmap = _kdigo_heatmap(egfr_result["stage"], alb)
-    cr_baseline = float(labs.get("cr_baseline", cr))
-    cr_48h = float(labs.get("cr_48h_ago", cr_baseline))
-    uo_6h = float(labs.get("urine_output_mlkgh_6h", vitals.get("urine_output", 1.0)) if "urine_output_mlkgh_6h" in labs else
-                  float(vitals.get("urine_output_hourly", 0.016)) * 6 if vitals.get("urine_output_hourly") else None)
+    cr_baseline = _safe_float(labs.get("cr_baseline", cr))
+    cr_48h = _safe_float(labs.get("cr_48h_ago", cr_baseline))
+    uo_6h = _safe_float(labs.get("urine_output_mlkgh_6h", vitals.get("urine_output", 1.0)) if "urine_output_mlkgh_6h" in labs else
+                  _safe_float(vitals.get("urine_output_hourly", 0.016)) * 6 if vitals.get("urine_output_hourly") else None)
     aki = _aki_kdigo(cr_baseline, cr, cr_48h, uo_6h)
 
     findings = [

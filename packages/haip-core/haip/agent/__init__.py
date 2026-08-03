@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import logging
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
 import yaml
+
+from haip.llm import DEFAULT_MAX_TOKENS
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +31,7 @@ class ToolDef:
 class PromptConfig:
     system: str = ""
     temperature: float = 0.3
-    max_tokens: int = 4096
+    max_tokens: int = DEFAULT_MAX_TOKENS
 
 
 @dataclass
@@ -192,10 +195,12 @@ class DomainPlugin:
 # ── Global Registry ──
 
 _registry: dict[str, DomainPlugin] = {}
+_registry_lock = threading.Lock()
 
 
 def register(plugin: DomainPlugin) -> None:
-    _registry[plugin.name] = plugin
+    with _registry_lock:
+        _registry[plugin.name] = plugin
 
 
 def get(name: str) -> DomainPlugin | None:
@@ -204,8 +209,10 @@ def get(name: str) -> DomainPlugin | None:
 
 def list_all(include_skipped: bool = False) -> dict[str, DomainPlugin]:
     if include_skipped:
-        return dict(_registry)
-    return {k: v for k, v in _registry.items() if not _is_skipped(k + ".yaml")}
+        with _registry_lock:
+            return dict(_registry)
+    with _registry_lock:
+        return {k: v for k, v in _registry.items() if not _is_skipped(k + ".yaml")}
 
 
 def load_from_dir(definitions_dir: str | Path, agent_filter: str = "",

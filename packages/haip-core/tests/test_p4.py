@@ -7,7 +7,7 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent.parent.parent  # xhaip root
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
-import yaml  # noqa: E402
+import yaml
 
 
 class TestKnowledgeRuntime:

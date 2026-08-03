@@ -89,7 +89,8 @@ tools:
     stress_factor: float
     condition: str
 - name: refeeding_risk
-  description: '再喂养综合征风险评估 — 基于NICE 2006标准(BMI/体重下降/摄入时间/电解质)， 高危/中危/低危分级 + 启动方案(从目标量1/4开始) + 电解质监测计划。
+  description: '再喂养综合征风险评估 — 基于NICE 2006标准(BMI/体重下降/摄入时间/电解质)， 高危/中危/低危分级 + 启动方案(从目标量1/4开始)
+    + 电解质监测计划。
 
     '
   handler: dietitian.refeeding_risk
@@ -157,3 +158,40 @@ ui:
   - category: 综合报告
     tools:
     - nutrition_report
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: standard
+stages:
+- order: 1
+  id: screen
+  label: 营养筛查
+  desc: NRS-2002 24h入院筛查、MNA-SF老年筛查、GLIM营养不良诊断
+  role_ids:
+  - dietitian
+  - nurse
+- order: 2
+  id: assess
+  label: 营养评估
+  desc: 能量蛋白目标(Harris-Benedict)、营养途径决策(EN/PN/SPN)、再喂养风险分级
+  role_ids:
+  - dietitian
+- order: 3
+  id: implement
+  label: 营养实施
+  desc: EN配方选择/PN配方设计(糖脂比+氨基酸+电解质+微量元素)、耐受性监测
+  role_ids:
+  - dietitian
+  - nurse
+- order: 4
+  id: monitor
+  label: 疗效监测
+  desc: 白蛋白/前白蛋白趋势、氮平衡、体重变化、营养方案调整
+  role_ids:
+  - dietitian

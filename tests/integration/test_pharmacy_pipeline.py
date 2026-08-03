@@ -10,9 +10,8 @@ project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root / "packages" / "haip-hospital"))
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
-from haip.agent import load_from_dir, register, DomainPlugin, ToolDef, _registry  # noqa: E402
-from haip.a2a import call, clear_history, get_history  # noqa: E402
-
+from haip.a2a import call, clear_history, get_history
+from haip.agent import DomainPlugin, ToolDef, _registry, load_from_dir, register
 
 YAML_DIR = project_root / "packages" / "haip-hospital" / "agents" / "definitions"
 

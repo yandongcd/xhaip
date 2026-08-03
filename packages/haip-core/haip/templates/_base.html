@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}xHAIP{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', path='dashboard/style.css') }}">
+{% block head_extra %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+<div id="app" x-data="app" x-init="initTheme()">
+
+<!-- ── Global Header ── -->
+<header class="header global-header">
+  <div class="header-left">
+    <a href="/" class="header-home" aria-label="返回门户">&#127968; xHAIP</a>
+    {% block breadcrumb %}{% endblock %}
+  </div>
+  <div class="header-center" x-show="activePatient">
+    <span class="patient-bar" role="status" aria-label="currentPatientLabel()">
+      <span class="patient-dot"></span>
+      <span class="patient-info" x-text="patientLabel()"></span>
+    </span>
+  </div>
+  <div class="header-actions">
+    <button class="btn-icon" @click="toggleTheme()" :aria-label="theme === 'dark' ? '切换到亮色模式' : '切换到深色模式'">
+      <template x-if="theme === 'dark'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </template>
+      <template x-if="theme === 'light'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </template>
+    </button>
+  </div>
+</header>
+
+{% block content %}{% endblock %}
+
+</div>
+<script defer src="{{ url_for('static', path='dashboard/alpine.min.js') }}"></script>
+<script>
+function safeGet(k, fallback) { try { var v = localStorage.getItem(k); return v != null ? v : fallback; } catch(e) { return fallback; } }
+function safeSet(k, v) { try { localStorage.setItem(k, v) } catch(e) { /* tracking prevention */ } }
+function safeRemove(k) { try { localStorage.removeItem(k) } catch(e) { /* tracking prevention */ } }
+document.addEventListener('alpine:init', () => {
+  Alpine.store('patient', {
+    activePatient: null,
+    activePatientId: safeGet('activePatientId') || '',
+    recentPatients: JSON.parse(safeGet('recentPatients') || '[]'),
+
+    setActive(id, name, age, gender, dept) {
+      this.activePatient = { id, name, age, gender, dept };
+      this.activePatientId = id;
+      safeSet('activePatientId', id);
+      const recents = this.recentPatients.filter(p => p.id !== id);
+      recents.unshift({ id, name, age, gender, dept });
+      this.recentPatients = recents.slice(0, 5);
+      safeSet('recentPatients', JSON.stringify(this.recentPatients));
+    },
+    patientLabel() {
+      if (!this.activePatient) return '';
+      const p = this.activePatient;
+      return `${p.id} ${p.name} ${p.age || ''}岁 ${p.gender || ''} ${p.dept || ''}`;
+    },
+  });
+
+  Alpine.data('app', () => ({
+    get activePatient() { return this.$store.patient.activePatient; },
+    get activePatientId() { return this.$store.patient.activePatientId; },
+
+    theme: safeGet('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
+
+    initTheme() { this.applyTheme(); },
+    toggleTheme() { this.theme = this.theme === 'dark' ? 'light' : 'dark'; this.applyTheme(); safeSet('theme', this.theme); },
+    applyTheme() { document.documentElement.setAttribute('data-theme', this.theme); },
+
+    patientLabel() { return this.$store.patient.patientLabel(); },
+    currentPatientLabel() {
+      const p = this.$store.patient.activePatient;
+      return p ? `当前患者: ${p.id} ${p.name} ${p.age}岁 ${p.gender} ${p.dept}` : '未选择患者';
+    },
+  }));
+});
+</script>
+<script src="{{ url_for('static', path='dashboard/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

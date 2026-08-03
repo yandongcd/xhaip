@@ -1,0 +1,71 @@
+{% extends "_base.html" %}
+{% block title %}Pharmacy — xHAIP{% endblock %}
+{% block breadcrumb %}<span class="breadcrumb"> / <a href="/">Portal</a> / 药学服务</span>{% endblock %}
+
+{% block content %}
+<div class="pharmacy-page" x-data="pharmacyPage">
+  <div class="process-header"><h2>药学服务</h2></div>
+
+  <!-- Prescription Review -->
+  <div class="rx-section">
+    <h3>&#128138; 处方审查</h3>
+    <div class="rx-list">
+      <template x-for="(rx, i) in rxResults" :key="i">
+        <div class="rx-item" :class="'rx-' + rx.level" role="alert" :aria-label="rx.level === 'danger' ? '高危' : rx.level === 'warning' ? '注意' : '通过'">
+          <div class="rx-indicator">
+            <span class="rx-shape" :class="'shape-' + rx.level"></span>
+            <span class="rx-symbol" x-text="rx.level === 'danger' ? '🔴' : rx.level === 'warning' ? '🟡' : '🟢'"></span>
+            <span class="rx-label" x-text="rx.level === 'danger' ? '高危' : rx.level === 'warning' ? '注意' : '通过'"></span>
+          </div>
+          <div class="rx-content">
+            <strong x-text="rx.drug"></strong>
+            <p x-text="rx.message"></p>
+          </div>
+        </div>
+      </template>
+      <div class="empty-state" x-show="rxResults.length === 0"><p>等待处方提交...</p></div>
+    </div>
+  </div>
+
+  <!-- TPN Calculator -->
+  <div class="tpn-section">
+    <h3>&#127860; TPN 计算器</h3>
+    <div class="tpn-grid">
+      <div class="tpn-card">
+        <label>体重 (kg)</label>
+        <input type="range" min="30" max="120" x-model="weight" class="tpn-slider">
+        <span class="tpn-val" x-text="weight"></span>
+      </div>
+      <div class="tpn-card">
+        <label>应激系数</label>
+        <select x-model="stress" class="tpn-select">
+          <option value="1.0">无应激 (1.0)</option>
+          <option value="1.2">轻度 (1.2)</option>
+          <option value="1.5" selected>中度 (1.5)</option>
+          <option value="2.0">重度 (2.0)</option>
+        </select>
+      </div>
+      <div class="tpn-result" x-show="weight > 0">
+        <div class="tpn-row"><span>能量</span><strong x-text="Math.round(weight * 28 * stress) + ' kcal'"></strong></div>
+        <div class="tpn-row"><span>氨基酸</span><strong x-text="Math.round(weight * 1.3) + ' g'"></strong></div>
+        <div class="tpn-row"><span>脂质</span><strong x-text="Math.round(weight * 0.8) + ' g'"></strong></div>
+        <div class="tpn-row"><span>渗透压</span><strong x-text="Math.round(700 + weight * 3) + ' mOsm/L'"></strong></div>
+        <div class="tpn-row osm-safe"><span>Ca×P</span><strong x-text="(weight * 0.35).toFixed(1) + ' (<55)'">✅</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+  Alpine.data('pharmacyPage', () => ({
+    weight: 65, stress: 1.5,
+    rxResults: [
+      { drug: '头孢曲松 2g + 0.9%NS 100mL', level: 'success', message: '配伍通过 / 剂量正常' },
+      { drug: '万古霉素 1g + 5%GS 250mL', level: 'warning', message: '需TDM监测谷浓度(目标10-20μg/mL)' },
+      { drug: '氯化钾 1.5g + 5%GNS 500mL', level: 'danger', message: '浓度超标! (6g/L > 3g/L 上限)' },
+    ],
+  }));
+});
+</script>
+{% endblock %}

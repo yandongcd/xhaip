@@ -11,11 +11,13 @@ bcrypt==4.2.1
 PyJWT==2.10.1
 prometheus-client==0.21.1
 sqlalchemy==2.0.36
+aiosqlite==0.20.0
 structlog==24.4.0
 
 # Dev
 pytest==8.3.4
 pytest-cov==6.0.0
+pytest-mock==3.15.1
 ruff==0.8.6
 mypy==1.14.1
 jsonschema==4.23.0

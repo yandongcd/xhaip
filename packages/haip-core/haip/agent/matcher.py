@@ -9,7 +9,6 @@ import difflib
 
 from haip.agent import list_all
 
-
 CANONICAL_ALIASES: dict[str, list[str]] = {
     "pharmacy": ["药剂科", "药房", "pharmacy", "药学", "pharmacy agent"],
     "orthopedic-surgery": ["骨科", "创伤骨科", "骨外科", "ortho", "orthopedic", "orthopedics"],

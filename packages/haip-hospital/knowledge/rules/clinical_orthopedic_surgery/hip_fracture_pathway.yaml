@@ -1,0 +1,119 @@
+# 髋部骨折MDT多学科协作通道规则
+# 来源: 国家卫健委指南2022 / 南方医院MDT实践
+# T1: 国家指南 | T2: 南方医院MDT流程
+
+rule_type: diagnosis
+department: 创伤骨科
+capability: cap-l3-hip-fracture-mdt
+business_process: bp-hip-fracture-mdt
+guideline: 国家卫健委《老年髋部骨折诊疗与管理指南(2022年版)》
+stakeholder: MDT首席(骨科)+心内科+麻醉科+护理+康复
+version: "1.0.0"
+
+rules:
+  - id: mdt-cardiology-referral
+    description: 心内科会诊指征
+    condition:
+      or:
+        - field: 冠心病史
+          operator: "=="
+          value: true
+        - field: 心衰(NYHA≥II)
+          operator: "=="
+          value: true
+        - field: 高血压≥160/100
+          operator: "=="
+          value: true
+        - field: ECG异常(缺血/心律失常)
+          operator: "=="
+          value: true
+        - field: "cTnI"
+          operator: ">"
+          value: 0.04
+    result:
+      referral: 心内科急会诊
+      tasks:
+        - 心脏超声(EF/室壁运动/瓣膜)
+        - 心肌酶+BNP复查
+        - 心血管药物优化(β阻滞剂/ACEI/他汀)
+      timing: 24h内完成评估
+
+  - id: mdt-anesthesia-referral
+    description: 麻醉科会诊指征
+    condition:
+      or:
+        - field: ASA分级
+          operator: ">="
+          value: 3
+        - field: 预期困难气道
+          operator: "=="
+          value: true
+        - field: 抗凝/抗血小板用药
+          operator: "=="
+          value: true
+        - field: BMI
+          operator: ">"
+          value: 35
+    result:
+      referral: 麻醉科急会诊
+      tasks:
+        - ASA分级确认
+        - 气道评估(Mallampati/甲颏间距)
+        - 抗凝桥接方案(停药时机+肝素桥接+重启)
+        - 麻醉方式推荐(全麻/椎管内/区域阻滞)
+      timing: 24h内完成评估
+
+  - id: mdt-geriatrics-referral
+    description: 老年科/内科会诊指征
+    condition:
+      and:
+        - field: age
+          operator: ">="
+          value: 75
+        - field: comorbidities_count
+          operator: ">="
+          value: 3
+    result:
+      referral: 老年科会诊
+      tasks:
+        - 老年综合评估(CGA): 认知/营养/衰弱/跌倒风险
+        - 多重用药审查(Beers标准)
+        - 血糖管理(目标6-10 mmol/L)
+        - 谵妄风险评估+预防
+      timing: 48h内完成评估
+
+  - id: mdt-rehab-referral
+    description: 康复科介入指征
+    condition:
+      field: surgery_completed
+      operator: "=="
+      value: true
+    result:
+      referral: 康复科
+      tasks:
+        - 术后24h: 被动关节活动+良肢位摆放
+        - 术后48h: 床旁坐起+下肢肌力训练
+        - 术后72h: 站立+助行器步行训练
+        - 出院前: Harris评分基线+FIM评分
+      timing: 术后24h启动
+
+  - id: mdt-consensus-required
+    description: 必须MDT讨论的场景
+    condition:
+      or:
+        - field: ASA分级
+          operator: ">="
+          value: 4
+        - field: 心内科建议延期 vs 骨科建议48h手术
+          operator: "=="
+          value: true
+        - field: 抗凝药无法停用(如近期DES支架)
+          operator: "=="
+          value: true
+        - field: eGFR
+          operator: "<"
+          value: 30
+    result:
+      escalation: MDT急会诊(骨科+心内科+麻醉科+老年科)
+      action: 各专科独立评估 → 首席汇总 → 投票决策 → 家属沟通
+      timing: 4h内启动MDT

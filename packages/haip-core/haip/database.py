@@ -14,6 +14,7 @@ Environment:
 
 from __future__ import annotations
 
+import logging
 import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -27,6 +28,8 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.pool import NullPool, QueuePool
+
+logger = logging.getLogger(__name__)
 
 # Default connection string with SQLite fallback
 _DEFAULT_SQLITE = os.environ.get(
@@ -86,7 +89,8 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """FastAPI dependency: yields a database session."""
     if _sessionmaker is None:
         init_database()
-    session: AsyncSession = _sessionmaker()  # type: ignore[misc]  # _sessionmaker may be None
+    assert _sessionmaker is not None, "Database not initialized"
+    session: AsyncSession = _sessionmaker()
     try:
         yield session
         await session.commit()
@@ -102,7 +106,8 @@ async def session_scope():
     """Context manager for database sessions (non-FastAPI usage)."""
     if _sessionmaker is None:
         init_database()
-    session: AsyncSession = _sessionmaker()  # type: ignore[misc]  # _sessionmaker may be None
+    assert _sessionmaker is not None, "Database not initialized"
+    session: AsyncSession = _sessionmaker()
     try:
         yield session
         await session.commit()
@@ -122,7 +127,7 @@ async def create_tables():
         try:
             await session.execute(text("PRAGMA user_version = 2"))
         except Exception:
-            pass  # PostgreSQL fallback
+            logger.debug("PRAGMA user_version not supported, skipping", exc_info=True)
         # Users table
         await session.execute(text("""
             CREATE TABLE IF NOT EXISTS users (

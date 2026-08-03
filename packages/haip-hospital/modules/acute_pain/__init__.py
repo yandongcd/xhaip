@@ -7,6 +7,18 @@ from __future__ import annotations
 
 from typing import Any
 
+from haip.togaf.knowledge_agent import KnowledgeAgent
+
+_agent = KnowledgeAgent(agent_name="acute-pain", department="疼痛科")
+_GUIDELINES = [
+    "WHO Analgesic Ladder 镇痛三阶梯",
+    "VAS/NRS 疼痛评估量表",
+    "DN4 神经病理性疼痛筛查问卷",
+    "中国急性疼痛管理专家共识",
+    "ASA 急性疼痛管理实践指南",
+]
+_agent.rule_engine.load_all()
+
 
 def assess(vas_score: int = 0, description: str = "", nrs_score: int = 0,
            pain_quality: str = "", pain_site: str = "", dn4_items: dict | None = None,

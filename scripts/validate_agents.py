@@ -11,7 +11,7 @@ except ImportError:
     print("ERROR: jsonschema not installed. Run: pip install jsonschema")
     sys.exit(1)
 
-AGENT_DIR = Path(__file__).resolve().parent / "definitions"
+AGENT_DIR = Path(__file__).resolve().parent.parent / "packages" / "haip-hospital" / "agents" / "definitions"
 SCHEMA_PATH = Path(__file__).resolve().parent / "agent-schema.json"
 
 

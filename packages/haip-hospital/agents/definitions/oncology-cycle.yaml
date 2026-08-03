@@ -1,0 +1,109 @@
+name: oncology-cycle
+cn_name: 肿瘤周期治疗管理与返院决策辅助 v1.0
+version: 1.0.0
+type: specialist
+trust_tier: deep
+department: 肿瘤科
+port: 8945
+aliases: [肿瘤周期, 返院管理, oncology cycle, 化疗管理, 免疫治疗]
+depends_on:
+- agent: oncology
+  version: '>=1.0'
+  note: 肿瘤科基础诊疗智能体(TNM/ECOG/RECIST)
+prompt:
+  system: |
+    你是南方医院肿瘤科周期管理AI助手，负责肿瘤患者周期性治疗的全面管理与返院决策辅助。
+
+    核心能力: 一页式病情摘要(诊断/分期/病理/分子检测/治疗线数/疗效评价)、周期计划自动生成(D3-4/D7/D10-11/D14 复查节点+顺铂/紫杉/免疫方案特异注释)、治疗风险初筛(骨髓抑制4级/粒缺伴发热FN/肝肾毒性3级/irAE肠炎/肺炎/皮疹 7大风险域)、医生-护士-患者三端标准化输出。
+
+    约束: 粒缺伴发热(FN) → 立即住院+抗生素1h内; ALT>5xULN → 立即停药+肝病科会诊; irAE肺炎 → 大剂量激素+HRCT; 所有治疗调整须经主管医师确认, 不替代医生处方。
+  temperature: 0.2
+tools:
+- name: patient_summary
+  description: 一页式病情摘要 — 诊断/分期/病理/分子检测/治疗线数/ECOG/疗效评价/关键检验
+  handler: oncology_cycle.patient_summary
+  input:
+    patient_id: str
+    treatment_line: int
+    current_regimen: list
+    response_evaluation: str
+    ecog: int
+- name: cycle_plan
+  description: 周期计划生成 — D3-4/D7/D10-11/D14节点+方案特异注释(顺铂/紫杉/免疫)
+  handler: oncology_cycle.cycle_plan
+  input:
+    patient_id: str
+    treatment_date: str
+    regimen_type: str
+    cycle_number: int
+    cycle_interval_days: int
+- name: risk_screening
+  description: 治疗风险初筛 — 骨髓抑制/粒缺伴发热/肝肾毒性/irAE(肠炎/肺炎/皮疹)
+  handler: oncology_cycle.risk_screening
+  input:
+    patient_id: str
+    treatment_type: str
+    temperature: float
+    symptoms: list
+- name: tri_endpoint
+  description: 三端输出 — 医生端(诊疗摘要+风险)/护士端(随访清单+话术)/患者端(返院+居家)
+  handler: oncology_cycle.tri_endpoint
+  input:
+    patient_id: str
+    endpoint: str
+    summary: dict
+    cycle_plan: dict
+    risks: list
+    treatment_date: str
+guard:
+  triggers: [肿瘤化疗, 免疫治疗, 粒缺, 肝毒性, irAE]
+  high_risk_scenarios: [粒缺伴发热(T>38.3+NEUT<1.0), ALT>5xULN, irAE肺炎(G3-4), PLT<25]
+  citation: {required: true, min_sources: 1, min_trust: T1}
+stages:
+- order: 1
+  id: baseline
+  label: 基线评估
+  desc: "一页式病情摘要: 诊断+分期+病理+分子检测+治疗线数+ECOG+近期疗效"
+  role_ids: [attending, resident]
+- order: 2
+  id: cycle-planning
+  label: 周期规划
+  desc: D3-4血常规/D7综合/D10-11恢复/D14返院前+方案特异(顺铂水化/紫杉过敏/免疫irAE)
+  role_ids: [attending, pharmacist]
+- order: 3
+  id: risk-screening
+  label: 风险筛查
+  desc: "7大风险域: 粒缺/血小板/贫血/感染FN/肝ALT/肾Cr/irAE(肠炎+肺炎+皮疹+内分泌)"
+  role_ids: [attending, pharmacist]
+- order: 4
+  id: doctor-endpoint
+  label: 医生端输出
+  desc: 诊疗摘要+风险分层+返院决策建议
+  role_ids: [attending]
+- order: 5
+  id: nurse-endpoint
+  label: 护士端输出
+  desc: 随访清单+电话话术+不良反应监护要点
+  role_ids: [attending, nurse]
+- order: 6
+  id: patient-endpoint
+  label: 患者端输出
+  desc: 返院提醒+检查清单+居家注意事项+危险征象告知
+  role_ids: [attending, nurse, head_nurse]
+ui:
+  template: chat-with-role-switcher
+  roles:
+  - id: attending
+    label: 肿瘤科医师
+    default: true
+  - id: pharmacist
+    label: 临床药师
+  - id: nurse
+    label: 肿瘤科护士
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply: [citation_new, route_adj]
+  prompt_a_b: true

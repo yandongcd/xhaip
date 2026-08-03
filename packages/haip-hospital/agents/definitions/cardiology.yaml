@@ -108,3 +108,15 @@ guard:
   high_risk_scenarios:
   - NT-proBNP > 300 → 心衰确诊
   - NT-proBNP > 5000 → 急性心衰
+  citation:
+    required: true
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: deep

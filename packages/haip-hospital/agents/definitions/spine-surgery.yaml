@@ -1,4 +1,4 @@
-name: spine-surgery
+﻿name: spine-surgery
 cn_name: 脊柱骨科智能体
 version: 1.0.0
 type: business
@@ -16,7 +16,7 @@ prompt:
 depends_on:
 - agent: medical-record
   version: '>=1.0'
-- agent: anesthesia-risk
+- agent: anesthesia
   version: '>=1.0'
 tools:
 - name: asia_classification
@@ -115,51 +115,47 @@ ui:
     label: 康复师
 stages:
 - order: 1
-  id: preop-eval
-  label: 术前评估
-  desc: GCS/ASA评分、影像学评估、凝血功能、心肺功能筛查、麻醉评估
-  role_ids:
-  - attending
-  - resident
-  - anesthesiologist
+  id: neuro-eval
+  label: 神经功能评估
+  desc: ASIA分级(ISNCSCI 2019关键肌)、Cobb角测量(Risser骨龄修正)、马尾神经筛查(红色警报)
+  role_ids: [attending, resident, anesthesiologist]
 - order: 2
-  id: preop-prep
-  label: 术前准备
-  desc: 备血交叉配血、预防性抗生素、深静脉穿刺、导尿、备皮
-  role_ids:
-  - attending
-  - resident
-  - head_nurse
+  id: imaging-plan
+  label: 影像规划
+  desc: Schizas MRI分级(A-D)、腰椎管狭窄评估、OLIF/TLIF/UBE/PELD入路选择、T-score骨质量评估
+  role_ids: [attending, surgeon, radiologist]
 - order: 3
   id: surgery
   label: 手术执行
-  desc: 术中监测、出血量评估、冰冻病理、器械清点
-  role_ids:
-  - attending
-  - surgeon
-  - anesthesiologist
-  - instrument_nurse
+  desc: 入路选择(PELD日间/UBE 1-2d/OLIF L1-L5/TLIF 3-5d/开放)、神经监测、椎弓根螺钉植入
+  role_ids: [attending, surgeon, anesthesiologist]
 - order: 4
-  id: postop-icu
-  label: 术后监护
-  desc: ICU监测、GCS追踪、ICP管理、引流管管理、电解质平衡
-  role_ids:
-  - attending
-  - icu_doctor
-  - head_nurse
+  id: postop-care
+  label: 术后管理
+  desc: 神经功能监测(ASIA复查)、切口/引流管理、疼痛管理、支具/颈托使用指导
+  role_ids: [attending, resident, head_nurse]
 - order: 5
-  id: ward-care
-  label: 病房管理
-  desc: 切口护理、活动指导、营养支持、VTE预防、疼痛管理
-  role_ids:
-  - attending
-  - resident
-  - head_nurse
+  id: rehab
+  label: 康复训练
+  desc: ODI Oswestry功能障碍指数评估、核心肌群训练、活动限制指导(BLH原则)、防跌倒教育
+  role_ids: [attending, rehab_therapist, head_nurse]
 - order: 6
   id: followup
-  label: 随访康复
-  desc: 神经功能评分、康复计划制定、术后1/3/6月随访、影像复查
-  role_ids:
-  - attending
-  - rehab_therapist
-  - head_nurse
+  label: 随访监测
+  desc: ODI/ASIA评分追踪、Cobb角复查(脊柱侧弯)、融合评估(X线/CT)、术后1/3/6/12月
+  role_ids: [attending, rehab_therapist]
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+debate:
+  enabled: true
+  competitors:
+  - anesthesia
+  mode: auto
+trust_tier: deep

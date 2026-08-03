@@ -9,11 +9,11 @@
 
 import pytest
 from lab_critical_value import (
+    CRITICAL_THRESHOLDS,
+    batch_screen,
     check_critical_value,
     classify_and_route,
-    batch_screen,
     notification_record,
-    CRITICAL_THRESHOLDS,
 )
 
 

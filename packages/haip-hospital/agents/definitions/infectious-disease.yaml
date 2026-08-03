@@ -41,6 +41,16 @@ tools:
   handler: infectious_disease.bp_followup
   input:
     patient_id: str
+- name: assess_infection
+  description: CPIS+qPitt感染严重度评估
+  handler: infectious_disease.assess_infection
+  input:
+    patient_id: str
+- name: assess_antibiotic
+  description: IDSA抗生素疗程评估
+  handler: infectious_disease.assess_antibiotic
+  input:
+    patient_id: str
 ui:
   template: chat-with-role-switcher
   roles:
@@ -104,3 +114,15 @@ guard:
   high_risk_scenarios:
   - 诊断决策
   - 治疗方案
+  citation:
+    required: true
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: standard

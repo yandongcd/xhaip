@@ -85,19 +85,24 @@ class SignoffManager:
     # ── 查询 ──
 
     def get(self, signoff_id: str) -> dict | None:
-        row = self._db.execute(
-            "SELECT * FROM signoff_record WHERE id=?", (signoff_id,)).fetchone()
+        with self._lock:
+            row = self._db.execute(
+                "SELECT * FROM signoff_record WHERE id=?", (signoff_id,)).fetchone()
         return dict(row) if row else None
 
     def list_pending(self, limit: int = 100) -> list[dict]:
-        return [dict(r) for r in self._db.execute(
-            "SELECT * FROM signoff_record WHERE status='pending' ORDER BY created_at DESC LIMIT ?",
-            (limit,))]
+        with self._lock:
+            rows = self._db.execute(
+                "SELECT * FROM signoff_record WHERE status='pending' ORDER BY created_at DESC LIMIT ?",
+                (limit,)).fetchall()
+        return [dict(r) for r in rows]
 
     def list_by_patient(self, patient_id: str, limit: int = 100) -> list[dict]:
-        return [dict(r) for r in self._db.execute(
-            "SELECT * FROM signoff_record WHERE patient_id=? ORDER BY created_at DESC LIMIT ?",
-            (patient_id, limit))]
+        with self._lock:
+            rows = self._db.execute(
+                "SELECT * FROM signoff_record WHERE patient_id=? ORDER BY created_at DESC LIMIT ?",
+                (patient_id, limit)).fetchall()
+        return [dict(r) for r in rows]
 
     # ── 审计 ──
 
@@ -116,7 +121,7 @@ class SignoffManager:
 
 # ── 单例 ──
 
-_signoff: SignoffManager | None = None
+_singleton_state: dict = {}
 
 
 def _default_db_path() -> str:
@@ -133,19 +138,22 @@ def _default_db_path() -> str:
 
 def get_signoff_manager(db_path: str = "") -> SignoffManager:
     """进程级单例。路径优先级: 显式参数 > HAIP_SIGNOFF_DB > <root>/data/signoff.db。"""
-    global _signoff
-    if _signoff is None:
-        import os
-        path = db_path or os.environ.get("HAIP_SIGNOFF_DB", "") or _default_db_path()
-        _signoff = SignoffManager(path)
-    return _signoff
+    from haip._singleton import locked_singleton
+    return locked_singleton(lambda: _create_signoff_manager(db_path), _singleton_state, "signoff")
+
+
+def _create_signoff_manager(db_path: str) -> SignoffManager:
+    import os
+    path = db_path or os.environ.get("HAIP_SIGNOFF_DB", "") or _default_db_path()
+    return SignoffManager(path)
 
 
 def reset_signoff_manager() -> None:
-    global _signoff
-    if _signoff is not None:
-        try:
-            _signoff.close()
-        except Exception:
-            pass
-        _signoff = None
+    from haip._singleton import _key_locks
+    with _key_locks["signoff"]:
+        mgr = _singleton_state.pop("signoff", None)
+        if mgr is not None:
+            try:
+                mgr.close()
+            except Exception:
+                logging.getLogger(__name__).warning("signoff close failed", exc_info=True)

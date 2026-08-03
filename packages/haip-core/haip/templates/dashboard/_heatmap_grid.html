@@ -1,0 +1,38 @@
+<h2 style="font-size:var(--text-lg);margin-bottom:var(--space-lg)" x-show="!noResults">科室成熟度热力图</h2>
+
+<div class="no-results" x-bind:class="{ visible: noResults }">
+  <p>未找到匹配的科室</p>
+  <span class="empty-hint" x-show="searchQuery">请尝试其他关键词或调整筛选条件</span>
+</div>
+
+<template x-for="group in groups" x-bind:key="group.type">
+  <div class="group-section" x-show="group.depts.length > 0">
+    <div class="group-header">
+      <span x-text="group.type"></span>
+      <span style="font-weight:400;margin-left:4px" x-text="'(' + group.depts.length + ' 科室)'"></span>
+    </div>
+    <div class="dept-grid">
+      <template x-for="dept in group.depts" x-bind:key="dept.name">
+        <div
+          class="dept-card"
+          x-bind:class="[tierClass(dept.score), { selected: selectedDept === dept }]"
+          @click="selectDept(dept)"
+          role="button"
+          tabindex="0"
+          x-bind:aria-label="dept.name + ' ' + dept.score + '分 ' + tierLabel(dept.score)"
+          @keydown.enter="selectDept(dept)"
+        >
+          <div class="dept-card-header">
+            <span class="dept-card-name" x-text="dept.name"></span>
+            <span class="agent-badge" x-show="dept.has_agent">Agent</span>
+          </div>
+          <div class="dept-card-score" x-bind:class="tierClass(dept.score)" x-text="dept.score"></div>
+          <div class="dept-card-meta">
+            <span x-text="dept.stages + '阶段 · ' + dept.roles + '角色'"></span>
+            <span x-show="dept.guideline" style="margin-left:4px">· 指南</span>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+</template>

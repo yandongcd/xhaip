@@ -1,5 +1,4 @@
-"""通用 Agent UI 渲染引擎 — Card-based layout."""
-
+"""通用 Agent UI 渲染引擎 — Card-based layout with patient dropdown."""
 from __future__ import annotations
 
 import json
@@ -7,9 +6,20 @@ import json
 
 def render_agent_ui(name: str, cn_name: str, agent_type: str, port: int,
                     tools: list[dict], depends_on: list[dict],
-                    guard_triggers: list[str], sub_agents: list[str]) -> str:
+                    guard_triggers: list[str], sub_agents: list[str],
+                    patients: list[dict] | None = None) -> str:
 
     type_map = {"business": "业务智能体", "specialist": "专家智能体", "master_data": "主数据智能体"}
+
+    # ── Build patient options HTML ──
+    patient_options = ""
+    patients_json = "[]"
+    if patients:
+        patients_json = json.dumps(patients, ensure_ascii=False)
+        patient_options = "".join(
+            f'<option value="{p.get("patient_id","")}">{p.get("patient_id","")} — {p.get("name","")} ({p.get("age","")}岁)</option>\n'
+            for p in patients[:100]
+        )
 
     # ── Sidebar tabs ──
     sb = ""
@@ -32,7 +42,12 @@ def render_agent_ui(name: str, cn_name: str, agent_type: str, port: int,
             for field, ftype in inp.items():
                 fid = f"inp-{t['name']}-{field}"
                 fields += f'<div class="form-group"><label for="{fid}">{field}</label>'
-                fields += f'<input id="{fid}" class="inp-{t["name"]}" data-field="{field}" placeholder="{ftype}"></div>\n'
+                if field == "patient_id":
+                    # Render as dropdown populated from patient list
+                    fields += f'<select id="{fid}" class="inp-{t["name"]} sel-patient-id" data-field="{field}">'
+                    fields += f'<option value="">-- 选择患者 --</option>{patient_options}</select></div>\n'
+                else:
+                    fields += f'<input id="{fid}" class="inp-{t["name"]}" data-field="{field}" placeholder="{ftype}"></div>\n'
         else:
             fid = f"inp-{t['name']}-params"
             fields += f'<div class="form-group"><label for="{fid}">参数 (JSON)</label>'
@@ -78,6 +93,8 @@ def render_agent_ui(name: str, cn_name: str, agent_type: str, port: int,
     <div class="sidebar-title">工具列表</div>
 {sb}
     <div class="sidebar-foot">{len(tools)} 个工具</div>
+    <div class="sidebar-title" style="margin-top:16px">患者列表</div>
+    <div class="patient-mini-list" id="patient-mini-list"></div>
   </div>
 
   <div class="main">
@@ -98,6 +115,22 @@ def render_agent_ui(name: str, cn_name: str, agent_type: str, port: int,
 <script type="application/json" id="xhaip-data">
 {xhaip_data}
 </script>
+<script type="application/json" id="xhaip-patients">
+{patients_json}
+</script>
 <script src="/static/agent.js"></script>
+<script>
+// Populate patient list in sidebar
+(function(){{var pl=document.getElementById('patient-mini-list');if(!pl)return;
+var pts=JSON.parse(document.getElementById('xhaip-patients').textContent);
+if(!pts.length){{pl.innerHTML='<div style="padding:6px;font-size:11px;color:var(--text2)">暂无患者</div>';return;}}
+var h='';pts.forEach(function(p){{h+='<div class=\"pmini\" onclick=\"selectPatientMini(\\''+p.patient_id+'\\')\" title=\"'+p.diagnosis+'\">'+p.patient_id+' — '+p.name+' ('+p.age+'岁)</div>';}});
+pl.innerHTML=h;}})();
+
+function selectPatientMini(pid){{
+  var sel=document.querySelectorAll('.sel-patient-id');
+  for(var i=0;i<sel.length;i++){{sel[i].value=pid;}}
+}}
+</script>
 </body>
 </html>"""

@@ -1,0 +1,10 @@
+{
+  "id": "KPS-ECOG",
+  "title": "Karnofsky (KPS) and ECOG Performance Status Scales",
+  "priority": "P1",
+  "source": "ecog",
+  "url": "https://ecog-acrin.org/resources/ecog-performance-status/",
+  "note": "Free",
+  "downloaded": false,
+  "generated": "2026-07-26T23:45:17.599849"
+}

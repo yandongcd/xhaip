@@ -1,6 +1,6 @@
-"""D1 定点治理 — 禁止裸吞异常 (a2a/ auth/ web_server).
+"""D1 定点治理 — 禁止裸吞异常 (全仓关键模块).
 
-扫描 haip/a2a/__init__.py, haip/auth/__init__.py, haip/web_server.py 中:
+扫描以下模块中:
   - except ...: pass (无日志的静默吞异常)
   - except Exception: ... (宽泛捕获无 logging)
 断言 0 处 unsafe 静默。
@@ -13,11 +13,14 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-
 _SOURCE_DIR = Path(__file__).resolve().parent.parent / "haip"
 _TARGET_FILES = [
     _SOURCE_DIR / "a2a" / "__init__.py",
     _SOURCE_DIR / "auth" / "__init__.py",
+    _SOURCE_DIR / "auth" / "jwt.py",
+    _SOURCE_DIR / "auth" / "middleware.py",
+    _SOURCE_DIR / "adapters" / "__init__.py",
+    _SOURCE_DIR / "api_key_store.py",
     _SOURCE_DIR / "web_server.py",
 ]
 

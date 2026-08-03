@@ -5,33 +5,33 @@
 每个 BP handler 接受 A2A 调用，返回 JSON-serializable dict
 """
 
-from .scoring_engine import (
-    calculate_apfel_score,
-    calculate_povoc_score,
-    calculate_pdnv_score,
+from .anesthesia_guide import (
+    recommend_dexmedetomidine,
+    recommend_epidural,
+    recommend_fluid_therapy,
+    recommend_muscle_relaxant,
+    recommend_opioid_sparing,
+    recommend_pnb,
+    recommend_tiva,
 )
+from .drug_controls import validate_contraindications
 from .drug_recommend import (
     recommend_regimen_adult,
     recommend_regimen_pediatric,
-    recommend_timing,
     recommend_rescue,
-)
-from .drug_controls import validate_contraindications
-from .anesthesia_guide import (
-    recommend_tiva,
-    recommend_pnb,
-    recommend_epidural,
-    recommend_dexmedetomidine,
-    recommend_opioid_sparing,
-    recommend_fluid_therapy,
-    recommend_muscle_relaxant,
+    recommend_timing,
 )
 from .nondrug_guide import (
     recommend_acupoint,
-    recommend_auricular,
-    recommend_preop_carbs,
-    recommend_lifestyle,
     recommend_aromatherapy,
+    recommend_auricular,
+    recommend_lifestyle,
+    recommend_preop_carbs,
+)
+from .scoring_engine import (
+    calculate_apfel_score,
+    calculate_pdnv_score,
+    calculate_povoc_score,
 )
 
 

@@ -14,16 +14,36 @@ from __future__ import annotations
 
 from typing import Any
 
+from haip.togaf.knowledge_agent import KnowledgeAgent
+
+_agent = KnowledgeAgent(agent_name="orthopedic-surgery", department="创伤骨科")
+_GUIDELINES = [
+    "国家卫健委《老年髋部骨折诊疗与管理指南(2022年版)》",
+    "NICE NG37 髋部骨折管理 (2023)",
+    "AAOS 老年髋部骨折循证临床实践指南 (2022)",
+    "CSCO 股骨颈骨折诊疗指南 (2018)",
+    "CSCO 转子间骨折诊疗指南 (2020)",
+    "ACCP 抗栓治疗与血栓预防指南 (2021)",
+    "Caprini 静脉血栓栓塞症风险评估模型",
+]
+_agent.rule_engine.load_all()
+
+# Re-export clinical functions
+from .clinical import analyze_xray, harris_score, parse_clinical_text  # noqa: F401
+
 # Re-export extended module functions
 from .extended import (  # noqa: F401
-    quality_audit, checklist, completeness, rehab_track, osteoporosis_mgmt,
+    checklist,
+    completeness,
+    osteoporosis_mgmt,
+    quality_audit,
+    rehab_track,
 )
-# Re-export clinical functions
-from .clinical import analyze_xray, parse_clinical_text, harris_score  # noqa: F401
+from .his_adapter import query_imaging, query_labs, query_patient  # noqa: F401
+from .idata_adapter import list_categories, search_knowledge  # noqa: F401
+
 # Re-export new modules (v1.1: MDT + HIS Mock + iData Mock)
 from .mdt import mdt_aggregate, mdt_summary  # noqa: F401
-from .his_adapter import query_labs, query_patient, query_imaging  # noqa: F401
-from .idata_adapter import search_knowledge, list_categories  # noqa: F401
 
 EVIDENCE_REFS = {
     "general": [

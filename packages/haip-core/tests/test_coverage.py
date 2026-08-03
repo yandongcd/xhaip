@@ -6,14 +6,15 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
-from haip.a2a.router import build_routes, resolve_handler  # noqa: E402
-from haip.agent import register, _registry, DomainPlugin, ToolDef  # noqa: E402
-from haip.a2a import call_batch, call as a2a_dispatch, clear_history  # noqa: E402
-from haip.guard.citation import CitationEngine, Citation  # noqa: E402
-from haip.guard.confidence import ConfidenceScorer  # noqa: E402
-from haip.guard.verifier import GuardVerifier  # noqa: E402
-from haip.llm.mock import MockProvider  # noqa: E402
-from haip.llm import LLMProvider  # noqa: E402
+from haip.a2a import call as a2a_dispatch
+from haip.a2a import call_batch, clear_history
+from haip.a2a.router import build_routes, resolve_handler
+from haip.agent import DomainPlugin, ToolDef, _registry, register
+from haip.guard.citation import Citation, CitationEngine
+from haip.guard.confidence import ConfidenceScorer
+from haip.guard.verifier import GuardVerifier
+from haip.llm import LLMProvider
+from haip.llm.mock import MockProvider
 
 
 class TestA2ARouter:
@@ -154,8 +155,9 @@ class TestGuardVerifierCoverage:
 
 class TestKnowledgeCoverage:
     def test_empty_sync(self):
-        from haip.knowledge import KnowledgeStore
         import tempfile
+
+        from haip.knowledge import KnowledgeStore
         with tempfile.TemporaryDirectory() as d:
             store = KnowledgeStore(":memory:")
             stats = store.sync_from_dir(
@@ -169,9 +171,9 @@ class TestKnowledgeCoverage:
 class TestLoopCoverage:
     def test_build_tool_schemas_string_params(self):
         """测试 parameters() 返回 string value 而非 dict 的边界情况."""
-        from haip.tools import BaseTool, ToolResult
-        from haip.tools.registry import register, _tools
         from haip.loop import AgentLoop
+        from haip.tools import BaseTool, ToolResult
+        from haip.tools.registry import _tools, register
         _tools.clear()
 
         class StrParamTool(BaseTool):
@@ -198,8 +200,9 @@ class TestOrchestratorCoverage:
         assert dag.metadata.get("plan_error") == "no LLM provider"
 
     def test_plan_with_available_agents(self):
-        from haip.orchestrator import A2AOrchestrator
         import json
+
+        from haip.orchestrator import A2AOrchestrator
         dag_json = json.dumps([
             {"id": "n1", "agent": "a", "tool": "t1"},
         ])
@@ -218,8 +221,9 @@ class TestOrchestratorCoverage:
         assert "plan_error" in dag.metadata
 
     def test_plan_json_in_code_block(self):
-        from haip.orchestrator import A2AOrchestrator
         import json
+
+        from haip.orchestrator import A2AOrchestrator
         dag_json = json.dumps([{"id": "n1", "agent": "a", "tool": "t1"}])
         llm = MockProvider({"task": {"content": f"```json\n{dag_json}\n```"}})
         orch = A2AOrchestrator(llm=llm)
@@ -227,9 +231,10 @@ class TestOrchestratorCoverage:
         assert len(dag.nodes) == 1
 
     def test_plan_with_list_agents(self):
-        from haip.orchestrator import A2AOrchestrator
         import json
-        from haip.agent import register, DomainPlugin, _registry
+
+        from haip.agent import DomainPlugin, _registry, register
+        from haip.orchestrator import A2AOrchestrator
         _registry.clear()
         register(DomainPlugin(name="x", cn_name="X", type="business"))
         dag_json = json.dumps([{"id": "n1", "agent": "x", "tool": "test"}])

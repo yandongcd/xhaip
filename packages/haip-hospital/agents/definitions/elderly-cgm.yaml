@@ -1,0 +1,117 @@
+name: elderly-cgm
+cn_name: 老年住院患者血糖综合管理智能体 v2.0
+version: 1.1.0
+type: business
+trust_tier: deep
+department: 老年病科
+port: 8850
+aliases:
+- 老年血糖
+- CGM管理
+- elderly glucose
+- 动态血糖监测
+prompt:
+  system: |
+    你是南方医院老年病科AI助手 v2.0，负责基于动态血糖监测(CGM)的老年住院患者血糖综合管理。遵循"安全优先、达标为辅、个体化施策"三原则。
+
+    核心能力: AGP报告(TIR/TAR/TBR/CV/GMI)多维度分析、ADA年龄分层目标(健康/复杂/极复杂三级)、四维前瞻性低血糖预测(趋势+胰岛素+肾功+营养状态)、胰岛素/磺脲类个体化调整、固醇诱发高血糖(泼尼松/甲泼尼龙/地塞米松)管理、营养相关(禁食/肠内营养)血糖策略、出院降糖方案过渡规划。
+
+    约束: 血糖<3.0 mmol/L → 50%葡萄糖20mL IV紧急处置; 磺脲类老年患者避免使用(低血糖高风险); 所有方案调整须经主管医师确认。
+  temperature: 0.2
+tools:
+- name: cgm_analysis
+  description: CGM+AGP综合分析 — TIR/TAR/TBR/CV/GMI + 年龄分层目标评估
+  handler: elderly_cgm.cgm_analysis
+  input:
+    patient_id: str
+    cgm_readings: list
+    health_status: str
+    comorbidities: list
+- name: hypo_predict
+  description: 前瞻性低血糖预测 — 趋势+胰岛素/磺脲+肾功(eGFR)+营养 四维评分
+  handler: elderly_cgm.hypo_predict
+  input:
+    patient_id: str
+    recent_glucose: list
+    medications: list
+    creatinine: float
+    weight_kg: float
+    nutrition: str
+    age: int
+- name: regimen_optimize
+  description: 降糖方案优化 — 胰岛素调整+固醇诱发+营养策略+出院过渡
+  handler: elderly_cgm.regimen_optimize
+  input:
+    patient_id: str
+    tir_percent: float
+    hypo_risk: str
+    current_regimen: list
+    weight_kg: float
+    age: int
+    health_status: str
+    steroid: str
+    steroid_dose_mg: float
+    nutrition: str
+guard:
+  triggers:
+  - 低血糖
+  - 血糖<2.2
+  - 严重高血糖
+  - 固醇诱发高血糖
+  high_risk_scenarios:
+  - 血糖<3.0+意识改变
+  - 血糖<2.2
+  - 血糖>22.2
+  - 大剂量固醇+胰岛素(高血糖危象风险)
+  citation:
+    required: true
+    min_sources: 2
+    min_trust: T1
+stages:
+- order: 1
+  id: cgm-assessment
+  label: CGM评估
+  desc: "AGP报告分析: TIR/TAR/TBR/CV/GMI + 血糖波动模式识别(黎明/黄昏/餐后)"
+  role_ids: [attending, resident]
+- order: 2
+  id: risk-stratify
+  label: 风险分层
+  desc: 'ADA年龄分层(健康/复杂/极复杂)+低血糖风险评分+肾功(eGFR)评估'
+  role_ids: [attending, pharmacist]
+- order: 3
+  id: hypo-predict
+  label: 低血糖预测
+  desc: 四维前瞻预测(趋势+胰岛素/磺脲+肾功+营养状态) → 绿/黄/橙/红四级
+  role_ids: [attending, nurse]
+- order: 4
+  id: regimen-adjust
+  label: 方案调整
+  desc: 胰岛素/口服药个体化调整+固醇诱发管理+禁食/肠内营养策略
+  role_ids: [attending, pharmacist]
+- order: 5
+  id: nutrition
+  label: 营养协同
+  desc: NPO/肠内/肠外营养下的血糖管理 + 输糖速率匹配胰岛素
+  role_ids: [attending, pharmacist]
+- order: 6
+  id: discharge
+  label: 出院过渡
+  desc: 出院降糖方案转换 + 低血糖识别教育(规则15) + 随访规划(1周内)
+  role_ids: [attending, nurse, head_nurse]
+ui:
+  template: chat-with-role-switcher
+  roles:
+  - id: attending
+    label: 老年科医师
+    default: true
+  - id: pharmacist
+    label: 临床药师
+  - id: nurse
+    label: 糖尿病教育护士
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply: [citation_new, route_adj]
+  prompt_a_b: true

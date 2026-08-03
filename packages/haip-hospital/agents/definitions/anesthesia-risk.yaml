@@ -17,21 +17,21 @@ prompt:
 tools:
 - name: assess_asa
   description: ASA体格状态分级评估
-  handler: anesthesia.evaluate
+  handler: anesthesia.asa_assessment
   input:
     patient_id: str
     conditions: list
     functional_status: str
 - name: airway_assess
   description: 困难气道评估 (Mallampati/甲颌距/颈活动度)
-  handler: anesthesia.evaluate_aw
+  handler: anesthesia.airway_evaluation
   input:
     patient_id: str
     mallampati: int
     thyromental: float
 - name: anesthesia_plan
   description: 麻醉方案推荐 (全麻/腰麻/硬膜外/神经阻滞)
-  handler: anesthesia.recommend
+  handler: anesthesia.anesthesia_plan
   input:
     patient_id: str
     surgery_type: str
@@ -69,8 +69,8 @@ ui:
   template: chat-with-role-switcher
   roles:
   - id: anesthesiologist
-    label: anesthesiologist
+    label: 麻醉医师
   - id: attending
-    label: attending
+    label: 主治医师
   - id: nurse
-    label: nurse
+    label: 责任护士

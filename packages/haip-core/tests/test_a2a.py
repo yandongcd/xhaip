@@ -3,8 +3,9 @@
 import sys
 from pathlib import Path
 
-from haip.a2a import call, get_history, clear_history
-from haip.agent import register as reg_agent, list_all
+from haip.a2a import call, clear_history, get_history
+from haip.agent import list_all
+from haip.agent import register as reg_agent
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 

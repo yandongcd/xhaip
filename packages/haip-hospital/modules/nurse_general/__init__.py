@@ -21,6 +21,19 @@ from __future__ import annotations
 
 from typing import Any
 
+from haip.togaf.knowledge_agent import KnowledgeAgent
+
+_agent = KnowledgeAgent(agent_name="nurse-general", department="护理部")
+_GUIDELINES = [
+    "Braden Scale for Predicting Pressure Sore Risk (1988)",
+    "Morse Fall Scale (1989)",
+    "Caprini VTE Risk Assessment Model (2005)",
+    "NICE CG74 Surgical Site Infection (2017)",
+    "SBAR Communication Standard (IHI)",
+    "NEWS2 Early Warning Score (RCP London 2017)",
+    "中国医院协会《患者安全目标》",
+]
+_agent.rule_engine.load_all()
 
 # ═══════════════════════════════════════════════════════════
 # 1. Braden 压疮风险评估

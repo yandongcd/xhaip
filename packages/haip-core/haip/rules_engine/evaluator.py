@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import operator
 import re
-from typing import Callable
+from collections.abc import Callable
 
 from haip.rules_engine.models import EvaluationContext
 

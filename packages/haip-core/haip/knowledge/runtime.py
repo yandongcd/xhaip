@@ -6,13 +6,16 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import threading
 from pathlib import Path
 from typing import Any
 
-from haip.knowledge import KnowledgeStore
+logger = logging.getLogger(__name__)
+
 from haip.guard.citation import Citation, CitationEngine
+from haip.knowledge import KnowledgeStore
 
 
 class KnowledgeRuntime:
@@ -149,7 +152,7 @@ class KnowledgeRuntime:
                 if changed:
                     self.resync()
             except Exception:
-                pass
+                logger.debug("Watch loop YAML reload failed", exc_info=True)
 
     # ── 查询接口 ──
 
@@ -193,21 +196,25 @@ class KnowledgeRuntime:
 
 
 # 全局单例
-_kb_runtime: KnowledgeRuntime | None = None
+_singleton_state: dict = {}
 
 
 def get_kb(project_root: str | Path = ".") -> KnowledgeRuntime:
     """获取全局单例 KnowledgeRuntime。"""
-    global _kb_runtime
-    if _kb_runtime is None:
-        _kb_runtime = KnowledgeRuntime(project_root)
-        _kb_runtime.sync()
-    return _kb_runtime
+    from haip._singleton import locked_singleton
+    return locked_singleton(lambda: _create_kb(project_root), _singleton_state, "kb")
+
+
+def _create_kb(project_root: str | Path) -> KnowledgeRuntime:
+    kb = KnowledgeRuntime(project_root)
+    kb.sync()
+    return kb
 
 
 def reset_kb():
     """重置全局 KnowledgeRuntime (测试用)。"""
-    global _kb_runtime
-    if _kb_runtime:
-        _kb_runtime.close()
-    _kb_runtime = None
+    from haip._singleton import _key_locks
+    with _key_locks["kb"]:
+        kb = _singleton_state.pop("kb", None)
+        if kb:
+            kb.close()

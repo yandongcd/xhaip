@@ -1,0 +1,10 @@
+{
+  "id": "CHA2DS2-VASC",
+  "title": "CHA2DS2-VASc Score - Stroke Risk in Atrial Fibrillation",
+  "priority": "P0",
+  "source": "esc",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/28886624/",
+  "note": "Free - ESC guideline standard",
+  "downloaded": false,
+  "generated": "2026-07-26T23:45:17.597282"
+}

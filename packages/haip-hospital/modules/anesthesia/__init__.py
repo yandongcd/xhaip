@@ -1,139 +1,166 @@
-"""麻醉评估 — ASA分级 + 困难气道 + 抗凝管理 + 麻醉方案.
-
-业务流来源:
-  - ASA体格状态分级系统
-  - 困难气道管理指南 (ASA 2022)
-  - ACCP 围术期抗栓治疗指南
-"""
-
+"""麻醉风险评估智能体 — ASA分级/困难气道/抗凝桥接/麻醉方案/术前优化."""
 from __future__ import annotations
 
-from typing import Any
+from haip.togaf.knowledge_agent import KnowledgeAgent
 
-# ASA 分级标准
-ASA_CRITERIA = {
-    1: "健康患者, 无系统性疾病",
-    2: "轻度系统性疾病, 无功能受限 (如控制良好的高血压/糖尿病)",
-    3: "重度系统性疾病, 功能受限但非失能 (如控制不佳的糖尿病/稳定心绞痛)",
-    4: "重度系统性疾病, 持续威胁生命 (如不稳定心绞痛/失代偿心衰)",
-    5: "濒死患者, 无论手术与否均难以存活 24h",
-    6: "脑死亡患者, 器官捐献",
-}
-
-# Mallampati 分级
-MALLAMPATI = {
-    1: "可见软腭/咽腭弓/悬雍垂 — 插管容易",
-    2: "可见软腭/咽腭弓/部分悬雍垂 — 插管可能容易",
-    3: "仅见软腭/悬雍垂基部 — 插管可能困难",
-    4: "不可见软腭 — 插管困难",
-}
+_agent = KnowledgeAgent(agent_name="anesthesia", department="麻醉科")
+_GUIDELINES = [
+    "ASA Physical Status Classification System (2020)",
+    "2022 ASA Difficult Airway Algorithm",
+    "美国区域麻醉与疼痛医学学会(ASRA)抗凝指南 2025",
+    "中国麻醉学指南与专家共识 (2024)",
+]
+_agent.rule_engine.load_all()
 
 
-def evaluate(
-    patient_id: str = "", conditions: list[str] | None = None,
-    functional_status: str = "", **kwargs: Any,
-) -> dict[str, Any]:
-    """ASA 体格状态分级。"""
-    conditions = conditions or []
-    asa = 1
-    if conditions:
-        asa = 2
-    if len(conditions) >= 2 or "uncontrolled" in functional_status.lower():
-        asa = 3
-    if any(k in " ".join(conditions).lower() for k in [
-        "unstable angina", "失代偿心衰", "respiratory failure", "sepsis",
-    ]):
-        asa = 4
+def asa_assessment(**kwargs) -> dict:
+    """ASA体格状态分级评估."""
+    pid = kwargs.get("patient_id", "")
+    p = _agent.get_patient(pid)
+    if not p:
+        return _agent.clinical_result("Patient not found", None)
 
-    risk = "low" if asa <= 2 else "moderate" if asa == 3 else "high"
-    return {
-        "patient_id": patient_id, "asa_class": asa,
-        "asa_description": ASA_CRITERIA.get(asa, ""),
-        "risk": risk, "conditions": conditions,
-        "functional_status": functional_status,
-        "suitable_for_surgery": asa <= 4,
-        "recommendations": (
-            ["常规麻醉"] if asa <= 2
-            else ["术前优化 + 术中加强监测"] if asa == 3
-            else ["MDT评估 + ICU备床 + 有创监测"]
-        ),
+    age = p.get("age", 0)
+    comorbidities = []
+    # Check common ASA factors
+    vitals = _agent.assess_vitals(p)
+    if age >= 75:
+        comorbidities.append("高龄(≥75岁)")
+    if p.get("diagnosis", ""):
+        comorbidities.append(f"基础疾病: {p['diagnosis']}")
+
+    # ASA classification logic
+    asa_class = 2  # default mild systemic disease
+    alerts = []
+    if not comorbidities or len(comorbidities) <= 1:
+        asa_class = 1
+    elif any(kw in str(comorbidities) for kw in ["心衰", "COPD", "肾衰竭", "肝硬化"]):
+        asa_class = 3
+    if vitals.get("alerts"):
+        asa_class = max(asa_class, 3)
+        alerts = vitals.get("alerts", [])
+
+    guides = _agent.search_guidelines("ASA分级") or _GUIDELINES
+    return _agent.clinical_result(
+        summary=f"ASA评估完成 — ASA {asa_class}级",
+        patient=p,
+        guidelines=guides,
+        alerts=alerts,
+        findings=[{"ASA分级": asa_class, "合并症": comorbidities, "警示": alerts}],
+        recommendations=[f"ASA {asa_class}级患者围术期管理建议: 根据分级确定监测级别和麻醉方案"],
+    )
+
+
+def airway_evaluation(**kwargs) -> dict:
+    """困难气道评估."""
+    pid = kwargs.get("patient_id", "")
+    p = _agent.get_patient(pid)
+    if not p:
+        return _agent.clinical_result("Patient not found", None)
+
+    # Mallampati/Mallampati分级需临床检查，AI提供评估指引
+    bmi = float(p.get("bmi", 0) or 0)
+    findings = {
+        "Mallampati分级": "需临床评估(I-IV级)",
+        "BMI": f"{bmi:.1f} kg/m²" if bmi else "未知",
+        "甲颏间距": "需临床测量(正常≥6.5cm)",
+        "张口度": "需临床测量(正常≥3指)",
     }
+    alerts = []
+    if bmi and bmi > 35:
+        alerts.append(f"BMI {bmi:.1f} >35 — 肥胖是困难气道的独立危险因素")
+
+    guides = _agent.search_guidelines("困难气道") or _GUIDELINES
+    return _agent.clinical_result(
+        summary="困难气道评估指引 — 需配合临床体格检查完成",
+        patient=p,
+        guidelines=guides,
+        alerts=alerts,
+        findings=[findings],
+        recommendations=["建议麻醉医师完成床旁Mallampati分级/甲颏间距/张口度/颈围测量"],
+    )
 
 
-def evaluate_aw(
-    patient_id: str = "", mallampati: int = 1,
-    thyromental: float = 6.5, neck_mobility: str = "normal",
-    **kwargs: Any,
-) -> dict[str, Any]:
-    """困难气道评估: Mallampati + 甲颌距 + 颈活动度。"""
-    difficult = mallampati >= 4 or thyromental < 6.0 or neck_mobility == "limited"
-    return {
-        "patient_id": patient_id, "mallampati": mallampati,
-        "mallampati_desc": MALLAMPATI.get(mallampati, ""),
-        "thyromental_distance_cm": thyromental,
-        "neck_mobility": neck_mobility,
-        "difficult_airway": difficult,
-        "plan": (
-            "备困难气道车 + 纤支镜 + 清醒插管预案" if difficult
-            else "常规快速序贯诱导"
-        ),
-    }
+def anticoagulation_bridge(**kwargs) -> dict:
+    """抗凝桥接管理."""
+    pid = kwargs.get("patient_id", "")
+    p = _agent.get_patient(pid)
+    if not p:
+        return _agent.clinical_result("Patient not found", None)
+
+    meds = p.get("medications", [])
+    antithrombotic_meds = [m for m in meds if any(
+        kw in str(m).lower() for kw in ["华法林", "warfarin", "阿司匹林", "aspirin",
+                                          "氯吡格雷", "clopidogrel", "替格瑞洛", "ticagrelor",
+                                          "利伐沙班", "rivaroxaban", "达比加群", "dabigatran",
+                                          "阿哌沙班", "apixaban", "依度沙班", "edoxaban"])]
+
+    recommendations = []
+    alerts = []
+    for med in antithrombotic_meds:
+        med_name = med.get("name", str(med))
+        recommendations.append(f"{med_name}: 需根据手术出血风险和血栓风险制定桥接方案")
+        alerts.append(f"⚠️ 抗栓药物 {med_name} 需术前停药管理")
+
+    if not antithrombotic_meds:
+        recommendations.append("未检测到抗栓药物使用，常规术前评估即可")
+
+    guides = _agent.search_guidelines("抗凝桥接") or _GUIDELINES
+    return _agent.clinical_result(
+        summary=f"抗凝桥接评估 — 检测到{len(antithrombotic_meds)}种抗栓药物",
+        patient=p,
+        guidelines=guides,
+        alerts=alerts,
+        findings=[{"抗栓药物": [str(m) for m in antithrombotic_meds]}],
+        recommendations=recommendations,
+    )
 
 
-def anticoag_assess(
-    patient_id: str = "", meds: list[str] | None = None,
-    inr: float = 1.0, **kwargs: Any,
-) -> dict[str, Any]:
-    """围术期抗凝管理评估。
+def anesthesia_plan(**kwargs) -> dict:
+    """麻醉方案推荐."""
+    pid = kwargs.get("patient_id", "")
+    surgery_type = kwargs.get("surgery_type", "")
+    p = _agent.get_patient(pid)
+    if not p:
+        return _agent.clinical_result("Patient not found", None)
 
-    参考: ACCP 围术期抗栓指南
-    """
-    meds = [m.lower() for m in (meds or [])]
-    actions: list[str] = []
-    bridge_needed = False
+    age = p.get("age", 0)
+    plans = []
+    if age >= 70 or surgery_type in ["髋部骨折", "关节置换", "剖腹产"]:
+        plans.append("区域麻醉/椎管内麻醉 (适用于老年/骨科/产科)")
+    else:
+        plans.append("全身麻醉 (适用于腹部/胸部/神外手术)")
+    plans.append("监测下麻醉镇静 (适用于短小手术/内镜检查)")
 
-    if "warfarin" in " ".join(meds):
-        if inr > 1.5:
-            actions.append("华法林: 停药 5 天, 目标 INR < 1.5")
-            bridge_needed = True
-        else:
-            actions.append("华法林: INR 已达标, 可手术")
-    if any(m in " ".join(meds) for m in ["clopidogrel", "ticagrelor"]):
-        actions.append("P2Y12 抑制剂: 停药 5-7 天")
-        bridge_needed = True
-    if "aspirin" in " ".join(meds):
-        actions.append("阿司匹林: 风险获益评估, 一般不建议停用")
-    if any(m in " ".join(meds) for m in ["rivaroxaban", "apixaban", "edoxaban"]):
-        actions.append("NOAC: 停药 48-72h (根据肾功能调整)")
-
-    if bridge_needed:
-        actions.append("桥接方案: LMWH (依诺肝素 1mg/kg bid), 术前 24h 停用")
-
-    return {
-        "patient_id": patient_id, "inr": inr, "medications": meds,
-        "bridge_needed": bridge_needed, "actions": actions,
-        "evidence": ["ACCP 围术期抗栓指南"],
-    }
+    guides = _agent.search_guidelines("麻醉方案") or _GUIDELINES
+    return _agent.clinical_result(
+        summary=f"麻醉方案推荐 — 手术类型: {surgery_type or '未指定'}",
+        patient=p,
+        guidelines=guides,
+        findings=[{"手术类型": surgery_type, "年龄": age}],
+        recommendations=plans,
+    )
 
 
-def recommend(
-    patient_id: str = "", surgery_type: str = "",
-    asa_class: int = 1, age: int = 40, **kwargs: Any,
-) -> dict[str, Any]:
-    """麻醉方案推荐。"""
-    plan_type = "全麻"
-    if "lower" in surgery_type.lower() or "下肢" in surgery_type:
-        plan_type = "腰麻" if asa_class <= 2 else "腰麻+镇静" if asa_class == 3 else "全麻"
+def preoperative_optimization(**kwargs) -> dict:
+    """术前优化建议."""
+    pid = kwargs.get("patient_id", "")
+    p = _agent.get_patient(pid)
+    if not p:
+        return _agent.clinical_result("Patient not found", None)
 
-    induction = ("propofol 1.5-2mg/kg + rocuronium 0.6mg/kg" if "全麻" in plan_type
-                 else "bupivacaine 0.5% 2-3ml 蛛网膜下腔")
+    recs = [
+        "禁食: 清液体2h / 母乳4h / 轻食6h / 脂肪餐8h (ASA 2023指南)",
+        "术前用药: 根据患者情况评估是否需要术前镇静/抗焦虑",
+        "容量管理: 维持正常血容量，避免术前过度脱水",
+        "血糖控制: 糖尿病患者围术期血糖目标 6-10 mmol/L",
+        "β受体阻滞剂: 长期服用者继续使用，避免术前突然停药",
+    ]
 
-    return {
-        "patient_id": patient_id, "plan": plan_type,
-        "induction": induction,
-        "monitoring": ["ECG", "SpO2", "NIBP", "ETCO2"] if "全麻" in plan_type else ["ECG", "SpO2", "NIBP"],
-        "special_considerations": (
-            ["高龄: 减少诱导剂量 20-30%", "脆弱心功能: 避免心肌抑制药物"] if age >= 70
-            else []
-        ),
-    }
+    guides = _agent.search_guidelines("术前优化") or _GUIDELINES
+    return _agent.clinical_result(
+        summary="术前优化建议 — 基于ASA最新指南",
+        patient=p,
+        guidelines=guides,
+        recommendations=recs,
+    )

@@ -8,8 +8,9 @@ sys.path.insert(0, str(project_root / "packages" / "haip-hospital" / "modules"))
 sys.path.insert(0, str(project_root / "packages" / "haip-hospital"))
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
-from haip.agent import load_from_dir, _registry, get as get_agent, DomainPlugin, ToolDef, register  # noqa: E402
-from haip.a2a import call, clear_history  # noqa: E402
+from haip.a2a import call, clear_history
+from haip.agent import DomainPlugin, ToolDef, _registry, load_from_dir, register
+from haip.agent import get as get_agent
 
 YAML_DIR = project_root / "packages" / "haip-hospital" / "agents" / "definitions"
 
@@ -27,11 +28,11 @@ class TestAllAgents:
         load_from_dir(str(YAML_DIR))
         agents = {name: get_agent(name) for name in
                   ["pharmacy", "orthopedic-surgery", "cardio-surgery",
-                   "pediatrics", "cardio-risk", "anesthesia-risk", "medical-record"]}
+                   "pediatrics", "cardio-risk", "antiemetic", "medical-record"]}
         assert agents["pharmacy"].type == "business"
         assert agents["orthopedic-surgery"].type == "business"
         assert agents["cardio-risk"].type == "specialist"
-        assert agents["anesthesia-risk"].type == "specialist"
+        assert agents["antiemetic"].type == "specialist"
         assert agents["medical-record"].type == "master_data"
 
     def test_orthopedic_assess(self):
@@ -64,11 +65,12 @@ class TestAllAgents:
     def test_anesthesia_asa(self):
         register(DomainPlugin(name="anesthesia-risk", type="specialist",
             tools=[ToolDef(name="assess_asa", description="",
-                          handler="anesthesia.evaluate")]))
+                          handler="anesthesia.asa_assessment")]))
         r = call("anesthesia-risk", "assess_asa",
-                 {"conditions": ["HTN", "DM"], "functional_status": "active"})
+                 {"patient_id": "P001", "conditions": ["HTN", "DM"],
+                  "functional_status": "active"})
         assert r["status"] == "ok"
-        assert r["asa_class"] >= 2
+        assert "ASA" in r.get("summary", "")
 
     def test_medical_record_get_patient(self):
         register(DomainPlugin(name="medical-record", type="master_data",

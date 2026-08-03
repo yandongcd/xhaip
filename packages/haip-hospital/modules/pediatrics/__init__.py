@@ -10,6 +10,17 @@ from __future__ import annotations
 
 from typing import Any
 
+from haip.togaf.knowledge_agent import KnowledgeAgent
+
+_agent = KnowledgeAgent(agent_name="pediatrics", department="儿科")
+_GUIDELINES = [
+    "WHO IMCI 儿童疾病综合管理 (2014)",
+    "中国 0-18岁 儿童生长发育标准 (卫健委 2023)",
+    "中国国家处方集 (儿童版)",
+    "中国儿童保健指南 (2023)",
+    "AAP 美国儿科学会 Bright Futures Guidelines (2022)",
+]
+_agent.rule_engine.load_all()
 
 # ── IMCI 决策树 ──
 

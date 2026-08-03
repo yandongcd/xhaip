@@ -5,8 +5,18 @@
   - ACC/AHA 瓣膜疾病指南
   - ACCP 抗栓治疗指南
 """
-
 from __future__ import annotations
+
+from haip.togaf.knowledge_agent import KnowledgeAgent
+
+_agent = KnowledgeAgent(agent_name="cardio-surgery", department="心血管外科")
+_GUIDELINES = [
+    "EuroSCORE II 心脏手术风险评分 (2011)",
+    "ACC/AHA 2020 心脏瓣膜病患者管理指南",
+    "ACCP 抗栓治疗与血栓预防指南 (2021)",
+    "ESC/EACTS 2021 心脏瓣膜病管理指南",
+]
+_agent.rule_engine.load_all()
 
 from typing import Any
 

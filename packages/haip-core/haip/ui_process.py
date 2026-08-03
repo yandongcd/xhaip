@@ -6,7 +6,6 @@ CSS 和 JS 已迁移至 haip/static/ 独立文件，不再嵌入 Python。
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 
 def render_process_ui(

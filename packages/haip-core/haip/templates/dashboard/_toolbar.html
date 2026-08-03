@@ -1,0 +1,51 @@
+<div class="toolbar">
+  <div class="search-wrap">
+    <span class="search-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </span>
+    <input type="text" id="dept-search" name="search" class="search-input" placeholder="搜索科室..." x-model="searchQuery" aria-label="搜索科室">
+    <button class="search-clear" x-show="searchQuery" @click="clearSearch()" aria-label="清除搜索">&times;</button>
+  </div>
+
+  <div class="dropdown">
+    <button class="btn" @click="toggleTypeFilter()">
+      类型
+      <span x-show="typeFilters.length" x-text="'(' + typeFilters.length + ')'"></span>
+    </button>
+    <div class="dropdown-panel" x-bind:class="{ open: typeDropdownOpen }">
+      <template x-for="t in allTypes" x-bind:key="t">
+        <label class="dropdown-item">
+          <input type="checkbox" x-bind:checked="isTypeChecked(t)" @change="toggleType(t)">
+          <span x-text="t"></span>
+        </label>
+      </template>
+    </div>
+  </div>
+
+  <div class="dropdown">
+    <button class="btn" @click="toggleTierFilter()">
+      等级
+      <span x-show="tierFilters.length" x-text="'(' + tierFilters.length + ')'"></span>
+    </button>
+    <div class="dropdown-panel" x-bind:class="{ open: tierDropdownOpen }">
+      <label class="dropdown-item">
+        <input type="checkbox" x-bind:checked="isTierChecked('L3 成熟')" @change="toggleTier('L3 成熟')">
+        <span>L3 成熟</span>
+      </label>
+      <label class="dropdown-item">
+        <input type="checkbox" x-bind:checked="isTierChecked('L2 发展中')" @change="toggleTier('L2 发展中')">
+        <span>L2 发展中</span>
+      </label>
+      <label class="dropdown-item">
+        <input type="checkbox" x-bind:checked="isTierChecked('L1 起步')" @change="toggleTier('L1 起步')">
+        <span>L1 起步</span>
+      </label>
+      <label class="dropdown-item">
+        <input type="checkbox" x-bind:checked="isTierChecked('L0 未覆盖')" @change="toggleTier('L0 未覆盖')">
+        <span>L0 未覆盖</span>
+      </label>
+    </div>
+  </div>
+
+  <span style="font-size:var(--text-xs);color:var(--text-tertiary)" x-text="'共 ' + filteredDepts.length + ' 个科室'"></span>
+</div>

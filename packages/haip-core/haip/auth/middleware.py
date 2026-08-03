@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 from functools import lru_cache
-from typing import Optional
 
 from fastapi import HTTPException, Request
 from fastapi.security import HTTPBearer
@@ -136,6 +135,6 @@ async def get_current_user(request: Request) -> dict:
     return user
 
 
-async def get_optional_user(request: Request) -> Optional[dict]:
+async def get_optional_user(request: Request) -> dict | None:
     """FastAPI dependency: extracts user if authenticated, None otherwise."""
     return getattr(request.state, "current_user", None)

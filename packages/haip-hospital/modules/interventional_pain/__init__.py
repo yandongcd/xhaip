@@ -5,6 +5,17 @@ Port from haip-0705-2 v0.2.0.
 
 from __future__ import annotations
 
+from haip.togaf.knowledge_agent import KnowledgeAgent
+
+_agent = KnowledgeAgent(agent_name="interventional-pain", department="疼痛科")
+_GUIDELINES = [
+    "IASP 介入疼痛治疗指南",
+    "SIS 脊柱介入学会操作规范",
+    "中国疼痛医学分会 介入治疗专家共识",
+    "ASRA 区域麻醉与疼痛医学指南",
+]
+_agent.rule_engine.load_all()
+
 from typing import Any
 
 IMAGING_REQUIREMENTS = {

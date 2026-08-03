@@ -1,0 +1,135 @@
+# xhaip Prometheus Alert Rules
+# Phase 0.4 — covers LLM failures, latency, debate timeouts, cost anomalies
+# Deployed via: kubectl apply -f deploy/k8s/monitoring/prometheus-rules.yaml
+
+groups:
+  - name: xhaip-llm
+    rules:
+      - alert: HighLLMFailureRate
+        expr: |
+          (rate(xhaip_llm_errors_total[5m]) / rate(xhaip_llm_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          component: llm
+        annotations:
+          summary: "LLM failure rate exceeds 5%"
+          description: "Agent {{ $labels.agent }}: {{ $value | humanizePercentage }} failure rate over 5m."
+
+      - alert: HighLLMP95Latency
+        expr: |
+          histogram_quantile(0.95, rate(xhaip_llm_duration_seconds_bucket[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: llm
+        annotations:
+          summary: "LLM P95 latency > 10s"
+          description: "Agent {{ $labels.agent }}: P95 latency is {{ $value }}s."
+
+      - alert: LLMFallbackTriggered
+        expr: |
+          increase(xhaip_llm_fallback_total[10m]) > 3
+        for: 1m
+        labels:
+          severity: critical
+          component: llm
+        annotations:
+          summary: "LLM fallback circuit triggered repeatedly"
+          description: "Agent {{ $labels.agent }}: {{ $value }} fallbacks in last 10m. Primary provider unavailable."
+
+  - name: xhaip-debate
+    rules:
+      - alert: DebateTimeout
+        expr: |
+          rate(xhaip_debate_timeout_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: debate
+        annotations:
+          summary: "Debate timeout rate > 10%"
+          description: "Agent group {{ $labels.agent_group }}: {{ $value | humanizePercentage }} timeouts."
+
+      - alert: DebateDeadlock
+        expr: |
+          rate(xhaip_debate_deadlock_total[10m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: debate
+        annotations:
+          summary: "Debate deadlock rate > 5% (moderators disagree, appeals failed)"
+          description: "Agent group {{ $labels.agent_group }}: {{ $value }} deadlocks."
+
+  - name: xhaip-rag
+    rules:
+      - alert: RAGIndexStale
+        expr: |
+          xhaip_rag_index_age_seconds > 7200
+        for: 5m
+        labels:
+          severity: warning
+          component: rag
+        annotations:
+          summary: "RAG vector index is stale (>2h since rebuild)"
+          description: "Index age: {{ $value }}s. Knowledge updates may not be reflected."
+
+      - alert: RAGLatencyHigh
+        expr: |
+          histogram_quantile(0.95, rate(xhaip_rag_search_duration_seconds_bucket[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          component: rag
+        annotations:
+          summary: "RAG search P95 latency > 500ms"
+          description: "P95: {{ $value }}s. May indicate index fragmentation or model loading issue."
+
+  - name: xhaip-learning
+    rules:
+      - alert: LearningApprovalBacklog
+        expr: |
+          xhaip_learning_pending_review_total > 20
+        for: 30m
+        labels:
+          severity: info
+          component: learning
+        annotations:
+          summary: "Learning approval backlog > 20 items"
+          description: "{{ $value }} suggestions pending human review."
+
+      - alert: LearningRollback
+        expr: |
+          increase(xhaip_learning_rollbacks_total[1h]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          component: learning
+        annotations:
+          summary: "Learning change was auto-rolled back"
+          description: "{{ $value }} rollbacks in last hour. Check the affected agents."
+
+  - name: xhaip-infra
+    rules:
+      - alert: AgentHealthDegraded
+        expr: |
+          xhaip_agent_healthy == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: infra
+        annotations:
+          summary: "Agent health check failing"
+          description: "Agent {{ $labels.agent }} is unhealthy (circuit/database/knowledge check failed)."
+
+      - alert: HighCostAnomaly
+        expr: |
+          rate(xhaip_llm_tokens_out_total[1h]) > 1e6
+        for: 10m
+        labels:
+          severity: warning
+          component: cost
+        annotations:
+          summary: "LLM token usage spike > 1M tokens/hour"
+          description: "{{ $value }} tokens/hr. Possible debate loop or abuse."

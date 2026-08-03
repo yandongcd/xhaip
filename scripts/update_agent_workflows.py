@@ -3,7 +3,7 @@ import pathlib
 
 import yaml
 
-YAML_DIR = pathlib.Path(r"D:\dst\projects\xhaip\packages\haip-hospital\agents\definitions")
+YAML_DIR = pathlib.Path(__file__).resolve().parent.parent / "packages" / "haip-hospital" / "agents" / "definitions"
 
 # === Clinical workflow templates by department category ===
 

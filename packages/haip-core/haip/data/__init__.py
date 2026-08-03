@@ -17,7 +17,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
 
-
 # ── Data Source Adapter ───────────────────────────────────────
 
 class DataSourceAdapter(ABC):
@@ -62,9 +61,7 @@ class SQLiteDataSource(DataSourceAdapter):
         for k, v in params.items():
             conditions.append(f"{k}=?")
             values.append(v)
-        if conditions and "WHERE" not in sql.upper():
-            sql += " AND " + " AND ".join(conditions)
-        elif conditions:
+        if conditions and "WHERE" not in sql.upper() or conditions:
             sql += " AND " + " AND ".join(conditions)
         cursor = self._conn.execute(sql, values) if self._conn else None
         if cursor is None:
@@ -180,12 +177,15 @@ class DataProductRegistry:
 
 # ── Global ────────────────────────────────────────────────────
 
-_registry: DataProductRegistry | None = None
+_singleton_state: dict = {}
 
 
 def get_registry() -> DataProductRegistry:
-    global _registry
-    if _registry is None:
-        _registry = DataProductRegistry()
-        _registry.seed_defaults()
-    return _registry
+    from haip._singleton import locked_singleton
+    return locked_singleton(_create_registry, _singleton_state, "registry")
+
+
+def _create_registry() -> DataProductRegistry:
+    reg = DataProductRegistry()
+    reg.seed_defaults()
+    return reg

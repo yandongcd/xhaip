@@ -1,4 +1,4 @@
-name: obgyn
+﻿name: obgyn
 cn_name: 妇产科智能体
 version: 1.0.0
 type: business
@@ -44,6 +44,8 @@ tools:
 guard:
   triggers:
   - 药物交互
+  citation:
+    required: true
 ui:
   template: chat-with-role-switcher
   roles:
@@ -104,3 +106,19 @@ stages:
   role_ids:
   - attending
   - midwife
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+debate:
+  enabled: true
+  competitors:
+  - anesthesia
+  - neonatology
+  mode: auto
+trust_tier: deep

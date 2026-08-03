@@ -15,8 +15,8 @@ sys.path.insert(0, str(project_root / "packages" / "haip-hospital"))
 sys.path.insert(0, str(project_root / "packages" / "haip-hospital" / "modules"))
 
 import pytest
-from haip.agent import _registry, DomainPlugin, ToolDef, register
 from haip.a2a import call, clear_history
+from haip.agent import DomainPlugin, ToolDef, _registry, register
 
 
 def setup_function():

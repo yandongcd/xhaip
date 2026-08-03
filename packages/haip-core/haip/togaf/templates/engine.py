@@ -15,9 +15,10 @@ Template categories:
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Optional
+from typing import Any
 
 
 @dataclass
@@ -43,7 +44,7 @@ class TogafTemplateEngine:
     def register(self, template: TogafTemplate):
         self._templates[template.id] = template
 
-    def get(self, template_id: str) -> Optional[TogafTemplate]:
+    def get(self, template_id: str) -> TogafTemplate | None:
         return self._templates.get(template_id)
 
     def list_all(self) -> list[dict[str, Any]]:
@@ -62,7 +63,7 @@ class TogafTemplateEngine:
     def list_by_category(self, category: str) -> list[TogafTemplate]:
         return [t for t in self._templates.values() if t.category == category]
 
-    def render(self, template_id: str, **kwargs) -> Optional[str]:
+    def render(self, template_id: str, **kwargs) -> str | None:
         template = self._templates.get(template_id)
         if template is None:
             return None

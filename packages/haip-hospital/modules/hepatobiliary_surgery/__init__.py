@@ -20,7 +20,7 @@ _agent.rule_engine.load_all()
 
 
 def _clinical_error(msg: str) -> dict:
-    return {"status": "error", "agent": _agent.agent_name, "error": msg}
+    return _agent.make_clinical_error(msg)
 
 
 def _child_pugh(bil: float = 12, alb: float = 35, pt_ext: float = 1.5,

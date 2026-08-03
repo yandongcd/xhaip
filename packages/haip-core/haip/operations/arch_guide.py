@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 from typing import Any
 
+logger = logging.getLogger(__name__)
 
 # ════════════════════════════════════
 # 架构管理 (architecture)
@@ -93,8 +95,8 @@ class GuidelinesManager:
                         "name": data.get("name", ""), "publisher": data.get("publisher", ""),
                         "trust_level": data.get("trust_level", "T2"), "file": str(f),
                     }
-            except Exception:
-                pass
+            except (OSError, yaml.YAMLError) as exc:
+                logger.warning("跳过无法解析的指南 YAML %s: %s", f, exc)
 
     def search(self, keyword: str) -> list[dict]:
         kw = keyword.lower()

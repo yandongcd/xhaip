@@ -1,42 +1,88 @@
 name: education
 cn_name: 教育技能智能体
-version: "1.0.0"
+version: 1.0.0
 type: specialist
 department: 跨科室
 port: 8772
-aliases: [教学, 教育, 培训, edu]
-
+aliases:
+- 教学
+- 教育
+- 培训
+- edu
 prompt:
-  system: |
-    你是南方医院教育技能智能体，负责为年轻医师提供骨科临床案例教学、决策复盘、
+  system: '你是南方医院教育技能智能体，负责为年轻医师提供骨科临床案例教学、决策复盘、
+
     指南速查和学习路径规划。所有教学案例均为合成病例，不包含真实患者数据。
+
     遵循住培教学大纲和骨科专科医师培训标准。
+
+    '
   temperature: 0.3
   max_tokens: 2048
-
 tools:
-  - name: case_teaching
-    description: 典型病例教学 (合成病例不含真实患者数据)
-    handler: education.case_teaching
-    input: {fracture_type: str, difficulty: str}
-
-  - name: decision_review
-    description: 决策复盘 — 智能体推荐 vs 实际临床决策对比分析
-    handler: education.decision_review
-    input: {case_id: str, ai_recommendation: dict, actual_decision: dict}
-
-  - name: guideline_quick_ref
-    description: 指南速查 — NICE/AAOS/NHSA 核心要点卡片
-    handler: education.guideline_quick_ref
-    input: {guideline: str, topic: str}
-
-  - name: learning_path
-    description: 学习路径规划 — 住院医师→主治医师→专家三阶段
-    handler: education.learning_path
-    input: {role: str, department: str}
-
+- name: case_teaching
+  description: 典型病例教学 (合成病例不含真实患者数据)
+  handler: education.case_teaching
+  input:
+    fracture_type: str
+    difficulty: str
+- name: decision_review
+  description: 决策复盘 — 智能体推荐 vs 实际临床决策对比分析
+  handler: education.decision_review
+  input:
+    case_id: str
+    ai_recommendation: dict
+    actual_decision: dict
+- name: guideline_quick_ref
+  description: 指南速查 — NICE/AAOS/NHSA 核心要点卡片
+  handler: education.guideline_quick_ref
+  input:
+    guideline: str
+    topic: str
+- name: learning_path
+  description: 学习路径规划 — 住院医师→主治医师→专家三阶段
+  handler: education.learning_path
+  input:
+    role: str
+    department: str
 guard:
-  triggers: [错误信息传播, 超指南推荐]
+  triggers:
+  - 错误信息传播
+  - 超指南推荐
   high_risk_scenarios:
-    - 教学案例被误认为真实临床建议
-    - 指南引用已过时版本
+  - 教学案例被误认为真实临床建议
+  - 指南引用已过时版本
+  citation:
+    required: true
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: light
+stages:
+- order: 1
+  id: case-prep
+  label: 案例准备
+  desc: 典型病例筛选(合成病例)、指南要点提取、决策路径可视化
+  role_ids:
+  - attending
+  - resident
+- order: 2
+  id: teaching
+  label: 案例教学
+  desc: AI推荐vs实际临床决策对比、决策要点讨论、指南快速参考
+  role_ids:
+  - attending
+  - resident
+  - intern
+- order: 3
+  id: assessment
+  label: 学习评估
+  desc: 知识要点测试、临床推理能力评估、学习路径进度跟踪
+  role_ids:
+  - attending

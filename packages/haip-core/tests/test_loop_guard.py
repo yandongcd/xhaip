@@ -5,9 +5,9 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
-from haip.loop import AgentLoop, _summarize_tool_result  # noqa: E402
-from haip.llm.mock import MockProvider  # noqa: E402
-from haip.llm import ChatResponse, ToolCall  # noqa: E402
+from haip.llm import ChatResponse, ToolCall
+from haip.llm.mock import MockProvider
+from haip.loop import AgentLoop, _summarize_tool_result
 
 
 class TestSummarizeResult:
@@ -113,8 +113,8 @@ class TestGuardIntegration:
 
     def test_loop_result_has_guard_field(self):
         """call_with_loop result contains guard field."""
-        import haip.llm
         import haip.agent
+        import haip.llm
 
         # project_root = xhaip root (4 levels up from haip-core/tests)
         root = project_root.parent  # xhaip root

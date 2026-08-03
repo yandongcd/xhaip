@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>xHAIP · 科室能力成熟度仪表盘</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', path='dashboard/style.css') }}?v=2">
+<script defer src="{{ url_for('static', path='dashboard/app.js') }}?v=2"></script>
+<script>window.DASHBOARD_DATA = {{ DASHBOARD_DATA | tojson | safe }};</script>
+<script defer src="{{ url_for('static', path='dashboard/alpine.min.js') }}"></script>
+</head>
+<body x-data="dashboard" x-init="init()" id="app">
+
+<header class="header">
+  <div class="header-left">
+    <h1>xHAIP · 科室能力成熟度仪表盘</h1>
+    <div class="subtitle">TOGAF 10 架构治理</div>
+  </div>
+  <div class="header-actions">
+    <button class="btn-icon" @click="toggleTheme()" x-bind:aria-label="theme === 'dark' ? '切换到亮色模式' : '切换到深色模式'">
+      <template x-if="theme === 'dark'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </template>
+      <template x-if="theme === 'light'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </template>
+    </button>
+    <div class="export-dropdown">
+      <button class="btn" @click="toggleExport()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        导出
+      </button>
+      <div class="export-panel" x-bind:class="{ open: exportOpen }">
+        <button class="export-item" @click="doExportCSV()">导出 CSV</button>
+        <button class="export-item" @click="doExportPDF()">打印 PDF</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="content">
+  <template x-if="error">
+    <div class="error-state">
+      <div class="error-msg" x-text="'加载失败: ' + error"></div>
+      <button class="btn" @click="retry()">重试</button>
+    </div>
+  </template>
+
+  <template x-if="!error">
+    <div>
+      {% include 'dashboard/_stats_bar.html' %}
+      {% include 'dashboard/_toolbar.html' %}
+      {% include 'dashboard/_drilldown.html' %}
+      {% include 'dashboard/_heatmap_grid.html' %}
+      {% include 'dashboard/_detail_table.html' %}
+    </div>
+  </template>
+</div>
+
+</body>
+</html>

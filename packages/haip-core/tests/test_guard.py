@@ -6,9 +6,9 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
-from haip.guard.citation import Citation, CitationEngine, T1_KEYWORDS, T2_KEYWORDS
+from haip.guard.citation import T1_KEYWORDS, T2_KEYWORDS, Citation, CitationEngine
 from haip.guard.confidence import ConfidenceScore, ConfidenceScorer
-from haip.guard.verifier import GuardResult, GuardVerifier, HIGH_RISK_SCENARIOS
+from haip.guard.verifier import HIGH_RISK_SCENARIOS, GuardResult, GuardVerifier
 
 
 class TestCitationEngine:

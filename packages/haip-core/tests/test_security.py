@@ -14,9 +14,9 @@ sys.path.insert(0, str(xhaip_root / "packages" / "haip-hospital" / "modules"))
 import pytest
 from fastapi.testclient import TestClient
 
+from haip.agent import DomainPlugin, _registry, load_from_dir, register
 from haip.knowledge import KnowledgeStore
 from haip.operations import ReleaseManager
-from haip.agent import load_from_dir, _registry, DomainPlugin, register
 
 YAML_DIR = xhaip_root / "packages" / "haip-hospital" / "agents" / "definitions"
 

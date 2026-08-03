@@ -1,0 +1,37 @@
+<div class="stats-row">
+  <div class="stat-card l3">
+    <div class="stat-value" x-text="tiers['L3 成熟'] || 0"></div>
+    <div class="stat-label">L3 成熟</div>
+  </div>
+  <div class="stat-card l2">
+    <div class="stat-value" x-text="tiers['L2 发展中'] || 0"></div>
+    <div class="stat-label">L2 发展中</div>
+  </div>
+  <div class="stat-card l1">
+    <div class="stat-value" x-text="tiers['L1 起步'] || 0"></div>
+    <div class="stat-label">L1 起步</div>
+  </div>
+  <div class="stat-card l0">
+    <div class="stat-value" x-text="tiers['L0 未覆盖'] || 0"></div>
+    <div class="stat-label">L0 未覆盖</div>
+  </div>
+  <div class="stat-card avg">
+    <div class="stat-value" x-text="avg_score"></div>
+    <div class="stat-label">均分</div>
+  </div>
+</div>
+
+<div class="tier-bar-wrap">
+  <div class="tier-bar">
+    <div class="tier-l3" x-bind:style="{ width: tierPct('L3 成熟') + '%' }"></div>
+    <div class="tier-l2" x-bind:style="{ width: tierPct('L2 发展中') + '%' }"></div>
+    <div class="tier-l1" x-bind:style="{ width: tierPct('L1 起步') + '%' }"></div>
+    <div class="tier-l0" style="flex:1"></div>
+  </div>
+  <div class="tier-legend">
+    <span><span class="dot dot-l3"></span> L3 成熟 &ge;80</span>
+    <span><span class="dot dot-l2"></span> L2 发展中 50-79</span>
+    <span><span class="dot dot-l1"></span> L1 起步 20-49</span>
+    <span><span class="dot dot-l0"></span> L0 未覆盖 &lt;20</span>
+  </div>
+</div>

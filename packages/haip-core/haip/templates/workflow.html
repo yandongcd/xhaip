@@ -1,0 +1,37 @@
+{% extends "_base.html" %}
+{% block title %}{{ wf_name }} · Workflow — xHAIP{% endblock %}
+{% block breadcrumb %}<span class="breadcrumb"> / <a href="/">Portal</a> / 工作流: {{ wf_name }}</span>{% endblock %}
+
+{% block content %}
+<div class="workflow-page" x-data="workflowPage">
+  <div class="process-header"><h2>工作流: {{ wf_name }}</h2></div>
+
+  <div class="dag-container" id="dagSvg">
+    <svg viewBox="0 0 800 400" role="img" aria-label="DAG workflow graph for {{ wf_name }}">
+      {% for layer in layers %}
+      {% set ly = 20 + loop.index0 * 80 %}
+      {% for node in layer.nodes %}
+      {% set nx = 50 + loop.index0 * 250 %}
+      <rect x="{{ nx }}" y="{{ ly }}" width="{{ node.w }}" height="50" rx="8"
+            class="dag-node {{ node.status }}" id="node-{{ node.id }}">
+        <title>{{ node.id }}: {{ node.label }}</title>
+      </rect>
+      <text x="{{ nx + 10 }}" y="{{ ly + 30 }}" class="dag-label" fill="currentColor" font-size="11">{{ node.label[:12] }}</text>
+      {% endfor %}
+      <!-- Edges -->
+      {% for node in layer.nodes %}{% for tid in node.to %}{% set tx = 50 + (loop.parent.loop.index0) * 250 + 100 %}{% set ty = ly + 80 %}<line x1="{{ 50 + loop.index0 * 250 + 100 }}" y1="{{ ly + 50 }}" x2="{{ tx }}" y2="{{ ty }}" class="dag-edge"/>{% endfor %}{% endfor %}
+      {% endfor %}
+    </svg>
+  </div>
+
+  <div class="dag-legend">
+    <span><span class="dag-dot active"></span> 执行中</span>
+    <span><span class="dag-dot done"></span> 已完成</span>
+    <span><span class="dag-dot pending"></span> 待执行</span>
+    <span><span class="dag-dot routed"></span> 路由节点</span>
+  </div>
+</div>
+{% endblock %}
+{% block head_extra %}
+<style>.dag-node { stroke: var(--border); stroke-width: 2; transition: fill .3s; } .dag-node.active { fill: var(--brand-light); stroke: var(--brand); } .dag-node.done { fill: var(--success-light); stroke: var(--success); } .dag-node.pending { fill: var(--muted); } .dag-node.routed { fill: var(--warning-light); stroke: var(--warning); } .dag-edge { stroke: var(--text-tertiary); stroke-width: 1.5; marker-end: url(#arrow); } .dag-container { overflow: auto; max-width: 100%; } .dag-legend { display: flex; gap: 16px; margin-top: 12px; } .dag-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; } .dag-dot.active { background: var(--brand); } .dag-dot.done { background: var(--success); } .dag-dot.pending { background: var(--muted); } .dag-dot.routed { background: var(--warning); }</style>
+{% endblock %}

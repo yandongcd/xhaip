@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ agent.cn_name }} — xHAIP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fafbfc; --surface: #fff; --border: #e2e8f0;
+  --text: #1a202c; --text2: #718096; --text3: #a0aec0;
+  --brand: #0d7377; --brand-light: #e0f7f8; --brand-hover: #095f63;
+  --success: #059669; --success-light: #d1fae5;
+  --warning: #d97706; --warning-light: #fef3c7;
+  --danger: #dc2626; --danger-light: #fee2e2;
+  --amber: #d97706; --blue: #2563eb; --purple: #7c3aed;
+  --shadow: 0 1px 3px rgba(0,0,0,.06); --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+  --radius: 8px; --radius-lg: 12px;
+}
+[data-theme="dark"] {
+  --bg: #0f172a; --surface: #1e293b; --border: #334155;
+  --text: #f1f5f9; --text2: #94a3b8; --text3: #64748b;
+  --brand-light: rgba(13,115,119,.15);
+  --success-light: rgba(5,150,105,.15);
+  --warning-light: rgba(217,119,6,.15);
+  --danger-light: rgba(220,38,38,.15);
+  --shadow: 0 1px 3px rgba(0,0,0,.2); --shadow-md: 0 4px 12px rgba(0,0,0,.3);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.header { height: 52px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; flex-shrink: 0; justify-content: space-between; }
+.header-left { display: flex; align-items: center; gap: 10px; }
+.header-home { font-size: 18px; font-weight: 700; color: var(--brand); text-decoration: none; }
+.header-home:hover { color: var(--brand-hover); }
+.header-sep { color: var(--text3); }
+.header-title { font-size: 15px; font-weight: 600; }
+.header-actions { display: flex; gap: 8px; align-items: center; }
+.btn-icon { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all .15s; }
+.btn-icon:hover { background: var(--brand); color: #fff; border-color: var(--brand); }
+
+.layout { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+
+.patient-col { width: 280px; flex-shrink: 0; background: var(--surface); min-height: 0; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+.patient-col-header { padding: 12px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.patient-col-header h3 { font-size: 13px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 8px; }
+.patient-search { width: 100%; padding: 7px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; background: var(--bg); color: var(--text); font-family: inherit; outline: none; transition: border-color .15s; }
+.patient-search:focus { border-color: var(--brand); }
+.patient-search::placeholder { color: var(--text3); }
+.patient-list { flex: 1; overflow-y: auto; }
+.patient-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; border-bottom: 1px solid var(--border); transition: all .15s; }
+.patient-item:hover { background: var(--brand-light); }
+.patient-item.active { background: var(--brand-light); border-left: 3px solid var(--brand); }
+.patient-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--brand); flex-shrink: 0; border: 2px solid var(--brand-light); }
+.patient-item.active .patient-avatar { background: var(--brand); color: #fff; border-color: var(--brand); }
+.patient-info { flex: 1; min-width: 0; }
+.patient-name { font-size: 13px; font-weight: 600; }
+.patient-meta { font-size: 11px; color: var(--text2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.patient-status { font-size: 10px; margin-top: 2px; }
+.dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; }
+.dot-pending { background: var(--amber); }
+.dot-processing { background: var(--blue); }
+.dot-done { background: var(--success); }
+.patient-empty { padding: 24px 16px; text-align: center; color: var(--text3); font-size: 13px; }
+
+.middle-col { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--bg); }
+.role-bar { display: flex; gap: 0; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 16px; flex-shrink: 0; overflow-x: auto; }
+.role-tab { padding: 10px 20px; border: none; background: transparent; color: var(--text2); font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; white-space: nowrap; transition: all .15s; display: flex; align-items: center; gap: 6px; }
+.role-tab:hover { color: var(--text); }
+.role-tab.active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
+.role-emoji { font-size: 16px; }
+
+.process-area { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+.stage-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 20px; box-shadow: var(--shadow); }
+.stage-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.stage-card-title { font-size: 15px; font-weight: 700; color: var(--brand); }
+.stage-card-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+.badge-completed { background: var(--success-light); color: var(--success); }
+.badge-active { background: var(--brand-light); color: var(--brand); }
+.badge-pending { background: var(--bg); color: var(--text3); }
+.patient-brief { display: flex; gap: 12px; align-items: center; padding: 8px 12px; background: var(--bg); border-radius: var(--radius); margin-bottom: 10px; font-size: 13px; }
+.patient-brief strong { color: var(--brand); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.patient-brief span { color: var(--text2); font-size: 12px; }
+.tool-form { margin-bottom: 10px; }
+.tool-form label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 4px; font-weight: 600; }
+.btn-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.btn { padding: 7px 18px; border: none; border-radius: var(--radius); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all .15s; }
+.btn:active { transform: scale(.97); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-primary { background: var(--brand); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--brand-hover); box-shadow: var(--shadow-md); }
+.btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--brand); color: var(--brand); }
+.result-box { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; font-size: 12px; line-height: 1.7; font-family: 'SF Mono', Consolas, monospace; white-space: pre-wrap; max-height: 240px; overflow-y: auto; color: var(--text2); }
+.result-box .ok { color: var(--success); }
+.result-box .warn { color: var(--warning); }
+.result-box .danger { color: var(--danger); }
+.result-box .key { color: var(--brand); }
+.loading-indicator { display: flex; align-items: center; gap: 8px; padding: 8px 0; color: var(--text2); font-size: 13px; }
+.loading-dots { display: flex; gap: 4px; }
+.loading-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); animation: dotBounce 1.4s infinite ease-in-out both; }
+.loading-dots span:nth-child(1){ animation-delay:0s; }
+.loading-dots span:nth-child(2){ animation-delay:.16s; }
+.loading-dots span:nth-child(3){ animation-delay:.32s; }
+@keyframes dotBounce { 0%,80%,100%{transform:scale(1);opacity:.3} 40%{transform:scale(1.3);opacity:1} }
+
+.next-step-bar { padding: 10px 16px; background: var(--surface); border-top: 1px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; }
+.next-step-info { font-size: 12px; color: var(--text2); }
+.next-step-info strong { color: var(--brand); }
+.btn-next { padding: 8px 24px; border: none; border-radius: var(--radius); font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; background: linear-gradient(135deg, var(--brand) 0%, var(--brand-hover) 100%); color: #fff; transition: all .15s; display: flex; align-items: center; gap: 6px; }
+.btn-next:hover:not(:disabled) { box-shadow: 0 4px 16px rgba(13,115,119,.35); transform: translateY(-1px); }
+.btn-next:disabled { background: var(--border); color: var(--text3); }
+.btn-next-inline { padding: 7px 18px; border: 2px solid var(--brand); border-radius: var(--radius); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; background: transparent; color: var(--brand); transition: all .15s; margin-left: auto; }
+.btn-next-inline:hover:not(:disabled) { background: var(--brand); color: #fff; }
+.btn-next-inline:disabled { border-color: var(--border); color: var(--text3); cursor: not-allowed; }
+.auto-params { font-size: 12px; color: var(--text2); background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; font-family: 'SF Mono', Consolas, monospace; line-height: 1.6; white-space: pre-wrap; max-height: 120px; overflow-y: auto; }
+
+.stage-col { width: 320px; flex-shrink: 0; background: var(--surface); min-height: 0; border-left: 1px solid var(--border); display: flex; flex-direction: column; }
+.stage-col-header { padding: 16px 16px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.stage-col-header h3 { font-size: 13px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .03em; }
+.stage-col-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+.stage-item { display: flex; gap: 12px; padding: 12px 16px; cursor: pointer; border-left: 3px solid transparent; transition: all .15s; position: relative; }
+.stage-item:hover { background: var(--bg); }
+.stage-item.active { background: var(--brand-light); border-left-color: var(--brand); }
+.stage-item.completed .stage-dot { background: var(--success); color: #fff; border-color: var(--success); }
+.stage-item.active .stage-dot { background: var(--brand); color: #fff; border-color: var(--brand); }
+.stage-dot { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; border: 2px solid var(--border); background: var(--bg); color: var(--text2); transition: all .15s; position: relative; z-index: 2; }
+.stage-body { flex: 1; min-width: 0; }
+.stage-label { font-size: 13px; font-weight: 600; }
+.stage-desc { font-size: 11px; color: var(--text2); margin-top: 2px; line-height: 1.4; }
+.stage-roles { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+.stage-role-tag { font-size: 10px; padding: 1px 6px; border-radius: 10px; background: var(--bg); color: var(--text2); }
+.stage-connector { position: absolute; left: 29px; top: 40px; width: 2px; height: calc(100% - 28px); background: var(--border); z-index: 1; }
+.stage-item.completed .stage-connector { background: var(--success); }
+.stage-item:last-child .stage-connector { display: none; }
+
+.empty-state { padding: 40px 20px; text-align: center; color: var(--text3); display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.empty-state .icon { font-size: 40px; }
+.empty-state p { font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <a href="/" class="header-home">xHAIP</a>
+    <span class="header-sep">/</span>
+    <span class="header-title">{{ agent.cn_name }}</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn-icon" id="btn-theme" onclick="toggleTheme()">🌙</button>
+  </div>
+</div>
+
+<div class="layout" x-data="agentPage" x-init="init()">
+  <!-- LEFT: Patients -->
+  <div class="patient-col">
+    <div class="patient-col-header">
+      <h3>待跟踪患者 (<span x-text="filteredPatients.length"></span>)</h3>
+      <input class="patient-search" x-model="patientSearch" placeholder="搜索: 姓名 / ID / 诊断..." aria-label="搜索患者">
+    </div>
+    <div class="patient-list">
+      <template x-for="p in filteredPatients" :key="p.patient_id">
+        <div class="patient-item" :class="{ active: activePatientId === p.patient_id }" @click="selectPatient(p)" role="button" tabindex="0">
+          <div class="patient-avatar" x-text="(p.name||p.patient_id).charAt(0)"></div>
+          <div class="patient-info">
+            <div class="patient-name" x-text="p.name || p.patient_id"></div>
+            <div class="patient-meta" x-text="(p.age||'?') + '岁 ' + (p.gender||'') + ' · ' + (p.department||'')"></div>
+            <div class="patient-status"><span :class="'dot dot-' + (patientStageStatus(p.patient_id) || 'pending')"></span><span x-text="patientStageLabel(p.patient_id)"></span></div>
+          </div>
+        </div>
+      </template>
+      <div class="patient-empty" x-show="filteredPatients.length === 0">没有匹配的患者</div>
+    </div>
+  </div>
+
+  <!-- MIDDLE: Processing -->
+  <div class="middle-col">
+    {% if agent.ui.roles %}
+    <div class="role-bar">
+      {% for r in agent.ui.roles %}
+      <button class="role-tab" :class="{ active: activeRole === '{{ r.id }}' }" @click="switchRole('{{ r.id }}')">
+        <span class="role-emoji">{{ r.emoji }}</span><span>{{ r.label }}</span>
+      </button>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="process-area" id="processArea">
+      <div class="empty-state" x-show="!activePatientId">
+        <div class="icon">🏥</div>
+        <p>请在左侧选择一个待跟踪患者</p>
+        <p style="font-size:12px;color:var(--text3)">选择患者后开始诊疗流程</p>
+      </div>
+
+      <div class="stage-card" x-show="activePatientId">
+        {% if agent.stages %}
+        <div class="stage-card-header">
+          <div class="stage-card-title" x-text="stageLabel(activeStage)"></div>
+          <span class="stage-card-badge" :class="'badge-' + (isStageCompleted(activeStage) ? 'completed' : 'active')" x-text="isStageCompleted(activeStage) ? '✓ 已完成' : '进行中'"></span>
+        </div>
+        {% else %}
+        <div class="stage-card-header">
+          <div class="stage-card-title">{{ agent.tools[0].description[:30] if agent.tools else '工具调用' }}</div>
+        </div>
+        {% endif %}
+
+        <div class="patient-brief" x-show="currentPatient">
+          <div class="patient-avatar" style="width:28px;height:28px;font-size:12px;" x-text="(currentPatient.name||currentPatient.patient_id).charAt(0)"></div>
+          <strong x-text="currentPatient.patient_id + ' ' + (currentPatient.name||'')"></strong>
+          <span x-text="(currentPatient.age||'') + '岁 ' + (currentPatient.sex||'')"></span>
+          <span style="color:var(--text3)" x-text="currentPatient.diagnosis || ''"></span>
+        </div>
+
+        <div class="tool-form" x-show="activeTool">
+          <label x-text="'执行工具: ' + activeTool"></label>
+          <div class="auto-params" x-show="toolParamsHint" x-text="toolParamsHint"></div>
+          <div class="btn-row">
+            <button class="btn btn-primary" @click="executeTool()" :disabled="loading">
+              <span x-show="!loading">执行</span>
+              <span x-show="loading" style="display:flex;align-items:center;gap:6px;"><span class="loading-dots"><span></span><span></span><span></span></span>处理中...</span>
+            </button>
+            <button class="btn btn-secondary" @click="resetTool()">重置</button>
+            {% if agent.stages %}
+            <button class="btn btn-next-inline" @click="goNextStage()" x-show="nextStage()" :disabled="loading">下一步 →</button>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="result-box" x-show="currentResult" x-html="formatResult(currentResult)"></div>
+        <div class="loading-indicator" x-show="loading"><span class="loading-dots"><span></span><span></span><span></span></span><span x-text="loadingText"></span></div>
+        <div class="result-box" x-show="!currentResult && !loading && activePatientId && isStageCompleted(activeStage)" style="text-align:center;color:var(--success)">✓ 已执行完成</div>
+      </div>
+    </div>
+
+    {% if agent.stages %}
+    <div class="next-step-bar">
+      <div class="next-step-info">
+        当前: <strong x-text="stageLabel(activeStage)"></strong>
+        <template x-if="nextStage()"><span> → 下一步: <strong x-text="stageLabel(nextStage())"></strong></span></template>
+      </div>
+      <button class="btn-next" @click="goNextStage()" :disabled="!nextStage() || loading" x-show="nextStage()">下一步: <span x-text="stageShortLabel(nextStage())"></span> →</button>
+      <button class="btn-next" x-show="!nextStage()" style="background:var(--success);" @click="finalize()">完成流程 ✓</button>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- RIGHT: Stage Flow -->
+  {% if agent.stages %}
+  <div class="stage-col">
+    <div class="stage-col-header"><h3>诊疗流程</h3></div>
+    <div class="stage-col-list">
+      {% for s in agent.stages %}
+      <div class="stage-item" x-show="isStageVisible('{{ s.id }}')" :class="{ active: activeStage === '{{ s.id }}', completed: isStageCompleted('{{ s.id }}') }" @click="goToStage('{{ s.id }}')" role="button" tabindex="0">
+        <div class="stage-dot" x-text="isStageCompleted('{{ s.id }}') ? '✓' : '{{ s.order }}'"></div>
+        <div class="stage-body">
+          <div class="stage-label">{{ s.label }}</div>
+          <div class="stage-desc">{{ s.desc[:60] }}{% if s.desc|length > 60 %}...{% endif %}</div>
+          {% if s.role_ids and agent.ui.roles %}
+          <div class="stage-roles">{% for rid in s.role_ids %}<span class="stage-role-tag">{% for r in agent.ui.roles %}{% if r.id == rid %}{{ r.emoji }} {{ r.label[:4] }}{% endif %}{% endfor %}</span>{% endfor %}</div>
+          {% endif %}
+        </div>
+        {% if not loop.last %}<div class="stage-connector"></div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script defer src="{{ url_for('static', path='dashboard/alpine.min.js') }}"></script>
+<script>
+window.AGENT = {{ agent | tojson | safe }};
+window.PATIENTS = {{ patients | tojson | safe }};
+</script>
+<script>
+(function(){
+  var t = (function(){try{return localStorage.getItem('xhaip_theme')}catch(e){}})()||'light';
+  document.documentElement.setAttribute('data-theme', t);
+  var btn = document.getElementById('btn-theme');
+  if(btn) btn.textContent = t==='dark'?'☀️':'🌙';
+})();
+function toggleTheme(){
+  var cur = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme', cur);
+  try{localStorage.setItem('xhaip_theme',cur)}catch(e){}
+  var btn = document.getElementById('btn-theme');
+  if(btn) btn.textContent = cur==='dark'?'☀️':'🌙';
+}
+
+document.addEventListener('alpine:init', function(){
+  Alpine.data('agentPage', function(){
+    var STAGES = AGENT.stages || [];
+    var TOOLS = AGENT.tools || [];
+    var LS_KEY = 'xhaip_agent_' + AGENT.name;
+    var HAS_STAGES = STAGES.length > 0;
+    var HAS_ROLES = (AGENT.ui && AGENT.ui.roles && AGENT.ui.roles.length) > 0;
+
+    // Build stage-tool map
+    var stageToolMap = {};
+    if (HAS_STAGES) {
+      STAGES.forEach(function(s, i){
+        stageToolMap[s.id] = (TOOLS[i % TOOLS.length] || {}).name || '';
+      });
+    }
+
+    return {
+      patients: PATIENTS || [],
+      activePatientId: '',
+      patientSearch: '',
+      activeRole: HAS_ROLES ? AGENT.ui.roles[0].id : '',
+      _activeStage: HAS_STAGES ? STAGES[0].id : '',
+      activeTool: HAS_STAGES ? stageToolMap[STAGES[0].id] : ((TOOLS[0]||{}).name || ''),
+      toolParamsHint: '',
+      currentResult: '',
+      loading: false,
+      loadingText: '',
+      patientStates: {},
+
+      getPatientState: function(){
+        var pid = this.activePatientId;
+        if (!pid) return { completedStages: [], stageResults: {}, activeStage: HAS_STAGES ? STAGES[0].id : '' };
+        if (!this.patientStates[pid]) {
+          this.patientStates[pid] = {
+            completedStages: [],
+            stageResults: {},
+            activeStage: HAS_STAGES ? STAGES[0].id : ''
+          };
+        }
+        return this.patientStates[pid];
+      },
+
+      get completedStages(){ return this.getPatientState().completedStages; },
+      set completedStages(v){ this.getPatientState().completedStages = v; },
+      get stageResults(){ return this.getPatientState().stageResults; },
+      set stageResults(v){ this.getPatientState().stageResults = v; },
+
+      get activeStage(){
+        if (!HAS_STAGES) return '';
+        return this.getPatientState().activeStage || STAGES[0].id;
+      },
+      set activeStage(v){
+        if (HAS_STAGES) this.getPatientState().activeStage = v;
+      },
+
+      get filteredPatients(){
+        var q = (this.patientSearch||'').trim().toLowerCase();
+        if (!q) return this.patients||[];
+        var self = this;
+        return (this.patients||[]).filter(function(p){
+          return [p.patient_id,p.name,p.diagnosis,p.department].filter(Boolean).some(function(v){ return String(v).toLowerCase().indexOf(q)>=0; });
+        });
+      },
+
+      get currentPatient(){
+        var self = this;
+        return (this.patients||[]).find(function(p){ return p.patient_id===self.activePatientId; })||null;
+      },
+
+      stageLabel: function(stageId){
+        var s = STAGES.find(function(x){ return x.id===stageId; });
+        return s ? s.order+'. '+s.label : stageId;
+      },
+      stageShortLabel: function(stageId){
+        var s = STAGES.find(function(x){ return x.id===stageId; });
+        return s ? s.label : stageId;
+      },
+      isStageCompleted: function(stageId){
+        return this.completedStages.indexOf(stageId)>=0;
+      },
+      isStageVisible: function(stageId){
+        if (!HAS_ROLES) return true;
+        var s = STAGES.find(function(x){ return x.id===stageId; });
+        if (!s) return false;
+        var roleIds = s.role_ids||[];
+        return roleIds.length===0 || roleIds.indexOf(this.activeRole)>=0;
+      },
+      get visibleStages(){
+        var self = this;
+        return STAGES.filter(function(s){ return self.isStageVisible(s.id); });
+      },
+      nextStage: function(){
+        var self = this;
+        var idx = STAGES.findIndex(function(s){ return s.id===self.activeStage; });
+        if (idx<0) return '';
+        for (var i=idx+1; i<STAGES.length; i++){
+          if (this.isStageVisible(STAGES[i].id)) return STAGES[i].id;
+        }
+        return '';
+      },
+      switchRole: function(roleId){
+        this.activeRole = roleId;
+        if (HAS_STAGES){
+          var firstVis = this.visibleStages[0];
+          if (firstVis && !this.isStageVisible(this.activeStage)){
+            this.activeStage = firstVis.id;
+            this.currentResult = this.stageResults[this.activeStage]||'';
+            this._initTool();
+          }
+        }
+        this.saveState();
+      },
+      patientStageStatus: function(pid){
+        var ps = this.patientStates[pid];
+        if (!ps || !ps.completedStages||!ps.completedStages.length) return 'pending';
+        if (ps.completedStages.length >= STAGES.length) return 'done';
+        return 'processing';
+      },
+      patientStageLabel: function(pid){
+        var ps = this.patientStates[pid];
+        if (!ps || !ps.completedStages||!ps.completedStages.length) return '待处理';
+        if (ps.completedStages.length >= STAGES.length) return '全部完成 ✓';
+        var s = STAGES.find(function(x){ return x.id===ps.activeStage; });
+        return s ? s.order+'. '+s.label : '处理中';
+      },
+      init: function(){
+        if (!HAS_STAGES){
+          this.activeTool = (TOOLS[0]||{}).name || '';
+          this.toolParamsHint = '';
+        }
+        try {
+          var saved = JSON.parse(localStorage.getItem(LS_KEY)||'{}');
+          if (saved.activePatientId) this.activePatientId = saved.activePatientId;
+          if (saved.activeRole && HAS_ROLES) this.activeRole = saved.activeRole;
+          if (saved.patientStates) this.patientStates = saved.patientStates;
+          if (this.activePatientId){
+            var ps = this.patientStates[this.activePatientId];
+            if (ps && ps.stageResults && ps.activeStage){
+              this.currentResult = ps.stageResults[ps.activeStage]||'';
+            }
+          }
+        }catch(e){}
+        if (this.activePatientId) this._initTool();
+      },
+      saveState: function(){
+        try {
+          localStorage.setItem(LS_KEY, JSON.stringify({
+            activePatientId: this.activePatientId,
+            activeRole: this.activeRole,
+            patientStates: this.patientStates
+          }));
+        }catch(e){}
+      },
+      selectPatient: function(p){
+        this.activePatientId = p.patient_id;
+        var ps = this.getPatientState();
+        if (HAS_STAGES){
+          this.currentResult = ps.stageResults[ps.activeStage]||'';
+        } else {
+          this.currentResult = '';
+        }
+        this._initTool();
+        this.saveState();
+      },
+      goToStage: function(stageId){
+        if (!HAS_STAGES) return;
+        this.activeStage = stageId;
+        this.currentResult = this.stageResults[stageId]||'';
+        this._initTool();
+        var el = document.getElementById('processArea');
+        if (el) el.scrollTop = 0;
+        this.saveState();
+      },
+      goNextStage: function(){
+        var next = this.nextStage();
+        if (next){
+          this.activeStage = next;
+          this.currentResult = this.stageResults[next]||'';
+          this._initTool();
+          var el = document.getElementById('processArea');
+          if (el) el.scrollTop = 0;
+          this.saveState();
+        }
+      },
+      finalize: function(){
+        alert('流程已全部完成。可在左侧选择其他患者继续。');
+      },
+      _initTool: function(){
+        if (HAS_STAGES){
+          this.activeTool = stageToolMap[this.activeStage]||'';
+        } else {
+          this.activeTool = (TOOLS[0]||{}).name||'';
+        }
+        var p = this.currentPatient;
+        if (!p){ this.toolParamsHint = ''; return; }
+        var labs = p.lab_results||{};
+        var params = { patient_id: this.activePatientId };
+        var added = false;
+        Object.keys(labs).forEach(function(k){
+          var v = labs[k];
+          if (v !== null && v !== undefined && v !== '' && v !== 0){
+            if (typeof v === 'number') params[k] = Math.round(v*10)/10;
+            else params[k] = v;
+            added = true;
+          }
+        });
+        this.toolParamsHint = added ? JSON.stringify(params,null,2) : 'patient_id=' + this.activePatientId;
+      },
+      resetTool: function(){ this._initTool(); },
+      buildToolParams: function(){
+        var p = this.currentPatient;
+        var labs = (p&&p.lab_results)||{};
+        var params = { patient_id: this.activePatientId };
+        Object.keys(labs).forEach(function(k){
+          var v = labs[k];
+          if (v !== null && v !== undefined && v !== ''){
+            params[k] = typeof v==='number' ? Math.round(v*10)/10 : v;
+          }
+        });
+        return params;
+      },
+      executeTool: async function(){
+        if (!this.activePatientId||!this.activeTool||this.loading) return;
+        this.loading = true;
+        this.loadingText = '正在执行 ' + this.activeTool + '...';
+        var params = this.buildToolParams();
+        try {
+          var resp = await fetch('/api/call', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ agent: AGENT.name, tool: this.activeTool, params: params })
+          });
+          var data = await resp.json();
+          this.loadingText = '处理结果中...';
+          this.currentResult = data.reply||JSON.stringify(data,null,2).slice(0,1000);
+          this.stageResults[this.activeStage] = this.currentResult;
+          if (data.status==='ok' && HAS_STAGES){
+            if (this.completedStages.indexOf(this.activeStage)<0){
+              this.completedStages.push(this.activeStage);
+            }
+          }
+          this.saveState();
+        }catch(e){
+          this.currentResult = '请求失败: ' + e.message;
+        }
+        this.loading = false;
+      },
+      formatResult: function(text){
+        if (!text) return '';
+        return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      }
+    };
+  });
+});
+</script>
+</body>
+</html>

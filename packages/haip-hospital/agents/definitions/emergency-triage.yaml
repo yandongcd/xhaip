@@ -1,0 +1,95 @@
+name: emergency-triage
+cn_name: 急诊预检分诊智能体
+version: 1.0.0
+type: business
+trust_tier: deep
+department: 急诊科
+port: 8840
+aliases:
+- 急诊分诊
+- 三区四级
+- 预检分诊
+- triage
+prompt:
+  system: 你是南方医院急诊预检分诊AI助手。请基于三区四级分诊标准，对患者主诉、生命体征和危险信号进行综合评估，输出分诊建议。所有建议仅供分诊护士参考，最终以医护人员现场判断为准。
+  temperature: 0.2
+tools:
+- name: triage_assess
+  description: 三区四级分诊评估 — 综合主诉/生命体征/危险信号 → 分级(I/II/III/IV) + 分区(红/黄/绿)
+  handler: emergency_triage.triage_assess
+  input:
+    patient_id: str
+    chief_complaint: str
+    vital_signs: dict
+- name: red_flag_detect
+  description: 危险信号识别 — 胸痛/卒中/创伤/呼吸困难/意识障碍/休克/过敏/大出血
+  handler: emergency_triage.red_flag_detect
+  input:
+    patient_id: str
+    chief_complaint: str
+    vital_signs: dict
+- name: green_channel_check
+  description: 绿色通道触发检查 — 胸痛中心/卒中中心/创伤中心
+  handler: emergency_triage.green_channel_check
+  input:
+    patient_id: str
+    chief_complaint: str
+    red_flags: list
+- name: triage_record
+  description: 分诊记录生成 — 结构化HIS-ready分诊记录
+  handler: emergency_triage.triage_record
+  input:
+    patient_id: str
+    triage_level: str
+    triage_zone: str
+    red_flags: list
+    basis: str
+- name: mass_casualty
+  description: '群伤检伤分类(START) — 适用于灾难/批量伤员: RED立即/YELLOW延迟/GREEN轻伤/BLACK死亡'
+  handler: emergency_triage.mass_casualty_triage
+  input:
+    patients: list
+guard:
+  triggers:
+  - 胸痛
+  - 卒中FAST
+  - 严重创伤
+  - 过敏性休克
+  - 意识障碍
+  high_risk_scenarios:
+  - 胸痛+大汗+低血压
+  - 突发面瘫+肢体无力+言语不清
+  - 严重呼吸困难+SpO2<90%
+  - 收缩压<90mmHg+意识改变
+  citation:
+    required: true
+    min_sources: 2
+    min_trust: T1
+stages:
+- order: 1
+  id: triage
+  label: 分诊评估
+  desc: 三区四级分诊(生命体征+主诉+危险信号)、MEWS/NEWS2评分、ESI分级
+  role_ids:
+  - triage_nurse
+  - emergency_doctor
+- order: 2
+  id: green-channel
+  label: 绿色通道
+  desc: 胸痛/卒中/创伤中心激活、STEMI门球时间<90min、卒中溶栓<60min
+  role_ids:
+  - emergency_doctor
+  - nurse
+- order: 3
+  id: disposition
+  label: 处置分流
+  desc: 抢救室/留观/住院/出院决策、转科交接、HIS记录
+  role_ids:
+  - emergency_doctor
+
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: false

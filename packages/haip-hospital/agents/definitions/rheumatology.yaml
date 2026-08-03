@@ -41,6 +41,21 @@ tools:
   handler: rheumatology.bp_followup
   input:
     patient_id: str
+- name: assess_ra_activity
+  description: DAS28-CRP类风湿关节炎活动度
+  handler: rheumatology.assess_ra_activity
+  input:
+    patient_id: str
+- name: assess_sle_activity
+  description: SLEDAI-2K SLE活动度评估
+  handler: rheumatology.assess_sle_activity
+  input:
+    patient_id: str
+- name: assess_spa_activity
+  description: BASDAI强直性脊柱炎活动度
+  handler: rheumatology.assess_spa_activity
+  input:
+    patient_id: str
 ui:
   template: chat-with-role-switcher
   roles:
@@ -104,3 +119,15 @@ guard:
   high_risk_scenarios:
   - 诊断决策
   - 治疗方案
+  citation:
+    required: true
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: standard

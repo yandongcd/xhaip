@@ -8,8 +8,8 @@ sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
 from typer.testing import CliRunner
 
-from haip.cli import app
 from haip.agent import _registry
+from haip.cli import app
 
 runner = CliRunner()
 
@@ -32,7 +32,7 @@ class TestCLI:
         assert result.exit_code == 0
 
     def test_info_with_agent(self):
-        from haip.agent import register, DomainPlugin
+        from haip.agent import DomainPlugin, register
         register(DomainPlugin(name="test", cn_name="测试", type="business", port=9999))
         result = runner.invoke(app, ["info", "test"])
         assert result.exit_code == 0
@@ -69,7 +69,7 @@ class TestToolsCLI:
         assert result.exit_code == 0
 
     def test_tools_list_with_agent(self):
-        from haip.agent import register, DomainPlugin, ToolDef
+        from haip.agent import DomainPlugin, ToolDef, register
 
         plugin = DomainPlugin(
             name="test-tools-agent",
@@ -244,11 +244,12 @@ class TestCLIErrorPaths:
 class TestCLIRealPaths:
     def setup_method(self):
         from unittest.mock import patch
+
         from haip.agent import _registry
         _registry.clear()
 
     def test_info_with_full_plugin(self):
-        from haip.agent import register, DomainPlugin, ToolDef
+        from haip.agent import DomainPlugin, ToolDef, register
 
         plugin = DomainPlugin(
             name="full-plugin", cn_name="完整插件",
@@ -328,8 +329,8 @@ class TestCLIRealPaths:
             assert "Snapshot created" in result.output
 
     def test_release_list_with_real(self):
-        from unittest.mock import patch
         import tempfile
+        from unittest.mock import patch
         d = tempfile.mkdtemp()
         try:
             root = Path(d)
@@ -344,8 +345,8 @@ class TestCLIRealPaths:
             shutil.rmtree(d, ignore_errors=True)
 
     def test_audit_list_with_data(self):
-        from unittest.mock import patch
         import tempfile
+        from unittest.mock import patch
         d = tempfile.mkdtemp()
         try:
             root = Path(d)
@@ -361,8 +362,8 @@ class TestCLIRealPaths:
             shutil.rmtree(d, ignore_errors=True)
 
     def test_audit_rollback_with_data(self):
-        from unittest.mock import patch
         import tempfile
+        from unittest.mock import patch
         d = tempfile.mkdtemp()
         try:
             root = Path(d)
@@ -442,7 +443,7 @@ class TestCLIRealPaths:
         assert "Organization Tree" in result.output or "院领导班子" in result.output
 
     def test_cmd_call_with_real_agent(self):
-        from haip.agent import register, DomainPlugin, ToolDef
+        from haip.agent import DomainPlugin, ToolDef, register
         register(DomainPlugin(name="cmd-agent", cn_name="命令测试", type="business", port=9999,
                               tools=[ToolDef(name="echo", description="Echo", handler="haip.tools.registry.list_schemas")]))
         result = runner.invoke(app, ["call", "cmd-agent", "echo", "--params", '{"msg":"hi"}'])

@@ -8,9 +8,13 @@ sys.path.insert(0, str(project_root / "packages" / "haip-hospital" / "modules"))
 sys.path.insert(0, str(project_root / "packages" / "haip-hospital"))
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
-from orthopedics import (  # noqa: E402
-    evaluate_timing, predict_complications, nursing_plan, followup_plan,
-    assess, plan,
+from orthopedics import (
+    assess,
+    evaluate_timing,
+    followup_plan,
+    nursing_plan,
+    plan,
+    predict_complications,
 )
 
 ELDERLY_HIP = {"patient_id": "P001", "labs": {

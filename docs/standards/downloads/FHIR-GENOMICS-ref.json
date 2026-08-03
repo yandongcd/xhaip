@@ -1,0 +1,10 @@
+{
+  "id": "FHIR-GENOMICS",
+  "title": "HL7 FHIR Genomics Implementation Guide",
+  "priority": "P2",
+  "source": "hl7",
+  "url": "https://hl7.org/fhir/uv/genomics-reporting/",
+  "note": "Free",
+  "downloaded": false,
+  "generated": "2026-07-26T23:45:17.604852"
+}

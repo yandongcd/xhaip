@@ -8,7 +8,9 @@ project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
 from haip.a2a import call, clear_history, get_history
-from haip.agent import register as reg_agent, list_all, get as get_agent, DomainPlugin, ToolDef
+from haip.agent import DomainPlugin, ToolDef, list_all
+from haip.agent import get as get_agent
+from haip.agent import register as reg_agent
 from haip.knowledge import KnowledgeStore
 from haip.operations.sync_checks import SkillSync
 
@@ -143,6 +145,7 @@ class TestConcurrentKnowledgeAccess:
 
     def test_concurrent_knowledge_access(self):
         import tempfile
+
         import yaml as yaml_lib
 
         with tempfile.TemporaryDirectory() as tmp:

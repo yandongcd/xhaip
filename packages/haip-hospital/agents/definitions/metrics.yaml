@@ -1,57 +1,93 @@
 name: metrics
 cn_name: 全院指标数据中心
-version: "1.0.0"
+version: 1.0.0
 type: master_data
 department: 全院
 port: 8767
-aliases: [指标中心, 数据指标, metrics]
-
+aliases:
+- 指标中心
+- 数据指标
+- metrics
 prompt:
-  system: |
-    你是全院指标数据中心，提供医院运营指标、质量指标和效率指标的
+  system: '你是全院指标数据中心，提供医院运营指标、质量指标和效率指标的
+
     统一查询与对比分析服务。
+
+    '
   temperature: 0.1
-
 tools:
-  - name: get_department_metrics
-    description: 获取科室运营指标
-    handler: metrics.get_department_metrics
-    input: {department: str, month: str}
-
-  - name: get_quality_metrics
-    description: 获取质量安全指标 (感染率/死亡率/再入院率)
-    handler: metrics.get_quality_metrics
-    input: {department: str, year: int}
-
-  - name: get_efficiency_metrics
-    description: 获取效率指标 (平均住院日/床位使用率)
-    handler: metrics.get_efficiency_metrics
-    input: {department: str, month: str}
-
+- name: get_department_metrics
+  description: 获取科室运营指标
+  handler: metrics.get_department_metrics
+  input:
+    department: str
+    month: str
+- name: get_quality_metrics
+  description: 获取质量安全指标 (感染率/死亡率/再入院率)
+  handler: metrics.get_quality_metrics
+  input:
+    department: str
+    year: int
+- name: get_efficiency_metrics
+  description: 获取效率指标 (平均住院日/床位使用率)
+  handler: metrics.get_efficiency_metrics
+  input:
+    department: str
+    month: str
 ui:
   template: chat-with-role-switcher
   roles:
-    - {id: data_admin, label: 数据管理员, default: true}
-    - {id: data_analyst, label: 数据分析师}
-    - {id: quality_director, label: 质控主任}
-    - {id: dept_head, label: 科主任}
-
+  - id: data_admin
+    label: 数据管理员
+    default: true
+  - id: data_analyst
+    label: 数据分析师
+  - id: quality_director
+    label: 质控主任
+  - id: dept_head
+    label: 科主任
 stages:
-  - order: 1
-    id: collect
-    label: 指标采集
-    desc: "科室上报数据校验、多源指标汇聚、数据清洗"
-    role: 数据管理员
-    role_ids: [data_admin, data_analyst]
-  - order: 2
-    id: analyze
-    label: 指标分析
-    desc: "同比环比计算、趋势分析、异常标记、预警触发"
-    role: 数据分析师
-    role_ids: [data_admin, data_analyst, quality_director]
-  - order: 3
-    id: report
-    label: 报告发布
-    desc: "指标看板生成、质控报告输出、全院指标分发"
-    role: 数据分析师 / 质控主任 / 科主任
-    role_ids: [data_admin, data_analyst, quality_director, dept_head]
+- order: 1
+  id: collect
+  label: 指标采集
+  desc: 科室上报数据校验、多源指标汇聚、数据清洗
+  role: 数据管理员
+  role_ids:
+  - data_admin
+  - data_analyst
+- order: 2
+  id: analyze
+  label: 指标分析
+  desc: 同比环比计算、趋势分析、异常标记、预警触发
+  role: 数据分析师
+  role_ids:
+  - data_admin
+  - data_analyst
+  - quality_director
+- order: 3
+  id: report
+  label: 报告发布
+  desc: 指标看板生成、质控报告输出、全院指标分发
+  role: 数据分析师 / 质控主任 / 科主任
+  role_ids:
+  - data_admin
+  - data_analyst
+  - quality_director
+  - dept_head
+guard:
+  triggers:
+  - 数据上报延迟
+  - 指标异常未报警
+  high_risk_scenarios:
+  - 全院指标连续下降>3天
+  - 单科室异常>2sigma
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: light

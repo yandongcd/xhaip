@@ -8,6 +8,18 @@ GUIDELINES: ASIA International Standards (2019) / SRS Schroth / NASS 2019
 
 from __future__ import annotations
 
+from haip.togaf.knowledge_agent import KnowledgeAgent
+
+_agent = KnowledgeAgent(agent_name="spine-surgery", department="脊柱骨科")
+_GUIDELINES = [
+    "ASIA International Standards for Neurological Classification of SCI (2019)",
+    "NASS 北美脊柱外科学会临床指南 (2019)",
+    "SRS Schroth 脊柱侧弯分类与治疗指南",
+    "AAOS 脊柱外科临床实践指南 (2022)",
+    "中国脊柱外科围术期管理专家共识 (2023)",
+]
+_agent.rule_engine.load_all()
+
 from typing import Any
 
 # ═══════════════════════════════════════════════════════════

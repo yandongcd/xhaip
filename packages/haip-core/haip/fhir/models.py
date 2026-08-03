@@ -9,10 +9,7 @@ Supports:
 
 from __future__ import annotations
 
-from typing import Optional
-
 from pydantic import BaseModel, Field
-
 
 # ── FHIR Resource Models (partial R4) ──
 
@@ -62,8 +59,8 @@ class FHIRObservation(BaseModel):
     code: FHIRCodeableConcept = Field(default_factory=FHIRCodeableConcept)
     subject: FHIRReference = Field(default_factory=FHIRReference)
     effectiveDateTime: str = ""
-    valueQuantity: Optional[FHIRQuantity] = None
-    valueString: Optional[str] = None
+    valueQuantity: FHIRQuantity | None = None
+    valueString: str | None = None
     interpretation: list[FHIRCodeableConcept] = Field(default_factory=list)
     referenceRange: list[dict] = Field(default_factory=list)
 

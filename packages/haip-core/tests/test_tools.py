@@ -1,6 +1,7 @@
 """Tests for haip.tools — base tool abstraction."""
 
 import pytest
+
 from haip.tools import BaseTool, ToolResult
 
 

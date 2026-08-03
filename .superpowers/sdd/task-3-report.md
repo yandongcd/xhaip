@@ -1,47 +1,60 @@
-# Task 3 Report: 构建门户 HTML — 布局与设计令牌
+# Task 3 Report: 清理 8 个 .openharness/skills/*/SKILL.md
 
-## 实现内容
+## Status: DONE
 
-将 `ui_ortho_portal.html` 从骨架替换为完整静态布局，包含：
-- 设计令牌：CSS 自定义属性（`--accent`, `--bg`, `--card-bg`, `--text` 等），`body.light` 浅色模式
-- 布局区域：header（含 `#theme-toggle`）、`#kpi-bar`（5 列 KPI）、`#patient-list`（左侧 240px）、`#capability-grid`（4 列网格）、`#stage-timeline`（11 阶段）、`#result-panel`（右侧 360px）
-- 空 `<script>` 占位供 Task 4/5 填充 JS
+## What was implemented
 
-## TDD 证据
+Applied the brief's per-file replacement table verbatim to the `source:` YAML block of all 8 SKILL.md files. YAML indentation (`  - `) preserved exactly; only path text changed; `\` → `/`.
 
-### RED（Step 2：骨架 HTML 无锚点）
+| 文件 | 替换数 | 旧 → 新 |
+|------|--------|---------|
+| xhaip-core (L8-9) | 2 | `D:\FC\xhaip\packages\haip-core` → `packages/haip-core`; `D:\FC\xhaip\docs\specs\xhaip-refactoring-design.md` → `docs/specs/xhaip-refactoring-design.md` |
+| xhaip-pharmacy (L7-8) | 2 | `...\agents\definitions\pharmacy.yaml` → `packages/haip-hospital/agents/definitions/pharmacy.yaml`; `...\modules\pharmacy\assessment\__init__.py` → `packages/haip-hospital/modules/pharmacy/assessment/__init__.py` |
+| xhaip-pediatrics (L7-8) | 2 | `...\agents\definitions\pediatrics.yaml` → `packages/haip-hospital/agents/definitions/pediatrics.yaml`; `...\modules\pediatrics\__init__.py` → `packages/haip-hospital/modules/pediatrics/__init__.py` |
+| xhaip-pain (L7) | 1 | `...\agents\definitions\pain-hub.yaml` → `packages/haip-hospital/agents/definitions/pain-hub.yaml` |
+| xhaip-cardio (L7-8) | 2 | `...\agents\definitions\cardio-surgery.yaml` → `packages/haip-hospital/agents/definitions/cardio-surgery.yaml`; `...\agents\definitions\cardio-risk.yaml` → `packages/haip-hospital/agents/definitions/cardio-risk.yaml` |
+| xhaip-orthopedic (L7-8) | 2 | `...\agents\definitions\orthopedic-surgery.yaml` → `packages/haip-hospital/agents/definitions/orthopedic-surgery.yaml`; `...\modules\orthopedics\__init__.py` → `packages/haip-hospital/modules/orthopedics/__init__.py` |
+| xhaip-anesthesia (L7-8) | 2 | `...\agents\definitions\anesthesia-risk.yaml` → `packages/haip-hospital/agents/definitions/anesthesia-risk.yaml`; `...\modules\anesthesia\__init__.py` → `packages/haip-hospital/modules/anesthesia/__init__.py` |
+| xhaip-masterdata (L7-8) | 2 | `...\agents\definitions\medical-record.yaml` → `packages/haip-hospital/agents/definitions/medical-record.yaml`; `...\agents\definitions\metrics.yaml` → `packages/haip-hospital/agents/definitions/metrics.yaml` |
+
+Total: 15 replacements across 8 files.
+
+## Verification results
+
+Step 2 command (run pre- and post-commit, identical output):
+
 ```
-$ python -m pytest tests/integration/test_ortho_portal.py::TestPortalLayout -q
-FF  [100%]
-FAILED test_has_layout_anchors — 缺锚点 kpi-bar
-FAILED test_has_title_and_tokens — 缺 --accent
-2 failed, 1 warning in 1.21s
+PS> Select-String -Path ".openharness\skills\*\SKILL.md" -Pattern "D:\\FC" | Measure-Object | Select-Object Count
+Count
+-----
+    0
 ```
 
-### GREEN（Step 4：完整 HTML 锚点全部通过）
-```
-$ python -m pytest tests/integration/test_ortho_portal.py -q
-..........  [100%]
-10 passed, 1 warning in 0.95s
-```
-新测试 `TestPortalLayout`（2 项）通过，原有 `TestPatientData`（3 项）、`TestUrgencyDistribution`（3 项）、`TestPortalRoute`（2 项）无回归。
+Post-commit `git status --short -- .openharness/skills/` → empty (clean).
 
-## 文件变更
+## Files changed
 
-| 文件 | 操作 | 变更 |
-|------|------|------|
-| `packages/haip-core/haip/ui_ortho_portal.html` | MODIFY | 骨架 → 完整静态 HTML+CSS（含 6 个稳定锚点 + 设计令牌） |
-| `tests/integration/test_ortho_portal.py` | MODIFY | 追加 `TestPortalLayout` 类（2 个测试方法） |
+All 8 committed in f3dff6b (8 files changed, 15 insertions(+), 15 deletions(-)):
+- .openharness/skills/xhaip-anesthesia/SKILL.md
+- .openharness/skills/xhaip-cardio/SKILL.md
+- .openharness/skills/xhaip-core/SKILL.md
+- .openharness/skills/xhaip-masterdata/SKILL.md
+- .openharness/skills/xhaip-orthopedic/SKILL.md
+- .openharness/skills/xhaip-pain/SKILL.md
+- .openharness/skills/xhaip-pediatrics/SKILL.md
+- .openharness/skills/xhaip-pharmacy/SKILL.md
 
-## 自检
+Commit: `f3dff6b docs: 8 个 SKILL.md source 路径改为仓库相对路径, 去除 D:\FC 外部引用`
+Staged only `.openharness/skills/` — the pre-existing uncommitted WIP elsewhere in the tree was not touched (verified via `git show --stat HEAD`).
 
-- 所有 6 个锚点 id 已在 HTML 中：`kpi-bar`, `patient-list`, `capability-grid`, `result-panel`, `stage-timeline`, `theme-toggle`
-- CSS 令牌 `--accent` 和 `body.light` 规则已包含
-- 标题含 "创伤骨科"
-- 空 `<script>` 占位符已保留
-- 未删除原有测试类
-- 仅 staged 指定两个文件
+## Self-review findings
 
-## 关注点
+- One mid-edit error: I initially wrote `packages/haip-hospital/modules/metrics.yaml` for xhaip-masterdata L8 (wrong directory — brief says `agents/definitions/metrics.yaml`). Caught during post-edit line inspection and corrected before committing; final diff verified against the brief table line-by-line.
+- All source lines now start with exactly `  - ` (two-space + dash) and use forward slashes.
+- xhaip-core uses the different prefix per brief (`packages/haip-core` + `docs/...`), applied correctly.
+- Verified commit contains exactly the 8 intended files — no WIP leakage.
+- CRLF warnings from git are pre-existing repo line-ending config behavior; content diff is 1:1 path substitution (4 lines changed per 2-entry file = 2 lines replaced), no accidental reformatting.
 
-无。
+## Issues / concerns
+
+- None blocking. The `.openharness/skills/` directory is a sync mirror of source module SKILL.md files (per AGENTS.md, `xhaip sync-skills`); if a future sync re-derives these files from packages/, the source-of-truth files there may still contain `D:\FC` paths — not part of this task's scope, but worth noting for later tasks.

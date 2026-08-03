@@ -36,6 +36,21 @@ tools:
   handler: psychiatry.bp_followup
   input:
     patient_id: str
+- name: assess_depression
+  description: PHQ-9抑郁筛查
+  handler: psychiatry.assess_depression
+  input:
+    patient_id: str
+- name: assess_anxiety
+  description: GAD-7焦虑筛查
+  handler: psychiatry.assess_anxiety
+  input:
+    patient_id: str
+- name: assess_cognition
+  description: MMSE认知筛查
+  handler: psychiatry.assess_cognition
+  input:
+    patient_id: str
 ui:
   template: chat-with-role-switcher
   roles:
@@ -96,3 +111,15 @@ guard:
   triggers:
   - 诊断决策
   - 治疗方案
+  citation:
+    required: true
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: standard

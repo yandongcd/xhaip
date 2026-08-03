@@ -1,5 +1,15 @@
 """疼痛中枢 — 分诊 + 结果聚合."""
 
+from haip.togaf.knowledge_agent import KnowledgeAgent
+
+_agent = KnowledgeAgent(agent_name="pain-hub", department="疼痛科")
+_GUIDELINES = [
+    "VAS/NRS 疼痛评估量表",
+    "IASP 国际疼痛研究协会分类标准",
+    "中国疼痛医学中心建设标准",
+]
+_agent.rule_engine.load_all()
+
 def triage(pain_type: str = "", vas_score: int = 0, description: str = "", **kwargs):
     route_to = "pain-hub"
     urgency = "routine"

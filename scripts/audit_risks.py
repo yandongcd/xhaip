@@ -10,7 +10,7 @@ from collections import defaultdict
 
 import yaml
 
-ROOT = pathlib.Path(r"D:\dst\projects\xhaip")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
 YAML_DIR = ROOT / "packages/haip-hospital/agents/definitions"
 MODULES_DIR = ROOT / "packages/haip-hospital/modules"
 CORE_DIR = ROOT / "packages/haip-core/haip"

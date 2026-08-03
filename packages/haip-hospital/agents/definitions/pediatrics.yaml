@@ -102,3 +102,13 @@ stages:
   role: 主治医师
   role_ids:
   - attending
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: standard

@@ -1,4 +1,4 @@
-name: pain-management
+﻿name: pain-management
 cn_name: 疼痛管理智能体
 version: 1.0.0
 type: specialist
@@ -60,8 +60,10 @@ guard:
   - 老年患者阿片类药物使用
   - 肾功能不全患者 NSAIDs 禁忌
   - PCA 泵参数设置错误
+  citation:
+    required: true
 depends_on:
-- agent: anesthesia-risk
+- agent: anesthesia
   version: '>=1.0'
   note: 麻醉 Agent 为强制依赖 — 术中镇痛策略由麻醉 Agent 主导，疼痛 Agent 覆盖术前/术后
 stages:
@@ -88,6 +90,24 @@ ui:
   template: chat-with-role-switcher
   roles:
   - id: attending
-    label: attending
+    label: 主治医师
   - id: therapist
-    label: therapist
+    default: true
+    label: 治疗师
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+debate:
+  enabled: true
+  competitors:
+  - anesthesia
+  - mdt
+  - orthopedic-surgery
+  mode: auto
+trust_tier: standard

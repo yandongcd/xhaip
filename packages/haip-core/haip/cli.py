@@ -6,8 +6,11 @@ from pathlib import Path
 
 import typer
 
-from haip.agent import load_from_dir, list_all as list_agents, get as get_agent
-from haip.a2a import call as a2a_call, get_history
+from haip.a2a import call as a2a_call
+from haip.a2a import get_history
+from haip.agent import get as get_agent
+from haip.agent import list_all as list_agents
+from haip.agent import load_from_dir
 
 app = typer.Typer(name="xhaip", help="HAIP v1.0 — Hospital AI Platform")
 
@@ -123,10 +126,16 @@ def sync_skills(
 ):
     """Sync skills between agent source modules and .openharness/skills/."""
     from haip.operations.skill_sync import (
-        sync as do_sync,
-        validate as do_validate,
         init_from_runtime,
+    )
+    from haip.operations.skill_sync import (
         list_skills as do_list,
+    )
+    from haip.operations.skill_sync import (
+        sync as do_sync,
+    )
+    from haip.operations.skill_sync import (
+        validate as do_validate,
     )
 
     if validate:
@@ -211,8 +220,8 @@ def main():
 @togaf_app.command("list")
 def togaf_list():
     """列出 TOGAF 元模型（实体类型 + 关系类型 + 可用领域）。"""
-    from haip.togaf.metamodel import list_entity_types, list_relationship_types
     from haip.togaf.builder import list_domains as list_builder_domains
+    from haip.togaf.metamodel import list_entity_types, list_relationship_types
     from haip.togaf.templates import list_templates as list_ea_templates
 
     typer.echo("=== TOGAF Entity Types (10) ===")
@@ -305,7 +314,7 @@ def togaf_org(
     org_id: str = typer.Option("", "--org", help="列出科室角色"),
 ):
     """查看 TOGAF 组织架构和角色。"""
-    from haip.togaf.organization import list_orgs, list_roles, get_role, build_org_tree
+    from haip.togaf.organization import build_org_tree, get_role, list_orgs, list_roles
 
     if role_id:
         r = get_role(role_id)

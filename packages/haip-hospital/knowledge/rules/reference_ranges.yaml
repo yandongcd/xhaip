@@ -1,0 +1,23 @@
+# 临床检验参考范围 (Normal Reference Ranges)
+# 用于基础生命体征评估 (assess_vitals)
+# 不同于 critical_thresholds.yaml (危急值) — 此处为正常范围上下限
+#
+# 来源: 南方医院检验科 + WS/T 405-2012 附录
+# 当此文件存在时，knowledge_agent.py 将从此加载而非使用硬编码默认值
+version: "1.0.0"
+ranges:
+  Hb: {low: 110, high: 160, unit: "g/L"}
+  WBC: {low: 3.5, high: 10.0, unit: "x10^9/L"}
+  PLT: {low: 100, high: 300, unit: "x10^9/L"}
+  CRP: {low: 0, high: 10, unit: "mg/L"}
+  Cr: {low: 60, high: 110, unit: "umol/L"}
+  ALT: {low: 10, high: 40, unit: "U/L"}
+  AST: {low: 10, high: 40, unit: "U/L"}
+  TBIL: {low: 3, high: 21, unit: "umol/L"}
+  BUN: {low: 2.9, high: 8.2, unit: "mmol/L"}
+  FPG: {low: 3.9, high: 6.1, unit: "mmol/L"}
+  "K+": {low: 3.5, high: 5.5, unit: "mmol/L"}
+  Troponin: {low: 0, high: 0.04, unit: "ng/mL"}
+  "D-Dimer": {low: 0, high: 0.5, unit: "mg/L"}
+  PaO2: {low: 80, high: 100, unit: "mmHg"}
+  TSH: {low: 0.4, high: 4.0, unit: "mIU/L"}

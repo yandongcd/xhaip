@@ -10,11 +10,11 @@ sys.path.insert(0, str(ROOT / "packages" / "haip-core"))
 sys.path.insert(0, str(ROOT / "packages" / "haip-hospital"))
 sys.path.insert(0, str(ROOT / "packages" / "haip-hospital" / "modules"))
 
-from fastapi.testclient import TestClient  # noqa: E402
-from haip.agent import load_from_dir  # noqa: E402
+from fastapi.testclient import TestClient
+from haip.agent import load_from_dir
 
 load_from_dir(str(ROOT / "packages" / "haip-hospital" / "agents" / "definitions"))
-from haip.web_server import app  # noqa: E402
+from haip.web_server import app
 
 client = TestClient(app)
 

@@ -1,0 +1,10 @@
+{
+  "id": "FHIR-R4",
+  "title": "HL7 FHIR Release 4",
+  "priority": "P0",
+  "source": "hl7",
+  "url": "https://hl7.org/fhir/R4/",
+  "note": "Free",
+  "downloaded": false,
+  "generated": "2026-07-26T23:45:17.566831"
+}

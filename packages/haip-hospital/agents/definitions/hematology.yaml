@@ -41,6 +41,21 @@ tools:
   handler: hematology.bp_followup
   input:
     patient_id: str
+- name: assess_anemia
+  description: WHO贫血分级+类型判断(MCV)
+  handler: hematology.assess_anemia
+  input:
+    patient_id: str
+- name: assess_mds
+  description: IPSS-R MDS预后评分
+  handler: hematology.assess_mds
+  input:
+    patient_id: str
+- name: assess_dic
+  description: ISTH DIC诊断评分
+  handler: hematology.assess_dic
+  input:
+    patient_id: str
 ui:
   template: chat-with-role-switcher
   roles:
@@ -104,3 +119,15 @@ guard:
   high_risk_scenarios:
   - 诊断决策
   - 治疗方案
+  citation:
+    required: true
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: standard

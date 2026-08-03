@@ -17,8 +17,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-
-
 # ── Domain Knowledge: Orthopedic Surgery ──
 
 _ORTHO_VALUE_STREAMS = [
@@ -454,8 +452,8 @@ def _build_edges(nodes: list[ArchitectureNode], domain: str) -> list[Architectur
 
 def _build_domain_from_template(department: str) -> dict | None:
     """Generate domain data from templates_dept.py for any department."""
-    from haip.togaf.templates_dept import get_dept_template
     from haip.togaf.organization import list_orgs
+    from haip.togaf.templates_dept import get_dept_template
 
     # Try Chinese name → org_id lookup
     org_id = department

@@ -70,7 +70,6 @@ class OrchestrationResult:
 
 from haip.a2a.transport import AgentTransport, InProcessTransport, MockTransport  # noqa: F401
 
-
 # ── Orchestrator ──
 
 class A2AOrchestrator:

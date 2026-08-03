@@ -18,11 +18,12 @@ Usage:
 from __future__ import annotations
 
 import importlib
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-import logging
 
+logger = logging.getLogger(__name__)
 
 # ── Known data entity IDs (used by business process steps) ──
 
@@ -311,7 +312,7 @@ def _check_guideline_refs(
                     if ref_id[:20] in gcontent or any(w in gcontent for w in ref_id.split()[:3]):
                         existing.add(ref_id)
             except Exception:
-                pass
+                logger.debug("Guideline ref extraction failed: %s", gfile, exc_info=True)
 
     # Also load registered guidelines from templates_dept
     try:

@@ -8,9 +8,9 @@ sys.path.insert(0, str(project_root / "packages" / "haip-hospital" / "modules"))
 
 import haip.agent
 import haip.llm
-from haip.llm.mock import MockProvider
+from haip.a2a import call, call_with_loop
 from haip.llm import ChatResponse, ToolCall
-from haip.a2a import call_with_loop, call
+from haip.llm.mock import MockProvider
 
 
 class TestA2ALoopIntegration:
@@ -70,9 +70,8 @@ class TestA2ALoopIntegration:
         ])
         result = call_with_loop("antiemetic", "Evaluate PONV risk and recommend drugs")
         
-        # If result is error (agent not loaded), skip
-        if result.get("status") == "error":
-            pytest.skip("Agents not loaded in test context")
+        # The agent must be loaded for this integration test to be meaningful
+        assert result.get("status") != "error", f"antiemetic agent call failed: {result}"
         
         assert result["status"] == "ok"
         assert result["steps"] == 3

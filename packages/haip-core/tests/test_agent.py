@@ -253,7 +253,6 @@ depends_on: []
 class TestAgentFilter:
     def setup_method(self):
         _registry.clear()
-    def setup_method(self):
         list_all().clear()
 
     def test_load_with_agent_filter_single(self):

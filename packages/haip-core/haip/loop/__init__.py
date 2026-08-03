@@ -13,15 +13,17 @@ v1.2: 新增 AsyncAgentLoop — ADK 风格的 async generator + Event + state_de
 
 from __future__ import annotations
 
+import asyncio
 import time
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator, Callable
+from typing import Any
 
-from haip.llm import LLMProvider
-from haip.session import Event as SessionEvent
-from haip.session import events_to_messages
+from haip.llm import DEFAULT_MAX_TOKENS, LLMProvider
 from haip.loop.context import InvocationContext
 from haip.loop.hooks import HookChain, HookContext
+from haip.session import Event as SessionEvent
+from haip.session import events_to_messages
 
 
 @dataclass
@@ -67,7 +69,7 @@ class AgentLoop:
         tools: list[dict[str, Any]] | None = None,
         max_steps: int = 5,
         temperature_schedule: tuple[float, ...] = _TEMPERATURE_SCHEDULE,
-        max_tokens: int = 4096,
+        max_tokens: int = DEFAULT_MAX_TOKENS,
         max_total_tokens: int = 32000,
         agent_name: str = "default",
     ):
@@ -268,7 +270,7 @@ class AsyncAgentLoop:
         tools: list[dict[str, Any]] | None = None,
         max_steps: int = 5,
         temperature_schedule: tuple[float, ...] = _TEMPERATURE_SCHEDULE,
-        max_tokens: int = 4096,
+        max_tokens: int = DEFAULT_MAX_TOKENS,
         max_total_tokens: int = 32000,
         agent_name: str = "default",
         hooks: HookChain | None = None,
@@ -371,7 +373,8 @@ class AsyncAgentLoop:
             # before_llm hook
             llm_response = self.hooks.run_before_llm(hook_ctx, messages, tool_schemas)
             if llm_response is None:
-                llm_response = self.llm.chat(
+                llm_response = await asyncio.to_thread(
+                    self.llm.chat,
                     messages=messages,
                     tools=tool_schemas if tool_schemas else None,
                     temperature=temperature,
@@ -415,10 +418,10 @@ class AsyncAgentLoop:
                 if mock_result is not None:
                     raw_result = mock_result
                 elif self.tool_executor is not None:
-                    raw_result = self.tool_executor(tc.name, tc.arguments)
+                    raw_result = await asyncio.to_thread(self.tool_executor, tc.name, tc.arguments)
                 else:
                     from haip.tools.registry import execute as _global_exec
-                    tr = _global_exec(tc.name, **tc.arguments)
+                    tr = await asyncio.to_thread(_global_exec, tc.name, **tc.arguments)
                     raw_result = {"success": tr.success, "output": tr.output, "error": tr.error}
 
                 # after_tool hook

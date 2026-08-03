@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
-from haip.clinical.nutrition import assess as nrs2002, NRS2002Result
-from haip.clinical.drug_compat import check_compatibility, check_cation_limits, CompatibilityResult
+
+from haip.clinical.drug_compat import CompatibilityResult, check_cation_limits, check_compatibility
+from haip.clinical.nutrition import NRS2002Result
+from haip.clinical.nutrition import assess as nrs2002
 
 
 class TestNRS2002:

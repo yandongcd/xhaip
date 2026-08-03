@@ -1,4 +1,4 @@
-name: interventional-therapy
+﻿name: interventional-therapy
 cn_name: 介入治疗科智能体
 version: 1.0.0
 type: business
@@ -54,6 +54,8 @@ tools:
 guard:
   triggers:
   - 手术决策
+  citation:
+    required: true
 ui:
   template: chat-with-role-switcher
   roles:
@@ -97,3 +99,20 @@ stages:
   desc: 影像复查、疗效评估、再狭窄监测
   role_ids:
   - attending
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+debate:
+  enabled: true
+  competitors:
+  - cardio-risk
+  - anesthesia
+  - cardiology
+  mode: auto
+trust_tier: standard

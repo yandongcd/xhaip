@@ -76,11 +76,11 @@ class TestSignoffLifecycle:
 
 
 class TestSignoffHttp:
-    def test_guard_high_risk_creates_signoff(self, signoff_db):
+    def test_guard_high_risk_creates_signoff(self, signoff_db, monkeypatch):
         """/api/guard 判定需人工复核时自动建签核单并返回 signoff_id."""
-        import os
-        os.environ["HAIP_TEST_MODE"] = "true"
+        monkeypatch.setenv("HAIP_TEST_MODE", "true")
         from fastapi.testclient import TestClient
+
         from haip.web_server import app
         client = TestClient(app)
         r = client.post("/api/guard", json={
@@ -92,10 +92,10 @@ class TestSignoffHttp:
         assert data["requires_human_review"] is True
         assert data.get("signoff_id"), "需复核的输出必须生成签核单"
 
-    def test_signoff_endpoints(self, signoff_db):
-        import os
-        os.environ["HAIP_TEST_MODE"] = "true"
+    def test_signoff_endpoints(self, signoff_db, monkeypatch):
+        monkeypatch.setenv("HAIP_TEST_MODE", "true")
         from fastapi.testclient import TestClient
+
         from haip.signoff import get_signoff_manager
         from haip.web_server import app
         client = TestClient(app)
@@ -109,11 +109,11 @@ class TestSignoffHttp:
         assert r2.status_code == 200
         assert r2.json()["status"] == "approved"
 
-    def test_reviewer_identity_cannot_be_forged(self, signoff_db):
+    def test_reviewer_identity_cannot_be_forged(self, signoff_db, monkeypatch):
         """请求体伪造的 reviewer_id 必须被认证身份覆盖 (商用红线)."""
-        import os
-        os.environ["HAIP_TEST_MODE"] = "true"
+        monkeypatch.setenv("HAIP_TEST_MODE", "true")
         from fastapi.testclient import TestClient
+
         from haip.signoff import get_signoff_manager
         from haip.web_server import app
         client = TestClient(app)

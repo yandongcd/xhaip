@@ -8,9 +8,11 @@ project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
 from haip.a2a import call, clear_history
-from haip.agent import register as reg_agent, list_all, get as get_agent, DomainPlugin
+from haip.agent import DomainPlugin, list_all
+from haip.agent import get as get_agent
+from haip.agent import register as reg_agent
 from haip.knowledge import KnowledgeStore
-from haip.orchestrator import A2AOrchestrator, TaskNode, TaskDAG, MockTransport
+from haip.orchestrator import A2AOrchestrator, MockTransport, TaskDAG, TaskNode
 
 
 def test_call_batch_throughput():

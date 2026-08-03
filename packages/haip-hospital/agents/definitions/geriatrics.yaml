@@ -41,6 +41,18 @@ tools:
   handler: geriatrics.bp_followup
   input:
     patient_id: str
+- name: assess_frailty
+  description: Fried衰弱表型5项评估(健壮/前衰弱/衰弱)
+  handler: geriatrics.assess_frailty
+  input: {patient_id: str}
+- name: assess_beers
+  description: Beers标准潜在不适当用药筛查
+  handler: geriatrics.assess_beers
+  input: {patient_id: str}
+- name: assess_mna
+  description: MNA-SF简易营养评估(0-14分)
+  handler: geriatrics.assess_mna
+  input: {patient_id: str}
 ui:
   template: chat-with-role-switcher
   roles:
@@ -101,3 +113,15 @@ guard:
   triggers:
   - 诊断决策
   - 治疗方案
+  citation:
+    required: true
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: standard

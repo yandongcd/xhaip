@@ -3,22 +3,24 @@
 import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
+from haip.agent import DomainPlugin
+from haip.agent import _registry as agent_registry
+from haip.agent import register as register_agent
 from haip.tools import BaseTool, ToolResult
 from haip.tools import registry as tool_registry
 from haip.tools.mcp_server import (
-    _list_registry_tools,
     _list_agent_tools,
+    _list_registry_tools,
     serve_agent,
     serve_all,
 )
-from haip.agent import DomainPlugin, register as register_agent, _registry as agent_registry
 
 
 class _DummyTool(BaseTool):

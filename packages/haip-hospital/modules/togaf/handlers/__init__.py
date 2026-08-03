@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 # ═══════════════════════════════════════════════════════════
 # 1. metamodel_list — TOGAF 10 Metamodel
 # ═══════════════════════════════════════════════════════════
@@ -33,10 +32,10 @@ def metamodel_list(entity_type: str = "", **kwargs: Any) -> dict[str, Any]:
         }
     """
     from haip.togaf.metamodel import (
-        list_entity_types,
-        list_relationship_types,
         get_entity_type,
         get_relationship_type,
+        list_entity_types,
+        list_relationship_types,
     )
 
     entities = list_entity_types()
@@ -257,7 +256,7 @@ def template_render(name: str = "", theme: dict[str, Any] | None = None, **kwarg
     # JSON/HTML templates with real rendering via template modules
     if name == "stakeholder_map":
         try:
-            from haip.togaf.templates.stakeholder_map import render, DEFAULT_DATA
+            from haip.togaf.templates.stakeholder_map import DEFAULT_DATA, render
             html = render(DEFAULT_DATA, theme=theme, full_page=True)
             return {"status": "ok", "template": tmpl, "format": "html", "html": html}
         except Exception as e:
@@ -265,7 +264,7 @@ def template_render(name: str = "", theme: dict[str, Any] | None = None, **kwarg
 
     if name == "roadmap":
         try:
-            from haip.togaf.templates.roadmap import render, DEFAULT_DATA
+            from haip.togaf.templates.roadmap import DEFAULT_DATA, render
             html = render(DEFAULT_DATA, theme=theme, full_page=True)
             return {"status": "ok", "template": tmpl, "format": "html", "html": html}
         except Exception as e:
@@ -273,7 +272,7 @@ def template_render(name: str = "", theme: dict[str, Any] | None = None, **kwarg
 
     if name == "app_landscape":
         try:
-            from haip.togaf.templates.app_landscape import render, DEFAULT_DATA
+            from haip.togaf.templates.app_landscape import DEFAULT_DATA, render
             html = render(DEFAULT_DATA, theme=theme, full_page=True)
             return {"status": "ok", "template": tmpl, "format": "html", "html": html}
         except Exception as e:
@@ -281,7 +280,7 @@ def template_render(name: str = "", theme: dict[str, Any] | None = None, **kwarg
 
     if name == "value_stream":
         try:
-            from haip.togaf.templates.value_stream_map import render, DEFAULT_DATA
+            from haip.togaf.templates.value_stream_map import DEFAULT_DATA, render
             html = render(DEFAULT_DATA, theme=theme, full_page=True)
             return {"status": "ok", "template": tmpl, "format": "html", "html": html}
         except Exception as e:

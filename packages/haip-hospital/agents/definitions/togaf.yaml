@@ -1,44 +1,89 @@
 name: togaf
 cn_name: TOGAF架构治理智能体
-version: "1.0.0"
+version: 1.0.0
 type: architecture
 department: 全院
 port: 8750
-aliases: [TOGAF, 架构治理, 企业架构, togaf]
-
+aliases:
+- TOGAF
+- 架构治理
+- 企业架构
+- togaf
 prompt:
-  system: |
-    你是 TOGAF 架构治理智能体，负责全院企业架构的元模型定义、4A 架构构建、
+  system: '你是 TOGAF 架构治理智能体，负责全院企业架构的元模型定义、4A 架构构建、
+
     力导向布局计算、环境审计和 EA 模板渲染。提供 6 个工具供全院 Agent 通过 MCP/A2A 调用。
+
+    '
   temperature: 0.2
-
 tools:
-  - name: metamodel_list
-    description: 列出 TOGAF 10 元模型定义 — 实体类型 (10种) 和关系类型 (13种)
-    handler: togaf.handlers.metamodel_list
-    input: {entity_type: str}
-
-  - name: architecture_build
-    description: 为指定科室构建 TOGAF 4A 架构实例 (价值流 / 业务流程 / 数据实体 / 应用组件)
-    handler: togaf.handlers.architecture_build
-    input: {department: str}
-
-  - name: layout_graph
-    description: 计算力导向布局坐标 (Coulomb斥力 + Hooke引力 + 中心重力)
-    handler: togaf.handlers.layout_graph
-    input: {nodes: list, edges: list, width: int, height: int}
-
-  - name: audit_environment
-    description: 自动扫描并发现当前部署环境架构 (Agents / 工具 / 基础设施)
-    handler: togaf.handlers.audit_environment
-    input: {}
-
-  - name: template_render
-    description: 渲染 EA 可视化模板 (capability_heatmap / stakeholder_map / roadmap / app_landscape / value_stream)
-    handler: togaf.handlers.template_render
-    input: {name: str, theme: dict}
-
-  - name: template_list
-    description: 列出所有可用的 EA 可视化模板及其版本信息
-    handler: togaf.handlers.template_list
-    input: {}
+- name: metamodel_list
+  description: 列出 TOGAF 10 元模型定义 — 实体类型 (10种) 和关系类型 (13种)
+  handler: togaf.handlers.metamodel_list
+  input:
+    entity_type: str
+- name: architecture_build
+  description: 为指定科室构建 TOGAF 4A 架构实例 (价值流 / 业务流程 / 数据实体 / 应用组件)
+  handler: togaf.handlers.architecture_build
+  input:
+    department: str
+- name: layout_graph
+  description: 计算力导向布局坐标 (Coulomb斥力 + Hooke引力 + 中心重力)
+  handler: togaf.handlers.layout_graph
+  input:
+    nodes: list
+    edges: list
+    width: int
+    height: int
+- name: audit_environment
+  description: 自动扫描并发现当前部署环境架构 (Agents / 工具 / 基础设施)
+  handler: togaf.handlers.audit_environment
+  input: {}
+- name: template_render
+  description: 渲染 EA 可视化模板 (capability_heatmap / stakeholder_map / roadmap / app_landscape
+    / value_stream)
+  handler: togaf.handlers.template_render
+  input:
+    name: str
+    theme: dict
+- name: template_list
+  description: 列出所有可用的 EA 可视化模板及其版本信息
+  handler: togaf.handlers.template_list
+  input: {}
+guard:
+  triggers:
+  - 架构合规违规
+  - 技术债务超标
+  - 能力评估偏差
+  high_risk_scenarios:
+  - 关键系统无灾备
+  - 单点故障未消除
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: light
+stages:
+- order: 1
+  id: assess
+  label: 架构评估
+  desc: 科室能力成熟度5维评估、架构缺口分析(Gap Analysis)
+  role_ids:
+  - architect
+- order: 2
+  id: roadmap
+  label: 路线图规划
+  desc: 应用组合管理、技术债务量化、迁移路线图
+  role_ids:
+  - architect
+- order: 3
+  id: govern
+  label: 架构治理
+  desc: 架构合规检查(9条TOGAF规则)、技术标准审查、LeanIX导出
+  role_ids:
+  - architect

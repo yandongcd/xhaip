@@ -1,0 +1,110 @@
+name: anesthesia
+cn_name: 麻醉风险评估智能体
+version: 1.0.0
+type: specialist
+trust_tier: deep
+department: 麻醉科
+port: 8820
+aliases:
+- 麻醉科
+- 麻醉评估
+- 围术期麻醉
+- anesthesia
+prompt:
+  system: 你是南方医院麻醉科AI助手，负责围术期麻醉风险评估与管理。请基于最新ASA分级标准、困难气道评估指南和抗凝桥接共识给出专业建议。所有评估结果须经麻醉医师复核确认后方可执行。
+  temperature: 0.2
+tools:
+- name: asa_assessment
+  description: ASA体格状态分级评估 — 基于患者合并症/功能状态/手术类型进行I-VI级分级
+  handler: anesthesia.asa_assessment
+  input:
+    patient_id: str
+- name: airway_evaluation
+  description: 困难气道评估 — Mallampati分级/甲颏间距/颈围/BMI/张口度/Wilson评分
+  handler: anesthesia.airway_evaluation
+  input:
+    patient_id: str
+- name: anticoagulation_bridge
+  description: 抗凝桥接管理 — 华法林/NOAC/抗血小板药物的术前停药时机+术后重启方案+肝素桥接
+  handler: anesthesia.anticoagulation_bridge
+  input:
+    patient_id: str
+- name: anesthesia_plan
+  description: 麻醉方案推荐 — 全身麻醉/椎管内麻醉/区域阻滞/监测麻醉的选择+药物方案+监测要求
+  handler: anesthesia.anesthesia_plan
+  input:
+    patient_id: str
+    surgery_type: str
+- name: preoperative_optimization
+  description: 术前优化建议 — 禁食禁饮指南/术前用药/容量管理/血糖控制/β阻滞剂管理
+  handler: anesthesia.preoperative_optimization
+  input:
+    patient_id: str
+guard:
+  triggers:
+  - 麻醉意外
+  - 困难气道
+  - 抗凝出血
+  - 过敏反应
+  - 恶性高热
+  high_risk_scenarios:
+  - ASA IV级以上
+  - 已知困难气道
+  - 双抗未停药
+  - 严重心功能不全
+  citation:
+    required: true
+    min_sources: 2
+    min_trust: T1
+depends_on:
+- agent: cardio-risk
+  version: '>=1.0'
+  note: 心血管风险评估
+- agent: medical-record
+  version: '>=1.0'
+  note: 患者病历/过敏史/用药史
+stages:
+- order: 1
+  id: preop-eval
+  label: 术前评估
+  desc: ASA分级、气道评估(Mallampati)、抗凝桥接方案评估、麻醉风险分层
+  role_ids:
+  - attending
+  - anesthesiologist
+- order: 2
+  id: anesthesia-plan
+  label: 麻醉方案
+  desc: GA/区域麻醉/神经阻滞选择、药物方案、监测计划、术前优化(禁食/预用药/容量管理)
+  role_ids:
+  - attending
+  - anesthesiologist
+- order: 3
+  id: intraop
+  label: 麻醉执行
+  desc: 诱导与维持、血流动力学管理、液体与体温管理、输血决策
+  role_ids:
+  - anesthesiologist
+  - nurse
+- order: 4
+  id: postop
+  label: 术后管理
+  desc: PACU监测、疼痛管理(多模式镇痛)、PONV预防与补救、并发症监测
+  role_ids:
+  - anesthesiologist
+  - nurse
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: false
+debate:
+  enabled: true
+  competitors:
+  - cardio-risk
+  - cardio-surgery
+  - orthopedic-surgery
+  mode: auto

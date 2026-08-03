@@ -10,13 +10,25 @@ import pytest
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
-from haip.agent import DomainPlugin  # noqa: E402
-from haip.operations import (  # noqa: E402
-    AuditEngine, ReleaseManager, ExecutionJournal,
-    ArchitectureManager, GuidelinesManager, validate_agents, validate_modules,
-    SkillSync, system_checks, benchmark_a2a, format_output,
-    get_agent_tree, get_dependency_graph, coordinate_agents,
-    AgentMemory, PermissionManager, scaffold_agent,
+from haip.agent import DomainPlugin
+from haip.operations import (
+    AgentMemory,
+    ArchitectureManager,
+    AuditEngine,
+    ExecutionJournal,
+    GuidelinesManager,
+    PermissionManager,
+    ReleaseManager,
+    SkillSync,
+    benchmark_a2a,
+    coordinate_agents,
+    format_output,
+    get_agent_tree,
+    get_dependency_graph,
+    scaffold_agent,
+    system_checks,
+    validate_agents,
+    validate_modules,
 )
 
 
@@ -415,7 +427,7 @@ class TestSkillSyncFunctions:
         assert SKILL_OWNERSHIP["packages/haip-core"] == "xhaip-core"
 
     def test_auto_discover_skills_includes_registry(self):
-        from haip.operations.skill_sync import auto_discover_skills, SKILL_OWNERSHIP
+        from haip.operations.skill_sync import SKILL_OWNERSHIP, auto_discover_skills
         discovered = auto_discover_skills()
         assert len(discovered) >= len(SKILL_OWNERSHIP)
         assert "packages/haip-core" in discovered
@@ -449,7 +461,8 @@ class TestCallHistoryPruning:
 
     def test_call_history_pruning(self):
         from haip.a2a import call, clear_history, get_history
-        from haip.agent import register as reg_agent, list_all
+        from haip.agent import list_all
+        from haip.agent import register as reg_agent
 
         saved = dict(list_all())
         list_all().clear()
@@ -470,7 +483,8 @@ class TestCallHistoryPruning:
 
     def test_call_history_retains_recent(self):
         from haip.a2a import call, clear_history, get_history
-        from haip.agent import register as reg_agent, list_all
+        from haip.agent import list_all
+        from haip.agent import register as reg_agent
 
         saved = dict(list_all())
         list_all().clear()
@@ -693,7 +707,7 @@ class TestSystemChecksExtended:
 class TestReleaseManagerV1:
     def test_backup_and_notes(self):
         with tempfile.TemporaryDirectory() as d:
-            from haip.agent import register, _registry
+            from haip.agent import _registry, register
             _registry.clear()
             register(DomainPlugin(name="test_rel", type="business", port=9000,
                                   cn_name="测试"))
@@ -705,7 +719,7 @@ class TestReleaseManagerV1:
 
     def test_list_releases_returns_entries(self):
         with tempfile.TemporaryDirectory() as d:
-            from haip.agent import register, _registry
+            from haip.agent import _registry, register
             _registry.clear()
             register(DomainPlugin(name="test_rel", type="business", port=9000))
             rm = ReleaseManager(str(d))
@@ -930,7 +944,7 @@ class TestAuditEngineEdgeCases:
 
     def test_snapshot_agents_multiple(self):
         with tempfile.TemporaryDirectory() as d:
-            from haip.agent import register, _registry
+            from haip.agent import _registry, register
             _registry.clear()
             register(DomainPlugin(name="agent_1", type="business", port=9001, version="1.0"))
             register(DomainPlugin(name="agent_2", type="specialist", port=9002, version="2.0"))
@@ -994,7 +1008,7 @@ class TestSystemChecksMore:
 
 class TestValidateMore:
     def test_validate_agents_with_plugins(self):
-        from haip.agent import register, _registry, DomainPlugin
+        from haip.agent import DomainPlugin, _registry, register
         _registry.clear()
         register(DomainPlugin(name="v1", type="business", port=9001))
         register(DomainPlugin(name="v2", type="specialist", port=9002))
@@ -1002,7 +1016,7 @@ class TestValidateMore:
         assert result["total"] == 2
 
     def test_validate_agents_port_conflict(self):
-        from haip.agent import register, _registry, DomainPlugin
+        from haip.agent import DomainPlugin, _registry, register
         _registry.clear()
         register(DomainPlugin(name="a1", type="business", port=7777))
         register(DomainPlugin(name="a2", type="specialist", port=7777))

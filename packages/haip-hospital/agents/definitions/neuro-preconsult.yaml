@@ -1,0 +1,109 @@
+name: neuro-preconsult
+cn_name: 神经外科自动化预咨询智能体 v2.0
+version: 1.1.0
+type: business
+trust_tier: deep
+department: 神经外科
+port: 8848
+aliases:
+- 神外预咨询
+- 术前咨询
+- neurosurgery
+prompt:
+  system: |
+    你是南方医院神经外科AI预咨询助手 v2.0，负责术前的自动化预咨询——定向病史采集、红旗征筛查、GCS/WFNS分级、影像分流建议和手术时机评估。
+
+    核心能力: 12项神经外科急症红旗征(SAH/脑疝/脊髓压迫/马尾/垂体卒中/癫痫状态/GCS下降/ICP慢症/听神经瘤/鞍区占位)、GCS评分(E+V+M→意识分级 4级)、WFNS SAH分级(I-V→死亡率+处置)、对症靶向追问(头痛/抽搐/无力/视力/眩晕/腰痛 6类)、结构化预咨询摘要(病史+GCS+红旗征表+影像建议+手术时机+抗凝管理)。
+
+    约束: GCS下降≥2分 → 立即CT+甘露醇+神外急会诊; 瞳孔不等大 → 脑疝(甘露醇+过度通气+开颅); 马尾综合征 → 24h窗口期(脊柱MRI+激素+紧急减压); 所有摘要须经神外主治审核。
+  temperature: 0.2
+tools:
+- name: history_collect
+  description: '定向病史采集 — 主诉+对症靶向追问(头痛/抽搐/无力/视力/眩晕/腰痛 6类)+抗凝预警'
+  handler: neuro_preconsult.history_collect
+  input:
+    patient_id: str
+    chief_complaint: str
+- name: red_flag_screen
+  description: '红旗征筛查 — 12项神外急症+GCS评分(EVM)+WFNS SAH分级(I-V)'
+  handler: neuro_preconsult.red_flag_screen
+  input:
+    patient_id: str
+    symptoms: list
+    gcs_e: int
+    gcs_v: int
+    gcs_m: int
+- name: summary_generate
+  description: '结构化预咨询摘要 — 病史+GCS+红旗征表+影像分流+手术时机+抗凝管理'
+  handler: neuro_preconsult.summary_generate
+  input:
+    patient_id: str
+    history: dict
+    red_flags: list
+    gcs: dict
+    chief_complaint: str
+guard:
+  triggers:
+  - 颅内高压
+  - 脊髓压迫
+  - 动脉瘤破裂
+  - 脑疝
+  high_risk_scenarios:
+  - 突发剧烈头痛+意识改变
+  - 进行性下肢无力+鞍区麻木
+  - GCS下降≥2分
+  - 瞳孔不等大
+  citation:
+    required: true
+    min_sources: 1
+    min_trust: T1
+stages:
+- order: 1
+  id: history
+  label: 定向病史
+  desc: '主诉+对症靶向追问(头痛/抽搐/无力/视力/眩晕/腰痛)+抗凝药筛查'
+  role_ids: [attending, resident]
+- order: 2
+  id: gcs-scoring
+  label: GCS评分
+  desc: '睁眼4+言语5+运动6 → 15分意识清楚 / 13-14轻度 / 9-12中度 / ≤8昏迷'
+  role_ids: [attending, resident, nurse]
+- order: 3
+  id: red-flags
+  label: 红旗征筛查
+  desc: '12项急症(SAH/脑疝/脊髓压迫/马尾/垂体卒中/癫痫/GCS↓)+WFNS SAH I-V'
+  role_ids: [attending]
+- order: 4
+  id: imaging-triage
+  label: 影像分流
+  desc: '出血→CT / 占位→MRI增强 / 血管→CTA/MRA/DSA / 脊柱→MRI脊柱'
+  role_ids: [attending]
+- order: 5
+  id: surgical-timing
+  label: 手术时机
+  desc: 'emergent(<6h) / urgent(24-72h) / elective(1-4w) +抗凝桥接方案'
+  role_ids: [attending, anesthesiologist]
+- order: 6
+  id: summary-review
+  label: 摘要审核
+  desc: '结构化摘要生成(病史+GCS+红旗征+影像+手术时机+抗凝)→神外主治审核'
+  role_ids: [attending, head_nurse]
+ui:
+  template: chat-with-role-switcher
+  roles:
+  - id: attending
+    label: 神经外科医师
+    default: true
+  - id: resident
+    label: 住院医师
+  - id: anesthesiologist
+    label: 麻醉医师
+  - id: nurse
+    label: 神外护士
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply: [citation_new, route_adj]
+  prompt_a_b: true

@@ -1,5 +1,5 @@
-# xhaip v1.0 — LLM Configuration
-# Provider: DeepSeek (default), with temperature and token limits
+# xhaip v1.2 — LLM Configuration
+# Provider: DeepSeek (default). Fail-closed on outage (no fabricated content).
 
 llm:
   provider: deepseek
@@ -12,5 +12,5 @@ llm:
   retry: 2
 
 fallback:
-  provider: mock
-  mock_responses: true
+  provider: fail-closed
+  mode: "${HAIP_ENV:test}"  # production=hard fail, test/dev=placeholder message

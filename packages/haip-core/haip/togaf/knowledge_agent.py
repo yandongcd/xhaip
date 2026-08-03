@@ -19,9 +19,13 @@ Usage:
 from __future__ import annotations
 
 import json
+import logging
 import os
+import threading
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent  # xhaip root
 KNOWLEDGE_DIR = Path(os.environ.get(
@@ -33,20 +37,53 @@ PATIENTS_FILE = Path(os.environ.get(
     str(PROJECT_ROOT / "packages" / "haip-hospital" / "data" / "patients.json"),
 ))
 
-# Cached patient data
+# Cached patient data (mtime+size invalidation, thread-safe)
 _patient_cache: dict[str, dict] | None = None
+_patient_cache_mtime: float = -1.0
+_patient_cache_size: int = -1
+_patient_cache_lock = threading.Lock()
+
+
+def clear_patient_cache() -> None:
+    """清空患者缓存 (测试/数据更新后调用)。"""
+    global _patient_cache, _patient_cache_mtime, _patient_cache_size
+    with _patient_cache_lock:
+        _patient_cache = None
+        _patient_cache_mtime = -1.0
+        _patient_cache_size = -1
 
 
 def _load_patients() -> dict[str, dict]:
-    global _patient_cache
-    if _patient_cache is None:
-        _patient_cache = {}
+    global _patient_cache, _patient_cache_mtime, _patient_cache_size
+    with _patient_cache_lock:
         if PATIENTS_FILE.exists():
-            with open(PATIENTS_FILE, encoding="utf-8") as f:
-                data = json.load(f)
-            for p in data.get("patients", []):
-                _patient_cache[p["patient_id"]] = p
-    return _patient_cache
+            try:
+                st = PATIENTS_FILE.stat()
+                current = (st.st_mtime, st.st_size)
+            except OSError:
+                current = None
+        else:
+            current = None
+
+        # Rebuild if cache absent, or file changed since last load
+        stale = (
+            current is None
+            or _patient_cache is None
+            or _patient_cache_mtime != current[0]
+            or _patient_cache_size != current[1]
+        )
+        if stale:
+            _patient_cache = {}
+            if PATIENTS_FILE.exists():
+                with open(PATIENTS_FILE, encoding="utf-8") as f:
+                    data = json.load(f)
+                for p in data.get("patients", []):
+                    _patient_cache[p["patient_id"]] = p
+            if current is not None:
+                _patient_cache_mtime, _patient_cache_size = current
+            else:
+                _patient_cache_mtime, _patient_cache_size = -1.0, -1
+        return _patient_cache or {}
 
 
 class KnowledgeAgent:
@@ -121,37 +158,74 @@ class KnowledgeAgent:
         return [p for p in _load_patients().values()
                 if p.get("department") == dept]
 
+    def get_patient_from_kwargs(self, kwargs: dict) -> tuple[dict | None, dict | None]:
+        """从 kwargs 提取 patient_id 并查找患者。返回 (patient, error_dict)。"""
+        pid = kwargs.get("patient_id", "")
+        p = self.get_patient(pid)
+        if not p:
+            return None, {"status": "error", "agent": self.agent_name, "error": f"Patient {pid} not found"}
+        return p, None
+
+    def make_clinical_error(self, msg: str) -> dict:
+        """构建统一的 clinical error 响应字典。"""
+        return {"status": "error", "agent": self.agent_name, "error": msg}
+
     def search_guidelines(self, query: str) -> list[str]:
-        """Search knowledge/guidelines/ for relevant guidelines."""
+        """Search knowledge/guidelines/ for relevant guidelines.
+
+        Returns matching guideline file stems (content keyword match).
+        """
         guidelines_dir = KNOWLEDGE_DIR / "guidelines"
         results: list[str] = []
         if not guidelines_dir.exists():
             return results
+        q = query.lower()
         for f in sorted(guidelines_dir.glob("*.yaml")):
             try:
                 with open(f, encoding="utf-8") as fh:
                     content = fh.read()
-                if query.lower() in content.lower():
+                if q in content.lower():
                     results.append(f.stem)
             except Exception:
-                pass
-        return results[:5]
+                logger.debug("Guideline file search failed: %s", f, exc_info=True)
+        return results[:10]
 
-    def search_rules(self, query: str) -> list[str]:
-        """Search knowledge/rules/ for applicable rules."""
-        rules_dir = KNOWLEDGE_DIR / "rules"
-        results: list[str] = []
-        if not rules_dir.exists():
-            return results
-        for f in sorted(rules_dir.rglob("*.yaml")):
-            try:
-                with open(f, encoding="utf-8") as fh:
-                    content = fh.read()
-                if query.lower() in content.lower():
-                    results.append(str(f.relative_to(rules_dir)))
-            except Exception:
-                pass
-        return results[:5]
+    def search_rules(self, query: str = "") -> list[str]:
+        """Search loaded clinical rules and return rule reference strings.
+
+        Matching strategy:
+          1. exact department match (query == rule department)
+          2. substring match (query inside rule department name)
+          3. fall back to this agent's department when query is empty/unmatched
+        Returns e.g. "消化内科/diagnosis/R1-01" references for rule_refs display.
+        """
+        try:
+            engine = self.rule_engine
+            q = (query or "").strip()
+            docs = engine.get_rules(department=q) if q else []
+            if not docs and q:
+                all_docs = engine.get_rules()
+                docs = [d for d in all_docs if q in str(d.get("department", ""))]
+            if not docs and self.department:
+                docs = engine.get_rules(department=self.department)
+                if not docs:
+                    all_docs = engine.get_rules()
+                    docs = [d for d in all_docs
+                            if self.department in str(d.get("department", ""))]
+            refs: list[str] = []
+            for d in docs:
+                dept_name = str(d.get("department", ""))
+                rtype = str(d.get("rule_type", ""))
+                rules = d.get("rules", []) or []
+                for r in rules:
+                    rid = str(r.get("id", "")) if isinstance(r, dict) else ""
+                    refs.append(f"{dept_name}/{rtype}/{rid}" if rid else f"{dept_name}/{rtype}")
+                if not rules:
+                    refs.append(f"{dept_name}/{rtype}")
+            return refs[:20]
+        except Exception:
+            logger.debug("Rule search failed for %r", query, exc_info=True)
+            return []
 
     def assess_vitals(self, patient: dict) -> dict:
         """Basic vital sign assessment from patient data."""
@@ -268,8 +342,7 @@ def _load_vital_ranges() -> dict[str, tuple[float, float, str]]:
                     for k, v in data.items()
                 }
     except Exception:
-        pass
-    return dict(_VITAL_RANGES_DEFAULTS)
+        logger.debug("Vital ranges load failed", exc_info=True)
 
 
 _VITAL_RANGES = _load_vital_ranges()

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
 import time
 from typing import Any
 
@@ -13,6 +14,9 @@ logger = logging.getLogger(__name__)
 
 _SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "")
 if not _SECRET_KEY:
+    if os.environ.get("HAIP_ENV") == "production":
+        from haip.security_baseline import SecurityBaselineError
+        raise SecurityBaselineError("JWT_SECRET_KEY 未设置，生产环境必须通过环境变量配置")
     _SECRET_KEY = "xhaip-dev-secret-change-in-production"
     if os.environ.get("HAIP_TEST_MODE") != "true" and os.environ.get("AUTH_ENABLED") != "false":
         logger.warning("JWT_SECRET_KEY 未设置, 正在使用开发默认密钥 — 生产环境必须通过环境变量配置")
@@ -22,6 +26,7 @@ _REFRESH_TOKEN_EXPIRE = int(os.environ.get("JWT_REFRESH_EXPIRE", "604800"))  # 7
 
 # In-memory refresh token blacklist (PostgreSQL-backed in P1)
 _revoked_refresh_tokens: set[str] = set()
+_revoke_lock = threading.Lock()
 
 
 def create_access_token(
@@ -95,9 +100,10 @@ def revoke_refresh_token(refresh_token: str) -> None:
         payload = decode_token(refresh_token)
         jti = payload.get("jti", "")
         if jti:
-            _revoked_refresh_tokens.add(jti)
+            with _revoke_lock:
+                _revoked_refresh_tokens.add(jti)
     except Exception:
-        pass
+        logger.debug("refresh token 吊销失败 (token 已失效?)", exc_info=True)
 
 
 def _generate_jti() -> str:

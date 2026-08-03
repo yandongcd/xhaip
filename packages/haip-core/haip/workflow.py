@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 
-
 # ═══════════════════════════════════════════════════════════════
 # 骨科工作流 — 基于国家卫健委2022 §1-§7
 # ═══════════════════════════════════════════════════════════════
@@ -128,11 +127,11 @@ PHARMACY_WORKFLOW = {
     "stages": [
         {"id": "assess", "order": 1, "label": "① NRS2002 营养评估",
          "description": "营养风险筛查 (NRS2002) + 再喂养+电解质+肝功",
-         "tool": "assess_nutrition", "roles": ["pharmacist", "clinical_pharmacist"],
+         "tool": "nutrition_assess", "roles": ["pharmacist", "clinical_pharmacist"],
          "key_output": "risk_level", "guideline_ref": "ESPEN §3"},
         {"id": "route", "order": 2, "label": "② 营养途径推荐",
          "description": "EN (肠内) vs PN (肠外) 途径选择",
-         "tool": "recommend_nutrition_route", "roles": ["clinical_pharmacist", "dietitian"],
+         "tool": "nutrition_route", "roles": ["clinical_pharmacist", "dietitian"],
          "key_output": "recommended_route", "guideline_ref": "ESPEN §4"},
         {"id": "tpn", "order": 3, "label": "③ TPN 配比计算",
          "description": "氨基酸/脂肪乳/葡萄糖/电解质/渗透压",
@@ -140,11 +139,11 @@ PHARMACY_WORKFLOW = {
          "key_output": "energy_kcal", "guideline_ref": "CSPEN 肠外营养"},
         {"id": "review", "order": 4, "label": "④ 处方审核 (17规则)",
          "description": "抗凝4+抗生素3+电解质3+镇痛3+心血管4 完整规则库",
-         "tool": "full_prescription_review", "roles": ["review_pharmacist", "pharmacist"],
+         "tool": "review_rx", "roles": ["review_pharmacist", "pharmacist"],
          "key_output": "risk_level", "guideline_ref": "中国药典2020"},
         {"id": "drugs", "order": 5, "label": "⑤ 药品查询",
          "description": "通用名/商品名/规格/医保类别",
-         "tool": "list_medications", "roles": ["all"],
+         "tool": "drug_search", "roles": ["all"],
          "key_output": "results", "guideline_ref": "—"},
     ],
     "roles": {

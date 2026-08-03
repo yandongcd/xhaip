@@ -1,0 +1,10 @@
+{
+  "id": "NUTRIC-SCORE",
+  "title": "NUTRIC Score for ICU Nutrition Risk",
+  "priority": "P1",
+  "source": "icu",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/21927559/",
+  "note": "Free",
+  "downloaded": false,
+  "generated": "2026-07-26T23:45:17.599099"
+}

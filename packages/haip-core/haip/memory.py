@@ -11,6 +11,7 @@ Usage:
 
 from __future__ import annotations
 
+import contextlib
 import json
 import pathlib
 import sqlite3
@@ -30,7 +31,7 @@ class AgentMemory:
         self._init_db()
 
     def _init_db(self):
-        with sqlite3.connect(str(self.db_path)) as conn:
+        with contextlib.closing(sqlite3.connect(str(self.db_path))) as conn:
             conn.execute("PRAGMA journal_mode=WAL")
             from haip.schema_version import ensure_version
             ensure_version(conn, 1)
@@ -54,7 +55,7 @@ class AgentMemory:
     def record(self, agent: str, patient_id: str, tool: str = "",
                params: dict | None = None, result: dict | None = None,
                status: str = "ok", confidence: float = 0.0):
-        with sqlite3.connect(str(self.db_path)) as conn:
+        with contextlib.closing(sqlite3.connect(str(self.db_path))) as conn:
             conn.execute(
                 "INSERT INTO decisions (agent, patient_id, tool, input_params, result, status, confidence, timestamp) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -68,7 +69,7 @@ class AgentMemory:
     def insights(self, agent: str, days: int = 30) -> dict[str, Any]:
         """Generate insights for an agent based on past decisions."""
         cutoff = time.time() - days * 86400
-        with sqlite3.connect(str(self.db_path)) as conn:
+        with contextlib.closing(sqlite3.connect(str(self.db_path))) as conn:
             conn.row_factory = sqlite3.Row
             rows = conn.execute(
                 "SELECT * FROM decisions WHERE agent = ? AND timestamp > ? ORDER BY timestamp DESC",
@@ -108,7 +109,7 @@ class AgentMemory:
 
     def global_insights(self) -> dict[str, Any]:
         """Cross-agent insights for TOGAF governance."""
-        with sqlite3.connect(str(self.db_path)) as conn:
+        with contextlib.closing(sqlite3.connect(str(self.db_path))) as conn:
             conn.row_factory = sqlite3.Row
             rows = conn.execute("SELECT agent, status, COUNT(*) as cnt FROM decisions GROUP BY agent, status").fetchall()
 
@@ -135,11 +136,9 @@ class AgentMemory:
         }
 
 
-_memory: AgentMemory | None = None
+_singleton_state: dict = {}
 
 
 def get_memory() -> AgentMemory:
-    global _memory
-    if _memory is None:
-        _memory = AgentMemory()
-    return _memory
+    from haip._singleton import locked_singleton
+    return locked_singleton(AgentMemory, _singleton_state, "memory")

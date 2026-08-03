@@ -1,4 +1,4 @@
-name: cardio-risk
+﻿name: cardio-risk
 cn_name: 围术期心脏评估
 version: 1.0.0
 type: specialist
@@ -63,6 +63,44 @@ ui:
   template: chat-with-role-switcher
   roles:
   - id: attending
-    label: attending
+    label: 主治医师
   - id: cardiologist
-    label: cardiologist
+    default: true
+    label: 心内科医师
+guard:
+  triggers:
+  - 手术时机延误
+  - 心脏风险低估
+  - 抗凝管理错误
+  high_risk_scenarios:
+  - RCRI>=3+急诊手术
+  - cTnI>0.5+手术中
+  - INR>3+术中出血
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+debate:
+  enabled: true
+  competitors:
+  - anesthesia
+  - cardio-surgery
+  - emergency
+  - general-surgery
+  - hepatobiliary-surgery
+  - icu
+  - interventional-therapy
+  - joint-surgery
+  - mdt
+  - neurosurgery
+  - orthopedic-surgery
+  - renal-transplant
+  - thoracic-surgery
+  - vascular-surgery
+  mode: auto
+trust_tier: deep

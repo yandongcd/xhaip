@@ -5,7 +5,6 @@ Port from haip-0705-2 v0.2.0. Pure Python with 8 delay factors + T2 layered arbi
 
 from __future__ import annotations
 
-
 # T2 因子名 → 中文名映射
 _T2_FACTOR_NAMES: dict[str, str] = {
     "cardiac": "心脏因素", "pulmonary": "肺部因素", "cerebral": "脑血管因素",

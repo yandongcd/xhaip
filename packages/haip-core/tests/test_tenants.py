@@ -1,12 +1,13 @@
 """Tests for haip.tenants — multi-tenant management."""
 
 import pytest
+
 from haip.tenants import (
-    TenantManager,
     Tenant,
+    TenantManager,
     TenantStatus,
-    init_default_tenant,
     get_tenant_manager,
+    init_default_tenant,
 )
 
 

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Any, Iterator
+from collections.abc import Iterator
+from typing import Any
 
-from haip.llm import ChatResponse, LLMProvider, ToolCall
+from haip.llm import DEFAULT_MAX_TOKENS, ChatResponse, LLMProvider, ToolCall
 
 
 class MockProvider(LLMProvider):
@@ -17,7 +18,7 @@ class MockProvider(LLMProvider):
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
         temperature: float = 0.3,
-        max_tokens: int = 4096,
+        max_tokens: int = DEFAULT_MAX_TOKENS,
     ) -> ChatResponse:
         self.call_history.append({
             "messages_count": len(messages),
@@ -40,7 +41,7 @@ class MockProvider(LLMProvider):
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
         temperature: float = 0.3,
-        max_tokens: int = 4096,
+        max_tokens: int = DEFAULT_MAX_TOKENS,
     ) -> Iterator[ChatResponse]:
         response = self.chat(messages, tools, temperature, max_tokens)
         # Simulate streaming by yielding content in chunks

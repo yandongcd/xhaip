@@ -1,0 +1,92 @@
+# 髋部骨折围术期VTE预防规则
+# 来源: Caprini风险评估模型 / ACCP抗栓指南 / NICE NG89
+# T1: 国际指南 | T2: 南方医院适配
+
+rule_type: treatment
+department: 创伤骨科
+capability: cap-l3-vte-prophylaxis
+business_process: bp-hip-fracture-vte
+guideline: ACCP Antithrombotic Therapy (2021) / NICE NG89 (2018)
+stakeholder: 骨科+麻醉科+护理
+version: "1.0.0"
+
+rules:
+  - id: vte-caprini-assessment
+    description: Caprini血栓风险评估 — 髋部骨折患者
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 髋部骨折
+    result:
+      risk_score:
+        base: 5  # 髋部骨折默认5分(最高风险)
+        modifiers:
+          - age_61_74: "+2"
+          - age_75_plus: "+3"
+          - BMI_gt_25: "+1"
+          - varicose_veins: "+1"
+          - prior_vte: "+3"
+          - family_vte: "+3"
+          - malignancy: "+2"
+          - acute_infection: "+1"
+          - bed_rest_gt_72h: "+2"
+      interpretation:
+        score_0_1: "低危 — 基础预防(早期活动+充足水化)"
+        score_2: "中危 — 物理预防(IPC/GCS)"
+        score_3_4: "高危 — 药物预防(LMWH/磺达肝癸钠)"
+        score_ge_5: "极高危 — 药物+物理联合预防"
+
+  - id: vte-pharmacological
+    description: 药物预防方案
+    condition:
+      and:
+        - field: caprini_score
+          operator: ">="
+          value: 3
+        - field: bleeding_risk
+          operator: "=="
+          value: acceptable
+    result:
+      regimen:
+        first_line: "依诺肝素 40mg qd 皮下注射"
+        alternative: "磺达肝癸钠 2.5mg qd"
+        renal_impairment: "eGFR<30 → 减量至20mg qd 或换用普通肝素"
+        duration: "术后6-14天(最低), 出院后延长至35天(推荐)"
+      contraindications:
+        - "活动性大出血"
+        - "血小板<50×10⁹/L"
+        - "颅内出血近期(<4周)"
+        - "未控制的严重高血压(>180/110)"
+
+  - id: vte-mechanical
+    description: 物理预防方案
+    condition:
+      and:
+        - field: diagnosis
+          operator: contains
+          value: 髋部骨折
+    result:
+      regimen:
+        pre_op: "术后即刻开始IPC(间歇充气加压)"
+        post_op: "IPC + 弹力袜(GCS, 膝长型)"
+        contraindications: "严重下肢动脉硬化/腿部皮肤破损/已确诊DVT"
+      note: "物理预防贯穿整个制动期, 直至患者恢复完全负重行走"
+
+  - id: vte-surveillance
+    description: DVT/PE监测
+    condition:
+      field: diagnosis
+      operator: contains
+      value: 髋部骨折
+    result:
+      monitoring:
+        dvt:
+          - "每日检查下肢肿胀/疼痛/Homans征"
+          - "D-dimer: 术后3-5天(常规), 可疑DVT时立即"
+          - "下肢静脉超声: D-dimer升高+临床症状 → 立即"
+        pe:
+          - "SpO2下降+呼吸困难+胸痛 → 立即CTPA"
+          - "心超: 右室扩大+肺动脉高压 → 提示PE"
+      alert_thresholds:
+        - "D-dimer > 3mg/L + 下肢肿胀 → 🟡 触发下肢静脉超声"
+        - "D-dimer > 5mg/L + SpO2 <92% → 🔴 触发急诊CTPA"

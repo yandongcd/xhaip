@@ -7,15 +7,22 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
-import pytest  # noqa: E402
-from haip.session.store import Event, AgentSession, SessionService, InMemorySessionService, events_to_messages  # noqa: E402
-from haip.loop import AsyncAgentLoop, AgentLoop  # noqa: E402
-from haip.loop.context import InvocationContext  # noqa: E402
-from haip.loop.hooks import HookChain, HookContext  # noqa: E402
-from haip.llm.mock import MockProvider  # noqa: E402
-from haip.llm import ChatResponse, ToolCall  # noqa: E402
-from haip.tools import BaseTool, ToolResult  # noqa: E402
-from haip.tools.registry import register, list_all  # noqa: E402
+import pytest
+
+from haip.llm import ChatResponse, ToolCall
+from haip.llm.mock import MockProvider
+from haip.loop import AgentLoop, AsyncAgentLoop
+from haip.loop.context import InvocationContext
+from haip.loop.hooks import HookChain, HookContext
+from haip.session.store import (
+    AgentSession,
+    Event,
+    InMemorySessionService,
+    SessionService,
+    events_to_messages,
+)
+from haip.tools import BaseTool, ToolResult
+from haip.tools.registry import list_all, register
 
 
 class EchoTool(BaseTool):
@@ -103,7 +110,7 @@ class TestInMemorySessionService:
 
         svc.end_invocation(s)
         # temp: 前缀在 end_invocation 清除
-        assert True  # 无异常
+        assert "temp:" not in "".join(e.content or "" for e in s.events) or len(s.events) == 1
 
 
 class TestEventsToMessages:

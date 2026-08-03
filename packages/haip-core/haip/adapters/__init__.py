@@ -12,9 +12,12 @@ Each adapter normalizes data into a common PatientRecord format.
 
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -61,7 +64,7 @@ class HISAdapter(ABC):
         self.config = config or {}
 
     @abstractmethod
-    async def get_patient(self, patient_id: str) -> Optional[PatientRecord]:
+    async def get_patient(self, patient_id: str) -> PatientRecord | None:
         """Retrieve a single patient."""
         ...
 
@@ -122,7 +125,7 @@ class MockHISAdapter(HISAdapter):
                         record = self._convert_to_record(p)
                         self._patients[record.patient_id] = record
                 except Exception:
-                    pass
+                    logger.debug("Mock HIS 数据加载失败: %s", path, exc_info=True)
                 break
 
     def _convert_to_record(self, p: dict[str, Any]) -> PatientRecord:
@@ -142,7 +145,7 @@ class MockHISAdapter(HISAdapter):
             source_system="mock-his",
         )
 
-    async def get_patient(self, patient_id: str) -> Optional[PatientRecord]:
+    async def get_patient(self, patient_id: str) -> PatientRecord | None:
         return self._patients.get(patient_id)
 
     async def search_patients(
@@ -178,7 +181,7 @@ class HISAdapterRegistry:
 
     def __init__(self):
         self._adapters: dict[str, HISAdapter] = {}
-        self._default: Optional[HISAdapter] = None
+        self._default: HISAdapter | None = None
 
     def register(self, tenant_id: str, adapter: HISAdapter):
         self._adapters[tenant_id] = adapter

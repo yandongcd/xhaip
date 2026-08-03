@@ -15,6 +15,17 @@ from __future__ import annotations
 
 from typing import Any
 
+from haip.togaf.knowledge_agent import KnowledgeAgent
+
+_agent = KnowledgeAgent(agent_name="antiemetic", department="药学部")
+_GUIDELINES = [
+    "ASER/SAMBA 术后恶心呕吐管理共识 (2020)",
+    "中国麻醉学会 术后恶心呕吐诊疗指南 (2025版)",
+    "Fourth Consensus Guidelines for PONV Management (2020)",
+    "NMPA 止吐药物说明书 (5-HT3/NK1/糖皮质激素/抗组胺类)",
+]
+_agent.rule_engine.load_all()
+
 APFEL_FACTORS = {
     "female": "女性",
     "nonsmoker": "非吸烟者",
@@ -355,5 +366,95 @@ def rescue(
             "SAMBA Guidelines: Gan TJ et al, Anesth Analg 2020;131:411-448",
             "中华医学会麻醉学分会 PONV 防治专家共识 (2020)",
             "Apfel CC et al, Anesth Analg 2012;114:1305-1315 (rescue RCT)",
+        ],
+    }
+
+
+# ── v2.0 扩展: 术后监测 + 出院随访 ──
+
+
+def postop_monitor(
+    patient_id: str = "",
+    hours_postop: float = 0,
+    nausea_severity: str = "none",
+    vomiting_episodes: int = 0,
+    rescue_given: bool = False,
+    **kwargs,
+) -> dict[str, Any]:
+    """术后24h/48h分层监测 — 基于T0基准的定时评估.
+
+    T0 = 手术结束时间, T0+24h/48h 自动触发评估.
+    """
+    severity = "none"
+    alert = ""
+
+    if vomiting_episodes >= 3:
+        severity = "high"
+        alert = "🟠 持续呕吐≥3次 → 触发MDT会诊(麻醉+外科+药师)"
+    elif vomiting_episodes >= 1 or nausea_severity in ("moderate", "severe"):
+        severity = "medium"
+        alert = "🟡 有PONV症状 → 启动补救治疗"
+    elif nausea_severity == "mild":
+        severity = "low"
+    else:
+        alert = "✅ 无PONV → 继续常规监测"
+
+    if hours_postop < 24:
+        next_check = f"T0+24h (约{24 - hours_postop:.0f}h后)"
+    else:
+        next_check = "T0+48h 最终评估"
+
+    return {
+        "status": "ok",
+        "hours_postop": hours_postop,
+        "severity": severity,
+        "nausea": nausea_severity,
+        "vomiting": vomiting_episodes,
+        "rescue_given": rescue_given,
+        "alert": alert,
+        "next_check": next_check,
+        "recommendations": [
+            "PONV已发生 → 选择与预防用药不同机制的补救药物" if severity != "none" else "",
+            "持续呕吐+脱水 → 补液+电解质纠正" if severity == "high" else "",
+            "记录PONV事件用于质控报表" if severity != "none" else "",
+        ],
+    }
+
+
+def discharge_followup(
+    patient_id: str = "",
+    day_postop: int = 0,
+    has_nausea: bool = False,
+    has_vomiting: bool = False,
+    has_dizziness: bool = False,
+    has_constipation: bool = False,
+    **kwargs,
+) -> dict[str, Any]:
+    """出院随访 — D3/D7自动短信/小程序随访问卷."""
+    if day_postop <= 0:
+        return {"status": "error", "message": "需要指定术后天数(day_postop)"}
+
+    symptoms = []
+    if has_nausea:
+        symptoms.append("恶心")
+    if has_vomiting:
+        symptoms.append("呕吐")
+    if has_dizziness:
+        symptoms.append("头晕")
+    if has_constipation:
+        symptoms.append("便秘 (阿片/5-HT3相关)")
+
+    needs_contact = bool(symptoms)
+
+    return {
+        "status": "ok",
+        "day_postop": day_postop,
+        "symptoms": symptoms,
+        "needs_clinician_contact": needs_contact,
+        "message": f"术后D{day_postop}随访 — {'有症状需关注' if needs_contact else '恢复良好'}",
+        "actions": [
+            f"D{day_postop}自动推送随访问卷(短信/小程序)" if day_postop in (3, 7) else "",
+            "持续呕吐 → 药师远程指导或建议返院" if has_vomiting else "",
+            "记录止吐药不良反应(头晕/便秘)用于质控" if has_dizziness or has_constipation else "",
         ],
     }

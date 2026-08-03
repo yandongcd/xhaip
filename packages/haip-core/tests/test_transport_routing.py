@@ -3,12 +3,17 @@
 import pytest
 
 from haip.a2a.transport import (
-    AgentTransport, InProcessTransport, MockTransport, MCPTransport,
-    set_transport, get_transport, remove_transport,
+    AgentTransport,
+    InProcessTransport,
+    MCPTransport,
+    MockTransport,
+    get_transport,
+    remove_transport,
+    set_transport,
 )
-from haip.loop.routing import KeywordRouter, RouteRule
-from haip.loop.hitl import HITLRequest, HITLHook
+from haip.loop.hitl import HITLHook, HITLRequest
 from haip.loop.hooks import HookChain, HookContext
+from haip.loop.routing import KeywordRouter, RouteRule
 
 
 class TestTransport:

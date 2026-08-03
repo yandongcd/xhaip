@@ -1,13 +1,14 @@
 """Tests for haip.crypto — PHI field encryption."""
 
 import pytest
+
 from haip.crypto import (
-    encrypt_field,
-    decrypt_field,
-    encrypt_patient_record,
-    decrypt_patient_record,
     PHI_FIELDS,
     _Encryptor,
+    decrypt_field,
+    decrypt_patient_record,
+    encrypt_field,
+    encrypt_patient_record,
 )
 
 

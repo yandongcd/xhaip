@@ -11,15 +11,13 @@ from __future__ import annotations
 
 import importlib
 import sys
-
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
-
-from haip.agent import _registry, DomainPlugin, ToolDef, register
 from haip.a2a import call, clear_history
+from haip.agent import DomainPlugin, ToolDef, _registry, register
 
 SPINE_TOOLS = [
     ToolDef(name="asia_classification", description="",

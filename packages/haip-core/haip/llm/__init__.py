@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import Any, Iterator
+from typing import Any
+
+DEFAULT_MAX_TOKENS = 4096
 
 
 @dataclass
@@ -33,7 +36,7 @@ class LLMProvider(ABC):
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
         temperature: float = 0.3,
-        max_tokens: int = 4096,
+        max_tokens: int = DEFAULT_MAX_TOKENS,
     ) -> ChatResponse:
         """非流式对话请求。"""
 
@@ -43,19 +46,19 @@ class LLMProvider(ABC):
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
         temperature: float = 0.3,
-        max_tokens: int = 4096,
+        max_tokens: int = DEFAULT_MAX_TOKENS,
     ) -> Iterator[ChatResponse]:
         """流式对话请求，yield 逐块 ChatResponse。"""
 
     @classmethod
     def from_config(cls, config: dict[str, Any]) -> LLMProvider:
-        """工厂方法: 从配置字典创建 Provider。
-        配置格式:
+        """Factory: create Provider from config dict.
+        Config format:
             {"provider": "deepseek", "api_key": "...", "model": "deepseek-chat"}
-        或:
             {"provider": "mock", "fixtures": {...}}
+            {"provider": "fail-closed", "mode": "production|test"}
         """
-        provider_name = config.get("provider", "mock")
+        provider_name = config.get("provider", "fail-closed")
         if provider_name == "deepseek":
             from haip.llm.deepseek import DeepSeekProvider
             return DeepSeekProvider(
@@ -66,4 +69,7 @@ class LLMProvider(ABC):
         if provider_name == "mock":
             from haip.llm.mock import MockProvider
             return MockProvider(fixtures=config.get("fixtures", {}))
+        if provider_name == "fail-closed":
+            from haip.llm.circuit import FailClosedProvider
+            return FailClosedProvider(mode=config.get("mode", "production"))
         raise ValueError(f"Unknown provider: {provider_name}")

@@ -32,7 +32,7 @@ def _interpolate_env(value: str) -> str:
 
 def _interpolate_dict(data: dict) -> dict:
     """Recursively interpolate environment variables in a dict."""
-    result = {}
+    result: dict = {}
     for key, value in data.items():
         if isinstance(value, str):
             result[key] = _interpolate_env(value)
@@ -116,18 +116,19 @@ class Config:
 
 
 # Global singleton
-_config: Config | None = None
+_singleton_state: dict = {}
 
 
 def get_config() -> Config:
     """Get the global config singleton."""
-    global _config
-    if _config is None:
-        _config = Config()
-    return _config
+    from haip._singleton import locked_singleton
+    return locked_singleton(Config, _singleton_state, "config")
 
 
 def reload_config():
     """Reload the global config."""
-    if _config is not None:
-        _config.reload()
+    from haip._singleton import _key_locks
+    with _key_locks["config"]:
+        cfg = _singleton_state.get("config")
+        if cfg is not None:
+            cfg.reload()

@@ -60,8 +60,8 @@ class TestHomeRedirect:
     """GET /home 按角色分流."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
-        os.environ["HAIP_TEST_MODE"] = "true"
+    def setup(self, monkeypatch):
+        monkeypatch.setenv("HAIP_TEST_MODE", "true")
         from haip.web_server import app
         self.client = TestClient(app)
 
@@ -110,8 +110,9 @@ class TestDemoIdentitySeeding:
     """seed_demo_identities 幂等 + 12 用户."""
 
     def test_seed_idempotent(self):
-        from haip.auth import AuthService
         import os
+
+        from haip.auth import AuthService
 
         os.environ["HAIP_TEST_MODE"] = "true"
         auth = AuthService()

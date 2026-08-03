@@ -31,7 +31,8 @@ def _list_registry_tools() -> list[dict[str, Any]]:
 def _list_agent_tools(agent_name: str) -> list[dict[str, Any]]:
     """Return tools defined on a specific agent's YAML definition."""
     try:
-        from haip.agent import get as get_agent, load_from_dir, list_all
+        from haip.agent import get as get_agent
+        from haip.agent import list_all, load_from_dir
     except ImportError:
         return []
 
@@ -274,8 +275,9 @@ def main():
             print("Specify --agent <name> or --all")
             sys.exit(1)
     elif args.cmd == "list-agents":
-        from haip.agent import list_all, load_from_dir
         from pathlib import Path
+
+        from haip.agent import list_all, load_from_dir
 
         ags = list_all()
         if not ags:

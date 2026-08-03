@@ -1,0 +1,117 @@
+# 肠外营养(TPN)处方安全规则
+# 来源: ESPEN/ASPEN/CSPEN 指南 | 南方医院静配中心SOP
+# T1: ESPEN/ASPEN | T2: 南方医院参数
+
+rule_type: treatment
+department: 药学部静配中心
+capability: cap-l3-tpn-safety
+business_process: bp-tpn-prescription
+guideline: ESPEN 2023 / ASPEN 2022 / CSPEN 2024
+stakeholder: 临床药师+营养师
+version: "1.0.0"
+
+rules:
+  - id: tpn-calcium-phosphate
+    description: 钙磷沉淀风险 — Ca×P乘积
+    condition:
+      and:
+        - field: calcium_mmol_L
+          operator: ">"
+          value: 0
+        - field: phosphate_mmol_L
+          operator: ">"
+          value: 0
+    result:
+      formula: "Ca(mmol/L) × P(mmol/L)"
+      thresholds:
+        safe: "<45 (mmol/L)² — 常規安全"
+        caution: "45-55 (mmol/L)² — 🟡 需注意pH/Mg/温度"
+        dangerous: ">55 (mmol/L)² — 🔴 高风险沉淀, 必须调整"
+      mitigation:
+        - 优先使用有机磷(甘油磷酸钠)替代无机磷
+        - 降低Ca浓度或P浓度
+        - 保持配方pH<6.0
+        - 控制Mg浓度(与Ca竞争结合)
+
+  - id: tpn-cation-limits
+    description: 单价/二价阳离子浓度上限
+    condition:
+      field: tpn_volume
+      operator: ">"
+      value: 0
+    result:
+      limits:
+        sodium: "Na⁺ < 150 mmol/L (中心静脉), <100 mmol/L (外周静脉)"
+        potassium: "K⁺ < 80 mmol/L (中心静脉), <60 mmol/L (外周静脉)"
+        calcium: "Ca²⁺ < 5 mmol/L (全合一), <10 mmol/L (单独输注)"
+        magnesium: "Mg²⁺ < 5 mmol/L"
+      warning: "⚠️ 高浓度阳离子可导致脂肪乳破乳 → 脂肪栓塞风险"
+
+  - id: tpn-osmolarity
+    description: 渗透压 — 决定输注途径
+    condition:
+      field: tpn_osmolarity
+      operator: ">"
+      value: 0
+    result:
+      thresholds:
+        peripheral: "<900 mOsm/L — 外周静脉安全"
+        borderline: "900-1200 mOsm/L — ⚠️ 外周静脉血栓性静脉炎风险升高"
+        central_only: ">1200 mOsm/L — 🔴 必须中心静脉输注, 外周禁配"
+      formula: "氨基酸×10 + 葡萄糖×5 + 脂肪×1.4 + 电解质×2 + (Na+K+Ca+Mg)×2"
+      recommendation: "渗透压>1200 → 自动标记'需要中心静脉通路'"
+
+  - id: tpn-lipid-stability
+    description: 脂肪乳稳定性
+    condition:
+      field: lipid_emulsion_used
+      operator: "=="
+      value: true
+    result:
+      checks:
+        - "pH > 5.0 (过低→脂肪乳不稳定)"
+        - "避免直接加入酸性药物(如VitC注射液)"
+        - "避免高浓度二价阳离子直接接触脂肪乳"
+        - "全合一配方中脂肪乳应最后加入"
+      warning: "🔴 脂肪乳破乳→脂肪栓塞(致命) — 出现分层/絮状物/油滴=立即废弃"
+
+  - id: tpn-glucose-lipid-ratio
+    description: 糖脂比
+    condition:
+      field: tpn_energy_kcal
+      operator: ">"
+      value: 0
+    result:
+      normal: "糖:脂 = 60:40 或 50:50"
+      special:
+        respiratory_failure: "减少葡萄糖(降低CO₂产生) → 糖:脂 = 40:60"
+        severe_stress: "增加脂肪(应激时脂肪氧化增强) → 糖:脂 = 40:60"
+        diabetes: "严格控制葡萄糖(减少胰岛素需求) → 糖:脂 = 50:50"
+      formula: "葡萄糖供能(kcal) = 葡萄糖(g)×3.4; 脂肪供能(kcal) = 脂肪(g)×9"
+
+  - id: tpn-refeeding-risk
+    description: 再喂养综合征风险
+    condition:
+      or:
+        - field: nrs2002_score
+          operator: ">="
+          value: 5
+        - field: bmi
+          operator: "<"
+          value: 16
+        - field: weight_loss_3m
+          operator: ">"
+          value: 15
+        - field: recent_intake
+          operator: "<"
+          value: 10
+          unit: days
+    result:
+      risk: HIGH — 再喂养综合征高风险
+      protocol:
+        - "初始能量: 10-15 kcal/kg/d (正常需求的25-50%)"
+        - "4-7天逐步递增至目标能量"
+        - "前3天: 补磷+补钾+补镁+硫胺素(维生素B1) 200-300mg/d"
+        - "每日监测: K⁺/Mg²⁺/P (前3天每12h, 稳定后每日)"
+        - "如P<0.32 mmol/L: 停止营养, 先补磷"
+      alert: "🔴 再喂养综合征死亡率高达10-20% — 必须遵循渐进食方案"

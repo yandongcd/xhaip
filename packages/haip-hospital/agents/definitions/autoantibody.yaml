@@ -1,0 +1,81 @@
+name: autoantibody
+cn_name: 自身抗体检测结果智能解读系统 v2.0
+version: 1.1.0
+type: business
+trust_tier: deep
+department: 检验医学科
+port: 8856
+aliases: [自身抗体, 抗核抗体, ANA, 风湿免疫, ANCA, 抗磷脂]
+prompt:
+  system: |
+    你是南方医院检验医学科AI助手 v2.0，负责自身抗体检测结果的智能综合解读。
+
+    核心能力: ANA IIF模式(颗粒/均质/核仁/着丝点/胞浆/核点/核膜 7型)、EULAR/ACR分类标准打分(SLE/SSc/SS/MCTD/PM-DM/RA/ANCA血管炎/APS 8种)、ANCA综合分析(PR3/c-ANCA vs MPO/p-ANCA +器官指向)、抗磷脂抗体综合征(LA/aCL/anti-β2GPI)、抗体滴度趋势追踪(4倍变化=临床显著)。
+
+    约束: 所有解读须经检验科/风湿科医师复核; 抗dsDNA高滴度+低补体 → 提示SLE活动; MPO/PR3阳性+肾肺综合征 → 紧急风湿科/肾内科会诊。
+  temperature: 0.2
+tools:
+- name: pattern_match
+  description: 抗体组合模式匹配 — ANA IIF 7型 + 8种风湿病(EULAR/ACR标准)+检查建议
+  handler: autoantibody.pattern_match
+  input: {patient_id: str, antibodies: dict, ana_pattern: str, ana_titer: str}
+- name: trend_track
+  description: 抗体动态趋势追踪 — 滴度4倍/2倍变化+新抗体出现+疾病活动度关联
+  handler: autoantibody.trend_track
+  input: {patient_id: str, current_results: dict, historical_results: list}
+- name: disease_orientation
+  description: 疾病指向性评估 — 整合抗体谱+临床表现+ANCA+分类标准→鉴别诊断排序
+  handler: autoantibody.disease_orientation
+  input: {patient_id: str, antibody_pattern: dict, symptoms: list, pr3: float, mpo: float, c_anca: str, p_anca: str}
+guard:
+  triggers: [自身抗体, 风湿免疫, SLE, ANCA, 血管炎]
+  high_risk_scenarios: [抗dsDNA高滴度+补体↓, 抗MPO/PR3阳性+肾肺综合征, 抗RNP高滴度+肺动脉高压, 抗Jo-1+快速ILD进展]
+  citation: {required: true, min_sources: 2, min_trust: T1}
+stages:
+- order: 1
+  id: ana-screening
+  label: ANA筛查
+  desc: IIF ANA初筛(HEp-2底物) → 7型模式识别 + 滴度确定(1:80起)
+  role_ids: [attending, technician]
+- order: 2
+  id: ena-panel
+  label: ENA/ANCA确认
+  desc: ENA Panel(SS-A/SS-B/Sm/RNP/Scl-70/Jo-1)+ANCA(MPO/PR3)+dsDNA+补体
+  role_ids: [attending, technician]
+- order: 3
+  id: pattern-matching
+  label: 模式匹配
+  desc: 8种风湿病(EULAR/ACR标准)综合打分 + 检查建议
+  role_ids: [attending, resident]
+- order: 4
+  id: trend-analysis
+  label: 趋势分析
+  desc: 抗体滴度时序变化(4倍=显著) + 新抗体预警 + 疾病活动度关联
+  role_ids: [attending]
+- order: 5
+  id: disease-orientation
+  label: 疾病指向
+  desc: 鉴别诊断排序 + ANCA器官评估 + APS分层 + 临床标准校验
+  role_ids: [attending]
+- order: 6
+  id: rheumatology-referral
+  label: 风湿会诊
+  desc: 风湿免疫科会诊建议 + 确诊试验计划 + 治疗监测方案
+  role_ids: [attending, pharmacist]
+ui:
+  template: chat-with-role-switcher
+  roles:
+  - id: attending
+    label: 检验/风湿科医师
+    default: true
+  - id: technician
+    label: 检验技师
+  - id: pharmacist
+    label: 临床药师
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply: [citation_new, route_adj]
+  prompt_a_b: true

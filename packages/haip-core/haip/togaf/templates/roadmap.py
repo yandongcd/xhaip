@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from haip.togaf.templates._base import wrap_html
 
-
 DEFAULT_DATA: list[dict] = [
     {
         "phase": "Phase 1 · Q3 2026",

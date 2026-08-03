@@ -5,9 +5,9 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
-from haip.loop import AgentLoop
-from haip.llm.mock import MockProvider
 from haip.llm import ChatResponse, ToolCall
+from haip.llm.mock import MockProvider
+from haip.loop import AgentLoop
 
 
 class TestToolExecutor:
@@ -73,7 +73,7 @@ class TestToolExecutor:
     def test_fallback_to_global_registry_when_no_executor(self):
         """Falls back to global registry when no tool_executor."""
         from haip.tools import BaseTool, ToolResult
-        from haip.tools.registry import register, list_all
+        from haip.tools.registry import list_all, register
 
         list_all().clear()
 

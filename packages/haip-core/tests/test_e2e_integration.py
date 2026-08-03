@@ -7,17 +7,27 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
-import pytest  # noqa: E402
-from haip.session.store import Event, AgentSession, InMemorySessionService, SessionService  # noqa: E402
-from haip.loop import AsyncAgentLoop, Runner  # noqa: E402
-from haip.loop.context import InvocationContext  # noqa: E402
-from haip.loop.hooks import HookChain, HookContext  # noqa: E402
-from haip.llm.mock import MockProvider  # noqa: E402
-from haip.llm import ChatResponse, ToolCall  # noqa: E402
-from haip.orchestrator.graph import ClinicalWorkflow, WorkflowBuilder, Node, NodeType  # noqa: E402
-from haip.orchestrator.agent_tool import AgentTool, build_agent_tools, create_agent_tool_executor  # noqa: E402
-from haip.tools import BaseTool, ToolResult  # noqa: E402
-from haip.tools.registry import register, list_all  # noqa: E402
+import pytest
+
+from haip.llm import ChatResponse, ToolCall
+from haip.llm.mock import MockProvider
+from haip.loop import AsyncAgentLoop, Runner
+from haip.loop.context import InvocationContext
+from haip.loop.hooks import HookChain, HookContext
+from haip.orchestrator.agent_tool import (
+    AgentTool,
+    build_agent_tools,
+    create_agent_tool_executor,
+)
+from haip.orchestrator.graph import ClinicalWorkflow, Node, NodeType, WorkflowBuilder
+from haip.session.store import (
+    AgentSession,
+    Event,
+    InMemorySessionService,
+    SessionService,
+)
+from haip.tools import BaseTool, ToolResult
+from haip.tools.registry import list_all, register
 
 
 class EchoTool(BaseTool):
@@ -104,7 +114,9 @@ class TestAgentToolIntegration:
 
     def test_agent_tool_with_loop(self):
         """AgentTool 包装为 AsyncAgentLoop 可调用工具."""
-        from haip.agent import DomainPlugin, register as agent_register, list_all as agent_list_all
+        from haip.agent import DomainPlugin
+        from haip.agent import list_all as agent_list_all
+        from haip.agent import register as agent_register
         agent_list_all().clear()
 
         plugin = DomainPlugin(
@@ -133,7 +145,9 @@ class TestAgentToolIntegration:
 
     def test_coordinator_with_agent_tools(self):
         """Coordinator Agent 通过 AgentTool 委派到子 Agent."""
-        from haip.agent import DomainPlugin, register as agent_register, list_all as agent_list_all
+        from haip.agent import DomainPlugin
+        from haip.agent import list_all as agent_list_all
+        from haip.agent import register as agent_register
         agent_list_all().clear()
         list_all().clear()
         register(EchoTool())
@@ -328,9 +342,9 @@ class TestErrorHandling:
 
     def test_session_service_thread_safety(self):
         """多线程并发写入 — 使用文件 DB (内存 DB 是 per-connection 的)."""
+        import shutil
         import tempfile
         import threading
-        import shutil
 
         tmpdir = tempfile.mkdtemp()
         db_path = Path(tmpdir) / "test_concurrent.db"

@@ -1,0 +1,79 @@
+name: interventional-pain
+cn_name: 介入疼痛治疗评估
+version: 1.0.0
+type: specialist
+port: 0
+department: 疼痛科
+aliases:
+- 介入疼痛
+- interventional-pain
+parent: pain-hub
+prompt:
+  system: '你是介入疼痛治疗专家，负责介入治疗适应症评估、影像学门控检查
+
+    和术后安全管理。
+
+    '
+  temperature: 0.3
+tools:
+- name: assess_indications
+  description: 介入治疗适应症评估
+  handler: interventional_pain.assess_indications
+  input:
+    patient_id: str
+- name: imaging_gate
+  description: 影像学门控检查 (MRI/CT 完成度)
+  handler: interventional_pain.imaging_gate
+  input:
+    patient_id: str
+- name: postop_safety
+  description: 术后安全评估 (感染/神经/出血)
+  handler: interventional_pain.postop_safety
+  input:
+    patient_id: str
+guard:
+  triggers:
+  - 手术决策
+  high_risk_scenarios:
+  - 硬膜外血肿
+  - 穿刺部位感染
+  citation:
+    required: true
+stages:
+- order: 1
+  id: indication
+  label: 适应证评估
+  desc: 介入治疗指征判断、禁忌证筛查
+  role_ids:
+  - attending
+- order: 2
+  id: procedure
+  label: 介入操作
+  desc: 神经阻滞/射频/椎体成形术
+  role_ids:
+  - attending
+  - technician
+- order: 3
+  id: followup
+  label: 术后随访
+  desc: 疗效评估、并发症监测、重复治疗计划
+  role_ids:
+  - attending
+ui:
+  template: chat-with-role-switcher
+  roles:
+  - id: attending
+    label: attending
+  - id: technician
+    default: true
+    label: technician
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+trust_tier: standard

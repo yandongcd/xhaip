@@ -10,7 +10,7 @@
 
 ## Reporting a Vulnerability
 
-Do NOT create a public GitHub issue. Send details to the maintainers via private channel.
+Do NOT create a public GitHub issue. Send details to the maintainers via private channel or email security@example.com (replace with actual contact).
 
 ## Security Measures
 

@@ -8,6 +8,18 @@ GUIDELINES: AAOS / AAHKS / MSIS-ICM 2018 / ERAS Society
 
 from __future__ import annotations
 
+from haip.togaf.knowledge_agent import KnowledgeAgent
+
+_agent = KnowledgeAgent(agent_name="joint-surgery", department="关节与骨病外科")
+_GUIDELINES = [
+    "AAOS 老年髋部骨折循证临床实践指南 (2022)",
+    "AAHKS 美国髋膝关节外科医师学会指南",
+    "MSIS-ICM 2018 假体周围感染诊断标准",
+    "ERAS Society 关节置换加速康复指南",
+    "EFORT 欧洲骨科与创伤学会联合会指南 (2021)",
+]
+_agent.rule_engine.load_all()
+
 from typing import Any
 
 # ═══════════════════════════════════════════════════════════
@@ -493,7 +505,18 @@ def tha_tka_planning(
                          "PS (后稳定型) — PCL 缺失/严重畸形 >15°; "
                          "CCK (髁限制型) — 内外侧副韧带功能不全")
     else:
-        return {"status": "error", "error": "请指定关节类型 (hip/knee)"}
+        # Default to hip when unspecified
+        joint_lower = "hip"
+        procedure_type = "THA (人工全髋关节置换)"
+        indications_list = THA_INDICATIONS
+        bone_quality_info = {
+            "normal": "生物型 (cementless) — 多孔涂层 + HA 喷涂",
+            "osteopenia": "生物型 + 大直径股骨头 (36mm+) 降低脱位风险",
+            "osteoporosis": "骨水泥型 (cemented) 或混合固定 (hybrid)",
+        }
+        approach_options = ["后外侧入路 (Moore)", "直接前入路 (DAA / AMIS)", "前外侧入路 (Watson-Jones)"]
+        specific_note = ("髋臼侧: 压配式生物杯 (正常骨量) / 骨水泥杯 (骨质疏松); "
+                         "股骨侧: 锥形柄 (Dorr A-B) / 骨水泥柄 (Dorr C)")
 
     matched = []
     for ind in indications_list:

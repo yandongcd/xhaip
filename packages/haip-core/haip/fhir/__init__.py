@@ -17,11 +17,11 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query
 
 from haip.fhir.converter import (
-    patient_to_fhir,
-    patient_bundle_to_fhir,
-    lab_to_observations,
     diagnosis_to_condition,
+    lab_to_observations,
+    patient_bundle_to_fhir,
     patient_to_encounter,
+    patient_to_fhir,
 )
 
 fhir_router = APIRouter(prefix="/fhir", tags=["fhir"])
@@ -50,12 +50,12 @@ def _search_patients(mgr, **filters) -> list[dict[str, Any]]:
     """Search patients with FHIR-style filters."""
     results = mgr.search(limit=50)
 
-    if "_id" in filters and filters["_id"]:
+    if filters.get("_id"):
         results = [p for p in results if p.get("patient_id") == filters["_id"]]
-    if "name" in filters and filters["name"]:
+    if filters.get("name"):
         name_lower = filters["name"].lower()
         results = [p for p in results if name_lower in (p.get("name") or "").lower()]
-    if "gender" in filters and filters["gender"]:
+    if filters.get("gender"):
         from haip.fhir.converter import _map_gender
         gen_fhir = filters["gender"]
         results = [p for p in results if _map_gender(p.get("gender", "")) == gen_fhir]

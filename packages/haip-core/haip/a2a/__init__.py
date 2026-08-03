@@ -11,6 +11,7 @@ import importlib
 import logging
 import os
 import re
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -25,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 _agent_cache: dict[str, Any] = {}       # module cache: module_path → module_obj
 _call_history: list[dict[str, Any]] = []
+_cache_lock = threading.Lock()
 
 
 def _check_version(requirement: str, actual: str) -> bool:
@@ -135,9 +137,11 @@ def call(agent: str, tool: str, params: dict[str, Any] | None = None,
 
     try:
         if handler not in _agent_cache:
-            if len(_agent_cache) > 200:
-                _agent_cache.clear()  # Reset on excessive caching
-            _agent_cache[handler] = importlib.import_module(module_name)
+            with _cache_lock:
+                if handler not in _agent_cache:
+                    if len(_agent_cache) > 200:
+                        _agent_cache.clear()  # Reset on excessive caching
+                    _agent_cache[handler] = importlib.import_module(module_name)
         fn = getattr(_agent_cache[handler], func_name)
         # Coerce param types from YAML input schema (form inputs are always strings)
         if tool_def.input and params:
@@ -245,7 +249,12 @@ def _record(agent: str, tool: str, status: str, error: str,
     except Exception:
         logger.debug("TOGAF ABB 映射记录失败", exc_info=True)
 
-    _call_history.append(entry)
+    with _cache_lock:
+        _call_history.append(entry)
+
+        # Prune to prevent unbounded growth
+        if len(_call_history) > 1000:
+            _call_history[:] = _call_history[-500:]
 
     # ── Agent Memory Recording (持续探索) ──
     try:
@@ -253,10 +262,6 @@ def _record(agent: str, tool: str, status: str, error: str,
         get_memory().record(agent, "", tool, status=status)
     except Exception:
         logger.debug("Agent Memory 记录失败 (非致命)", exc_info=True)
-
-    # Prune to prevent unbounded growth
-    if len(_call_history) > 1000:
-        _call_history[:] = _call_history[-500:]
 
     # ── Audit logging ──
     try:
@@ -275,11 +280,13 @@ def _record(agent: str, tool: str, status: str, error: str,
 
 
 def get_history(limit: int = 20) -> list[dict[str, Any]]:
-    return _call_history[-limit:]
+    with _cache_lock:
+        return _call_history[-limit:]
 
 
 def clear_history() -> None:
-    _call_history.clear()
+    with _cache_lock:
+        _call_history.clear()
 
 
 # ── ReAct Loop 集成 ──
@@ -411,7 +418,7 @@ def _run_guard(output: str, tool_calls: list, plugin) -> dict:
                     )
                     guard_result["flags"].append(guard_result["blocked_reason"])
     except Exception as e:
-        logger.exception("Guard 验证异常, 阻断通过: %s", e)
+        logger.exception("Guard 验证异常, 阻断通过")
         guard_result["passed"] = False
         guard_result["flags"].append(f"Guard 内部异常: {e}")
         guard_result["blocked_reason"] = f"Guard 验证管道异常: {e}"

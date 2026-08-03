@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -132,9 +131,9 @@ PORTAL_IDENTITY_ROLES: dict[str, str] = {
 class UserCreateRequest(BaseModel):
     username: str = Field(min_length=3, max_length=64)
     password: str = Field(min_length=8, max_length=128)
-    email: Optional[str] = None
-    display_name: Optional[str] = None
-    department: Optional[str] = None
+    email: str | None = None
+    display_name: str | None = None
+    department: str | None = None
 
 
 class UserLoginRequest(BaseModel):
@@ -157,11 +156,11 @@ class UserInfo(BaseModel):
     id: str
     username: str
     display_name: str
-    email: Optional[str] = None
-    department: Optional[str] = None
+    email: str | None = None
+    department: str | None = None
     roles: list[str] = Field(default_factory=list)
     permissions: list[str] = Field(default_factory=list)
-    tenant_id: Optional[str] = None
+    tenant_id: str | None = None
 
 
 class LoginResponse(BaseModel):

@@ -1,16 +1,18 @@
 """Tests for haip.data — Data Product adapter layer."""
 
-import pytest
-from haip.data import (
-    DataSourceAdapter,
-    SQLiteDataSource,
-    MockDataSource,
-    DataProduct,
-    DataProductRegistry,
-    get_registry,
-)
 import tempfile
 from pathlib import Path
+
+import pytest
+
+from haip.data import (
+    DataProduct,
+    DataProductRegistry,
+    DataSourceAdapter,
+    MockDataSource,
+    SQLiteDataSource,
+    get_registry,
+)
 
 
 class TestSQLiteDataSource:

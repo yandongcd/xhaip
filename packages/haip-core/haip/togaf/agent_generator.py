@@ -6,11 +6,13 @@ Output: complete YAML agent definition with stages, roles, tools, guard
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
-from haip.togaf.organization import list_roles, list_orgs
+from haip.togaf.organization import list_orgs, list_roles
 from haip.togaf.templates_dept import get_dept_template
 
+logger = logging.getLogger(__name__)
 
 # Tool name generators per template type
 _TOOL_NAMES_BY_TYPE: dict[str, list[dict]] = {
@@ -100,8 +102,7 @@ def generate_agent_yaml(org_id: str, output_dir: str = "") -> str | None:
     ui_roles = []
     for r in role_defs[:4]:  # Max 4 UI roles
         role_id = r.id.replace(org_id.replace("-", "").replace("_", ""), "")
-        if role_id.startswith("_"):
-            role_id = role_id[1:]
+        role_id = role_id.removeprefix("_")
         ui_roles.append({
             "id": role_id,
             "label": r.level,
@@ -231,12 +232,13 @@ def generate_all_missing(output_dir: str, dry_run: bool = False) -> list[str]:
     """Generate agents for all departments without one."""
     agent_registry = {}
     try:
-        from haip.agent import _registry as _agent_registry, load_from_dir
+        from haip.agent import _registry as _agent_registry
+        from haip.agent import load_from_dir
         if not _agent_registry:
             load_from_dir("")
         agent_registry = _agent_registry
     except Exception:
-        pass
+        logger.debug("Agent registry load failed", exc_info=True)
 
     # Map org name → agent name
     {a.cn_name: a.name for a in agent_registry.values()}

@@ -8,6 +8,17 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
+from haip.togaf.knowledge_agent import KnowledgeAgent
+
+_agent = KnowledgeAgent(agent_name="lab-critical-value", department="检验医学科")
+_GUIDELINES = [
+    "WS/T 405-2012 临床检验危急值报告与处置规范",
+    "CLSI GP47 危急值管理指南 (2021)",
+    "国家卫健委 医疗质量安全核心制度要点 — 危急值报告制度",
+    "南方医院 检验危急值管理制度 (T2适配)",
+]
+_agent.rule_engine.load_all()
+
 CRITICAL_THRESHOLDS: list[dict[str, Any]] = [
     {
         "item": "K+",

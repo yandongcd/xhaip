@@ -9,6 +9,16 @@ from __future__ import annotations
 from haip.togaf.knowledge_agent import KnowledgeAgent
 
 _agent = KnowledgeAgent(agent_name="metrics", department="全院")
+_GUIDELINES = [
+    "国家三级医院评审标准 (2022版)",
+    "公立医院绩效考核指标 (国考55项)",
+    "JCI 质量改进与患者安全 (QPS) 标准",
+]
+_agent.rule_engine.load_all()
+
+from haip.togaf.knowledge_agent import KnowledgeAgent
+
+_agent = KnowledgeAgent(agent_name="metrics", department="全院")
 _guidelines = ['全院指标标准']
 
 def get_department_metrics(**kwargs) -> dict:

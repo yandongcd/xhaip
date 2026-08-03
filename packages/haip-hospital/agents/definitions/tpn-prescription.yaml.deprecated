@@ -1,0 +1,63 @@
+name: tpn-prescription
+cn_name: 肠外营养处方设计智能体
+version: 1.0.0
+type: specialist
+trust_tier: deep
+department: 药学部静配中心
+port: 8844
+aliases:
+- TPN
+- 肠外营养
+- 营养处方
+- parenteral nutrition
+prompt:
+  system: 你是南方医院药学部静配中心AI助手，负责肠外营养(TPN)处方设计与安全审核。基于ESPEN/ASPEN/CSPEN指南，提供营养筛查、能量计算、处方配比和配伍安全检查。所有处方须经临床药师+营养师审核确认后执行。
+  temperature: 0.2
+tools:
+- name: nutrition_screen
+  description: 营养风险筛查 — NRS-2002(成人)/MNA-SF(老年)/GLIM诊断/再喂养综合征风险评估
+  handler: tpn_prescription.nutrition_screen
+  input:
+    patient_id: str
+- name: energy_calculate
+  description: 能量目标计算 — Harris-Benedict BEE × 应激系数 × 活动系数 → TEE + 蛋白目标
+  handler: tpn_prescription.energy_calculate
+  input:
+    patient_id: str
+    weight_kg: float
+    height_cm: float
+    age: int
+    gender: str
+    stress_level: str
+- name: formula_design
+  description: 处方配比设计 — 糖脂比/氨基酸/电解质/维生素/微量元素全合一配方
+  handler: tpn_prescription.formula_design
+  input:
+    patient_id: str
+    tee_kcal: float
+    protein_g: float
+    route: str
+- name: safety_check
+  description: 配伍安全审核 — 钙磷沉淀/阳离子浓度/渗透压/脂肪乳稳定性/再喂养风险
+  handler: tpn_prescription.safety_check
+  input:
+    patient_id: str
+    formula: dict
+guard:
+  triggers:
+  - TPN安全
+  - 配伍禁忌
+  - 钙磷沉淀
+  - 再喂养综合征
+  high_risk_scenarios:
+  - Ca×P>55
+  - 渗透压>1200
+  - 再喂养高风险
+  citation:
+    required: true
+    min_sources: 2
+    min_trust: T1
+depends_on:
+- agent: medical-record
+  version: '>=1.0'
+  note: 患者病历/检验/过敏史

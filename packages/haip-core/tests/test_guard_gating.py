@@ -2,8 +2,8 @@
 
 import pytest
 
-from haip.guard.verifier import GuardVerifier, GuardResult
-from haip.guard.citation import CitationEngine, Citation
+from haip.guard.citation import Citation, CitationEngine
+from haip.guard.verifier import GuardResult, GuardVerifier
 
 
 class TestGuardNonHighRisk:

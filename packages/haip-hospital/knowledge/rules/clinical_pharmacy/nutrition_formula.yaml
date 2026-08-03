@@ -1,0 +1,97 @@
+# 营养评估与处方计算公式
+# 来源: ESPEN/ASPEN/CSPEN | NRS-2002/GLIM/MNA-SF
+# T1: 国际指南 | T2: 南方医院参数
+
+rule_type: diagnosis
+department: 药学部+营养科
+capability: cap-l3-nutrition-assessment
+business_process: bp-nutrition-screening
+guideline: ESPEN 2023 / ASPEN 2022 / CSPEN 2024
+stakeholder: 临床药师+营养师+主管医师
+version: "1.0.0"
+
+rules:
+  - id: nut-nrs2002
+    description: NRS-2002营养风险筛查
+    condition:
+      field: age
+      operator: ">="
+      value: 18
+    result:
+      scoring:
+        impaired_nutrition:
+          normal: 0
+          weight_loss_gt_5pct_3m_or_reduced_intake_50_75pct_1w: 1
+          weight_loss_gt_5pct_2m_or_bmi_18_5_20_5_or_reduced_intake_25_50pct_1w: 2
+          weight_loss_gt_5pct_1m_or_bmi_lt_18_5_or_reduced_intake_0_25pct_1w: 3
+        disease_severity:
+          normal: 0
+          chronic_disease_with_complications: 1
+          major_abdominal_surgery_stroke_severe_pneumonia: 2
+          head_injury_bone_marrow_transplant_icu_apache_gt_10: 3
+        age_bonus:
+          age_ge_70: "+1"
+      interpretation:
+        score_ge_3: "有营养风险 → 启动营养干预"
+        score_lt_3: "暂无营养风险 → 每周复评"
+
+  - id: nut-harris-benedict
+    description: Harris-Benedict基础能量消耗(BEE)
+    condition:
+      field: nrs2002_score
+      operator: ">="
+      value: 3
+    result:
+      formulas:
+        male: "BEE = 66.5 + 13.75×W(kg) + 5.0×H(cm) - 6.78×A(y)"
+        female: "BEE = 655.1 + 9.56×W(kg) + 1.85×H(cm) - 4.68×A(y)"
+      stress_factors:
+        minor_surgery: 1.1
+        major_surgery: 1.3
+        sepsis: 1.4
+        severe_sepsis: 1.5
+        burns_20_40pct: 1.5
+        burns_gt_40pct: 2.0
+      activity_factors:
+        bed_rest: 1.1
+        ambulatory: 1.3
+      total_energy: "TEE = BEE × stress_factor × activity_factor"
+
+  - id: nut-mna-sf
+    description: MNA-SF老年营养筛查
+    condition:
+      field: age
+      operator: ">="
+      value: 65
+    result:
+      scoring:
+        food_intake_decline: "严重0分/中度1分/无2分"
+        weight_loss_3m: ">3kg 0分/不知道1分/1-3kg 2分/无3分"
+        mobility: "卧床0分/能下床1分/能外出2分"
+        psychological_stress: "有0分/无2分"
+        neuropsychological: "严重痴呆0分/轻度1分/无2分"
+        bmi: "<19 0分/19-21 1分/21-23 2分/≥23 3分"
+      interpretation:
+        "12-14": "正常营养状态"
+        "8-11": "营养不良风险 — 需干预"
+        "0-7": "营养不良 — 需营养支持"
+
+  - id: nut-glim
+    description: GLIM营养不良诊断标准
+    condition:
+      field: nrs2002_score
+      operator: ">="
+      value: 3
+    result:
+      criteria:
+        phenotypic:
+          - weight_loss_gt_5pct_6m_or_gt_10pct_6m_plus
+          - bmi_lt_20_under70_or_lt_22_over70
+          - reduced_muscle_mass_by_validated_technique
+        etiologic:
+          - reduced_food_intake_lt_50pct_1w_or_any_reduction_gt_2w
+          - acute_disease_or_chronic_disease_with_inflammation
+      diagnosis: "≥1 phenotypic + ≥1 etiologic = GLIM营养不良"
+      severity:
+        stage_1_moderate: "体重丢失5-10% 或 BMI<20(老年<22)"
+        stage_2_severe: "体重丢失>10% 或 BMI<18.5(老年<20)"

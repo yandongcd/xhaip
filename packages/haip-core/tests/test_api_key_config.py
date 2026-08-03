@@ -41,9 +41,10 @@ class TestApiKeyStore:
 
 
 class TestLlmConfigEndpoint:
-    def test_set_and_status(self, clean_api_key):
-        os.environ["HAIP_TEST_MODE"] = "true"
+    def test_set_and_status(self, clean_api_key, monkeypatch):
+        monkeypatch.setenv("HAIP_TEST_MODE", "true")
         from fastapi.testclient import TestClient
+
         from haip.web_server import app
         client = TestClient(app)
         r = client.post("/api/config/llm", json={"api_key": "sk-test-xyz"})
@@ -52,18 +53,20 @@ class TestLlmConfigEndpoint:
         s = client.get("/api/config/llm").json()
         assert s["configured"] and "***" in s["masked_key"]
 
-    def test_clear_endpoint(self, clean_api_key):
-        os.environ["HAIP_TEST_MODE"] = "true"
+    def test_clear_endpoint(self, clean_api_key, monkeypatch):
+        monkeypatch.setenv("HAIP_TEST_MODE", "true")
         from fastapi.testclient import TestClient
+
         from haip.web_server import app
         client = TestClient(app)
         client.post("/api/config/llm", json={"api_key": "sk-test-xyz"})
         r = client.post("/api/config/llm", json={"clear": True})
         assert not r.json()["configured"]
 
-    def test_empty_key_rejected(self, clean_api_key):
-        os.environ["HAIP_TEST_MODE"] = "true"
+    def test_empty_key_rejected(self, clean_api_key, monkeypatch):
+        monkeypatch.setenv("HAIP_TEST_MODE", "true")
         from fastapi.testclient import TestClient
+
         from haip.web_server import app
         client = TestClient(app)
         r = client.post("/api/config/llm", json={"api_key": "   "})
@@ -73,8 +76,8 @@ class TestLlmConfigEndpoint:
 class TestLlmConfigIntegration:
     def test_api_key_fed_into_llm_config(self, clean_api_key, monkeypatch):
         """web 端设置 key 后, _load_llm_config 应返回该 key (非 mock 模式)."""
-        from haip.api_key_store import set_api_key
         from haip.a2a import _load_llm_config
+        from haip.api_key_store import set_api_key
         monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
         set_api_key("sk-integration-test")
         cfg = _load_llm_config()

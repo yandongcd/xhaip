@@ -306,14 +306,15 @@ class PermissionManager:
     def log_access(self, ctx: PermissionContext, action: str, resource: str,
                    decision: str, reason: str = "") -> None:
         # Write to SQLite schema
-        self._db.execute(
-            """INSERT INTO audit_access_log
-               (subject_type, subject_id, action, resource_type, resource_id, decision, reason)
-               VALUES (?,?,?,?,?,?,?)""",
-            ("agent", ctx.agent_id or ctx.user_id, action,
-             "agent_tool" if action == "A2A_call" else "data", resource,
-             decision, reason))
-        self._db.commit()
+        with self._lock:
+            self._db.execute(
+                """INSERT INTO audit_access_log
+                   (subject_type, subject_id, action, resource_type, resource_id, decision, reason)
+                   VALUES (?,?,?,?,?,?,?)""",
+                ("agent", ctx.agent_id or ctx.user_id, action,
+                 "agent_tool" if action == "A2A_call" else "data", resource,
+                 decision, reason))
+            self._db.commit()
         # Also write to existing audit.AuditLogger
         try:
             from haip.audit import get_audit_logger
@@ -356,7 +357,7 @@ class PermissionManager:
 
 # ── Global singleton ────────────────────────────────────────
 
-_perm: PermissionManager | None = None
+_singleton_state: dict = {}
 
 
 def _default_db_path() -> str:
@@ -378,29 +379,33 @@ def get_permission_manager(db_path: str = "") -> PermissionManager:
     路径优先级: 显式参数 > 环境变量 HAIP_PERMISSION_DB > <root>/data/permission.db。
     HAIP_TEST_MODE=true 且未显式指定路径时使用 :memory: (保测试速度与隔离)。
     """
-    global _perm
-    if _perm is None:
-        import os
-        path = db_path or os.environ.get("HAIP_PERMISSION_DB", "")
-        if not path:
-            if os.environ.get("HAIP_TEST_MODE", "").strip().lower() == "true":
-                path = ":memory:"
-            else:
-                path = _default_db_path()
-        _perm = PermissionManager(path)
-        _perm.seed_defaults()
-    return _perm
+    from haip._singleton import locked_singleton
+    return locked_singleton(lambda: _create_permission_manager(db_path), _singleton_state, "perm")
+
+
+def _create_permission_manager(db_path: str) -> PermissionManager:
+    import os
+    path = db_path or os.environ.get("HAIP_PERMISSION_DB", "")
+    if not path:
+        if os.environ.get("HAIP_TEST_MODE", "").strip().lower() == "true":
+            path = ":memory:"
+        else:
+            path = _default_db_path()
+    pm = PermissionManager(path)
+    pm.seed_defaults()
+    return pm
 
 
 def reset_permission_manager() -> None:
     """关闭并清空单例 (测试/重载用)。"""
-    global _perm
-    if _perm is not None:
-        try:
-            _perm.close()
-        except (sqlite3.OperationalError, sqlite3.ProgrammingError, OSError):
-            pass
-        _perm = None
+    from haip._singleton import _key_locks
+    with _key_locks["perm"]:
+        pm = _singleton_state.pop("perm", None)
+        if pm is not None:
+            try:
+                pm.close()
+            except (sqlite3.OperationalError, sqlite3.ProgrammingError, OSError):
+                pass
 
 
 def get_permission(db_path: str = ":memory:") -> PermissionManager:

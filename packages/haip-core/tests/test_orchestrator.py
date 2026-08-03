@@ -7,8 +7,13 @@ project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root / "packages" / "haip-core"))
 
 from haip.orchestrator import (
-    A2AOrchestrator, TaskNode, TaskDAG, OrchestrationResult,
-    OrchestrationMode, MockTransport, AgentTransport,
+    A2AOrchestrator,
+    AgentTransport,
+    MockTransport,
+    OrchestrationMode,
+    OrchestrationResult,
+    TaskDAG,
+    TaskNode,
 )
 
 
@@ -161,8 +166,9 @@ class TestOrchestratorPipeline:
         assert result.status == "error"
 
     def test_plan_with_mock_llm(self):
-        from haip.llm.mock import MockProvider
         import json
+
+        from haip.llm.mock import MockProvider
         dag_json = json.dumps([
             {"id": "n1", "agent": "pharmacy", "tool": "assess"},
             {"id": "n2", "agent": "pharmacy", "tool": "review", "depends_on": ["n1"]},

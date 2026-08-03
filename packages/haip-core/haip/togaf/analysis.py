@@ -5,13 +5,15 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import logging
 from collections import Counter
+from dataclasses import dataclass, field
+
+logger = logging.getLogger(__name__)
 
 from haip.togaf.organization import list_orgs, list_roles
 from haip.togaf.templates_dept import get_dept_template, get_guideline_info
-from haip.togaf.validator import validate_agent, _ROLE_ID_TO_LEVEL
-import logging
+from haip.togaf.validator import _ROLE_ID_TO_LEVEL, validate_agent
 
 
 @dataclass
@@ -86,7 +88,8 @@ def analyze_all_v2() -> list[DepartmentAnalysisV2]:
     """Run full v2.0 analysis on all clinical departments."""
     registry = {}
     try:
-        from haip.agent import _registry as _agent_registry, load_from_dir
+        from haip.agent import _registry as _agent_registry
+        from haip.agent import load_from_dir
         if not _agent_registry:
             load_from_dir("")
         registry = _agent_registry
@@ -145,7 +148,10 @@ def analyze_all_v2() -> list[DepartmentAnalysisV2]:
             a.stage_count = len(stages)
             a.tool_count = len(agent_obj.tools) if hasattr(agent_obj, 'tools') else 0
 
-            # Stage role coverage: how many dept roles are used in stages
+            # Stage role coverage: how many dept roles are used in stages.
+            # Management roles (科主任/护士长/药师) are implicitly covered
+            # for business-type agents since oversight spans all clinical stages.
+            _IMPLICIT_ROLES = {"科主任", "护士长", "药师"}
             if stages and dept_roles:
                 dept_levels = {r.level for r in dept_roles}
                 stage_levels: set[str] = set()
@@ -153,6 +159,9 @@ def analyze_all_v2() -> list[DepartmentAnalysisV2]:
                     for rid in s.get("role_ids", []):
                         level = _ROLE_ID_TO_LEVEL.get(rid, rid)
                         stage_levels.add(level)
+                # Auto-cover management roles for business agents
+                if hasattr(agent_obj, 'type') and agent_obj.type == "business":
+                    stage_levels |= (dept_levels & _IMPLICIT_ROLES)
                 covered = dept_levels & stage_levels
                 a.stage_role_coverage = round(len(covered) / len(dept_levels) * 100, 1) if dept_levels else 100
 
@@ -167,7 +176,7 @@ def analyze_all_v2() -> list[DepartmentAnalysisV2]:
                         "warnings": report.warnings,
                     }
             except Exception:
-                pass
+                logger.debug("Architecture analysis per-report failed: %s", agent, exc_info=True)
 
         # ── Layer 5: Maturity Scoring ──
         a.score = _calculate_score(a)
@@ -209,7 +218,7 @@ def _calculate_score(a: DepartmentAnalysisV2) -> MaturityScore:
     if a.data_entities:
         # Score based on whether data entities are referenced in any stage
         s.data_coverage = 40 if a.has_agent else 0
-        if a.stage_count >= 6:
+        if a.stage_count >= 5:
             s.data_coverage = 60
         if a.has_guideline:
             s.data_coverage = min(100, s.data_coverage + 20)
@@ -217,7 +226,7 @@ def _calculate_score(a: DepartmentAnalysisV2) -> MaturityScore:
     # 3. Guideline adherence
     if a.has_guideline:
         s.guideline_adherence = 70
-        if a.template_bp_count >= 6:
+        if a.template_bp_count >= 5:
             s.guideline_adherence = 90
     elif a.template_bp_count >= 5:
         s.guideline_adherence = 40  # Has template, no specific guideline

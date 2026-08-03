@@ -1,0 +1,115 @@
+name: anesthesia-risk
+cn_name: 围术期麻醉评估
+version: 1.0.0
+type: specialist
+port: 0
+department: 跨科室
+aliases:
+- 麻醉评估
+- 麻醉科
+- anesthesia
+prompt:
+  system: '你是围术期麻醉风险评估专家，负责ASA分级、困难气道评估、
+
+    麻醉方案推荐和术后镇痛管理。
+
+    '
+  temperature: 0.3
+tools:
+- name: assess_asa
+  description: ASA体格状态分级评估
+  handler: anesthesia.asa_assessment
+  input:
+    patient_id: str
+    conditions: list
+    functional_status: str
+- name: airway_assess
+  description: 困难气道评估 (Mallampati/甲颌距/颈活动度)
+  handler: anesthesia.airway_evaluation
+  input:
+    patient_id: str
+    mallampati: int
+    thyromental: float
+- name: anesthesia_plan
+  description: 麻醉方案推荐 (全麻/腰麻/硬膜外/神经阻滞)
+  handler: anesthesia.anesthesia_plan
+  input:
+    patient_id: str
+    surgery_type: str
+    asa_class: int
+stages:
+- order: 1
+  id: preop
+  label: 术前评估
+  desc: ASA分级、困难气道评估、心血管风险评估
+  role_ids:
+  - attending
+  - anesthesiologist
+- order: 2
+  id: plan
+  label: 麻醉方案
+  desc: 麻醉方式选择、用药方案、监测计划
+  role_ids:
+  - attending
+  - anesthesiologist
+- order: 3
+  id: execute
+  label: 麻醉执行
+  desc: 诱导与维持、液体管理、体温管理
+  role_ids:
+  - anesthesiologist
+  - nurse
+- order: 4
+  id: postop
+  label: 术后管理
+  desc: PACU监护、疼痛管理、并发症预防
+  role_ids:
+  - anesthesiologist
+  - nurse
+ui:
+  template: chat-with-role-switcher
+  roles:
+  - id: anesthesiologist
+    label: anesthesiologist
+  - id: attending
+    default: true
+    label: attending
+  - id: nurse
+    label: nurse
+guard:
+  citation:
+    required: true
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+debate:
+  enabled: true
+  competitors:
+  - breast-center
+  - burns-plastic
+  - cardio-risk
+  - cardio-surgery
+  - cosmetic-surgery
+  - emergency
+  - general-surgery
+  - hepatobiliary-surgery
+  - icu
+  - interventional-therapy
+  - joint-surgery
+  - mdt
+  - neurosurgery
+  - obgyn
+  - orthopedic-surgery
+  - pain-management
+  - renal-transplant
+  - spine-surgery
+  - thoracic-surgery
+  - vascular-surgery
+  mode: auto
+trust_tier: deep

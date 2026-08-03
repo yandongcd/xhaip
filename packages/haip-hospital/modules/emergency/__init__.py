@@ -467,7 +467,7 @@ def extract_vitals(patient: dict) -> dict:
 # ── Pipeline Handlers (injected with real scoring) ──────────────────────
 
 def _clinical_error(msg: str) -> dict:
-    return {"status": "error", "agent": _agent.agent_name, "error": msg}
+    return _agent.make_clinical_error(msg)
 
 
 def bp_triage(**kwargs) -> dict:

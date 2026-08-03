@@ -1,7 +1,9 @@
 """Add stage definitions to specialist agents."""
-import yaml, pathlib
+import pathlib
 
-d = pathlib.Path(r"D:\dst\projects\xhaip\packages\haip-hospital\agents\definitions")
+import yaml
+
+d = pathlib.Path(__file__).resolve().parent.parent / "packages" / "haip-hospital" / "agents" / "definitions"
 
 agents = {
     'acute-pain': [

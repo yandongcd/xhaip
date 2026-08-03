@@ -10,7 +10,6 @@ immunotherapy irAE management, WHO cancer pain ladder.
 
 from __future__ import annotations
 
-
 from haip.togaf.knowledge_agent import KnowledgeAgent
 
 _agent = KnowledgeAgent(agent_name="oncology", department="肿瘤科")
@@ -69,7 +68,7 @@ IRA_MANAGEMENT = {
 
 
 def _clinical_error(msg: str) -> dict:
-    return {"status": "error", "agent": _agent.agent_name, "error": msg}
+    return _agent.make_clinical_error(msg)
 
 
 # ── Clinical Scoring Systems ─────────────────────────────────────────
@@ -147,10 +146,7 @@ def _ecog_assessment(score: int) -> dict:
 def _recist_evaluation(target_sum_baseline: float, target_sum_now: float,
                        non_target: str = "non-CR/non-PD", new_lesions: bool = False) -> dict:
     """RECIST 1.1 tumor response evaluation."""
-    if new_lesions:
-        response = "PD"
-        change_pct = 100.0
-    elif non_target == "PD":
+    if new_lesions or non_target == "PD":
         response = "PD"
         change_pct = 100.0
     elif target_sum_baseline == 0:

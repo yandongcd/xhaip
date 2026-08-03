@@ -7,7 +7,6 @@ Trust: T1 (ESPEN 2023 + 中华医学会 2023)
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -27,11 +26,11 @@ def assess(
     bmi: float,
     nutrition_status: str = "正常",
     disease_severity: str = "无",
-    weight_kg: Optional[float] = None,
-    height_cm: Optional[float] = None,
-    weight_loss_3m_pct: Optional[float] = None,
-    weight_loss_2m_pct: Optional[float] = None,
-    weight_loss_1m_pct: Optional[float] = None,
+    weight_kg: float | None = None,
+    height_cm: float | None = None,
+    weight_loss_3m_pct: float | None = None,
+    weight_loss_2m_pct: float | None = None,
+    weight_loss_1m_pct: float | None = None,
     intake_reduction: str = "无",
     diagnosis: str = "",
 ) -> NRS2002Result:

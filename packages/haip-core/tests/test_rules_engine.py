@@ -2,22 +2,34 @@
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
-from haip.rules_engine.evaluator import evaluate, register_callback
-from haip.rules_engine.models import (
-    Rule, RuleSet, EvidenceRef, EvaluationContext, Certainty, RuleType,
-    GuidelineSource, SourceTier, ImpactReport, RuleDiff, ChangeType,
-)
+
 from haip.rules_engine.arbitration import evaluate_rules, register_source
-from haip.rules_engine.impact import analyze_impact
+from haip.rules_engine.evaluator import evaluate, register_callback
 from haip.rules_engine.governance import (
-    create_change_request, get_pending_changes,
-    approve_change, reject_change,
+    approve_change,
+    create_change_request,
+    get_pending_changes,
+    reject_change,
+)
+from haip.rules_engine.impact import analyze_impact
+from haip.rules_engine.models import (
+    Certainty,
+    ChangeType,
+    EvaluationContext,
+    EvidenceRef,
+    GuidelineSource,
+    ImpactReport,
+    Rule,
+    RuleDiff,
+    RuleSet,
+    RuleType,
+    SourceTier,
 )
 
 

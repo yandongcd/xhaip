@@ -1,0 +1,10 @@
+{
+  "id": "CHARLSON-CCI",
+  "title": "Charlson Comorbidity Index (CCI) - original and updated",
+  "priority": "P1",
+  "source": "comorbidity",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/3558716/",
+  "note": "Free - landmark paper",
+  "downloaded": false,
+  "generated": "2026-07-26T23:45:17.598717"
+}

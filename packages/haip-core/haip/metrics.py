@@ -12,18 +12,17 @@ Provides:
 
 from __future__ import annotations
 
-
 from fastapi import FastAPI
 
 # Optional: prometheus_client may not be installed
 PROMETHEUS_AVAILABLE = False
 try:
     from prometheus_client import (
+        CONTENT_TYPE_LATEST,
         Counter,
         Gauge,
         Histogram,
         generate_latest,
-        CONTENT_TYPE_LATEST,
     )
     PROMETHEUS_AVAILABLE = True
 except ImportError:

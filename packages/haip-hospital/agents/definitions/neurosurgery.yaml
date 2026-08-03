@@ -1,4 +1,4 @@
-name: neurosurgery
+﻿name: neurosurgery
 cn_name: 神经外科智能体
 version: 1.0.0
 type: business
@@ -57,6 +57,8 @@ guard:
   high_risk_scenarios:
   - 手术并发症
   - 药物不良反应
+  citation:
+    required: true
 ui:
   template: chat-with-role-switcher
   roles:
@@ -127,3 +129,19 @@ stages:
   - attending
   - rehab_therapist
   - head_nurse
+rag:
+  enabled: true
+  top_k: 5
+learning:
+  enabled: true
+  auto_apply:
+  - citation_new
+  - route_adj
+  prompt_a_b: true
+debate:
+  enabled: true
+  competitors:
+  - cardio-risk
+  - anesthesia
+  mode: auto
+trust_tier: deep
