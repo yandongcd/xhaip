@@ -49,6 +49,14 @@ DEV_USER: dict = {
     "tenant_id": None,
 }
 
+# 开发免登录仅限本机回环地址 — 远程匿名请求不得获得 admin 身份
+_LOOPBACK_HOSTS = {"127.0.0.1", "::1", "localhost"}
+
+
+def _allow_dev_autologin(client_host: str | None) -> bool:
+    """是否允许开发模式免登录 (仅 loopback 客户端)."""
+    return bool(client_host) and client_host in _LOOPBACK_HOSTS
+
 
 @lru_cache(maxsize=1)
 def _warn_dev_auth_bypass() -> bool:
@@ -87,9 +95,11 @@ class AuthMiddleware(BaseHTTPMiddleware):
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
             from haip.security_baseline import is_production_mode
-            if not is_production_mode():
-                # 开发模式免登录: 前端尚无登录流程 (commercial-readiness R1),
-                # 缺失 Authorization 时注入 dev 用户; 携带非法 token 仍 401 (fail-visible)。
+            client_host = request.client.host if request.client else None
+            if not is_production_mode() and _allow_dev_autologin(client_host):
+                # 开发模式免登录仅限本机: 前端尚无登录流程 (commercial-readiness R1),
+                # 仅 loopback 客户端缺失 Authorization 时注入 dev 用户;
+                # 远程/非回环匿名请求 401 (fail-visible), 携带非法 token 仍 401。
                 _warn_dev_auth_bypass()
                 request.state.current_user = dict(DEV_USER)
                 return await call_next(request)

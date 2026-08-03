@@ -95,19 +95,22 @@ class AgentTool:
             **kwargs: 传递给工具的参数
         """
         from haip.a2a import call as a2a_call
-        from haip.a2a import call_with_loop
+        from haip.a2a import call_with_loop, internal_permission_context
 
         if self.mode == "task":
             query = kwargs.get("query", "")
-            return call_with_loop(self.agent_name, query)
+            return call_with_loop(self.agent_name, query,
+                                  perm_ctx=internal_permission_context())
 
         # single mode
         tool = kwargs.pop("tool", self.tool_name)
         if tool == "reason":
             query = kwargs.get("query", kwargs.get("message", ""))
-            return call_with_loop(self.agent_name, query)
+            return call_with_loop(self.agent_name, query,
+                                  perm_ctx=internal_permission_context())
 
-        return a2a_call(self.agent_name, tool, kwargs)
+        return a2a_call(self.agent_name, tool, kwargs,
+                        perm_ctx=internal_permission_context())
 
     def __call__(self, **kwargs) -> dict[str, Any]:
         return self.execute(**kwargs)

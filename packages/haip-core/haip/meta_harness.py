@@ -719,9 +719,12 @@ class MetaHarness:
         from concurrent.futures import Future
 
         from haip.a2a import call as a2a_call
+        from haip.a2a import internal_permission_context
         if self._a2a_executor is None:
             self._a2a_executor = ThreadPoolExecutor(max_workers=4)
-        future: Future = self._a2a_executor.submit(a2a_call, agent, tool_name, params)
+        future: Future = self._a2a_executor.submit(
+            a2a_call, agent, tool_name, params,
+            perm_ctx=internal_permission_context())
         return future.result(timeout=timeout)
 
     def _validate_runtime_response(self, resp: dict, tool_name: str, agent_name: str,

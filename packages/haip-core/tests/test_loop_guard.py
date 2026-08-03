@@ -142,6 +142,74 @@ class TestGuardIntegration:
         haip.llm.LLMProvider.from_config = original
 
 
+class TestStreamGuardGating:
+    """C4: 流式路径 Guard 门控 — guard_blocked 事件 + 回复抑制."""
+
+    def _ensure_antiemetic(self):
+        import haip.agent
+        from haip.agent import _registry
+        if "antiemetic" not in _registry:
+            yaml_dir = project_root.parent / "packages" / "haip-hospital" / "agents" / "definitions"
+            if yaml_dir.exists():
+                haip.agent.load_from_dir(str(yaml_dir))
+        assert "antiemetic" in _registry, "antiemetic agent 未加载"
+
+    @staticmethod
+    def _fake_verify(passed):
+        from types import SimpleNamespace
+
+        def _verify(self, agent_output, scenario, agent_name):
+            return SimpleNamespace(
+                passed=passed,
+                flags=[] if passed else ["simulated guard flag"],
+                requires_human_review=False,
+                citations=[],
+            )
+        return _verify
+
+    def _stream_events(self, agent, query):
+        import asyncio
+        import json
+
+        from haip.a2a import stream_events
+        chunks: list[str] = []
+
+        async def _collect():
+            async for chunk in stream_events(agent, query, max_steps=3):
+                chunks.append(chunk)
+
+        asyncio.run(_collect())
+        return [json.loads(c[len("data: "):]) for c in chunks]
+
+    def test_stream_guard_pass_streams_reply(self, monkeypatch):
+        """(a) guard 通过 → 流式推送最终回复。"""
+        self._ensure_antiemetic()
+        monkeypatch.setattr(
+            "haip.guard.verifier.GuardVerifier.verify", self._fake_verify(True))
+        parsed = self._stream_events("antiemetic", "PONV prophylaxis?")
+        assert parsed, "应产生事件"
+        final = [p for p in parsed if p.get("role") == "assistant" and p.get("turn_complete")]
+        assert final, "guard 通过时应推送最终回复事件"
+        assert final[-1]["content"], "回复内容应完整推送"
+        assert final[-1].get("guard", {}).get("passed") is True
+        assert not any(p.get("type") == "guard_blocked" for p in parsed)
+
+    def test_stream_guard_fail_emits_blocked_and_suppresses(self, monkeypatch):
+        """(b) guard 未通过 → 推送 guard_blocked 事件并抑制回复内容。"""
+        self._ensure_antiemetic()
+        monkeypatch.setattr(
+            "haip.guard.verifier.GuardVerifier.verify", self._fake_verify(False))
+        parsed = self._stream_events("antiemetic", "PONV prophylaxis?")
+        blocked = [p for p in parsed if p.get("type") == "guard_blocked"]
+        assert blocked, "guard 未通过必须推送 guard_blocked 事件"
+        assert blocked[-1]["reason"], "guard_blocked 事件应含 reason"
+        assert blocked[-1]["content"] == "", "被拦截时不得推送回复内容"
+        leaked = [p for p in parsed
+                  if p.get("role") == "assistant" and p.get("turn_complete")
+                  and p.get("type") != "guard_blocked"]
+        assert not leaked, "guard 未通过时最终回复不得流出"
+
+
 if __name__ == "__main__":
     import pytest
 

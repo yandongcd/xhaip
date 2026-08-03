@@ -125,6 +125,56 @@ class TestJWT:
             refresh_access_token(rt)
 
 
+# ── C2: JWT 实例密钥 (per-install random secret) ──
+
+
+class TestJWTInstanceSecret:
+    def test_dev_secret_file_created_and_stable(self, monkeypatch, tmp_path):
+        """(a) 未设 JWT_SECRET_KEY 时生成实例密钥文件, 两次加载稳定复用。"""
+        import haip.auth.jwt as jwt_mod
+        secret_file = tmp_path / "jwt_dev_secret.key"
+        monkeypatch.setattr(jwt_mod, "_dev_secret_path", lambda: secret_file)
+        key1 = jwt_mod._load_or_generate_dev_secret()
+        assert secret_file.exists(), "实例密钥文件应被创建"
+        assert key1, "密钥非空"
+        assert key1 != "xhaip-dev-secret-change-in-production", "不得使用公开固定常量"
+        key2 = jwt_mod._load_or_generate_dev_secret()
+        assert key2 == key1, "第二次加载应复用同一密钥 (跨重启稳定)"
+
+    def test_old_constant_token_rejected(self, monkeypatch, tmp_path):
+        """(b) 用历史公开常量签发的 token 必须无法通过校验。"""
+        import time as _time
+
+        import jwt as _jwt
+
+        import haip.auth.jwt as jwt_mod
+        assert jwt_mod._SECRET_KEY != "xhaip-dev-secret-change-in-production", \
+            "模块密钥不得是公开固定常量"
+        now = int(_time.time())
+        forged = _jwt.encode(
+            {"sub": "forged-admin", "type": "access", "roles": ["admin"],
+             "iat": now, "exp": now + 900},
+            "xhaip-dev-secret-change-in-production", algorithm="HS256",
+        )
+        with pytest.raises(Exception):
+            jwt_mod.decode_token(forged)
+
+    def test_env_secret_still_used(self, monkeypatch, tmp_path):
+        """JWT_SECRET_KEY 显式设置时行为不变 (不使用/不创建文件密钥)。"""
+        import importlib
+
+        import haip.auth.jwt as jwt_mod
+        orig_env = os.environ.get("JWT_SECRET_KEY", "")
+        secret_file = tmp_path / "not_created.key"
+        monkeypatch.setenv("JWT_SECRET_KEY", "explicit-env-secret-123")
+        monkeypatch.setattr(jwt_mod, "_dev_secret_path", lambda: secret_file)
+        importlib.reload(jwt_mod)
+        assert jwt_mod._SECRET_KEY == "explicit-env-secret-123"
+        assert not secret_file.exists(), "env 已配置时不应创建文件密钥"
+        monkeypatch.setenv("JWT_SECRET_KEY", orig_env)
+        importlib.reload(jwt_mod)  # 还原模块状态
+
+
 # ── RBAC Tests ──
 
 
@@ -300,15 +350,20 @@ class TestAuthAPI:
             os.environ.pop("HAIP_ENV", None)
 
     def test_dev_mode_no_token_gets_dev_user(self):
-        """开发模式 (HAIP_ENV != production) 无 token 注入 dev 用户放行 — 门户免登录可用。"""
+        """开发模式 (HAIP_ENV != production) 下 loopback 客户端无 token 注入 dev 用户放行 — 门户免登录可用。"""
         os.environ["HAIP_TEST_MODE"] = "false"
         old_env = os.environ.pop("HAIP_ENV", None)
         old_strict = os.environ.pop("HAIP_STRICT_SECURITY", None)
         try:
+            from haip.agent import _registry as _reg2
+            from haip.agent import load_from_dir
+            from haip.web_server import YAML_DIR
+            if len(_reg2) < 14:
+                load_from_dir(str(YAML_DIR))
             from haip.web_server import app as app2
-            client = TestClient(app2)
+            client = TestClient(app2, client=("127.0.0.1", 12345))
             r = client.get("/api/agents")
-            assert r.status_code == 200, f"dev 模式免登录失效: {r.status_code} {r.text[:200]}"
+            assert r.status_code == 200, f"loopback dev 模式免登录失效: {r.status_code} {r.text[:200]}"
             assert isinstance(r.json(), list) and r.json(), "dev 模式下 /api/agents 应返回 agent 列表"
         finally:
             os.environ["HAIP_TEST_MODE"] = "true"
@@ -316,6 +371,34 @@ class TestAuthAPI:
                 os.environ["HAIP_ENV"] = old_env
             if old_strict is not None:
                 os.environ["HAIP_STRICT_SECURITY"] = old_strict
+
+    def test_dev_mode_remote_no_token_401(self):
+        """(c) 开发模式下非 loopback 客户端无 token 必须 401 (免登录仅限本机)。"""
+        os.environ["HAIP_TEST_MODE"] = "false"
+        old_env = os.environ.pop("HAIP_ENV", None)
+        old_strict = os.environ.pop("HAIP_STRICT_SECURITY", None)
+        try:
+            from haip.web_server import app as app2
+            client = TestClient(app2, client=("203.0.113.7", 12345))
+            r = client.get("/api/agents")
+            assert r.status_code == 401, f"远程匿名请求应 401: {r.status_code}"
+        finally:
+            os.environ["HAIP_TEST_MODE"] = "true"
+            if old_env is not None:
+                os.environ["HAIP_ENV"] = old_env
+            if old_strict is not None:
+                os.environ["HAIP_STRICT_SECURITY"] = old_strict
+
+    def test_allow_dev_autologin_helper(self):
+        """_allow_dev_autologin: 仅 loopback 主机放行。"""
+        from haip.auth.middleware import _allow_dev_autologin
+        assert _allow_dev_autologin("127.0.0.1")
+        assert _allow_dev_autologin("::1")
+        assert _allow_dev_autologin("localhost")
+        assert not _allow_dev_autologin("192.168.1.10")
+        assert not _allow_dev_autologin("10.0.0.5")
+        assert not _allow_dev_autologin("testclient")
+        assert not _allow_dev_autologin(None)
 
     def test_dev_mode_invalid_token_still_401(self):
         """开发模式下携带非法 token 仍 401 (fail-visible, 不静默降级)。"""

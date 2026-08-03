@@ -25,7 +25,9 @@ class InProcessTransport(AgentTransport):
 
     def call(self, agent: str, tool: str, params: dict[str, Any]) -> dict[str, Any]:
         from haip.a2a import call as a2a_call
-        return a2a_call(agent, tool, params)
+        from haip.a2a import internal_permission_context
+        # 引擎内部传输层: 身份在入口层校验, 显式内部上下文
+        return a2a_call(agent, tool, params, perm_ctx=internal_permission_context())
 
 
 class MockTransport(AgentTransport):

@@ -22,6 +22,7 @@ xhaip.db
 docker/.env
 data/*.json
 data/*.db
+data/jwt_dev_secret.key
 
 # runtime artifacts (derived)
 server.log

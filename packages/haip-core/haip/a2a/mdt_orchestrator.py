@@ -207,12 +207,13 @@ class MDTOrchestrator:
         """Default A2A agent call (in-process via importlib)."""
         try:
             from haip.a2a import call as a2a_call
+            from haip.a2a import internal_permission_context
             result = a2a_call(agent_name, "participate_mdt", {
                 "session_id": "",
                 "patient_id": patient_id,
                 "question": question,
                 **context,
-            })
+            }, perm_ctx=internal_permission_context())
             return result if isinstance(result, dict) else {"output": str(result)}
         except Exception as e:
             return {"error": str(e), "status": "failed"}

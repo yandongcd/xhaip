@@ -108,6 +108,58 @@ class TestToolExecutor:
         list_all().clear()
 
 
+class TestAsyncLoopGuardStatus:
+    """C4: call_with_loop_async 反映 Guard 状态 (与同步路径一致)."""
+
+    def _ensure_antiemetic(self):
+        import haip.agent
+        from haip.agent import _registry
+        if "antiemetic" not in _registry:
+            yaml_dir = project_root.parent / "packages" / "haip-hospital" / "agents" / "definitions"
+            if yaml_dir.exists():
+                haip.agent.load_from_dir(str(yaml_dir))
+        assert "antiemetic" in _registry, "antiemetic agent 未加载"
+
+    @staticmethod
+    def _fake_verify(passed):
+        from types import SimpleNamespace
+
+        def _verify(self, agent_output, scenario, agent_name):
+            return SimpleNamespace(
+                passed=passed,
+                flags=[] if passed else ["simulated guard flag"],
+                requires_human_review=False,
+                citations=[],
+            )
+        return _verify
+
+    def test_async_loop_guard_blocked(self, monkeypatch):
+        """(c) guard 未通过 → status=blocked。"""
+        import asyncio
+
+        from haip.a2a import call_with_loop_async
+        self._ensure_antiemetic()
+        monkeypatch.setattr(
+            "haip.guard.verifier.GuardVerifier.verify", self._fake_verify(False))
+        result = asyncio.run(call_with_loop_async("antiemetic", "PONV prophylaxis?"))
+        assert result["status"] == "blocked"
+        assert "Guard" in (result["error"] or "")
+        assert result["guard"]["passed"] is False
+
+    def test_async_loop_guard_passed(self, monkeypatch):
+        """(c) guard 通过 → status=ok。"""
+        import asyncio
+
+        from haip.a2a import call_with_loop_async
+        self._ensure_antiemetic()
+        monkeypatch.setattr(
+            "haip.guard.verifier.GuardVerifier.verify", self._fake_verify(True))
+        result = asyncio.run(call_with_loop_async("antiemetic", "PONV prophylaxis?"))
+        assert result["status"] == "ok"
+        assert result["guard"]["passed"] is True
+        assert result["reply"], "guard 通过时应返回回复"
+
+
 if __name__ == "__main__":
     import pytest
     pytest.main([__file__, "-v", "--tb=short"])

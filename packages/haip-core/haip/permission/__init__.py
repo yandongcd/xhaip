@@ -192,19 +192,21 @@ class PermissionManager:
     # ── U2A: User → Agent ──
 
     def get_user_roles(self, user_id: str) -> list[str]:
-        rows = self._db.execute(
-            "SELECT role_code FROM auth_user_role WHERE user_id=?", (user_id,))
-        return [r[0] for r in rows]
+        with self._lock:
+            rows = self._db.execute(
+                "SELECT role_code FROM auth_user_role WHERE user_id=?", (user_id,))
+            return [r[0] for r in rows]
 
     def get_accessible_agents(self, user_id: str) -> list[str]:
         roles = self.get_user_roles(user_id)
         if not roles:
             return []
         placeholders = ",".join("?" * len(roles))
-        rows = self._db.execute(
-            f"SELECT DISTINCT ra.agent_id FROM auth_role_agent ra WHERE ra.role_code IN ({placeholders})",
-            roles)
-        return [r[0] for r in rows]
+        with self._lock:
+            rows = self._db.execute(
+                f"SELECT DISTINCT ra.agent_id FROM auth_role_agent ra WHERE ra.role_code IN ({placeholders})",
+                roles)
+            return [r[0] for r in rows]
 
     # ── A2A: Agent → Agent ──
 
@@ -217,28 +219,29 @@ class PermissionManager:
             return True
 
         # 1. Check explicit A2A policies (per-agent granularity)
-        has_explicit_policy = False
-        rows = self._db.execute(
-            """SELECT allowed_tools FROM perm_agent_call_policy
-               WHERE (caller_agent_type='*' OR caller_agent_type=?)
-                 AND (caller_agent_id='*' OR caller_agent_id=? OR caller_agent_id IS NULL)
-                 AND target_agent_id=?
-               ORDER BY priority DESC""",
-            (ctx.agent_id, ctx.agent_id, target_agent))
-        for r in rows:
-            has_explicit_policy = True
-            raw = r[0]
-            if not raw:
-                continue
-            if raw == "*":
-                return True
-            try:
-                allowed = json.loads(raw)
-                if "*" in allowed or tool in allowed:
+        with self._lock:
+            has_explicit_policy = False
+            rows = self._db.execute(
+                """SELECT allowed_tools FROM perm_agent_call_policy
+                   WHERE (caller_agent_type='*' OR caller_agent_type=?)
+                     AND (caller_agent_id='*' OR caller_agent_id=? OR caller_agent_id IS NULL)
+                     AND target_agent_id=?
+                   ORDER BY priority DESC""",
+                (ctx.agent_id, ctx.agent_id, target_agent))
+            for r in rows:
+                has_explicit_policy = True
+                raw = r[0]
+                if not raw:
+                    continue
+                if raw == "*":
                     return True
-            except (json.JSONDecodeError, TypeError):
-                if str(raw) in (tool, "*"):
-                    return True
+                try:
+                    allowed = json.loads(raw)
+                    if "*" in allowed or tool in allowed:
+                        return True
+                except (json.JSONDecodeError, TypeError):
+                    if str(raw) in (tool, "*"):
+                        return True
 
         # 2. If explicit policy denied, no need to check RBAC
         if has_explicit_policy:
@@ -282,23 +285,24 @@ class PermissionManager:
         """检查 Agent 是否可以访问数据产品。返回 (allowed, field_filter)."""
         if ctx.is_emergency:
             return True, None
-        rows = self._db.execute(
-            """SELECT dept_scope, field_filter, field_denylist, security_label, requires_consent
-               FROM perm_data_policy
-               WHERE (agent_id=? OR agent_type=?) AND data_product=?""",
-            (ctx.agent_id, ctx.agent_id, data_product))
-        for r in rows:
-            dept_scope, ff, fd, sec_label, consent = r
-            # Dept scope check
-            if dept_scope == "self" and patient_department and ctx.department != patient_department:
-                return False, None
-            if dept_scope == "consulted":
-                # fail-closed: 会诊范围需会诊记录支撑, 会诊表未实现前一律拒绝
-                # (原实现 "simplified: allow for now" 属权限放水, 违反商用红线)
-                return False, None
-            # Field filter
-            field_list = json.loads(ff) if ff and ff != "null" else None
-            return True, field_list
+        with self._lock:
+            rows = self._db.execute(
+                """SELECT dept_scope, field_filter, field_denylist, security_label, requires_consent
+                   FROM perm_data_policy
+                   WHERE (agent_id=? OR agent_type=?) AND data_product=?""",
+                (ctx.agent_id, ctx.agent_id, data_product))
+            for r in rows:
+                dept_scope, ff, fd, sec_label, consent = r
+                # Dept scope check
+                if dept_scope == "self" and patient_department and ctx.department != patient_department:
+                    return False, None
+                if dept_scope == "consulted":
+                    # fail-closed: 会诊范围需会诊记录支撑, 会诊表未实现前一律拒绝
+                    # (原实现 "simplified: allow for now" 属权限放水, 违反商用红线)
+                    return False, None
+                # Field filter
+                field_list = json.loads(ff) if ff and ff != "null" else None
+                return True, field_list
         return True, None  # No policy → allow all (development default)
 
     # ── Audit ──

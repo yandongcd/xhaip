@@ -4,22 +4,62 @@ from __future__ import annotations
 
 import logging
 import os
+import secrets
 import threading
 import time
+from pathlib import Path
 from typing import Any
 
 import jwt
 
 logger = logging.getLogger(__name__)
 
+_OLD_DEV_SECRET = "xhaip-dev-secret-change-in-production"  # 历史公开常量, 已弃用
+
+
+def _dev_secret_path() -> Path:
+    """实例级开发密钥持久化路径: <项目根>/data/jwt_dev_secret.key."""
+    return (Path(__file__).resolve().parent.parent.parent.parent.parent
+            / "data" / "jwt_dev_secret.key")
+
+
+def _load_or_generate_dev_secret() -> str:
+    """读取或生成实例级随机密钥 (仅 JWT_SECRET_KEY 未设置时使用)。
+
+    首次启动生成 secrets.token_urlsafe(48) 并持久化到
+    data/jwt_dev_secret.key (0600 where possible); 已存在的密钥文件被复用,
+    保证跨重启稳定。持久化失败 → 退化为进程级随机密钥 (会话内有效),
+    绝不再使用公开固定的开发常量。
+    """
+    path = _dev_secret_path()
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if path.exists():
+            secret = path.read_text(encoding="utf-8").strip()
+            if secret:
+                return secret
+        secret = secrets.token_urlsafe(48)
+        path.write_text(secret, encoding="utf-8")
+        try:
+            os.chmod(path, 0o600)
+        except OSError:
+            pass
+        return secret
+    except OSError:
+        logger.warning("JWT 实例密钥无法持久化到 %s — 使用进程级随机密钥", path)
+        return secrets.token_urlsafe(48)
+
+
 _SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "")
 if not _SECRET_KEY:
     if os.environ.get("HAIP_ENV") == "production":
         from haip.security_baseline import SecurityBaselineError
         raise SecurityBaselineError("JWT_SECRET_KEY 未设置，生产环境必须通过环境变量配置")
-    _SECRET_KEY = "xhaip-dev-secret-change-in-production"
+    _SECRET_KEY = _load_or_generate_dev_secret()
     if os.environ.get("HAIP_TEST_MODE") != "true" and os.environ.get("AUTH_ENABLED") != "false":
-        logger.warning("JWT_SECRET_KEY 未设置, 正在使用开发默认密钥 — 生产环境必须通过环境变量配置")
+        logger.warning(
+            "JWT_SECRET_KEY 未设置, 正在使用实例级随机密钥 "
+            "(data/jwt_dev_secret.key) — 生产环境必须通过环境变量配置")
 _ALGORITHM = "HS256"
 _ACCESS_TOKEN_EXPIRE = int(os.environ.get("JWT_ACCESS_EXPIRE", "900"))  # 15 minutes
 _REFRESH_TOKEN_EXPIRE = int(os.environ.get("JWT_REFRESH_EXPIRE", "604800"))  # 7 days

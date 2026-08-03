@@ -185,10 +185,13 @@ async def _execute_node_async(
                 events.append(evt.to_dict())
             return {"output": events, "summary": f"Agent {node.agent_name}: {query[:80]}", "_events": events}
 
-        # 简单调用
+        # 简单调用 (引擎内部编排: 显式内部上下文)
+        from haip.a2a import internal_permission_context
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(
-            None, call_with_loop, node.agent_name, query,
+            None,
+            lambda: call_with_loop(node.agent_name, query,
+                                   perm_ctx=internal_permission_context()),
         )
         return {"output": result, "summary": str(result.get("reply", ""))[:200]}
 

@@ -7,7 +7,7 @@ from pathlib import Path
 import typer
 
 from haip.a2a import call as a2a_call
-from haip.a2a import get_history
+from haip.a2a import get_history, internal_permission_context
 from haip.agent import get as get_agent
 from haip.agent import list_all as list_agents
 from haip.agent import load_from_dir
@@ -80,7 +80,7 @@ def call(
     except json.JSONDecodeError:
         typer.echo(f"Invalid JSON params: {params}")
         return
-    result = a2a_call(agent, tool, p)
+    result = a2a_call(agent, tool, p, perm_ctx=internal_permission_context())
     typer.echo(json.dumps(result, ensure_ascii=False, indent=2))
 
 

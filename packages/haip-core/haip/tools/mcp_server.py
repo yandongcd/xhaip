@@ -66,7 +66,10 @@ def _run_agent_tool(agent_name: str, tool_name: str, params: dict[str, Any]) -> 
     """Execute a tool on an agent via the A2A dispatcher."""
     try:
         from haip.a2a import call as a2a_call
-        result = a2a_call(agent_name, tool_name, params)
+        from haip.a2a import internal_permission_context
+        # MCP 由管理员显式启动, 传输层自身鉴权 → 显式内部上下文
+        result = a2a_call(agent_name, tool_name, params,
+                          perm_ctx=internal_permission_context())
         return result
     except ImportError:
         return {"error": "A2A dispatcher not available"}

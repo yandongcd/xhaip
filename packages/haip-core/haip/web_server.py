@@ -629,11 +629,16 @@ def agent_info(name: str):
 
 
 @app.post("/api/call")
-def call_tool(body: CallRequest):
+def call_tool(body: CallRequest, request: Request):
     """调用 Agent 工具。
 
     特殊工具名 "reason" 触发 ReAct AgentLoop 模式。
+    A2A 执行身份取自请求用户 (request.state.current_user), 权限 fail-closed。
     """
+    from haip.a2a import permission_context_from_user
+    perm_ctx = permission_context_from_user(
+        getattr(request.state, "current_user", None))
+
     agent = body.agent
     tool = body.tool
     params = body.params
@@ -648,10 +653,10 @@ def call_tool(body: CallRequest):
     if tool == "reason" or mode == "reason":
         query = params.get("query", "") or params.get("message", "")
         max_steps = params.get("max_steps", 5)
-        result = call_with_loop(agent, query, max_steps)
+        result = call_with_loop(agent, query, max_steps, perm_ctx=perm_ctx)
         return result
 
-    result = a2a_call(agent, tool, params)
+    result = a2a_call(agent, tool, params, perm_ctx=perm_ctx)
     return result
 
 
@@ -672,8 +677,12 @@ async def stream_get(request: Request):
     if not agent or not query:
         raise HTTPException(status_code=400, detail={"status": "error", "error": "Missing agent or query"})
 
+    from haip.a2a import permission_context_from_user
+    perm_ctx = permission_context_from_user(
+        getattr(request.state, "current_user", None))
+
     return StreamingResponse(
-        stream_events(agent, query, max_steps, session_id, user_id),
+        stream_events(agent, query, max_steps, session_id, user_id, perm_ctx=perm_ctx),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -720,7 +729,7 @@ def llm_config_set(body: LLMConfigRequest):
 
 
 @app.post("/api/stream")
-async def stream_call(body: StreamRequest):
+async def stream_call(body: StreamRequest, request: Request):
     """SSE 流式 AgentLoop — 每步实时推送 Event。
 
     POST body: {"agent": "antiemetic", "query": "评估PONV风险", "max_steps": 5}
@@ -734,7 +743,11 @@ async def stream_call(body: StreamRequest):
     if not agent or not query:
         raise HTTPException(status_code=400, detail={"status": "error", "error": "Missing agent or query"})
 
-    return StreamingResponse(stream_events(agent, query, max_steps, session_id, user_id),
+    from haip.a2a import permission_context_from_user
+    perm_ctx = permission_context_from_user(
+        getattr(request.state, "current_user", None))
+
+    return StreamingResponse(stream_events(agent, query, max_steps, session_id, user_id, perm_ctx=perm_ctx),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -808,6 +821,7 @@ def loop_demo():
     返回每步的思考、工具调用和最终综合答案。
     """
     from haip.a2a import call as _a2a_call
+    from haip.a2a import internal_permission_context
     from haip.agent import get as _get_agent
     from haip.llm import DEFAULT_MAX_TOKENS, ChatResponse, ToolCall
     from haip.llm.mock import MockProvider
@@ -867,7 +881,9 @@ def loop_demo():
              for t in plugin.tools]
 
     def _exec(name, args):
-        return _a2a_call(agent, name, args)
+        # loop_demo: 显式引擎内部上下文 (demo 端点, 身份已在演示语境中)
+        return _a2a_call(agent, name, args,
+                         perm_ctx=internal_permission_context())
 
     loop = AgentLoop(
         llm=DemoLLM(),

@@ -70,9 +70,10 @@ class UnifiedPipeline:
             return None
 
     def _run_agent_batch(self, agents: list[str], query: str, rag_context: dict | None):
-        from haip.a2a import call_batch
+        from haip.a2a import call_batch, internal_permission_context
         tasks = [{"agent": a, "tool": "default", "params": {"query": query}} for a in agents]
-        results = call_batch(tasks)
+        # 引擎内部编排: 身份在入口层校验, 显式内部上下文
+        results = call_batch(tasks, perm_ctx=internal_permission_context())
         return {a: r for a, r in zip(agents, results)} if results else {}
 
     def _run_debate_maybe(self, patient_id: str, query: str,

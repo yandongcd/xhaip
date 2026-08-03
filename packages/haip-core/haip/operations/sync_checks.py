@@ -101,7 +101,7 @@ def system_checks() -> dict[str, Any]:
 
 def benchmark_a2a(iterations: int = 10) -> dict[str, Any]:
     """A2A 调用基准测试。"""
-    from haip.a2a import call, clear_history
+    from haip.a2a import call, clear_history, internal_permission_context
     from haip.agent import DomainPlugin, ToolDef, _registry, register
 
     _registry.clear()
@@ -116,7 +116,7 @@ def benchmark_a2a(iterations: int = 10) -> dict[str, Any]:
     times: list[float] = []
     for _ in range(iterations):
         t0 = time.perf_counter()
-        call("bench", "noop", {})
+        call("bench", "noop", {}, perm_ctx=internal_permission_context())
         times.append((time.perf_counter() - t0) * 1000)
 
     times.sort()

@@ -44,6 +44,7 @@ class EvalRunner:
     def _call_tool(self, tool: str, params: dict[str, Any]) -> dict[str, Any]:
         """通过 A2A 调用 agent 工具 (与生产一致), 失败返回 error 结构."""
         from haip.a2a import call as a2a_call
+        from haip.a2a import internal_permission_context
 
         _ensure_agent_registry(self.agent_name)
 
@@ -52,7 +53,8 @@ class EvalRunner:
             params["use_llm"] = True
         t0 = time.time()
         try:
-            resp = a2a_call(self.agent_name, tool, params)
+            resp = a2a_call(self.agent_name, tool, params,
+                            perm_ctx=internal_permission_context())
             elapsed = (time.time() - t0) * 1000
             if isinstance(resp, dict) and resp.get("status") == "error":
                 return {"_ok": False, "_elapsed_ms": round(elapsed, 1),

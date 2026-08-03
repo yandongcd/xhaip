@@ -330,14 +330,16 @@ class ClinicalWorkflow:
             return (node.id, {"output": result, "summary": str(result)[:100]})
 
         if node.node_type == NodeType.AGENT and node.agent_name:
-            # 调用 Agent 工具
+            # 调用 Agent 工具 (引擎内部编排: 显式内部上下文)
             from haip.a2a import call as a2a_call
+            from haip.a2a import internal_permission_context
             loop = asyncio.get_event_loop()
             result = await loop.run_in_executor(
                 None,
                 lambda: a2a_call(node.agent_name,
                                  upstream_data.get("tool", "reason"),
-                                 upstream_data),
+                                 upstream_data,
+                                 perm_ctx=internal_permission_context()),
             )
             return (node.id, {"output": result, "summary": str(result.get("reply", str(result)))[:100]})
 
