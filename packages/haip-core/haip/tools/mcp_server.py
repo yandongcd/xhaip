@@ -3,12 +3,17 @@
 Usage:
     python -m haip.tools.mcp_server serve --agent <agent_name> --port <port>
     python -m haip.tools.mcp_server serve --all --port 8700
+    python -m haip.tools.mcp_server serve --all --port 8700 --token <secret>
 
 The server auto-discovers tools from:
   1. The global tool registry (haip.tools.registry)
   2. DomainPlugin agent YAML definitions (haip.agent)
 
 Each tool is exposed as an MCP tool callable via tools/list and tools/call.
+
+Security: the built-in JSON-RPC transport does NOT authenticate by itself.
+Pass --token <secret> to require an X-MCP-Token header on every request
+(401 otherwise); when no token is set the server is open to any caller.
 """
 
 from __future__ import annotations
@@ -67,7 +72,8 @@ def _run_agent_tool(agent_name: str, tool_name: str, params: dict[str, Any]) -> 
     try:
         from haip.a2a import call as a2a_call
         from haip.a2a import internal_permission_context
-        # MCP 由管理员显式启动, 传输层自身鉴权 → 显式内部上下文
+        # 内置 JSON-RPC 传输层本身不鉴权 (仅可选 --token 共享密钥, 见启动告警);
+        # MCP 由管理员显式启动, 令牌校验位于传输层 → 引擎内部调用显式使用内部上下文
         result = a2a_call(agent_name, tool_name, params,
                           perm_ctx=internal_permission_context())
         return result
@@ -96,7 +102,7 @@ def _run_registry_tool(tool_name: str, params: dict[str, Any]) -> dict[str, Any]
 # -- CLI entry points for `xhaip tools mcp-serve` --
 
 
-def serve_agent(agent_name: str, port: int = 8700, host: str = "0.0.0.0") -> None:
+def serve_agent(agent_name: str, port: int = 8700, host: str = "0.0.0.0", token: str = "") -> None:
     """Serve agent tools over MCP SSE transport."""
     tools = _list_agent_tools(agent_name)
     if not tools:
@@ -108,10 +114,10 @@ def serve_agent(agent_name: str, port: int = 8700, host: str = "0.0.0.0") -> Non
     for t in tools:
         print(f"  - {t['name']}: {t.get('description', '')[:60]}")
 
-    _serve_mcp(agent_name, tools, port, host, dispatch_fn=lambda tn, p: _run_agent_tool(agent_name, tn, p))
+    _serve_mcp(agent_name, tools, port, host, dispatch_fn=lambda tn, p: _run_agent_tool(agent_name, tn, p), token=token)
 
 
-def serve_all(port: int = 8700, host: str = "0.0.0.0") -> None:
+def serve_all(port: int = 8700, host: str = "0.0.0.0", token: str = "") -> None:
     """Serve all registered tools over MCP SSE transport."""
     reg_tools = _list_registry_tools()
     if not reg_tools:
@@ -123,7 +129,7 @@ def serve_all(port: int = 8700, host: str = "0.0.0.0") -> None:
     for t in reg_tools:
         print(f"  - {t['name']}: {t.get('description', '')[:60]}")
 
-    _serve_mcp("all", reg_tools, port, host, dispatch_fn=lambda tn, p: _run_registry_tool(tn, p))
+    _serve_mcp("all", reg_tools, port, host, dispatch_fn=lambda tn, p: _run_registry_tool(tn, p), token=token)
 
 
 def _serve_mcp(
@@ -132,14 +138,19 @@ def _serve_mcp(
     port: int,
     host: str,
     dispatch_fn: callable,
+    token: str = "",
 ) -> None:
     """Start MCP server using FastMCP (optional dependency)."""
+    if not token:
+        print("[WARN] MCP server started WITHOUT authentication (no --token set). "
+              "Anyone who can reach this port can invoke tools. "
+              "Pass --token <secret> to require an X-MCP-Token header.")
     try:
         from mcp.server.fastmcp import FastMCP
     except ImportError:
         print("fastmcp not installed. Install with: pip install mcp")
         print("Falling back to built-in HTTP JSON-RPC server...")
-        _serve_builtin(name, tools, port, host, dispatch_fn)
+        _serve_builtin(name, tools, port, host, dispatch_fn, token)
         return
 
     mcp = FastMCP(name)
@@ -175,6 +186,7 @@ def _serve_builtin(
     port: int,
     host: str,
     dispatch_fn: callable,
+    token: str = "",
 ) -> None:
     """Built-in JSON-RPC server when fastmcp is not available."""
     import http.server
@@ -182,7 +194,18 @@ def _serve_builtin(
     tool_index: dict[str, dict[str, Any]] = {t["name"]: t for t in tools}
 
     class MCPHandler(http.server.BaseHTTPRequestHandler):
+        def _authorized(self) -> bool:
+            if not token:
+                return True
+            if self.headers.get("X-MCP-Token", "") != token:
+                self._respond(401, {"jsonrpc": "2.0", "id": None,
+                                    "error": {"code": -32001, "message": "Unauthorized: missing or invalid X-MCP-Token header"}})
+                return False
+            return True
+
         def do_POST(self):
+            if not self._authorized():
+                return
             length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(length)
             try:
@@ -233,7 +256,7 @@ def _serve_builtin(
             self.send_response(200)
             self.send_header("Access-Control-Allow-Origin", "*")
             self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
-            self.send_header("Access-Control-Allow-Headers", "Content-Type")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type, X-MCP-Token")
             self.end_headers()
 
         def _respond(self, code, data):
@@ -264,6 +287,7 @@ def main():
     serve_p.add_argument("--all", action="store_true", help="Serve all registered tools")
     serve_p.add_argument("--port", "-p", type=int, default=8700, help="Port (default: 8700)")
     serve_p.add_argument("--host", default="0.0.0.0", help="Host (default: 0.0.0.0)")
+    serve_p.add_argument("--token", default="", help="Shared secret; when set, clients must send X-MCP-Token header")
 
     sub.add_parser("list-agents", help="List agents with available tools")
 
@@ -271,9 +295,9 @@ def main():
 
     if args.cmd == "serve":
         if args.all:
-            serve_all(port=args.port, host=args.host)
+            serve_all(port=args.port, host=args.host, token=args.token)
         elif args.agent:
-            serve_agent(args.agent, port=args.port, host=args.host)
+            serve_agent(args.agent, port=args.port, host=args.host, token=args.token)
         else:
             print("Specify --agent <name> or --all")
             sys.exit(1)

@@ -162,3 +162,97 @@ class TestMainFunction:
             with pytest.raises(SystemExit) as exc:
                 mcp_main()
             assert exc.value.code == 0
+
+
+class TestBuiltinTokenAuth:
+    """Optional X-MCP-Token auth on the built-in JSON-RPC transport."""
+
+    def _start_server(self, token=""):
+        import http.server
+        import threading
+        import time
+
+        from haip.tools.mcp_server import _serve_builtin
+
+        class RecordingHTTPServer(http.server.HTTPServer):
+            instances = []
+
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                RecordingHTTPServer.instances.append(self)
+
+        RecordingHTTPServer.instances.clear()
+        tools = [{"name": "echo_tool", "description": "Echo", "parameters": {"x": {"type": "string"}}}]
+
+        def dispatch(tn, p):
+            return {"success": True, "output": p.get("x", ""), "data": {}, "error": None, "confidence": None}
+
+        thread = threading.Thread(
+            target=_serve_builtin,
+            kwargs={"name": "tokentest", "tools": tools, "port": 0, "host": "127.0.0.1",
+                    "dispatch_fn": dispatch, "token": token},
+            daemon=True,
+        )
+        with patch.object(http.server, "HTTPServer", RecordingHTTPServer):
+            thread.start()
+            deadline = time.time() + 5
+            while not RecordingHTTPServer.instances and time.time() < deadline:
+                time.sleep(0.01)
+            assert RecordingHTTPServer.instances, "server did not start"
+            return RecordingHTTPServer.instances[-1], thread
+
+    def _post(self, server, token_header=None):
+        import json
+        import urllib.error
+        import urllib.request
+
+        url = f"http://127.0.0.1:{server.server_address[1]}/"
+        body = json.dumps({"jsonrpc": "2.0", "method": "tools/list", "id": 1}).encode("utf-8")
+        req = urllib.request.Request(url, data=body, method="POST",
+                                     headers={"Content-Type": "application/json"})
+        if token_header is not None:
+            req.add_header("X-MCP-Token", token_header)
+        try:
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                return resp.status, json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            return e.code, json.loads(e.read().decode("utf-8"))
+
+    def test_no_token_set_accepts_requests(self):
+        server, thread = self._start_server(token="")
+        try:
+            code, data = self._post(server)
+            assert code == 200
+            assert "tools" in data["result"]
+        finally:
+            server.shutdown()
+            thread.join(timeout=5)
+
+    def test_token_set_rejects_request_without_token(self):
+        server, thread = self._start_server(token="s3cret")
+        try:
+            code, data = self._post(server)
+            assert code == 401
+            assert data["error"]["message"].startswith("Unauthorized")
+        finally:
+            server.shutdown()
+            thread.join(timeout=5)
+
+    def test_token_set_rejects_wrong_token(self):
+        server, thread = self._start_server(token="s3cret")
+        try:
+            code, _ = self._post(server, token_header="wrong")
+            assert code == 401
+        finally:
+            server.shutdown()
+            thread.join(timeout=5)
+
+    def test_token_set_accepts_request_with_matching_token(self):
+        server, thread = self._start_server(token="s3cret")
+        try:
+            code, data = self._post(server, token_header="s3cret")
+            assert code == 200
+            assert "tools" in data["result"]
+        finally:
+            server.shutdown()
+            thread.join(timeout=5)

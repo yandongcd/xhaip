@@ -1036,8 +1036,9 @@ class MetaHarness:
 
         def _call():
             try:
-                from haip.a2a import call_with_loop
-                result = call_with_loop(agent_name, scenario, max_steps=2)
+                from haip.a2a import call_with_loop, internal_permission_context
+                result = call_with_loop(agent_name, scenario, max_steps=2,
+                                        perm_ctx=internal_permission_context())
                 guard = result.get("guard", {})
                 if guard.get("passed") is False:
                     return "blocked"

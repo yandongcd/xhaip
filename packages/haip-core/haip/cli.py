@@ -162,15 +162,16 @@ def tools_mcp_serve(
     all_tools: bool = typer.Option(False, "--all", help="Serve all registered tools"),
     port: int = typer.Option(8700, "--port", "-p", help="Port (default: 8700)"),
     host: str = typer.Option("0.0.0.0", "--host", help="Host (default: 0.0.0.0)"),
+    token: str = typer.Option("", "--token", help="Shared secret; when set, clients must send X-MCP-Token header"),
 ):
     """Start MCP server exposing agent tools."""
     from haip.tools.mcp_server import serve_agent, serve_all
 
     load_all()
     if all_tools:
-        serve_all(port=port, host=host)
+        serve_all(port=port, host=host, token=token)
     elif agent:
-        serve_agent(agent, port=port, host=host)
+        serve_agent(agent, port=port, host=host, token=token)
     else:
         typer.echo("Specify --agent <name> or --all", err=True)
         raise typer.Exit(code=1)
