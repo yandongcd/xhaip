@@ -19,6 +19,7 @@ tools:
   handler: pc_aki.risk_screen
   input:
     patient_id: str
+  inference_tier: T0
 - name: renal_assess
   description: 肾功能评估 — eGFR计算 + 肌酐基线/变化 + AKI分期(KDIGO)
   handler: pc_aki.renal_assess
@@ -26,6 +27,7 @@ tools:
     patient_id: str
     pre_creatinine: float
     post_creatinine: float
+  inference_tier: T0
 - name: prevention_plan
   description: 预防管理方案 — 水化方案/药物调整(二甲双胍/ACEI/NSAIDs)/24h重复造影提醒
   handler: pc_aki.prevention_plan
@@ -34,12 +36,14 @@ tools:
     eGFR: float
     risk_level: str
     contrast_dose: float
+  inference_tier: T0
 - name: nursing_checklist
   description: 护理执行清单 — 筛查核对/水化执行/术后监测/宣教/交班
   handler: pc_aki.nursing_checklist
   input:
     patient_id: str
     risk_level: str
+  inference_tier: T0
 guard:
   triggers:
   - 对比剂肾病
@@ -81,7 +85,6 @@ stages:
   role_ids:
   - attending
   - nurse
-
 learning:
   enabled: true
   auto_apply:

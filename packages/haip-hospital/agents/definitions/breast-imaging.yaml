@@ -5,63 +5,114 @@ type: business
 trust_tier: deep
 department: 影像诊断科
 port: 8857
-aliases: [乳腺影像, BI-RADS, 钼靶, 超声, breast imaging, 乳腺癌筛查]
+aliases:
+- 乳腺影像
+- BI-RADS
+- 钼靶
+- 超声
+- breast imaging
+- 乳腺癌筛查
 prompt:
-  system: |
-    你是南方医院影像诊断科AI助手 v2.0，负责乳腺多模态影像(FFDM/DBT/超声/MRI)的综合辅助诊断。
+  system: '你是南方医院影像诊断科AI助手 v2.0，负责乳腺多模态影像(FFDM/DBT/超声/MRI)的综合辅助诊断。
 
-    核心能力: BI-RADS v2025 全典匹配(肿块形态/边缘/密度+钙化形态/分布+不对称/结构扭曲+伴随征象)、4A/4B/4C 亚型精确分层、乳腺密度 ACR a/b/c/d 4类调整、Tyrer-Cuzick/Gail 风险模型+BRCA遗传评估、BI-RADS→个体化随访路径(短期随访/活检/手术/MDT)。
+
+    核心能力: BI-RADS v2025 全典匹配(肿块形态/边缘/密度+钙化形态/分布+不对称/结构扭曲+伴随征象)、4A/4B/4C 亚型精确分层、乳腺密度
+    ACR a/b/c/d 4类调整、Tyrer-Cuzick/Gail 风险模型+BRCA遗传评估、BI-RADS→个体化随访路径(短期随访/活检/手术/MDT)。
+
 
     约束: BI-RADS ≥4 须经乳腺影像专科医师复核; BI-RADS 5 触发MDT流程; BRCA阳性+致密乳腺 推荐年度MRI筛查。
+
+    '
   temperature: 0.2
 tools:
 - name: birads_classify
   description: BI-RADS v2025 综合分级 — 全典匹配+4A/4B/4C亚型+乳腺密度调整
   handler: breast_imaging.birads_classify
-  input: {patient_id: str, findings: dict, modality: str, breast_density: str}
+  input:
+    patient_id: str
+    findings: dict
+    modality: str
+    breast_density: str
+  inference_tier: T0
 - name: risk_predict
   description: 乳腺癌风险预测 — BI-RADS+密度+Gail/Tyrer-Cuzick+BRCA+活检史
   handler: breast_imaging.risk_predict
-  input: {patient_id: str, birads: int, age: int, family_history: str, brca: str, breast_density: str, menopausal: str, age_menarche: int, age_first_birth: int, breast_biopsies: int, atypical_hyperplasia: bool}
+  input:
+    patient_id: str
+    birads: int
+    age: int
+    family_history: str
+    brca: str
+    breast_density: str
+    menopausal: str
+    age_menarche: int
+    age_first_birth: int
+    breast_biopsies: int
+    atypical_hyperplasia: bool
+  inference_tier: T0
 - name: followup_recommend
   description: BI-RADS导向的个体化随访路径 — 短期随访/活检/手术/MDT+密度附加建议
   handler: breast_imaging.followup_recommend
-  input: {patient_id: str, birads: int, breast_density: str}
+  input:
+    patient_id: str
+    birads: int
+    breast_density: str
+  inference_tier: T0
 guard:
-  triggers: [乳腺, BI-RADS, 乳腺癌, 活检]
-  high_risk_scenarios: [BI-RADS≥4+BRCA阳性, BI-RADS 5, 致密乳腺(d)+BI-RADS 3+, 腋窝淋巴结转移征象]
-  citation: {required: true, min_sources: 2, min_trust: T1}
+  triggers:
+  - 乳腺
+  - BI-RADS
+  - 乳腺癌
+  - 活检
+  high_risk_scenarios:
+  - BI-RADS≥4+BRCA阳性
+  - BI-RADS 5
+  - 致密乳腺(d)+BI-RADS 3+
+  - 腋窝淋巴结转移征象
+  citation:
+    required: true
+    min_sources: 2
+    min_trust: T1
 stages:
 - order: 1
   id: screening
   label: 筛查采集
   desc: 钼靶(FFDM/DBT)+超声+乳腺密度评估(ACR a/b/c/d)
-  role_ids: [attending, technician]
+  role_ids:
+  - attending
+  - technician
 - order: 2
   id: birads-classify
   label: BI-RADS分级
-  desc: "全典匹配: 肿块(形/边/密)+钙化(形态/分布)+不对称/结构扭曲+4A/4B/4C亚型"
-  role_ids: [attending, resident]
+  desc: '全典匹配: 肿块(形/边/密)+钙化(形态/分布)+不对称/结构扭曲+4A/4B/4C亚型'
+  role_ids:
+  - attending
+  - resident
 - order: 3
   id: risk-predict
   label: 风险预测
-  desc: 'Tyrer-Cuzick/Gail模型+BRCA+乳腺密度+活检史 -> 极高/高/中/一般风险分层'
-  role_ids: [attending]
+  desc: Tyrer-Cuzick/Gail模型+BRCA+乳腺密度+活检史 -> 极高/高/中/一般风险分层
+  role_ids:
+  - attending
 - order: 4
   id: biopsy-plan
   label: 活检决策
-  desc: 'BI-RADS 4A→核心针CNB / 4C→真空辅助VABB+定位夹+标本摄片+病理-影像一致性评估'
-  role_ids: [attending]
+  desc: BI-RADS 4A→核心针CNB / 4C→真空辅助VABB+定位夹+标本摄片+病理-影像一致性评估
+  role_ids:
+  - attending
 - order: 5
   id: mdt-referral
   label: MDT/手术
-  desc: 'BI-RADS 5->活检+标记物+腋窝超声+MRI->MDT(外科+肿瘤+放疗+病理+影像)'
-  role_ids: [attending]
+  desc: BI-RADS 5->活检+标记物+腋窝超声+MRI->MDT(外科+肿瘤+放疗+病理+影像)
+  role_ids:
+  - attending
 - order: 6
   id: followup
   label: 随访规划
   desc: 个体化随访间隔(6月/1年/每2周期MRI)+致密乳腺补充超声/MRI
-  role_ids: [attending, nurse]
+  role_ids:
+  - attending
+  - nurse
 ui:
   template: chat-with-role-switcher
   roles:
@@ -75,5 +126,7 @@ rag:
   top_k: 5
 learning:
   enabled: true
-  auto_apply: [citation_new, route_adj]
+  auto_apply:
+  - citation_new
+  - route_adj
   prompt_a_b: true

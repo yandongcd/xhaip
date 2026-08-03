@@ -16,46 +16,55 @@ tools:
   handler: rheumatology.bp_reception
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_exam
   description: 辅助检查
   handler: rheumatology.bp_exam
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_diagnosis
   description: 确诊与分型分期
   handler: rheumatology.bp_diagnosis
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_plan
   description: 治疗方案制定
   handler: rheumatology.bp_plan
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_treatment
   description: 治疗执行与监测
   handler: rheumatology.bp_treatment
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_followup
   description: 随访与长期管理
   handler: rheumatology.bp_followup
   input:
     patient_id: str
+  inference_tier: T0
 - name: assess_ra_activity
   description: DAS28-CRP类风湿关节炎活动度
   handler: rheumatology.assess_ra_activity
   input:
     patient_id: str
+  inference_tier: T0
 - name: assess_sle_activity
   description: SLEDAI-2K SLE活动度评估
   handler: rheumatology.assess_sle_activity
   input:
     patient_id: str
+  inference_tier: T0
 - name: assess_spa_activity
   description: BASDAI强直性脊柱炎活动度
   handler: rheumatology.assess_spa_activity
   input:
     patient_id: str
+  inference_tier: T0
 ui:
   template: chat-with-role-switcher
   roles:

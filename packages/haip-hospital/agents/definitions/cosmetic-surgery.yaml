@@ -1,4 +1,4 @@
-﻿name: cosmetic-surgery
+name: cosmetic-surgery
 cn_name: 整形美容科智能体
 version: 1.0.0
 type: business
@@ -16,41 +16,49 @@ tools:
   handler: cosmetic_surgery.bp_reg
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_diag
   description: 诊断评估
   handler: cosmetic_surgery.bp_diag
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_preop
   description: 术前准备
   handler: cosmetic_surgery.bp_preop
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_risk
   description: 风险评估
   handler: cosmetic_surgery.bp_risk
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_mdt
   description: MDT决策
   handler: cosmetic_surgery.bp_mdt
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_surgery
   description: 手术执行
   handler: cosmetic_surgery.bp_surgery
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_nursing
   description: 围术期护理
   handler: cosmetic_surgery.bp_nursing
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_followup
   description: 术后随访
   handler: cosmetic_surgery.bp_followup
   input:
     patient_id: str
+  inference_tier: T0
 guard:
   triggers:
   - 手术决策

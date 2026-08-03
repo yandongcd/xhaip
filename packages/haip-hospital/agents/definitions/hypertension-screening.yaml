@@ -12,12 +12,15 @@ aliases:
 - 原醛症
 - 嗜铬细胞瘤
 prompt:
-  system: |
-    你是南方医院内分泌科AI助手 v2.0，负责继发性高血压的系统性病因筛查与精准转诊。
+  system: '你是南方医院内分泌科AI助手 v2.0，负责继发性高血压的系统性病因筛查与精准转诊。
+
 
     核心能力: 13种高危特征模式检测(早发/难治/低钾/肾上腺占位/阵发性三联征/肾功恶化/低肾素/库欣/OSA/肾结构/药物/妊娠/下肢血压差)、六大病因导向筛查(原醛/嗜铬/肾动脉/库欣/OSA/肾实质性)、ARR(醛固酮/肾素比值)综合解读+药物干扰校正、分级转诊(基层→县级→内分泌科高血压专科)。
 
+
     约束: 嗜铬细胞瘤筛查前绝对不能用β-阻滞剂(可诱发高血压危象!); 低钾血症须先纠正至K≥4.0再行ARR检测; 肾上腺占位>4cm或MN>3xULN立即转诊内分泌科。
+
+    '
   temperature: 0.2
 tools:
 - name: high_risk_pattern
@@ -28,12 +31,14 @@ tools:
     symptoms: str
     medications: list
     adrenal_incidentaloma: bool
+  inference_tier: T0
 - name: screening_recommend
   description: 病因导向筛查 — PA(ARR+确证)/PHEO(MNs)/RAS(Doppler+CTA)/Cushing(DST+UFC) 四条路径
   handler: hypertension_screening.screening_recommend
   input:
     patient_id: str
     risk_pattern: dict
+  inference_tier: T0
 - name: referral_decision
   description: 转诊决策 — 基层→县级→内分泌科+病因导向治疗建议
   handler: hypertension_screening.referral_decision
@@ -41,6 +46,7 @@ tools:
     patient_id: str
     screening_results: dict
     facility_level: str
+  inference_tier: T0
 guard:
   triggers:
   - 嗜铬细胞瘤
@@ -61,32 +67,42 @@ stages:
   id: screening
   label: 高危筛查
   desc: 13种高危模式检测+病因加权得分(PA/PHEO/RAS/Cushing/OSA/肾性)
-  role_ids: [attending, resident]
+  role_ids:
+  - attending
+  - resident
 - order: 2
   id: biochemical
   label: 生化初筛
   desc: 电解质+ARR(醛固酮/肾素比值)+MNs+1mg DST+肾动脉Doppler
-  role_ids: [attending, technician, pharmacist]
+  role_ids:
+  - attending
+  - technician
+  - pharmacist
 - order: 3
   id: confirmation
   label: 确证试验
   desc: 卡托普利/盐水负荷→PA  可乐定抑制→PHEO  24h UFC→Cushing
-  role_ids: [attending]
+  role_ids:
+  - attending
 - order: 4
   id: imaging
   label: 影像定位
   desc: 肾上腺CT薄层+肾动脉CTA/MRA+AVS(肾上腺静脉采血)
-  role_ids: [attending]
+  role_ids:
+  - attending
 - order: 5
   id: referral
   label: 转诊决策
   desc: 分级转诊(基层→县级→内分泌科高血压专科)+术前准备(a阻滞)
-  role_ids: [attending, pharmacist]
+  role_ids:
+  - attending
+  - pharmacist
 - order: 6
   id: treatment
   label: 病因治疗
   desc: 手术(肾上腺切除/血管成形)+药物(MR拮抗剂/a阻滞/肾血管优化)+长期随访
-  role_ids: [attending]
+  role_ids:
+  - attending
 ui:
   template: chat-with-role-switcher
   roles:
@@ -100,5 +116,7 @@ rag:
   top_k: 5
 learning:
   enabled: true
-  auto_apply: [citation_new, route_adj]
+  auto_apply:
+  - citation_new
+  - route_adj
   prompt_a_b: true

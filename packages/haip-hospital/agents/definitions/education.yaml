@@ -26,6 +26,7 @@ tools:
   input:
     fracture_type: str
     difficulty: str
+  inference_tier: T0
 - name: decision_review
   description: 决策复盘 — 智能体推荐 vs 实际临床决策对比分析
   handler: education.decision_review
@@ -33,18 +34,21 @@ tools:
     case_id: str
     ai_recommendation: dict
     actual_decision: dict
+  inference_tier: T0
 - name: guideline_quick_ref
   description: 指南速查 — NICE/AAOS/NHSA 核心要点卡片
   handler: education.guideline_quick_ref
   input:
     guideline: str
     topic: str
+  inference_tier: T0
 - name: learning_path
   description: 学习路径规划 — 住院医师→主治医师→专家三阶段
   handler: education.learning_path
   input:
     role: str
     department: str
+  inference_tier: T0
 guard:
   triggers:
   - 错误信息传播

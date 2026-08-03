@@ -19,27 +19,32 @@ tools:
   handler: anesthesia.asa_assessment
   input:
     patient_id: str
+  inference_tier: T0
 - name: airway_evaluation
   description: 困难气道评估 — Mallampati分级/甲颏间距/颈围/BMI/张口度/Wilson评分
   handler: anesthesia.airway_evaluation
   input:
     patient_id: str
+  inference_tier: T0
 - name: anticoagulation_bridge
   description: 抗凝桥接管理 — 华法林/NOAC/抗血小板药物的术前停药时机+术后重启方案+肝素桥接
   handler: anesthesia.anticoagulation_bridge
   input:
     patient_id: str
+  inference_tier: T0
 - name: anesthesia_plan
   description: 麻醉方案推荐 — 全身麻醉/椎管内麻醉/区域阻滞/监测麻醉的选择+药物方案+监测要求
   handler: anesthesia.anesthesia_plan
   input:
     patient_id: str
     surgery_type: str
+  inference_tier: T0
 - name: preoperative_optimization
   description: 术前优化建议 — 禁食禁饮指南/术前用药/容量管理/血糖控制/β阻滞剂管理
   handler: anesthesia.preoperative_optimization
   input:
     patient_id: str
+  inference_tier: T0
 guard:
   triggers:
   - 麻醉意外

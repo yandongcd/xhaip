@@ -1,4 +1,4 @@
-﻿name: obgyn
+name: obgyn
 cn_name: 妇产科智能体
 version: 1.0.0
 type: business
@@ -16,31 +16,37 @@ tools:
   handler: obgyn.bp_reception
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_exam
   description: 专项检查
   handler: obgyn.bp_exam
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_diagnosis
   description: 诊断分级
   handler: obgyn.bp_diagnosis
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_treatment
   description: 分娩/治疗执行
   handler: obgyn.bp_treatment
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_nursing
   description: 产后/儿科护理
   handler: obgyn.bp_nursing
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_followup
   description: 随访与保健
   handler: obgyn.bp_followup
   input:
     patient_id: str
+  inference_tier: T0
 guard:
   triggers:
   - 药物交互

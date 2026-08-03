@@ -21,6 +21,7 @@ tools:
     patient_id: str
     chief_complaint: str
     vital_signs: dict
+  inference_tier: T0
 - name: red_flag_detect
   description: 危险信号识别 — 胸痛/卒中/创伤/呼吸困难/意识障碍/休克/过敏/大出血
   handler: emergency_triage.red_flag_detect
@@ -28,6 +29,7 @@ tools:
     patient_id: str
     chief_complaint: str
     vital_signs: dict
+  inference_tier: T0
 - name: green_channel_check
   description: 绿色通道触发检查 — 胸痛中心/卒中中心/创伤中心
   handler: emergency_triage.green_channel_check
@@ -35,6 +37,7 @@ tools:
     patient_id: str
     chief_complaint: str
     red_flags: list
+  inference_tier: T0
 - name: triage_record
   description: 分诊记录生成 — 结构化HIS-ready分诊记录
   handler: emergency_triage.triage_record
@@ -44,11 +47,13 @@ tools:
     triage_zone: str
     red_flags: list
     basis: str
+  inference_tier: T0
 - name: mass_casualty
   description: '群伤检伤分类(START) — 适用于灾难/批量伤员: RED立即/YELLOW延迟/GREEN轻伤/BLACK死亡'
   handler: emergency_triage.mass_casualty_triage
   input:
     patients: list
+  inference_tier: T0
 guard:
   triggers:
   - 胸痛
@@ -86,7 +91,6 @@ stages:
   desc: 抢救室/留观/住院/出院决策、转科交接、HIS记录
   role_ids:
   - emergency_doctor
-
 learning:
   enabled: true
   auto_apply:

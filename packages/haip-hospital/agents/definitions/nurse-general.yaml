@@ -52,6 +52,7 @@ tools:
     mobility: str
     nutrition: str
     friction: str
+  inference_tier: T0
 - name: morse_fall_score
   description: 'Morse跌倒风险评估 — 6个因子(跌倒史/次要诊断/步行辅助/静脉输液/步态/精神状态)， 总分0-125分，<25低危, 25-45中危,
     >45高危，含分级防跌措施清单。
@@ -65,6 +66,7 @@ tools:
     iv_heparin_lock: str
     gait: str
     mental_status: str
+  inference_tier: T0
 - name: caprini_dvt
   description: 'Caprini DVT风险评估 — 40+风险因子评分，0-1低危, 2中危, 3-4高危, ≥5极高危。 含分级预防建议(IPC/GCS/踝泵/LMWH)和禁忌注意事项。
 
@@ -77,6 +79,7 @@ tools:
     surgery_duration_min: int
     conditions: list
     medications: list
+  inference_tier: T0
 - name: vte_nursing_bundle
   description: '围术期护理4阶段方案 — 术前/术日/术后24-72h/出院指导， 含体位管理/管道护理/疼痛管理/健康教育条目化checklist。
 
@@ -86,6 +89,7 @@ tools:
     procedure: str
     age: int
     conditions: list
+  inference_tier: T0
 - name: handover_summary
   description: 'SBAR交班摘要生成 — Situation/Background/Assessment/Recommendation四段式结构，
     输入患者关键字段 → 生成结构化SBAR文本。
@@ -100,6 +104,7 @@ tools:
     current_status: str
     key_events: str
     recommendations: list
+  inference_tier: T0
 - name: vital_signs_alert
   description: '生命体征逐项判读 — T/P/R/BP/SpO2 逐项判读 + 简化早期预警评分 (EWS)， 异常→分级升级建议(观察/通知医师/紧急会诊)。
 
@@ -112,6 +117,7 @@ tools:
     systolic_bp: int
     spo2: float
     avpu: str
+  inference_tier: T0
 guard:
   triggers:
   - 跌倒

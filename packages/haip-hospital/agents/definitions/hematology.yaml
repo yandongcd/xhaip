@@ -16,46 +16,55 @@ tools:
   handler: hematology.bp_reception
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_exam
   description: 辅助检查
   handler: hematology.bp_exam
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_diagnosis
   description: 确诊与分型分期
   handler: hematology.bp_diagnosis
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_plan
   description: 治疗方案制定
   handler: hematology.bp_plan
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_treatment
   description: 治疗执行与监测
   handler: hematology.bp_treatment
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_followup
   description: 随访与长期管理
   handler: hematology.bp_followup
   input:
     patient_id: str
+  inference_tier: T0
 - name: assess_anemia
   description: WHO贫血分级+类型判断(MCV)
   handler: hematology.assess_anemia
   input:
     patient_id: str
+  inference_tier: T0
 - name: assess_mds
   description: IPSS-R MDS预后评分
   handler: hematology.assess_mds
   input:
     patient_id: str
+  inference_tier: T0
 - name: assess_dic
   description: ISTH DIC诊断评分
   handler: hematology.assess_dic
   input:
     patient_id: str
+  inference_tier: T0
 ui:
   template: chat-with-role-switcher
   roles:

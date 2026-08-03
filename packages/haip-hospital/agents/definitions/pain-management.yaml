@@ -1,4 +1,4 @@
-﻿name: pain-management
+name: pain-management
 cn_name: 疼痛管理智能体
 version: 1.0.0
 type: specialist
@@ -27,6 +27,7 @@ tools:
     vas_score: float
     nurse_id: str
     assessment_time: str
+  inference_tier: T0
 - name: multimodal_analgesia
   description: 多模式镇痛阶梯方案推荐 (NSAIDs→弱阿片→强阿片→局麻→神经阻滞)
   handler: pain_management.multimodal_analgesia
@@ -36,12 +37,14 @@ tools:
     allergies: list
     renal_function: str
     liver_function: str
+  inference_tier: T0
 - name: pain_free_ward_metrics
   description: 无痛化病房质控指标 VAS<3比例/爆发痛频率/补救用药率 (±2分评估容差)
   handler: pain_management.pain_free_ward_metrics
   input:
     ward_id: str
     period: str
+  inference_tier: T0
 - name: pca_config
   description: 术后 PCA 镇痛泵配置建议
   handler: pain_management.pca_config
@@ -51,6 +54,7 @@ tools:
     weight: float
     procedure: str
     allergies: list
+  inference_tier: T0
 guard:
   triggers:
   - 阿片过量

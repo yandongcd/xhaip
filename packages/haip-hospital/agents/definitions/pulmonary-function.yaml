@@ -5,67 +5,132 @@ type: business
 trust_tier: deep
 department: 呼吸科
 port: 8851
-aliases: [肺功能, PFT, 肺量计, spirometry, COPD, 哮喘]
+aliases:
+- 肺功能
+- PFT
+- 肺量计
+- spirometry
+- COPD
+- 哮喘
 prompt:
-  system: |
-    你是南方医院呼吸科AI助手 (PFT v2.0)，负责肺功能检查(PFT)的自动化综合评估。
+  system: '你是南方医院呼吸科AI助手 (PFT v2.0)，负责肺功能检查(PFT)的自动化综合评估。
+
 
     核心能力: ATS/ERS 6模式通气功能判读(正常/阻塞/限制/混合/小气道/非特异)、GOLD 2025 ABE分组+个体化治疗、支气管舒张/激发试验定量判读、Z-score标准化评估(GLI-2012)、肺年龄计算、胸科手术前风险评估(ACCP/BTS)。
 
+
     约束: 所有判读须经呼吸科医师复核确认; FEV1<30%+呼吸困难立即触发预警; 肺功能数据以ATS/ERS质控标准(C/D级)为准。
+
+    '
   temperature: 0.2
 tools:
 - name: pft_interpret
   description: 肺功能综合判读 — 6模式+Z-score+肺年龄+DLCO
   handler: pulmonary_function.pft_interpret
-  input: {patient_id: str, FEV1: float, FVC: float, FEV1_pred: float, FVC_pred: float, DLCO: float, TLC: float, TLC_pred: float, age: int, height_cm: float, gender: str}
+  input:
+    patient_id: str
+    FEV1: float
+    FVC: float
+    FEV1_pred: float
+    FVC_pred: float
+    DLCO: float
+    TLC: float
+    TLC_pred: float
+    age: int
+    height_cm: float
+    gender: str
+  inference_tier: T0
 - name: gold_staging
   description: GOLD 2025评估 — 分级(1-4)+ABE分组+个体化治疗(含EOS导向)
   handler: pulmonary_function.gold_staging
-  input: {patient_id: str, fev1_percent: float, exacerbations: int, CAT_score: int, mMRC: int, eosinophil_count: float}
+  input:
+    patient_id: str
+    fev1_percent: float
+    exacerbations: int
+    CAT_score: int
+    mMRC: int
+    eosinophil_count: float
+  inference_tier: T0
 - name: bronchodilator_test
   description: 支气管舒张试验 — BDR定量+激发试验(PC20)+ACO鉴别
   handler: pulmonary_function.bronchodilator_test
-  input: {patient_id: str, pre_FEV1: float, post_FEV1: float, pre_FVC: float, post_FVC: float, bronchodilator: str}
+  input:
+    patient_id: str
+    pre_FEV1: float
+    post_FEV1: float
+    pre_FVC: float
+    post_FVC: float
+    bronchodilator: str
+  inference_tier: T0
 - name: preop_assessment
   description: 术前评估 — ACCP胸科手术分层+ppo-FEV1/ppo-DLCO+6MWT+VO2max
   handler: pulmonary_function.preop_assessment
-  input: {patient_id: str, surgery_type: str, FEV1: float, FEV1_pred: float, DLCO: float, VO2max: float, walk_distance_6mwt: float}
+  input:
+    patient_id: str
+    surgery_type: str
+    FEV1: float
+    FEV1_pred: float
+    DLCO: float
+    VO2max: float
+    walk_distance_6mwt: float
+  inference_tier: T0
 guard:
-  triggers: [肺功能, COPD, 哮喘, 术前, 呼吸]
-  high_risk_scenarios: [FEV1<30%+呼吸困难, 全肺切除+FVE1<40%, VO2max<10]
-  citation: {required: true, min_sources: 1, min_trust: T1}
+  triggers:
+  - 肺功能
+  - COPD
+  - 哮喘
+  - 术前
+  - 呼吸
+  high_risk_scenarios:
+  - FEV1<30%+呼吸困难
+  - 全肺切除+FVE1<40%
+  - VO2max<10
+  citation:
+    required: true
+    min_sources: 1
+    min_trust: T1
 stages:
 - order: 1
   id: pft-testing
   label: 肺功能测定
   desc: 肺量计(FVC/FEV1)+体描箱(TLC/RV)+弥散(DLCO)按ATS质控标准
-  role_ids: [attending, technician]
+  role_ids:
+  - attending
+  - technician
 - order: 2
   id: pattern-classify
   label: 模式判读
   desc: ATS/ERS 6模式+Z-score标准化+LLN正常值下限+肺年龄计算
-  role_ids: [attending, resident]
+  role_ids:
+  - attending
+  - resident
 - order: 3
   id: bdr-challenge
   label: 舒张/激发试验
   desc: BDR定量(FEV1Δ≥12%+200mL)+PC20激发+ACO鉴别
-  role_ids: [attending]
+  role_ids:
+  - attending
 - order: 4
   id: copd-staging
   label: COPD综合评估
   desc: GOLD 2025分级(1-4)+ABE分组+EOS导向三联疗法+非药物治疗
-  role_ids: [attending, pharmacist]
+  role_ids:
+  - attending
+  - pharmacist
 - order: 5
   id: preop-risk
   label: 术前评估
   desc: ACCP/BTS胸科手术分层+ppo-FEV1+6MWT+VO2max+肺康复
-  role_ids: [attending, anesthesiologist]
+  role_ids:
+  - attending
+  - anesthesiologist
 - order: 6
   id: followup
   label: 随访追踪
   desc: 肺功能年下降率(FEV1 decline)+疗效评估+LTOT/NIV评估
-  role_ids: [attending, nurse]
+  role_ids:
+  - attending
+  - nurse
 ui:
   template: chat-with-role-switcher
   roles:
@@ -81,5 +146,7 @@ rag:
   top_k: 5
 learning:
   enabled: true
-  auto_apply: [citation_new, route_adj]
+  auto_apply:
+  - citation_new
+  - route_adj
   prompt_a_b: true

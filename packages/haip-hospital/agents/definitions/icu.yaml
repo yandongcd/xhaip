@@ -1,4 +1,4 @@
-﻿name: icu
+name: icu
 cn_name: 重症医学科智能体
 version: 1.0.0
 type: business
@@ -16,26 +16,31 @@ tools:
   handler: icu.bp_triage
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_rescue
   description: 紧急救治
   handler: icu.bp_rescue
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_icu
   description: 重症监护
   handler: icu.bp_icu
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_transfer
   description: 转归评估
   handler: icu.bp_transfer
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_followup
   description: 随访跟踪
   handler: icu.bp_followup
   input:
     patient_id: str
+  inference_tier: T0
 guard:
   triggers:
   - 手术决策

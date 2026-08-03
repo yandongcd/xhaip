@@ -1,4 +1,4 @@
-﻿name: cardio-risk
+name: cardio-risk
 cn_name: 围术期心脏评估
 version: 1.0.0
 type: specialist
@@ -23,6 +23,7 @@ tools:
     patient_id: str
     labs: dict
     ecg_findings: str
+  inference_tier: T0
 - name: assess_mi
   description: 围术期心肌梗死风险评估
   handler: cardio_risk.evaluate_mi
@@ -30,6 +31,7 @@ tools:
     patient_id: str
     troponin: float
     ecg: str
+  inference_tier: T0
 - name: assess_hypertension
   description: 高血压风险评估与管理建议
   handler: cardio_risk.evaluate_htn
@@ -38,6 +40,7 @@ tools:
     sbp: int
     dbp: int
     meds: list
+  inference_tier: T0
 stages:
 - order: 1
   id: assess

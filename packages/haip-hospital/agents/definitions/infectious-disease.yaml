@@ -16,41 +16,49 @@ tools:
   handler: infectious_disease.bp_reception
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_exam
   description: 辅助检查
   handler: infectious_disease.bp_exam
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_diagnosis
   description: 确诊与分型分期
   handler: infectious_disease.bp_diagnosis
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_plan
   description: 治疗方案制定
   handler: infectious_disease.bp_plan
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_treatment
   description: 治疗执行与监测
   handler: infectious_disease.bp_treatment
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_followup
   description: 随访与长期管理
   handler: infectious_disease.bp_followup
   input:
     patient_id: str
+  inference_tier: T0
 - name: assess_infection
   description: CPIS+qPitt感染严重度评估
   handler: infectious_disease.assess_infection
   input:
     patient_id: str
+  inference_tier: T0
 - name: assess_antibiotic
   description: IDSA抗生素疗程评估
   handler: infectious_disease.assess_antibiotic
   input:
     patient_id: str
+  inference_tier: T0
 ui:
   template: chat-with-role-switcher
   roles:

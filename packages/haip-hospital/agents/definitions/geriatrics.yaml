@@ -16,43 +16,55 @@ tools:
   handler: geriatrics.bp_reception
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_exam
   description: 辅助检查
   handler: geriatrics.bp_exam
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_diagnosis
   description: 确诊与分型分期
   handler: geriatrics.bp_diagnosis
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_plan
   description: 治疗方案制定
   handler: geriatrics.bp_plan
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_treatment
   description: 治疗执行与监测
   handler: geriatrics.bp_treatment
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_followup
   description: 随访与长期管理
   handler: geriatrics.bp_followup
   input:
     patient_id: str
+  inference_tier: T0
 - name: assess_frailty
   description: Fried衰弱表型5项评估(健壮/前衰弱/衰弱)
   handler: geriatrics.assess_frailty
-  input: {patient_id: str}
+  input:
+    patient_id: str
+  inference_tier: T0
 - name: assess_beers
   description: Beers标准潜在不适当用药筛查
   handler: geriatrics.assess_beers
-  input: {patient_id: str}
+  input:
+    patient_id: str
+  inference_tier: T0
 - name: assess_mna
   description: MNA-SF简易营养评估(0-14分)
   handler: geriatrics.assess_mna
-  input: {patient_id: str}
+  input:
+    patient_id: str
+  inference_tier: T0
 ui:
   template: chat-with-role-switcher
   roles:

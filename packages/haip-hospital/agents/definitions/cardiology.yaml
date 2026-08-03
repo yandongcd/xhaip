@@ -16,31 +16,37 @@ tools:
   handler: cardiology.bp_reception
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_exam
   description: 辅助检查 — 心电图/心脏超声/心肌酶谱/BNP/动态心电图
   handler: cardiology.bp_exam
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_diagnosis
   description: 确诊与分型分期 — 心衰(NYHA)/高血压分级/CAD分型
   handler: cardiology.bp_diagnosis
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_plan
   description: 治疗方案制定 — GDMT/CCB/ACEI/ARB + 危险因素控制
   handler: cardiology.bp_plan
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_treatment
   description: 治疗执行与监测 — 用药依从性/不良反应/疗效评估
   handler: cardiology.bp_treatment
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_followup
   description: 随访与长期管理 — 1/3/6/12月慢病随访
   handler: cardiology.bp_followup
   input:
     patient_id: str
+  inference_tier: T0
 ui:
   template: chat-with-role-switcher
   roles:

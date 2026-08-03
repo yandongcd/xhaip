@@ -1,4 +1,4 @@
-﻿name: vascular-surgery
+name: vascular-surgery
 cn_name: 血管外科智能体
 version: 1.0.0
 type: business
@@ -16,41 +16,49 @@ tools:
   handler: vascular_surgery.bp_reg
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_diag
   description: 诊断评估
   handler: vascular_surgery.bp_diag
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_preop
   description: 术前准备
   handler: vascular_surgery.bp_preop
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_risk
   description: 风险评估
   handler: vascular_surgery.bp_risk
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_mdt
   description: MDT决策
   handler: vascular_surgery.bp_mdt
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_surgery
   description: 手术执行
   handler: vascular_surgery.bp_surgery
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_nursing
   description: 围术期护理
   handler: vascular_surgery.bp_nursing
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_followup
   description: 术后随访
   handler: vascular_surgery.bp_followup
   input:
     patient_id: str
+  inference_tier: T0
 guard:
   triggers:
   - 手术决策
@@ -84,32 +92,49 @@ stages:
   id: vascular-eval
   label: 血管评估
   desc: Rutherford PAD分级(0-6)、ABI测量、NASCET/ECST颈动脉狭窄度、Wells DVT评分、CEAP静脉分级
-  role_ids: [attending, resident, cardiologist]
+  role_ids:
+  - attending
+  - resident
+  - cardiologist
 - order: 2
   id: preop-plan
   label: 术前规划
   desc: 抗凝方案(ACT>250肝素化)、AAA直径监测(男>55/女>50mm)、EVAR vs OR决策、移植血管选择
-  role_ids: [attending, surgeon, anesthesiologist]
+  role_ids:
+  - attending
+  - surgeon
+  - anesthesiologist
 - order: 3
   id: surgery
   label: 手术/介入执行
   desc: CEA纵切/外翻式、EVAR支架释放、血管吻合、远端灌注监测(踝部多普勒)
-  role_ids: [attending, surgeon, anesthesiologist]
+  role_ids:
+  - attending
+  - surgeon
+  - anesthesiologist
 - order: 4
   id: postop-monitor
   label: 术后监测
   desc: 外周动脉搏动监测(q15min→q1h)、缺血再灌注疼痛管理、移植物血栓筛查、抗凝管理
-  role_ids: [attending, resident, head_nurse]
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
 - order: 5
   id: recovery
   label: 康复期
   desc: 抗血小板/抗凝长期方案、血压控制(目标<130/80)、血脂管理、戒烟辅导
-  role_ids: [attending, resident, head_nurse]
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
 - order: 6
   id: followup
   label: 随访监测
   desc: DUS超声(1/6/12月→年度)、PSV比值>2.5提示>50%再狭窄、移植物通畅率、AAA瘤囊回缩
-  role_ids: [attending, resident]
+  role_ids:
+  - attending
+  - resident
 rag:
   enabled: true
   top_k: 5

@@ -1,4 +1,4 @@
-﻿name: breast-center
+name: breast-center
 cn_name: 乳腺中心智能体
 version: 1.0.0
 type: business
@@ -16,41 +16,49 @@ tools:
   handler: breast_center.bp_reg
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_diag
   description: 诊断评估
   handler: breast_center.bp_diag
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_preop
   description: 术前准备
   handler: breast_center.bp_preop
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_risk
   description: 风险评估
   handler: breast_center.bp_risk
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_mdt
   description: MDT决策
   handler: breast_center.bp_mdt
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_surgery
   description: 手术执行
   handler: breast_center.bp_surgery
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_nursing
   description: 围术期护理
   handler: breast_center.bp_nursing
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_followup
   description: 术后随访
   handler: breast_center.bp_followup
   input:
     patient_id: str
+  inference_tier: T0
 guard:
   triggers:
   - 手术决策

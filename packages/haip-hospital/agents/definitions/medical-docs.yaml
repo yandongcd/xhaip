@@ -23,6 +23,7 @@ tools:
     chief_complaint: str
     present_illness: str
     exam_findings: str
+  inference_tier: T0
 - name: draft_discharge_summary
   description: 出院小结草稿 (自动进签核队列)
   handler: medical_docs.draft_discharge_summary
@@ -31,6 +32,7 @@ tools:
     course: str
     discharge_meds: list
     followup: str
+  inference_tier: T0
 guard:
   triggers:
   - 手术决策

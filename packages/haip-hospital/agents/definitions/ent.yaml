@@ -16,26 +16,31 @@ tools:
   handler: ent.bp_screening
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_exam
   description: 专科检查
   handler: ent.bp_exam
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_diagnosis
   description: 确诊定级
   handler: ent.bp_diagnosis
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_treatment
   description: 治疗操作
   handler: ent.bp_treatment
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_followup
   description: 定期复查
   handler: ent.bp_followup
   input:
     patient_id: str
+  inference_tier: T0
 ui:
   template: chat-with-role-switcher
   roles:

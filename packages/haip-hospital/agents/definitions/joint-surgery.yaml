@@ -1,4 +1,4 @@
-﻿name: joint-surgery
+name: joint-surgery
 cn_name: 关节与骨病外科智能体
 version: 1.0.0
 type: business
@@ -44,6 +44,7 @@ tools:
     adduction_rom: int
     external_rotation_rom: int
     internal_rotation_rom: int
+  inference_tier: T0
 - name: kss_score
   description: KSS膝关节评分(临床0-100+功能0-100双表)
   handler: joint_surgery.kss_score
@@ -58,6 +59,7 @@ tools:
     walk_blocks: int
     stairs_up_down: int
     walking_aid: str
+  inference_tier: T0
 - name: pji_diagnosis
   description: 假体周围感染MSIS/ICM 2018诊断(主要+次要标准计分, 判定感染/可疑/排除)
   handler: joint_surgery.pji_diagnosis
@@ -73,6 +75,7 @@ tools:
     frozen_section_positive: bool
     intraop_purulence: bool
     d_dimer: float
+  inference_tier: T0
 - name: tha_tka_planning
   description: THA/TKA置换术前规划(适应证核对+假体类型建议+骨水泥/生物固定)
   handler: joint_surgery.tha_tka_planning
@@ -85,6 +88,7 @@ tools:
     bone_quality: str
     deformity_degree: str
     prior_surgery: bool
+  inference_tier: T0
 - name: eras_pathway
   description: THA/TKA ERAS快速康复路径(术前宣教/氨甲环酸/早期下地/出院标准checklist)
   handler: joint_surgery.eras_pathway
@@ -94,6 +98,7 @@ tools:
     age: int
     comorbidities: list
     current_phase: str
+  inference_tier: T0
 - name: revision_assessment
   description: 翻修评估(松动/磨损/不稳分型→翻修策略+骨缺损分级)
   handler: joint_surgery.revision_assessment
@@ -105,6 +110,7 @@ tools:
     symptoms: list
     xray_findings: list
     prior_revision_count: int
+  inference_tier: T0
 guard:
   triggers:
   - 手术
@@ -147,32 +153,49 @@ stages:
   id: joint-eval
   label: 关节功能评估
   desc: Harris髋关节评分/KSS膝关节评分、MSIS/ICM 2018 PJI诊断标准、ASA分级、心肺功能
-  role_ids: [attending, resident, anesthesiologist]
+  role_ids:
+  - attending
+  - resident
+  - anesthesiologist
 - order: 2
   id: preop-plan
   label: 术前规划
   desc: 假体选择(Dorr骨质量→骨水泥/非骨水泥)、CR/PS/CCK决策、ERAS术前方案(TXA/塞来昔布)
-  role_ids: [attending, surgeon, head_nurse]
+  role_ids:
+  - attending
+  - surgeon
+  - head_nurse
 - order: 3
   id: surgery
   label: 手术执行
   desc: 入路选择(后外侧/直接前方/内侧髌旁)、软组织平衡、假体稳定性评估、TXA止血方案
-  role_ids: [attending, surgeon, anesthesiologist]
+  role_ids:
+  - attending
+  - surgeon
+  - anesthesiologist
 - order: 4
   id: postop-early
   label: 术后早期
   desc: ERAS术后方案(多模式镇痛/VTE预防/感染监测)、24h内首次下床、引流管管理
-  role_ids: [attending, resident, head_nurse, rehab_therapist]
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
+  - rehab_therapist
 - order: 5
   id: rehab
   label: 康复训练
   desc: 关节活动度训练、肌力训练(股四头肌/臀中肌)、步态训练、日常生活能力恢复
-  role_ids: [rehab_therapist, head_nurse]
+  role_ids:
+  - rehab_therapist
+  - head_nurse
 - order: 6
   id: followup
   label: 长期随访
   desc: Harris/KSS评分追踪、影像复查(假体松动/磨损/骨溶解)、翻修评估(松动/不稳/感染)、术后3/6/12月→年度
-  role_ids: [attending, rehab_therapist]
+  role_ids:
+  - attending
+  - rehab_therapist
 rag:
   enabled: true
   top_k: 5

@@ -1,4 +1,4 @@
-﻿name: burns-plastic
+name: burns-plastic
 cn_name: 烧伤整形科智能体
 version: 1.0.0
 type: business
@@ -16,41 +16,49 @@ tools:
   handler: burns_plastic.bp_reg
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_diag
   description: 诊断评估
   handler: burns_plastic.bp_diag
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_preop
   description: 术前准备
   handler: burns_plastic.bp_preop
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_risk
   description: 风险评估
   handler: burns_plastic.bp_risk
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_mdt
   description: MDT决策
   handler: burns_plastic.bp_mdt
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_surgery
   description: 手术执行
   handler: burns_plastic.bp_surgery
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_nursing
   description: 围术期护理
   handler: burns_plastic.bp_nursing
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_followup
   description: 术后随访
   handler: burns_plastic.bp_followup
   input:
     patient_id: str
+  inference_tier: T0
 guard:
   triggers:
   - 手术决策
@@ -81,32 +89,49 @@ stages:
   id: burn-eval
   label: 烧伤评估
   desc: 烧伤深度(I/II/III°)、TBSA计算(Parkland公式)、吸入性损伤评估、电烧伤CK监测
-  role_ids: [attending, resident, emergency_doctor]
+  role_ids:
+  - attending
+  - resident
+  - emergency_doctor
 - order: 2
   id: resuscitation
   label: 液体复苏
   desc: Parkland公式补液(4mL×kg×%TBSA 前8h半量)、电解质监测、尿量目标0.5mL/kg/h
-  role_ids: [attending, icu_doctor, head_nurse]
+  role_ids:
+  - attending
+  - icu_doctor
+  - head_nurse
 - order: 3
   id: debridement
   label: 清创手术
   desc: 焦痂切开减张、深度烧伤削痂、负压封闭引流(VSD)、生物敷料覆盖
-  role_ids: [attending, surgeon, anesthesiologist]
+  role_ids:
+  - attending
+  - surgeon
+  - anesthesiologist
 - order: 4
   id: grafting
   label: 植皮重建
   desc: 自体皮片移植(刃厚/中厚)、网状制皮(1:1.5~1:3)、Integra真皮替代物
-  role_ids: [attending, surgeon, instrument_nurse]
+  role_ids:
+  - attending
+  - surgeon
+  - instrument_nurse
 - order: 5
   id: scar-mgmt
   label: 瘢痕管理
   desc: VSS温哥华瘢痕评分、压力衣治疗(20-30mmHg 23h/d)、硅酮凝胶、康复训练
-  role_ids: [attending, rehab_therapist, head_nurse]
+  role_ids:
+  - attending
+  - rehab_therapist
+  - head_nurse
 - order: 6
   id: followup
   label: 长期随访
   desc: 瘢痕成熟度评估、关节功能康复、心理支持、术后3/6/12月随访
-  role_ids: [attending, rehab_therapist]
+  role_ids:
+  - attending
+  - rehab_therapist
 rag:
   enabled: true
   top_k: 5

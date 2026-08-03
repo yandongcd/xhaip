@@ -25,6 +25,7 @@ tools:
     patient_id: str
     weight_kg: float
     height_cm: float
+  inference_tier: T0
 - name: calculate_tpn
   description: TPN处方计算 — Harris-Benedict BEE + 糖脂比 + 氨基酸 + 渗透压 + 钙磷沉淀检查
   handler: pharmacy.compute_tpn
@@ -34,23 +35,27 @@ tools:
     height_cm: float
     age: int
     gender: str
+  inference_tier: T0
 - name: review_rx
   description: 处方审核 — 17条风险规则(配伍禁忌/剂量/溶媒/抗菌药物/抗凝）
   handler: pharmacy.review_rx
   input:
     patient_id: str
     prescription_items: list
+  inference_tier: T0
 - name: nutrition_route
   description: 营养途径推荐 — EN vs PN vs SPN
   handler: pharmacy.nutrition_route
   input:
     patient_id: str
     gi_function: str
+  inference_tier: T0
 - name: drug_search
   description: 药品信息查询
   handler: pharmacy.drug_search
   input:
     keyword: str
+  inference_tier: T0
 guard:
   triggers:
   - 药物相互作用
@@ -89,7 +94,6 @@ stages:
   desc: 出院用药指导、特殊剂型使用培训(吸入剂/胰岛素/抗凝)、依从性随访
   role_ids:
   - pharmacist
-
 learning:
   enabled: true
   auto_apply:

@@ -21,17 +21,20 @@ tools:
   handler: medical_record.get_patient
   input:
     patient_id: str
+  inference_tier: T0
 - name: get_labs
   description: 获取患者检验结果
   handler: medical_record.get_labs
   input:
     patient_id: str
     days: int
+  inference_tier: T0
 - name: get_exams
   description: 获取患者影像检查报告
   handler: medical_record.get_exams
   input:
     patient_id: str
+  inference_tier: T0
 ui:
   template: chat-with-role-switcher
   roles:

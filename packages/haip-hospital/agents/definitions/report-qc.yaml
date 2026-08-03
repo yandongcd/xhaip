@@ -5,63 +5,110 @@ type: business
 trust_tier: deep
 department: 影像诊断科
 port: 8854
-aliases: [报告质控, 影像质控, report QC, 南医影鉴]
+aliases:
+- 报告质控
+- 影像质控
+- report QC
+- 南医影鉴
 prompt:
-  system: |
-    你是南医影鉴 v2.0，南方医院影像诊断科AI报告质控助手。
+  system: '你是南医影鉴 v2.0，南方医院影像诊断科AI报告质控助手。
 
-    核心能力: 10类硬规则检查(性别矛盾/年龄矛盾/左右矛盾/关键元素缺失/日期不一致/方法-部位不匹配)、语义矛盾审查(描述-结论矛盾/危急值未标注/测量不一致)、RSNA结构化报告完整性评估(6要素: 指征/技术/描述/对比/结论/建议)、四维综合评分(硬规则40%+语义30%+结构15%+及时性15% → A+/A/B/C/D等级)。
+
+    核心能力: 10类硬规则检查(性别矛盾/年龄矛盾/左右矛盾/关键元素缺失/日期不一致/方法-部位不匹配)、语义矛盾审查(描述-结论矛盾/危急值未标注/测量不一致)、RSNA结构化报告完整性评估(6要素:
+    指征/技术/描述/对比/结论/建议)、四维综合评分(硬规则40%+语义30%+结构15%+及时性15% → A+/A/B/C/D等级)。
+
 
     约束: 致命错误(性别矛盾/危急值漏报) → 强制退回; 评分<60 → 退回重写; 所有质控结果须经审核医师确认。
+
+    '
   temperature: 0.2
 tools:
 - name: hard_rule_check
-  description: '硬规则检查 — 10类致命错误(性别矛盾/年龄/左右/关键缺失/日期/方法-部位)+3级severity'
+  description: 硬规则检查 — 10类致命错误(性别矛盾/年龄/左右/关键缺失/日期/方法-部位)+3级severity
   handler: report_qc.hard_rule_check
-  input: {patient_id: str, report_text: str, patient_gender: str, patient_age: int, body_part: str, clinical_indication: str, modality: str}
+  input:
+    patient_id: str
+    report_text: str
+    patient_gender: str
+    patient_age: int
+    body_part: str
+    clinical_indication: str
+    modality: str
+  inference_tier: T0
 - name: semantic_check
-  description: '语义审查 — 描述-结论矛盾+危急值漏标+测量不一致+RSNA结构完整性'
+  description: 语义审查 — 描述-结论矛盾+危急值漏标+测量不一致+RSNA结构完整性
   handler: report_qc.semantic_check
-  input: {patient_id: str, findings: str, conclusion: str, report_text: str, modality: str, body_part: str}
+  input:
+    patient_id: str
+    findings: str
+    conclusion: str
+    report_text: str
+    modality: str
+    body_part: str
+  inference_tier: T0
 - name: qc_report
-  description: '四维综合评分 — 硬规则40%+语义30%+结构15%+及时性15% → 分级+签发行动'
+  description: 四维综合评分 — 硬规则40%+语义30%+结构15%+及时性15% → 分级+签发行动
   handler: report_qc.qc_report
-  input: {patient_id: str, hard_issues: list, semantic_issues: list, structured_score: int}
+  input:
+    patient_id: str
+    hard_issues: list
+    semantic_issues: list
+    structured_score: int
+  inference_tier: T0
 guard:
-  triggers: [报告质控, 诊断矛盾, 危急值]
-  high_risk_scenarios: [漏诊恶性病变, 性别矛盾, 左右矛盾, 危急值未标注]
-  citation: {required: true, min_sources: 1, min_trust: T1}
+  triggers:
+  - 报告质控
+  - 诊断矛盾
+  - 危急值
+  high_risk_scenarios:
+  - 漏诊恶性病变
+  - 性别矛盾
+  - 左右矛盾
+  - 危急值未标注
+  citation:
+    required: true
+    min_sources: 1
+    min_trust: T1
 stages:
 - order: 1
   id: hard-rules
   label: 硬规则扫描
   desc: '10类致命错误: 性别/年龄/左右矛盾+关键元素缺失+日期逻辑+方法-部位匹配'
-  role_ids: [attending, resident]
+  role_ids:
+  - attending
+  - resident
 - order: 2
   id: semantic
   label: 语义审查
-  desc: '描述-结论矛盾检测+危急值(气胸/游离气体/颅内出血/夹层/PE)漏标+测量一致性'
-  role_ids: [attending]
+  desc: 描述-结论矛盾检测+危急值(气胸/游离气体/颅内出血/夹层/PE)漏标+测量一致性
+  role_ids:
+  - attending
 - order: 3
   id: structured
   label: 结构评估
-  desc: 'RSNA 6要素(指征/技术/描述/对比/结论/建议)完整性评分'
-  role_ids: [attending]
+  desc: RSNA 6要素(指征/技术/描述/对比/结论/建议)完整性评分
+  role_ids:
+  - attending
 - order: 4
   id: scoring
   label: 综合评分
-  desc: '四维加权(硬40%+语义30%+结构15%+及时15%) → A+/A/B/C/D → 签发/修改/退回'
-  role_ids: [attending]
+  desc: 四维加权(硬40%+语义30%+结构15%+及时15%) → A+/A/B/C/D → 签发/修改/退回
+  role_ids:
+  - attending
 - order: 5
   id: revision
   label: 修订建议
-  desc: '逐条问题标注+修改指导+参考模板 → 修订后重审'
-  role_ids: [attending, resident]
+  desc: 逐条问题标注+修改指导+参考模板 → 修订后重审
+  role_ids:
+  - attending
+  - resident
 - order: 6
   id: final-review
   label: 终审签发
-  desc: '审核医师确认+质控签字+反馈闭环(错误类型统计 → 培训重点)'
-  role_ids: [attending, head_nurse]
+  desc: 审核医师确认+质控签字+反馈闭环(错误类型统计 → 培训重点)
+  role_ids:
+  - attending
+  - head_nurse
 ui:
   template: chat-with-role-switcher
   roles:
@@ -75,5 +122,7 @@ rag:
   top_k: 5
 learning:
   enabled: true
-  auto_apply: [citation_new, route_adj]
+  auto_apply:
+  - citation_new
+  - route_adj
   prompt_a_b: true

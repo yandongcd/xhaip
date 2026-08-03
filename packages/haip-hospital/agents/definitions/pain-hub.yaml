@@ -15,8 +15,6 @@ prompt:
 
     '
   temperature: 0.3
-# Sub-agents (internal routing — not direct-callable):
-# acute-pain, chronic-pain, cancer-pain, interventional-pain, pain-rehab
 tools:
 - name: triage
   description: 根据疼痛类型和严重程度分诊到对应Sub-agent
@@ -25,11 +23,13 @@ tools:
     pain_type: str
     vas_score: int
     description: str
+  inference_tier: T0
 - name: aggregate
   description: 聚合多个Sub-agent的评估结果
   handler: pain_hub.merge
   input:
     results: list
+  inference_tier: T0
 ui:
   template: chat-with-role-switcher
   roles:
@@ -49,35 +49,35 @@ stages:
 - order: 2
   id: acute
   label: 急性评估
-  desc: "A2A→acute-pain: 急性疼痛病因诊断 + 镇痛方案"
+  desc: 'A2A→acute-pain: 急性疼痛病因诊断 + 镇痛方案'
   role: 主治医师
   role_ids:
   - attending
 - order: 3
   id: chronic
   label: 慢痛管理
-  desc: "A2A→chronic-pain: 慢性疼痛综合评估 + 多模式镇痛"
+  desc: 'A2A→chronic-pain: 慢性疼痛综合评估 + 多模式镇痛'
   role: 主治医师
   role_ids:
   - attending
 - order: 4
   id: cancer
   label: 癌痛管理
-  desc: "A2A→cancer-pain: WHO三阶梯镇痛 + 爆发痛处置"
+  desc: 'A2A→cancer-pain: WHO三阶梯镇痛 + 爆发痛处置'
   role: 主治医师
   role_ids:
   - attending
 - order: 5
   id: intervention
   label: 介入治疗
-  desc: "A2A→interventional-pain: 神经阻滞/射频/脊髓电刺激"
+  desc: 'A2A→interventional-pain: 神经阻滞/射频/脊髓电刺激'
   role: 主治医师
   role_ids:
   - attending
 - order: 6
   id: rehab
   label: 康复随访
-  desc: "A2A→pain-rehab: 功能恢复 + 心理支持 + 长期随访"
+  desc: 'A2A→pain-rehab: 功能恢复 + 心理支持 + 长期随访'
   role: 主治医师 / 护士长
   role_ids:
   - attending

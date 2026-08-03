@@ -16,26 +16,31 @@ tools:
   handler: health_management.bp_reception
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_exam
   description: 检查检验
   handler: health_management.bp_exam
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_diagnosis
   description: 诊断确认
   handler: health_management.bp_diagnosis
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_treatment
   description: 治疗执行
   handler: health_management.bp_treatment
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_followup
   description: 随访管理
   handler: health_management.bp_followup
   input:
     patient_id: str
+  inference_tier: T0
 ui:
   template: chat-with-role-switcher
   roles:

@@ -11,12 +11,15 @@ aliases:
 - 腹部外科
 - post-op complications
 prompt:
-  system: |
-    你是PACER v2.0，南方医院普通外科AI助手，负责腹部手术后并发症的智能识别与分级管理。
+  system: '你是PACER v2.0，南方医院普通外科AI助手，负责腹部手术后并发症的智能识别与分级管理。
+
 
     核心能力: 10器官系统并发症扫描(吻合口漏/胰瘘/SSI/肠梗阻/出血/DVT-PE/呼吸/心血管/AKI/营养不良)、Clavien-Dindo I-V精确分级、ACS-NSQIP风险预测(ASA/年龄/急诊/手术时长/出血/污染/营养/合并症)、并发症特异性管理路径(抗生素/引流/TPN/再次手术/ICU)、分级升级触发MDT/急诊手术/ICU。
 
+
     约束: Grade≥IIIb触发急诊手术备台; Grade≥IVa触发ICU; 吻合口漏(CRP>150+POD≥3)需急诊CT+引流液淀粉酶; 术后出血+血流动力学不稳定立即启动MTP。
+
+    '
   temperature: 0.2
 tools:
 - name: complication_scan
@@ -28,6 +31,7 @@ tools:
     vital_signs: dict
     drainage_ml: float
     drainage_color: str
+  inference_tier: T0
 - name: risk_predict
   description: ACS-NSQIP风险预测 — ASA+年龄+急诊+时长+出血+污染+Alb+合并症
   handler: pacer.risk_predict
@@ -44,6 +48,7 @@ tools:
     diabetes: bool
     smoking: bool
     copd: bool
+  inference_tier: T0
 - name: escalation
   description: 并发症升级 — Grade IIIa→MDT, IIIb→手术, IV→ICU+MDT+手术, V→M&M
   handler: pacer.escalation
@@ -51,6 +56,7 @@ tools:
     patient_id: str
     complication_grade: str
     complication_type: str
+  inference_tier: T0
 guard:
   triggers:
   - 术后出血
@@ -72,32 +78,44 @@ stages:
   id: baseline
   label: 术前基线
   desc: ACS-NSQIP风险分层(ASA/年龄/营养Alb/合并症) + 预防策略(抗生素+LMWH+ERAS)
-  role_ids: [attending, resident]
+  role_ids:
+  - attending
+  - resident
 - order: 2
   id: early-surveillance
   label: 早期监测
-  desc: "POD 0-3: 生命体征+引流+检验(CRP/Hb/WBC)+出血/呼吸/心血管筛查"
-  role_ids: [attending, nurse]
+  desc: 'POD 0-3: 生命体征+引流+检验(CRP/Hb/WBC)+出血/呼吸/心血管筛查'
+  role_ids:
+  - attending
+  - nurse
 - order: 3
   id: complication-scan
   label: 并发症扫描
-  desc: "POD 3-14: 10器官系统扫描(吻合口漏/胰瘘/SSI/肠梗阻)+CT/超声"
-  role_ids: [attending, resident]
+  desc: 'POD 3-14: 10器官系统扫描(吻合口漏/胰瘘/SSI/肠梗阻)+CT/超声'
+  role_ids:
+  - attending
+  - resident
 - order: 4
   id: grade-assign
   label: 分级判定
   desc: Clavien-Dindo I-V精准分级+器官特异管理路径
-  role_ids: [attending]
+  role_ids:
+  - attending
 - order: 5
   id: escalation
   label: 升级响应
   desc: Grade IIIa→MDT, IIIb→急诊手术, IVa/b→ICU+MDT+手术, V→M&M
-  role_ids: [attending, anesthesiologist]
+  role_ids:
+  - attending
+  - anesthesiologist
 - order: 6
   id: recovery
   label: 恢复追踪
   desc: 并发症缓解/再手术后恢复+出院前评估+30天随访
-  role_ids: [attending, nurse, head_nurse]
+  role_ids:
+  - attending
+  - nurse
+  - head_nurse
 ui:
   template: chat-with-role-switcher
   roles:
@@ -115,5 +133,7 @@ rag:
   top_k: 5
 learning:
   enabled: true
-  auto_apply: [citation_new, route_adj]
+  auto_apply:
+  - citation_new
+  - route_adj
   prompt_a_b: true

@@ -10,17 +10,21 @@ aliases:
 - 血栓管理
 depends_on:
 - agent: medical-record
-  version: "1.0.0"
+  version: 1.0.0
   note: 电子病历数据调取
 prompt:
-  system: |
-    你是VTE小南，南方医院血管与介入科资深VTE专科智能体，精通VTE诊断标准、抗凝治疗方案、围术期管理规范及出院随访要点。
+  system: '你是VTE小南，南方医院血管与介入科资深VTE专科智能体，精通VTE诊断标准、抗凝治疗方案、围术期管理规范及出院随访要点。
+
 
     核心能力：Caprini/Wells风险分层、D-二聚体与INR解读、抗凝药物（华法林/利伐沙班/达比加群/低分子肝素）个体化指导、围术期桥接方案、出院后30天随访管理。
 
+
     约束：所有医疗建议注明"具体请以主治医生意见为准"；禁止替代医生开具处方；当描述紧急症状（胸痛/呼吸困难/单侧腿肿加重/大出血）时优先触发风险预警。
 
+
     知识库：中华医学会 DVT/PTE 指南、ESC/ESVS 2021 VTE指南、ACCP-10 抗栓指南、院内VTE防治临床路径。
+
+    '
   temperature: 0.3
 tools:
 - name: assess_vte_risk
@@ -29,34 +33,40 @@ tools:
   input:
     patient_id: str
     scenario: str
+  inference_tier: T0
 - name: anticoagulation_guide
   description: 抗凝方案推荐 (华法林INR目标/NOAC选择/桥接治疗/肾功能调整)
   handler: vte_management.anticoagulation
   input:
     patient_id: str
+  inference_tier: T0
 - name: monitor_symptoms
   description: 症状监测与风险预警 (腿围变化/胸痛/呼吸困难/出血 三色分级)
   handler: vte_management.monitor
   input:
     patient_id: str
     symptoms: list
+  inference_tier: T0
 - name: followup_plan
   description: 出院后30天随访计划生成 (D3/D7/D14/D21/D30 节点 + INR/D-二聚体复查)
   handler: vte_management.followup
   input:
     patient_id: str
+  inference_tier: T0
 - name: drug_reminder
   description: 抗凝药物提醒 (华法林每周INR监测 + NOAC每日服用提醒)
   handler: vte_management.reminder
   input:
     patient_id: str
     drug_name: str
+  inference_tier: T0
 - name: perioperative_bridging
   description: 围术期抗凝桥接方案 (术前停药时机/低分子肝素桥接/术后恢复抗凝)
   handler: vte_management.bridging
   input:
     patient_id: str
     surgery_date: str
+  inference_tier: T0
 guard:
   triggers:
   - 药物交互

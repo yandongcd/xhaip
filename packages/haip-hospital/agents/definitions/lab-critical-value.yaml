@@ -34,6 +34,7 @@ tools:
     value: float
     unit: str
     age_group: str
+  inference_tier: T0
 - name: classify_and_route
   description: '危急值路由推荐 — 根据检验项目和危急方向自动推荐响应科室、 升级链条（值班医生→科主任→医务处）、10/30分钟响应时限。
 
@@ -43,6 +44,7 @@ tools:
     item: str
     value: float
     patient_dept: str
+  inference_tier: T0
 - name: batch_screen
   description: '批量检验结果筛查 — 一批检验结果逐项判定危急值， 输出命中清单按危急级别排序。
 
@@ -50,6 +52,7 @@ tools:
   handler: lab_critical_value.batch_screen
   input:
     labs: list
+  inference_tier: T0
 - name: notification_record
   description: '危急值报告闭环记录 — 生成记录结构（时间戳/接收人/是否确认/超时标记）， 为后续LIS订阅与推送落地预留接口。
 
@@ -60,6 +63,7 @@ tools:
     value: float
     notified_to: str
     ack: bool
+  inference_tier: T0
 guard:
   triggers:
   - 危急值

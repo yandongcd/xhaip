@@ -23,6 +23,7 @@ tools:
     patient_id: str
     conditions: list
     functional_status: str
+  inference_tier: T0
 - name: airway_assess
   description: 困难气道评估 (Mallampati/甲颌距/颈活动度)
   handler: anesthesia.airway_evaluation
@@ -30,6 +31,7 @@ tools:
     patient_id: str
     mallampati: int
     thyromental: float
+  inference_tier: T0
 - name: anesthesia_plan
   description: 麻醉方案推荐 (全麻/腰麻/硬膜外/神经阻滞)
   handler: anesthesia.anesthesia_plan
@@ -37,6 +39,7 @@ tools:
     patient_id: str
     surgery_type: str
     asa_class: int
+  inference_tier: T0
 stages:
 - order: 1
   id: preop

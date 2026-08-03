@@ -21,16 +21,19 @@ tools:
   handler: acute_pain.assess
   input:
     patient_id: str
+  inference_tier: T0
 - name: manage_pca
   description: PCA 镇痛方案 (剂量/年龄/肾功能调整)
   handler: acute_pain.pca
   input:
     patient_id: str
+  inference_tier: T0
 - name: detect_crisis
   description: 疼痛危象检测 (骨筋膜室/动脉栓塞)
   handler: acute_pain.crisis
   input:
     patient_id: str
+  inference_tier: T0
 guard:
   triggers:
   - 药物交互

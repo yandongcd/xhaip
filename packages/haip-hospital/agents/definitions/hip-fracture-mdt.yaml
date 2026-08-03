@@ -20,17 +20,20 @@ tools:
   input:
     patient_id: str
     xray_findings: str
+  inference_tier: T0
 - name: surgical_timing
   description: 48h手术窗口评估 — T2 8因素(心脏/肺/脑/抗凝/贫血/肾/感染/血糖)层次决策
   handler: hip_fracture_mdt.surgical_timing
   input:
     patient_id: str
+  inference_tier: T0
 - name: mdt_coordinate
   description: MDT多学科协调 — 并行调用心内/麻醉/老年/护理 Agent, 聚合意见+冲突检测
   handler: hip_fracture_mdt.mdt_coordinate
   input:
     patient_id: str
     question: str
+  inference_tier: T0
 - name: perioperative_plan
   description: 围术期综合方案 — 手术+麻醉+护理+康复四维方案
   handler: hip_fracture_mdt.perioperative_plan
@@ -38,12 +41,14 @@ tools:
     patient_id: str
     fracture_type: str
     asa_level: int
+  inference_tier: T0
 - name: followup_schedule
   description: 术后随访计划 — Harris评分(D30/D90/D180/D365) + VTE监测 + 骨质疏松管理
   handler: hip_fracture_mdt.followup_schedule
   input:
     patient_id: str
     surgery_date: str
+  inference_tier: T0
 guard:
   triggers:
   - 手术时机
@@ -103,7 +108,6 @@ stages:
   role_ids:
   - attending
   - rehab_therapist
-
 learning:
   enabled: true
   auto_apply:

@@ -1,4 +1,4 @@
-﻿name: mdt
+name: mdt
 cn_name: MDT 会诊智能体
 version: 1.0.0
 type: specialist
@@ -31,11 +31,13 @@ tools:
     anesthesia_eval: dict
     orthopedic_eval: dict
     pain_eval: dict
+  inference_tier: T0
 - name: mdt_summary
   description: MDT 会诊纪要摘要 (Markdown 格式)
   handler: orthopedics.mdt.mdt_summary
   input:
     mdt_result: dict
+  inference_tier: T0
 guard:
   triggers:
   - MDT 意见分歧

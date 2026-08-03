@@ -40,11 +40,13 @@ tools:
     xray_findings: dict
     age: int
     gender: str
+  inference_tier: T1
 - name: preop_assessment
   description: 术前综合评估 (合并症/药物/营养/认知)
   handler: orthopedics.evaluate
   input:
     patient_id: str
+  inference_tier: T0
 - name: surgical_plan
   description: LLM增强手术方案 (LLM优先, 失败降级规则决策树) — L1 agentic upgrade
   handler: orthopedics.surgical_plan_llm
@@ -56,6 +58,7 @@ tools:
     classification_type: str
     stability: str
     gender: str
+  inference_tier: T1
 - name: complication_risk
   description: 并发症风险预测 (DVT/感染/心脏/跌倒谵妄 4维)
   handler: orthopedics.predict_complications
@@ -64,6 +67,7 @@ tools:
     age: int
     labs: dict
     conditions: list
+  inference_tier: T0
 - name: timing_decision
   description: T2 层次手术时机决策 (8因素 → emergency/urgent/elective)
   handler: orthopedics.evaluate_timing
@@ -73,6 +77,7 @@ tools:
     ecg_findings: str
     conditions: list
     meds: list
+  inference_tier: T0
 - name: nursing_plan
   description: 围术期护理计划 (4阶段25项)
   handler: orthopedics.nursing_plan
@@ -80,18 +85,21 @@ tools:
     patient_id: str
     age: int
     conditions: list
+  inference_tier: T0
 - name: followup_plan
   description: 术后随访计划 (1/3/6/12月 + 红旗症状 + 骨质疏松管理)
   handler: orthopedics.followup_plan
   input:
     patient_id: str
     procedure: str
+  inference_tier: T0
 - name: quality_audit
   description: 6阶段18检查点质控审计
   handler: orthopedics.extended.quality_audit
   input:
     patient_id: str
     compliance: dict
+  inference_tier: T0
 - name: checklist
   description: 11项术前检查清单 (急诊分诊)
   handler: orthopedics.extended.checklist
@@ -100,18 +108,21 @@ tools:
     symptoms: list
     conditions: list
     age: int
+  inference_tier: T0
 - name: completeness
   description: 14项术前检查完备性评估
   handler: orthopedics.extended.completeness
   input:
     patient_id: str
     completed_tests: list
+  inference_tier: T0
 - name: rehab_track
   description: 4阶段康复跟踪 + Harris 评分
   handler: orthopedics.extended.rehab_track
   input:
     patient_id: str
     procedure: str
+  inference_tier: T0
 - name: osteoporosis_mgmt
   description: FRAX评估 + 骨质疏松治疗方案
   handler: orthopedics.extended.osteoporosis_mgmt
@@ -120,6 +131,7 @@ tools:
     age: int
     gender: str
     conditions: list
+  inference_tier: T0
 - name: analyze_xray
   description: X光骨折分析 (Evans/Garden/AO分型)
   handler: orthopedics.clinical.analyze_xray
@@ -127,11 +139,13 @@ tools:
     patient_id: str
     view: str
     findings: dict
+  inference_tier: T0
 - name: parse_clinical
   description: 自然语言临床文本解析 (规则引擎)
   handler: orthopedics.clinical.parse_clinical_text
   input:
     text: str
+  inference_tier: T0
 - name: harris_score
   description: Harris髋关节评分 (100分制)
   handler: orthopedics.clinical.harris_score
@@ -140,6 +154,7 @@ tools:
     gait: str
     support: str
     distance: str
+  inference_tier: T0
 - name: mdt_aggregate
   description: MDT 多学科会诊聚合 (心内+麻醉+骨科+疼痛 → 结构化纪要)
   handler: orthopedics.mdt.mdt_aggregate
@@ -150,11 +165,13 @@ tools:
     anesthesia_eval: dict
     orthopedic_eval: dict
     pain_eval: dict
+  inference_tier: T0
 - name: mdt_summary
   description: MDT 会诊纪要摘要 (Markdown 格式)
   handler: orthopedics.mdt.mdt_summary
   input:
     mdt_result: dict
+  inference_tier: T0
 - name: pain_assess
   description: 疼痛评估 (VAS/NRS) — 输入必须由护士提供
   handler: pain_management.assess_pain
@@ -163,6 +180,7 @@ tools:
     vas_score: float
     nurse_id: str
     assessment_time: str
+  inference_tier: T0
 - name: pain_analgesia
   description: 多模式镇痛阶梯方案
   handler: pain_management.multimodal_analgesia
@@ -172,45 +190,53 @@ tools:
     allergies: list
     renal_function: str
     liver_function: str
+  inference_tier: T0
 - name: case_teach
   description: 典型病例教学 (合成病例)
   handler: education.case_teaching
   input:
     fracture_type: str
     difficulty: str
+  inference_tier: T0
 - name: guideline_ref
   description: 指南速查 (NHSA/NICE/AAOS)
   handler: education.guideline_quick_ref
   input:
     guideline: str
     topic: str
+  inference_tier: T0
 - name: his_labs
   description: 模拟 LIS 检验数据查询
   handler: orthopedics.his_adapter.query_labs
   input:
     patient_id: str
     lab_items: list
+  inference_tier: T0
 - name: his_patient
   description: 模拟 HIS 患者病历查询
   handler: orthopedics.his_adapter.query_patient
   input:
     patient_id: str
+  inference_tier: T0
 - name: his_patient_list
   description: 模拟 HIS 在册患者 ID 列表
   handler: orthopedics.his_adapter.list_patient_ids
   input: {}
+  inference_tier: T0
 - name: his_image
   description: 模拟 PACS 影像查询
   handler: orthopedics.his_adapter.query_imaging
   input:
     patient_id: str
     modality: str
+  inference_tier: T0
 - name: idata_search
   description: 模拟 iData 知识库检索
   handler: orthopedics.idata_adapter.search_knowledge
   input:
     query: str
     category: str
+  inference_tier: T0
 guard:
   triggers:
   - 手术决策

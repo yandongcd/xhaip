@@ -5,63 +5,108 @@ type: business
 trust_tier: deep
 department: 药学部
 port: 8858
-aliases: [DrugAgent, 药学服务, 药学查房, 临床药学, TDM]
+aliases:
+- DrugAgent
+- 药学服务
+- 药学查房
+- 临床药学
+- TDM
 prompt:
-  system: |
-    你是DrugAgent v2.0，南方医院药学部AI助手，提供全面药学服务。
+  system: '你是DrugAgent v2.0，南方医院药学部AI助手，提供全面药学服务。
 
-    核心能力: 医嘱审核(50+药物相互作用规则 按抗凝/抗生素/心血管/CNS/内分泌/免疫/草药7类)、TDM治疗药物监测(万古霉素/氨基糖苷/地高辛/环孢素)、肾功能(CrCl)+肝功能(Child-Pugh)剂量调整、老年潜在不适当用药筛查(Beers Criteria 2023)、入院-转科-出院三节点用药重整、药物-过敏+药物-检验交叉预警。
+
+    核心能力: 医嘱审核(50+药物相互作用规则 按抗凝/抗生素/心血管/CNS/内分泌/免疫/草药7类)、TDM治疗药物监测(万古霉素/氨基糖苷/地高辛/环孢素)、肾功能(CrCl)+肝功能(Child-Pugh)剂量调整、老年潜在不适当用药筛查(Beers
+    Criteria 2023)、入院-转科-出院三节点用药重整、药物-过敏+药物-检验交叉预警。
+
 
     约束: 华法林+碳青霉烯/甲硝唑→绝对禁忌!; 二甲双胍+碘造影剂→按eGFR分层停用; 所有药学建议须经临床药师复核确认。
+
+    '
   temperature: 0.2
 tools:
 - name: order_audit
   description: 医嘱审核 — 50+相互作用+Beers标准+TDM+肾肝剂量调整
   handler: drug_agent.order_audit
-  input: {patient_id: str, orders: list, child_pugh: str}
+  input:
+    patient_id: str
+    orders: list
+    child_pugh: str
+  inference_tier: T0
 - name: medication_reconciliation
   description: 用药重整 — 入院/转科/出院三节点+差异分析+Beers+重整建议
   handler: drug_agent.medication_reconciliation
-  input: {patient_id: str, source_meds: list, target_meds: list, reconciliation_type: str}
+  input:
+    patient_id: str
+    source_meds: list
+    target_meds: list
+    reconciliation_type: str
+  inference_tier: T0
 - name: adr_alert
   description: ADR预警 — 药物-药物+药物-过敏+药物-检验 三重交叉
   handler: drug_agent.adr_alert
-  input: {patient_id: str, new_drug: str, current_meds: list, allergies: list}
+  input:
+    patient_id: str
+    new_drug: str
+    current_meds: list
+    allergies: list
+  inference_tier: T0
 guard:
-  triggers: [用药安全, ADR, 处方审核, 药物相互作用]
-  high_risk_scenarios: [华法林+抗生素/唑类, 碳青霉烯+丙戊酸, 甲氨蝶呤+NSAIDs, 克拉霉素+他汀类]
-  citation: {required: true, min_sources: 2, min_trust: T1}
+  triggers:
+  - 用药安全
+  - ADR
+  - 处方审核
+  - 药物相互作用
+  high_risk_scenarios:
+  - 华法林+抗生素/唑类
+  - 碳青霉烯+丙戊酸
+  - 甲氨蝶呤+NSAIDs
+  - 克拉霉素+他汀类
+  citation:
+    required: true
+    min_sources: 2
+    min_trust: T1
 stages:
 - order: 1
   id: order-review
   label: 医嘱审核
   desc: 50+相互作用规则+Beers标准+TDM建议+肾(CrCl)肝(Child-Pugh)剂量
-  role_ids: [attending, pharmacist]
+  role_ids:
+  - attending
+  - pharmacist
 - order: 2
   id: reconciliation
   label: 用药重整
   desc: 入院/转科/出院三节点用药比对+差异标注+重整建议
-  role_ids: [attending, pharmacist]
+  role_ids:
+  - attending
+  - pharmacist
 - order: 3
   id: adr-prediction
   label: ADR预警
   desc: 药物-药物+药物-过敏(交叉过敏5类)+药物-检验(K/Cr)三重预警
-  role_ids: [pharmacist]
+  role_ids:
+  - pharmacist
 - order: 4
   id: tdm-guidance
   label: TDM指导
   desc: 万古霉素AUC/MIC+氨基糖苷谷峰+地高辛+环孢素C0/C2 采血时机+目标范围
-  role_ids: [pharmacist]
+  role_ids:
+  - pharmacist
 - order: 5
   id: dose-adjustment
   label: 剂量调整
   desc: 肾功能(eGFR分级)+肝功能(Child-Pugh)+老年(≥65岁 Beers)三维剂量优化
-  role_ids: [attending, pharmacist]
+  role_ids:
+  - attending
+  - pharmacist
 - order: 6
   id: patient-education
   label: 用药教育
   desc: 出院用药指导+不良反应识别+漏服处理+随访TDM时间
-  role_ids: [pharmacist, nurse, head_nurse]
+  role_ids:
+  - pharmacist
+  - nurse
+  - head_nurse
 ui:
   template: chat-with-role-switcher
   roles:
@@ -77,5 +122,7 @@ rag:
   top_k: 5
 learning:
   enabled: true
-  auto_apply: [citation_new, route_adj]
+  auto_apply:
+  - citation_new
+  - route_adj
   prompt_a_b: true

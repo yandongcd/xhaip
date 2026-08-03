@@ -24,6 +24,7 @@ tools:
     smoking: str
     ponv_history: str
     opioid_planned: str
+  inference_tier: T0
 - name: prophylaxis_plan
   description: 分级预防方案 — 低危单药/中危两药/高危三药+TIVA
   handler: antiemetic.prophylaxis
@@ -31,6 +32,7 @@ tools:
     patient_id: str
     risk_level: str
     risk_score: int
+  inference_tier: T0
 - name: rescue_mgmt
   description: 突破性PONV补救治疗 — 选择与预防不同机制的药物
   handler: antiemetic.rescue
@@ -38,6 +40,7 @@ tools:
     patient_id: str
     prior_antiemetics: list
     time_since_last_dose: float
+  inference_tier: T0
 - name: postop_monitor
   description: 术后24h/48h分层监测 — 基于T0评估恶心/呕吐/补救用药
   handler: antiemetic.postop_monitor
@@ -47,6 +50,7 @@ tools:
     nausea_severity: str
     vomiting_episodes: int
     rescue_given: bool
+  inference_tier: T0
 - name: discharge_followup
   description: 出院随访 D3/D7 — 自动推送随访问卷+症状追踪
   handler: antiemetic.discharge_followup
@@ -57,6 +61,7 @@ tools:
     has_vomiting: bool
     has_dizziness: bool
     has_constipation: bool
+  inference_tier: T0
 guard:
   triggers:
   - 止吐药
@@ -107,7 +112,6 @@ stages:
   desc: 24h/48h症状评分、D3/D7问卷推送、PDNV风险评估与干预
   role_ids:
   - nurse
-
 learning:
   enabled: true
   auto_apply:

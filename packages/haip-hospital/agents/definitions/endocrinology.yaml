@@ -16,51 +16,61 @@ tools:
   handler: endocrinology.bp_reception
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_exam
   description: 辅助检查
   handler: endocrinology.bp_exam
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_diagnosis
   description: 确诊与分型分期
   handler: endocrinology.bp_diagnosis
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_plan
   description: 治疗方案制定
   handler: endocrinology.bp_plan
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_treatment
   description: 治疗执行与监测
   handler: endocrinology.bp_treatment
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_followup
   description: 随访与长期管理
   handler: endocrinology.bp_followup
   input:
     patient_id: str
+  inference_tier: T0
 - name: assess_diabetes
   description: 糖尿病综合评估(HbA1c目标分层+低血糖分级+并发症筛查)
   handler: endocrinology.assess_diabetes
   input:
     patient_id: str
+  inference_tier: T0
 - name: assess_thyroid
   description: 甲状腺评估(TSH解读+ATA TI-RADS结节风险分层)
   handler: endocrinology.assess_thyroid
   input:
     patient_id: str
+  inference_tier: T0
 - name: assess_metabolic
   description: 代谢综合征筛查(IDF诊断标准/5项达标)
   handler: endocrinology.assess_metabolic
   input:
     patient_id: str
+  inference_tier: T0
 - name: assess_osteoporosis
   description: 骨质疏松风险评估(简化FRAX)
   handler: endocrinology.assess_osteoporosis
   input:
     patient_id: str
+  inference_tier: T0
 ui:
   template: chat-with-role-switcher
   roles:

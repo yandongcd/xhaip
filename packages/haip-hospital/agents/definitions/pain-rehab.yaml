@@ -21,16 +21,19 @@ tools:
   handler: pain_rehab.exercise
   input:
     patient_id: str
+  inference_tier: T0
 - name: assess_progress
   description: 功能恢复进展评估
   handler: pain_rehab.assess_progress
   input:
     patient_id: str
+  inference_tier: T0
 - name: comorbidity
   description: 合并症评估 (抑郁/焦虑/自杀风险)
   handler: pain_rehab.comorbid
   input:
     patient_id: str
+  inference_tier: T0
 stages:
 - order: 1
   id: assess

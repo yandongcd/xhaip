@@ -1,4 +1,4 @@
-﻿name: cardio-surgery
+name: cardio-surgery
 cn_name: 心血管外科智能体
 version: 1.0.0
 type: business
@@ -23,18 +23,21 @@ tools:
   handler: cardio_surgery.evaluate
   input:
     patient_id: str
+  inference_tier: T0
 - name: anticoagulation_plan
   description: 抗凝方案 (华法林/NOAC/桥接)
   handler: cardio_surgery.plan
   input:
     patient_id: str
     surgery_type: str
+  inference_tier: T0
 - name: postop_management
   description: 术后管理方案 (监护/引流/抗心律失常)
   handler: cardio_surgery.manage
   input:
     patient_id: str
     procedure: str
+  inference_tier: T0
 guard:
   triggers:
   - 药物交互
@@ -73,32 +76,50 @@ stages:
   id: cardiac-eval
   label: 心脏评估
   desc: EuroSCORE II评分、心功能(NYHA)评估、冠脉CTA/造影、颈动脉超声、抗凝方案评估
-  role_ids: [attending, resident, cardiologist]
+  role_ids:
+  - attending
+  - resident
+  - cardiologist
 - order: 2
   id: preop-optimize
   label: 术前优化
   desc: 抗凝桥接方案(华法林/NOAC/抗血小板)、血压血糖控制、贫血纠正、预康复训练
-  role_ids: [attending, resident, head_nurse]
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
 - order: 3
   id: surgery
   label: 手术执行
   desc: CPB管理(ACT/温度/流量)、心肌保护(停搏液选择)、血管吻合、止血关胸
-  role_ids: [attending, surgeon, anesthesiologist, perfusionist]
+  role_ids:
+  - attending
+  - surgeon
+  - anesthesiologist
+  - perfusionist
 - order: 4
   id: postop-icu
   label: ICU监护
   desc: 血流动力学监测、血管活性药管理、心包引流、心律失常管理、机械通气脱机
-  role_ids: [attending, icu_doctor, head_nurse]
+  role_ids:
+  - attending
+  - icu_doctor
+  - head_nurse
 - order: 5
   id: ward-recovery
   label: 病房康复
   desc: 切口护理、抗凝管理(INR/Anti-Xa监测)、心功能康复、VTE预防
-  role_ids: [attending, resident, head_nurse]
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
 - order: 6
   id: followup
   label: 随访管理
   desc: 抗凝方案长期管理、超声心动图复查、术后1/3/6/12月随访、瓣膜功能评估
-  role_ids: [attending, cardiologist]
+  role_ids:
+  - attending
+  - cardiologist
 rag:
   enabled: true
   top_k: 5

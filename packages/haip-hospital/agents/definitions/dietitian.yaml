@@ -53,6 +53,7 @@ tools:
     disease_severity: int
     food_intake_pct: int
     weight_loss_3mo_pct: float
+  inference_tier: T0
 - name: glim_diagnosis
   description: 'GLIM营养不良两步诊断 — 步骤1: NRS2002风险筛查(≥3阳性)；步骤2: 表型标准(体重下降/BMI/肌肉量) + 病因标准(食物摄入减少/疾病负担/炎症)，确诊营养不良及严重程度分级。
 
@@ -64,6 +65,7 @@ tools:
     food_intake_week_pct: int
     disease_burden: str
     crp: float
+  inference_tier: T0
 - name: route_decision
   description: '营养途径决策 — EN vs PN vs SPN，基于肠道功能/经口摄入/GRV/禁忌证做决策树推演。
 
@@ -75,6 +77,7 @@ tools:
     fasting_days: int
     bowel_obstruction: bool
     hemodynamic_unstable: bool
+  inference_tier: T0
 - name: energy_protein_target
   description: 'Harris-Benedict 基础能量消耗 + 活动/应激系数 → 总能量目标； 创伤/手术/感染等病情分层 → 蛋白质目标 (g/kg/d)。
 
@@ -88,6 +91,7 @@ tools:
     activity_factor: float
     stress_factor: float
     condition: str
+  inference_tier: T0
 - name: refeeding_risk
   description: '再喂养综合征风险评估 — 基于NICE 2006标准(BMI/体重下降/摄入时间/电解质)， 高危/中危/低危分级 + 启动方案(从目标量1/4开始)
     + 电解质监测计划。
@@ -101,6 +105,7 @@ tools:
     potassium: float
     phosphorus: float
     magnesium: float
+  inference_tier: T0
 - name: nutrition_report
   description: '综合营养评估报告生成 — 汇总 NRS2002/GLIM/途径/能量蛋白/再喂养风险五维结果， 输出结构化Markdown报告。
 
@@ -113,6 +118,7 @@ tools:
     route: dict
     energy_protein: dict
     refeeding: dict
+  inference_tier: T0
 guard:
   triggers:
   - 再喂养

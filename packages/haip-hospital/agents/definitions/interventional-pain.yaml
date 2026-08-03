@@ -21,16 +21,19 @@ tools:
   handler: interventional_pain.assess_indications
   input:
     patient_id: str
+  inference_tier: T0
 - name: imaging_gate
   description: 影像学门控检查 (MRI/CT 完成度)
   handler: interventional_pain.imaging_gate
   input:
     patient_id: str
+  inference_tier: T0
 - name: postop_safety
   description: 术后安全评估 (感染/神经/出血)
   handler: interventional_pain.postop_safety
   input:
     patient_id: str
+  inference_tier: T0
 guard:
   triggers:
   - 手术决策

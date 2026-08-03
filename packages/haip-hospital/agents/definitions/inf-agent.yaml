@@ -5,73 +5,130 @@ type: business
 trust_tier: deep
 department: 检验科
 port: 8852
-aliases: [INF-Agent, 感染鉴别, 感染诊断, infection diagnosis]
+aliases:
+- INF-Agent
+- 感染鉴别
+- 感染诊断
+- infection diagnosis
 prompt:
-  system: |
-    你是南方医院检验科AI助手(INF-Agent)，负责感染性疾病的智能鉴别诊断。
+  system: '你是南方医院检验科AI助手(INF-Agent)，负责感染性疾病的智能鉴别诊断。
+
     基于多检验指标(CRP/PCT/WBC/NLR/IL-6/Lactate/G-GM试验)和临床表现，区分细菌/病毒/真菌/非感染性炎症，并提供经验性抗感染建议、检验推荐、脓毒症筛查。
+
 
     核心能力: 感染类型概率判别、SIRS/qSOFA脓毒症筛查、经验性抗感染方案(部位/MDRO/肾功能导向)、微生物药敏大数据参考。
 
+
     约束: 所有诊断须经感染科/检验科医师复核; 抗生素建议须经临床药师审核; 危急值(PCT>10+低血压)立即启动预警流程。
+
+    '
   temperature: 0.2
 tools:
 - name: infection_type
   description: 感染类型判别 — 细菌/病毒/真菌/非感染 → 概率分布 + 证据链 + SIRS/qSOFA
   handler: inf_agent.infection_type
-  input: {patient_id: str}
+  input:
+    patient_id: str
+  inference_tier: T0
 - name: sepsis_screening
   description: 脓毒症筛查 — SIRS/qSOFA/器官功能评估 → 1h bundle 触发
   handler: inf_agent.sepsis_screening
-  input: {patient_id: str, vitals: dict}
+  input:
+    patient_id: str
+    vitals: dict
+  inference_tier: T0
 - name: test_recommend
   description: 检验项目推荐 — 基于当前信息缺口+疑似感染类型+部位 → T1必查/T2建议/T3可选
   handler: inf_agent.test_recommend
-  input: {patient_id: str, current_labs: dict, suspected_type: str, infection_site: str}
+  input:
+    patient_id: str
+    current_labs: dict
+    suspected_type: str
+    infection_site: str
+  inference_tier: T0
 - name: antimicrobial_advice
   description: 经验性抗感染建议 — 部位导向+MDRO分层+肾功能调整+降阶梯计划
   handler: inf_agent.antimicrobial_advice
-  input: {patient_id: str, infection_type: str, site: str, mdro_risk: str, severity: str, creatinine: float, age: int, weight_kg: float}
+  input:
+    patient_id: str
+    infection_type: str
+    site: str
+    mdro_risk: str
+    severity: str
+    creatinine: float
+    age: int
+    weight_kg: float
+  inference_tier: T0
 - name: antibiogram
   description: 微生物药敏参考 — CLSI M100病原体导向的经验用药+耐药趋势
   handler: inf_agent.antibiogram
-  input: {patient_id: str, pathogen: str, specimen: str}
+  input:
+    patient_id: str
+    pathogen: str
+    specimen: str
+  inference_tier: T0
 guard:
-  triggers: [感染诊断, 抗生素, 耐药, 脓毒症]
-  high_risk_scenarios: [PCT>10+低血压, 粒缺+发热, CRE/MRSA检出, Lactate>4+脓毒性休克]
-  citation: {required: true, min_sources: 2, min_trust: T1}
-depends_on: [{agent: lab-critical-value, version: '>=1.0', note: 检验危急值(PCT/WBC/乳酸)}]
+  triggers:
+  - 感染诊断
+  - 抗生素
+  - 耐药
+  - 脓毒症
+  high_risk_scenarios:
+  - PCT>10+低血压
+  - 粒缺+发热
+  - CRE/MRSA检出
+  - Lactate>4+脓毒性休克
+  citation:
+    required: true
+    min_sources: 2
+    min_trust: T1
+depends_on:
+- agent: lab-critical-value
+  version: '>=1.0'
+  note: 检验危急值(PCT/WBC/乳酸)
 stages:
 - order: 1
   id: specimen-collection
   label: 标本采集
   desc: 血培养×2套+痰/尿/CSF/分泌物标本规范化采集
-  role_ids: [attending, nurse]
+  role_ids:
+  - attending
+  - nurse
 - order: 2
   id: lab-testing
   label: 检验检测
   desc: PCT/CRP/WBC+Diff/IL-6/Lactate/G-GM试验/培养+药敏
-  role_ids: [attending, technician]
+  role_ids:
+  - attending
+  - technician
 - order: 3
   id: infection-typing
   label: 感染类型判别
   desc: 细菌/病毒/真菌/非感染 多指标加权概率+证据链
-  role_ids: [attending, pharmacist]
+  role_ids:
+  - attending
+  - pharmacist
 - order: 4
   id: sepsis-screening
   label: 脓毒症筛查
   desc: SIRS(4项)+qSOFA(3项)+Lac+器官功能 → 1h/3h bundle触发
-  role_ids: [attending, emergency_doctor]
+  role_ids:
+  - attending
+  - emergency_doctor
 - order: 5
   id: antimicrobial-decision
   label: 抗感染决策
   desc: 经验性方案(部位+MDRO+肾功)+48h降阶梯+疗程规划
-  role_ids: [attending, pharmacist]
+  role_ids:
+  - attending
+  - pharmacist
 - order: 6
   id: antibiogram-review
   label: 药敏复评
   desc: 培养+药敏结果判读(CLSI/EUCAST) → 窄谱抗生素降级
-  role_ids: [attending, pharmacist]
+  role_ids:
+  - attending
+  - pharmacist
 ui:
   template: chat-with-role-switcher
   roles:
@@ -87,5 +144,7 @@ rag:
   top_k: 5
 learning:
   enabled: true
-  auto_apply: [citation_new, route_adj]
+  auto_apply:
+  - citation_new
+  - route_adj
   prompt_a_b: true

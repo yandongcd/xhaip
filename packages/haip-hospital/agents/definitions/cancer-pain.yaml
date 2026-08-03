@@ -21,16 +21,19 @@ tools:
   handler: cancer_pain.assess
   input:
     patient_id: str
+  inference_tier: T0
 - name: opioid_safety
   description: 阿片类药物安全评估 (过量/DDI/器官功能)
   handler: cancer_pain.safety
   input:
     patient_id: str
+  inference_tier: T0
 - name: palliative_refer
   description: 姑息治疗转介评估
   handler: cancer_pain.palliative
   input:
     patient_id: str
+  inference_tier: T0
 guard:
   triggers:
   - 药物交互

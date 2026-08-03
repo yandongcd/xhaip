@@ -1,4 +1,4 @@
-﻿name: thoracic-surgery
+name: thoracic-surgery
 cn_name: 胸外科智能体
 version: 1.0.0
 type: business
@@ -16,41 +16,49 @@ tools:
   handler: thoracic_surgery.bp_reg
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_diag
   description: 诊断评估
   handler: thoracic_surgery.bp_diag
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_preop
   description: 术前准备
   handler: thoracic_surgery.bp_preop
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_risk
   description: 风险评估
   handler: thoracic_surgery.bp_risk
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_mdt
   description: MDT决策
   handler: thoracic_surgery.bp_mdt
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_surgery
   description: 手术执行
   handler: thoracic_surgery.bp_surgery
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_nursing
   description: 围术期护理
   handler: thoracic_surgery.bp_nursing
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_followup
   description: 术后随访
   handler: thoracic_surgery.bp_followup
   input:
     patient_id: str
+  inference_tier: T0
 guard:
   triggers:
   - 手术决策
@@ -84,32 +92,52 @@ stages:
   id: pulmonary-eval
   label: 肺功能评估
   desc: ppoFEV1%计算、DLCO可切除性评估、TNM 8th分期、心肺运动试验
-  role_ids: [attending, resident, anesthesiologist]
+  role_ids:
+  - attending
+  - resident
+  - anesthesiologist
 - order: 2
   id: preop-optimize
   label: 术前优化
   desc: 肺康复训练(激励性肺量计)、戒烟≥4周、营养支持、VTE预防(Caprini评分)
-  role_ids: [attending, resident, head_nurse, rehab_therapist]
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
+  - rehab_therapist
 - order: 3
   id: surgery
   label: 手术执行
   desc: VATS单孔/多孔 vs 开胸入路、淋巴结清扫、支气管残端处理、胸管放置
-  role_ids: [attending, surgeon, anesthesiologist, instrument_nurse]
+  role_ids:
+  - attending
+  - surgeon
+  - anesthesiologist
+  - instrument_nurse
 - order: 4
   id: postop-care
   label: 术后管理
   desc: 胸管管理(水封/气泡监测)、疼痛管理(硬膜外镇痛)、肺漏气分级、心律失常监测
-  role_ids: [attending, resident, head_nurse]
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
 - order: 5
   id: recovery
   label: 康复出院
   desc: 拔管指征评估、呼吸功能锻炼、活动指导、VTE预防、食管吻合口管理(食管手术)
-  role_ids: [attending, resident, head_nurse, rehab_therapist]
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
+  - rehab_therapist
 - order: 6
   id: followup
   label: 随访监测
   desc: 肿瘤标志物监测、LDCT定期复查(Fleishner结节标准)、肺功能随访、术后3/6/12月
-  role_ids: [attending, resident]
+  role_ids:
+  - attending
+  - resident
 rag:
   enabled: true
   top_k: 5

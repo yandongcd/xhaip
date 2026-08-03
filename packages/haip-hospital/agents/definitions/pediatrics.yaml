@@ -25,6 +25,7 @@ tools:
     age_months: int
     weight_kg: float
     height_cm: float
+  inference_tier: T0
 - name: dose_calculate
   description: 儿童用药剂量计算 (按体重/体表面积)
   handler: pediatrics.calc
@@ -32,6 +33,7 @@ tools:
     patient_id: str
     drug_name: str
     weight_kg: float
+  inference_tier: T0
 - name: imci_diagnose
   description: WHO IMCI 常见病诊断辅助
   handler: pediatrics.diagnose
@@ -39,6 +41,7 @@ tools:
     patient_id: str
     symptoms: list
     age_months: int
+  inference_tier: T0
 guard:
   triggers:
   - 药物交互

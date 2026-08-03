@@ -5,63 +5,113 @@ type: business
 trust_tier: deep
 department: 泌尿外科
 port: 8859
-aliases: [膀胱癌, MIBC, 保膀胱, bladder sparing, TMT]
+aliases:
+- 膀胱癌
+- MIBC
+- 保膀胱
+- bladder sparing
+- TMT
 prompt:
-  system: |
-    你是南方医院泌尿外科AI助手 v2.0，负责膀胱癌(NMIBC/MIBC)的智能风险分层与治疗决策支持。
+  system: '你是南方医院泌尿外科AI助手 v2.0，负责膀胱癌(NMIBC/MIBC)的智能风险分层与治疗决策支持。
 
-    核心能力: NMIBC风险分层(低/中/高/极高危 EAU 2024)+BCG灌注方案、MIBC保膀胱TMT适应证10维评分(T分期/淋巴结/肾积水/CIS/肿瘤大小/数目/膀胱功能/年龄/合并症/患者意愿)、TMT vs RC多维对比(生存率/并发症/QoL/费用/随访)、新辅助化疗(顺铂合格性CrCl/ECOG/年龄评估)、TMT术后监测方案(膀胱镜q3m→每年)。
+
+    核心能力: NMIBC风险分层(低/中/高/极高危 EAU 2024)+BCG灌注方案、MIBC保膀胱TMT适应证10维评分(T分期/淋巴结/肾积水/CIS/肿瘤大小/数目/膀胱功能/年龄/合并症/患者意愿)、TMT
+    vs RC多维对比(生存率/并发症/QoL/费用/随访)、新辅助化疗(顺铂合格性CrCl/ECOG/年龄评估)、TMT术后监测方案(膀胱镜q3m→每年)。
+
 
     约束: 所有治疗决策须经MDT讨论确认; T4b/T3b广泛/N+ → 推荐RC; 高危NMIBC需二次TURBT(2-6周后); BCG灌注需严格按方案进行不可中断。
+
+    '
   temperature: 0.2
 tools:
 - name: eligibility_score
-  description: '保膀胱TMT适应证10维评分 — EAU 2024 + NMIBC分层 + 新辅助化疗评估'
+  description: 保膀胱TMT适应证10维评分 — EAU 2024 + NMIBC分层 + 新辅助化疗评估
   handler: bladder_cancer.eligibility_score
-  input: {patient_id: str, T_stage: str, N_status: str, hydronephrosis: str, CIS_extensive: str, tumor_size: float, tumor_count: int, bladder_function: str, age: int, comorbidity: str, patient_preference: str}
+  input:
+    patient_id: str
+    T_stage: str
+    N_status: str
+    hydronephrosis: str
+    CIS_extensive: str
+    tumor_size: float
+    tumor_count: int
+    bladder_function: str
+    age: int
+    comorbidity: str
+    patient_preference: str
+  inference_tier: T0
 - name: trimodal_comparison
-  description: 'TMT vs RC多维对比 — 生存率/并发症/QoL/费用/随访 + 个体化决策因素'
+  description: TMT vs RC多维对比 — 生存率/并发症/QoL/费用/随访 + 个体化决策因素
   handler: bladder_cancer.trimodal_comparison
-  input: {patient_id: str, eligibility: dict, age: int, comorbidities: list, T_stage: str}
+  input:
+    patient_id: str
+    eligibility: dict
+    age: int
+    comorbidities: list
+    T_stage: str
+  inference_tier: T0
 - name: guideline_reference
-  description: '指南依据 — EAU 2024/NCCN 2025/CUA 分层推荐(mibc/nmibc/新辅助/随访)'
+  description: 指南依据 — EAU 2024/NCCN 2025/CUA 分层推荐(mibc/nmibc/新辅助/随访)
   handler: bladder_cancer.guideline_reference
-  input: {clinical_scenario: str}
+  input:
+    clinical_scenario: str
+  inference_tier: T0
 guard:
-  triggers: [膀胱癌, 手术决策, 化疗]
-  high_risk_scenarios: [T4b, N+广泛, 肾功能不全(Cr>200)]
-  citation: {required: true, min_sources: 2, min_trust: T1}
+  triggers:
+  - 膀胱癌
+  - 手术决策
+  - 化疗
+  high_risk_scenarios:
+  - T4b
+  - N+广泛
+  - 肾功能不全(Cr>200)
+  citation:
+    required: true
+    min_sources: 2
+    min_trust: T1
 stages:
 - order: 1
   id: risk-stratify
   label: 风险分层
-  desc: 'EAU 2024 NMIBC(低/中/高/极高危) + MIBC cTNM分期'
-  role_ids: [attending, resident]
+  desc: EAU 2024 NMIBC(低/中/高/极高危) + MIBC cTNM分期
+  role_ids:
+  - attending
+  - resident
 - order: 2
   id: tmt-scoring
   label: TMT评估
-  desc: '10维保膀胱评分(T/N/肾积水/CIS/大小/数目/膀胱功能/年龄/合并症/意愿)'
-  role_ids: [attending]
+  desc: 10维保膀胱评分(T/N/肾积水/CIS/大小/数目/膀胱功能/年龄/合并症/意愿)
+  role_ids:
+  - attending
 - order: 3
   id: neoadjuvant
   label: 新辅助化疗
-  desc: '顺铂合格性(CrCl/ECOG/年龄) → ddMVAC或GC方案'
-  role_ids: [attending, pharmacist]
+  desc: 顺铂合格性(CrCl/ECOG/年龄) → ddMVAC或GC方案
+  role_ids:
+  - attending
+  - pharmacist
 - order: 4
   id: tmt-vs-rc
   label: 方案对比
-  desc: 'TMT vs RC多维对比(OS/并发症/QoL/费用/随访) + 个体化决策'
-  role_ids: [attending, pharmacist]
+  desc: TMT vs RC多维对比(OS/并发症/QoL/费用/随访) + 个体化决策
+  role_ids:
+  - attending
+  - pharmacist
 - order: 5
   id: bcg-protocol
   label: BCG方案
-  desc: 'NMIBC高危→BCG诱导(1次/w×6次)+维持(3w q3m×1-3年)'
-  role_ids: [attending, nurse]
+  desc: NMIBC高危→BCG诱导(1次/w×6次)+维持(3w q3m×1-3年)
+  role_ids:
+  - attending
+  - nurse
 - order: 6
   id: surveillance
   label: 术后监测
   desc: 'TMT: 膀胱镜q3m×2y→q6m×3y→每年; CT q6-12m×5y'
-  role_ids: [attending, nurse, head_nurse]
+  role_ids:
+  - attending
+  - nurse
+  - head_nurse
 ui:
   template: chat-with-role-switcher
   roles:
@@ -77,5 +127,7 @@ rag:
   top_k: 5
 learning:
   enabled: true
-  auto_apply: [citation_new, route_adj]
+  auto_apply:
+  - citation_new
+  - route_adj
   prompt_a_b: true

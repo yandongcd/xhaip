@@ -21,29 +21,34 @@ tools:
   input:
     time_range: str
     department: str
+  inference_tier: T0
 - name: outbreak_detection
   description: 医院感染暴发检测 — 基于时空聚类算法，同一病区7天内≥3例同源MDRO自动触发橙色预警
   handler: infection_control.outbreak_detection
   input:
     cases: list
     time_window: int
+  inference_tier: T0
 - name: ssi_monitor
   description: 手术部位感染(SSI)监测 — 基于NHSN定义，对接手术记录+术后30天再入院+切口分泌物培养
   handler: infection_control.ssi_monitor
   input:
     surgery_records: list
+  inference_tier: T0
 - name: hai_bundle_compliance
   description: 院感集束化措施依从性 — CLABSI/CAUTI/VAP每日评估+手卫生依从率+隔离措施执行率
   handler: infection_control.hai_bundle_compliance
   input:
     department: str
     date: str
+  inference_tier: T0
 - name: environmental_surveillance
   description: 环境卫生学监测 — 手术室/ICU/NICU空气培养+物表采样+内镜洗消追溯
   handler: infection_control.environmental_surveillance
   input:
     location: str
     sample_type: str
+  inference_tier: T0
 guard:
   triggers:
   - 院感暴发
@@ -91,7 +96,6 @@ stages:
   desc: SSI监测(NHSN定义)、环境监测(GB15982)、季度报告、PDCA改进
   role_ids:
   - infection_control
-
 learning:
   enabled: true
   auto_apply:

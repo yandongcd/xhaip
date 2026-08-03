@@ -22,18 +22,21 @@ tools:
   input:
     department: str
     month: str
+  inference_tier: T0
 - name: get_quality_metrics
   description: 获取质量安全指标 (感染率/死亡率/再入院率)
   handler: metrics.get_quality_metrics
   input:
     department: str
     year: int
+  inference_tier: T0
 - name: get_efficiency_metrics
   description: 获取效率指标 (平均住院日/床位使用率)
   handler: metrics.get_efficiency_metrics
   input:
     department: str
     month: str
+  inference_tier: T0
 ui:
   template: chat-with-role-switcher
   roles:

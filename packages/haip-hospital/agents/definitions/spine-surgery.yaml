@@ -1,4 +1,4 @@
-﻿name: spine-surgery
+name: spine-surgery
 cn_name: 脊柱骨科智能体
 version: 1.0.0
 type: business
@@ -28,6 +28,7 @@ tools:
     motor_scores: dict
     sacral_sparing: bool
     anal_contraction: bool
+  inference_tier: T0
 - name: cobb_severity
   description: 脊柱侧弯Cobb角分级(<10正常/10-25观察/25-45支具/>45手术)+Risser骨龄修正
   handler: spine_surgery.cobb_severity
@@ -37,6 +38,7 @@ tools:
     age: int
     curve_type: str
     progression_risk: str
+  inference_tier: T0
 - name: stenosis_assessment
   description: 腰椎管狭窄评估(症状+步行距离+Schizas MRI影像分级→保守/减压建议, 参考NASS 2019)
   handler: spine_surgery.stenosis_assessment
@@ -48,11 +50,13 @@ tools:
     central_stenosis: bool
     foraminal_stenosis: bool
     age: int
+  inference_tier: T0
 - name: odi_score
   description: Oswestry功能障碍指数(10项0-5分, 输出百分比与功能障碍分级)
   handler: spine_surgery.odi_score
   input:
     scores: dict
+  inference_tier: T0
 - name: surgical_pathway
   description: 脊柱术式路径建议(PELD椎间孔镜/UBE/OLIF/TLIF/开放, 按病种+节段+骨密度)
   handler: spine_surgery.surgical_pathway
@@ -64,6 +68,7 @@ tools:
     multi_level: bool
     instability: bool
     prior_surgery: bool
+  inference_tier: T0
 - name: red_flags
   description: 脊柱红旗征筛查(马尾综合征/肿瘤/感染/骨折, 命中→急诊升级绿色通道)
   handler: spine_surgery.red_flags
@@ -74,6 +79,7 @@ tools:
     age: int
     lab_crp: float
     lab_esr: float
+  inference_tier: T0
 guard:
   triggers:
   - 手术
@@ -118,32 +124,49 @@ stages:
   id: neuro-eval
   label: 神经功能评估
   desc: ASIA分级(ISNCSCI 2019关键肌)、Cobb角测量(Risser骨龄修正)、马尾神经筛查(红色警报)
-  role_ids: [attending, resident, anesthesiologist]
+  role_ids:
+  - attending
+  - resident
+  - anesthesiologist
 - order: 2
   id: imaging-plan
   label: 影像规划
   desc: Schizas MRI分级(A-D)、腰椎管狭窄评估、OLIF/TLIF/UBE/PELD入路选择、T-score骨质量评估
-  role_ids: [attending, surgeon, radiologist]
+  role_ids:
+  - attending
+  - surgeon
+  - radiologist
 - order: 3
   id: surgery
   label: 手术执行
   desc: 入路选择(PELD日间/UBE 1-2d/OLIF L1-L5/TLIF 3-5d/开放)、神经监测、椎弓根螺钉植入
-  role_ids: [attending, surgeon, anesthesiologist]
+  role_ids:
+  - attending
+  - surgeon
+  - anesthesiologist
 - order: 4
   id: postop-care
   label: 术后管理
   desc: 神经功能监测(ASIA复查)、切口/引流管理、疼痛管理、支具/颈托使用指导
-  role_ids: [attending, resident, head_nurse]
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
 - order: 5
   id: rehab
   label: 康复训练
   desc: ODI Oswestry功能障碍指数评估、核心肌群训练、活动限制指导(BLH原则)、防跌倒教育
-  role_ids: [attending, rehab_therapist, head_nurse]
+  role_ids:
+  - attending
+  - rehab_therapist
+  - head_nurse
 - order: 6
   id: followup
   label: 随访监测
   desc: ODI/ASIA评分追踪、Cobb角复查(脊柱侧弯)、融合评估(X线/CT)、术后1/3/6/12月
-  role_ids: [attending, rehab_therapist]
+  role_ids:
+  - attending
+  - rehab_therapist
 rag:
   enabled: true
   top_k: 5

@@ -19,11 +19,13 @@ tools:
   handler: sepsis_early_warning.immune_status
   input:
     patient_id: str
+  inference_tier: T0
 - name: sepsis_score
   description: 脓毒症风险评分 — qSOFA+SOFA+PCT/CRP阶梯 + 时序轨迹评估
   handler: sepsis_early_warning.sepsis_score
   input:
     patient_id: str
+  inference_tier: T0
 - name: mortality_risk
   description: 28天死亡风险预测 — 多因素模型（年龄/淋巴细胞轨迹/NLR/SOFA/合并症）
   handler: sepsis_early_warning.mortality_risk
@@ -31,6 +33,7 @@ tools:
     patient_id: str
     immune_data: dict
     sofa_score: int
+  inference_tier: T0
 - name: early_warning
   description: 分级预警推送 — 低/中/高危 + 逐级升级(24h→48h→72h电话通知)
   handler: sepsis_early_warning.early_warning
@@ -38,6 +41,7 @@ tools:
     patient_id: str
     risk_level: str
     mortality_prob: float
+  inference_tier: T0
 guard:
   triggers:
   - 脓毒症

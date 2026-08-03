@@ -1,4 +1,4 @@
-﻿name: hepatobiliary-surgery
+name: hepatobiliary-surgery
 cn_name: 肝胆外科智能体
 version: 1.0.0
 type: business
@@ -16,41 +16,49 @@ tools:
   handler: hepatobiliary_surgery.bp_reg
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_diag
   description: 诊断评估
   handler: hepatobiliary_surgery.bp_diag
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_preop
   description: 术前准备
   handler: hepatobiliary_surgery.bp_preop
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_risk
   description: 风险评估
   handler: hepatobiliary_surgery.bp_risk
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_mdt
   description: MDT决策
   handler: hepatobiliary_surgery.bp_mdt
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_surgery
   description: 手术执行
   handler: hepatobiliary_surgery.bp_surgery
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_nursing
   description: 围术期护理
   handler: hepatobiliary_surgery.bp_nursing
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_followup
   description: 术后随访
   handler: hepatobiliary_surgery.bp_followup
   input:
     patient_id: str
+  inference_tier: T0
 guard:
   triggers:
   - 手术决策
@@ -84,32 +92,49 @@ stages:
   id: liver-eval
   label: 肝功能评估
   desc: Child-Pugh分级(胆红素/白蛋白/PT/腹水/脑病)、MELD评分、ICG-R15清除试验、BCLC分期
-  role_ids: [attending, resident, anesthesiologist]
+  role_ids:
+  - attending
+  - resident
+  - anesthesiologist
 - order: 2
   id: preop-plan
   label: 术前规划
   desc: 肝储备功能评估(正常≥20%/硬化≥40%残余肝)、PVE门静脉栓塞促进增生、PTCD减黄(Bil<100)
-  role_ids: [attending, surgeon, hepatologist]
+  role_ids:
+  - attending
+  - surgeon
+  - hepatologist
 - order: 3
   id: surgery
   label: 手术执行
   desc: Glissonean入路/Pringle法(15/5min阻断)、低中心静脉压(<5mmHg)、术中超声
-  role_ids: [attending, surgeon, anesthesiologist]
+  role_ids:
+  - attending
+  - surgeon
+  - anesthesiologist
 - order: 4
   id: postop-monitor
   label: 术后监测
   desc: ISGLS胆汁漏分级、50-50标准肝衰监测、腹腔引流(淀粉酶/Bil)、凝血功能、感染监测
-  role_ids: [attending, icu_doctor, head_nurse]
+  role_ids:
+  - attending
+  - icu_doctor
+  - head_nurse
 - order: 5
   id: recovery
   label: 恢复期管理
   desc: 营养支持(肝病专用EN)、腹水管理、切口护理、VTE预防(Caprini)、ERAS早期活动
-  role_ids: [attending, resident, head_nurse]
+  role_ids:
+  - attending
+  - resident
+  - head_nurse
 - order: 6
   id: followup
   label: 随访监测
   desc: 肿瘤标志物(AFP/CA19-9/CEA)、影像复查(CT/MRI q3-6m)、肝功能、术后1/3/6/12月
-  role_ids: [attending, hepatologist]
+  role_ids:
+  - attending
+  - hepatologist
 rag:
   enabled: true
   top_k: 5

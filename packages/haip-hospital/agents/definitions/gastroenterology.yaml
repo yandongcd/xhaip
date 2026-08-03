@@ -16,46 +16,55 @@ tools:
   handler: gastroenterology.bp_reception
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_exam
   description: 辅助检查
   handler: gastroenterology.bp_exam
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_diagnosis
   description: 确诊与分型分期
   handler: gastroenterology.bp_diagnosis
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_plan
   description: 治疗方案制定
   handler: gastroenterology.bp_plan
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_treatment
   description: 治疗执行与监测
   handler: gastroenterology.bp_treatment
   input:
     patient_id: str
+  inference_tier: T0
 - name: bp_followup
   description: 随访与长期管理
   handler: gastroenterology.bp_followup
   input:
     patient_id: str
+  inference_tier: T0
 - name: assess_liver
   description: Child-Pugh+MELD肝功能评估
   handler: gastroenterology.assess_liver
   input:
     patient_id: str
+  inference_tier: T0
 - name: assess_ibd
   description: Mayo UC评分+IBD活动度
   handler: gastroenterology.assess_ibd
   input:
     patient_id: str
+  inference_tier: T0
 - name: assess_ibs
   description: Rome IV IBS诊断辅助
   handler: gastroenterology.assess_ibs
   input:
     patient_id: str
+  inference_tier: T0
 ui:
   template: chat-with-role-switcher
   roles:
