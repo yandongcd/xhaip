@@ -39,8 +39,14 @@ class MDTOrchestrator:
         agent_call_fn=None,
         timeline_id: str | None = None,
         sub_windows: list[Any] | None = None,
+        max_rounds: int = 1,
     ) -> MDTSession:
         """Run a complete MDT session.
+
+        Multi-round debate (max_rounds > 1):
+        - Round 1: fan-out → detect divergence → resolve
+        - Round 2+: agents see previous opinions + divergences, re-evaluate
+        - Convergence: no new divergences for 2 consecutive rounds, or max_rounds reached
 
         Args:
             patient_id: Patient identifier
@@ -49,62 +55,79 @@ class MDTOrchestrator:
             context: Patient data context (labs, imaging, history)
             timeout: Max seconds for entire session
             agent_call_fn: Function(agent_name, patient_id, question) → dict
-                          If None, uses A2A call.
-            timeline_id: Optional time-window parent timeline id (haip.time_window).
-                        When set, a composite window is registered for this session
-                        and the verdict is attached to the session on completion.
-            sub_windows: Optional list of SubWindowSpec per participant; defaults
-                        to one parallel sub-window per participant using the parent
-                        deadline.
-
-        Returns:
-            MDTSession with all opinions, divergences, and consensus.
+            timeline_id: Optional time-window parent timeline id
+            sub_windows: Optional list of SubWindowSpec per participant
+            max_rounds: Max debate rounds (1 = single-round, default)
         """
+        context = context or {}
         session = MDTSession(
             patient_id=patient_id,
             question=question,
-            context=context or {},
+            context=context,
             participants=participants,
             timeout_seconds=timeout,
         )
+        round_states: list[list[Any]] = []  # track divergence count per round
 
-        # Phase 0: Register composite time window (if timeline requested)
+        # Phase 0: Register composite time window
         parent_token: str | None = None
         if timeline_id:
             parent_token = self._register_composite(
                 patient_id, participants, timeline_id, sub_windows,
             )
 
-        # Phase 1: Collect opinions in parallel
-        session.status = MDTStatus.COLLECTING
-        self._collect_opinions(session, agent_call_fn)
+        # ── Rounds loop ──
+        for rnd in range(1, max_rounds + 1):
+            if rnd > 1:
+                # Enrich question with previous opinions for debate
+                prev_summary = self._summarize_previous_round(session)
+                session.question = f"{question}\n\n{prev_summary}"
+                session.context = {**context, "_mdt_round": rnd}
 
-        # Phase 2: Detect divergence
-        session.status = MDTStatus.DIVERGENCE_CHECK
-        session.divergences = MDTProtocol.detect_divergence(session)
+            # Round: collect → detect → resolve
+            session.status = MDTStatus.COLLECTING
+            self._collect_opinions(session, agent_call_fn)
 
-        # Phase 3: Resolve
-        if session.divergences:
-            session.status = MDTStatus.RESOLVING
-            session.consensus = MDTProtocol.resolve(session)
-            if not session.consensus:
-                session.status = MDTStatus.DEADLOCKED
+            session.status = MDTStatus.DIVERGENCE_CHECK
+            session.divergences = MDTProtocol.detect_divergence(session)
+            round_states.append(session.divergences)
+
+            if session.divergences:
+                session.status = MDTStatus.RESOLVING
+                session.consensus = MDTProtocol.resolve(session)
+                if not session.consensus:
+                    session.status = MDTStatus.DEADLOCKED
+                else:
+                    session.status = MDTStatus.CONSENSUS
             else:
                 session.status = MDTStatus.CONSENSUS
-        else:
-            session.status = MDTStatus.CONSENSUS
-            session.consensus = MDTProtocol.resolve(session)
+                session.consensus = MDTProtocol.resolve(session)
 
-        # Phase 4: Complete
-        if session.status != MDTStatus.DEADLOCKED:
-            session.status = MDTStatus.COMPLETED
+            # Convergence: 2 consecutive rounds with no new divergences → stop
+            if rnd >= 2 and len(round_states[rnd - 1]) == 0 and len(round_states[rnd - 2]) == 0:
+                break
+
+        # Phase N+1: Complete
+        session.status = MDTStatus.COMPLETED
         session.resolved_at = time.time()
+        session.rounds = rnd  # type: ignore[attr-defined]
 
-        # Phase 5: Resolve composite window verdict (time_window integration)
         if parent_token:
             self._resolve_composite_verdict(session, parent_token)
 
         return session
+
+    @staticmethod
+    def _summarize_previous_round(session: MDTSession) -> str:
+        parts = ["上轮 MDT 会诊意见:"]
+        for o in session.opinions:
+            parts.append(f"- {o.agent_name} (置信度 {o.confidence:.0%}): {o.recommendation[:120]}")
+        if session.divergences:
+            parts.append(f"分歧: {len(session.divergences)} 项 — 请重新评估并尝试达成共识")
+        if session.consensus:
+            parts.append(f"上轮共识: {session.consensus[:150]}")
+        parts.append("请基于以上意见重新评估患者情况。")
+        return "\n".join(parts)
 
     def _register_composite(
         self,

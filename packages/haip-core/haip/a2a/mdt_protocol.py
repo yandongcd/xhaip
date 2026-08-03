@@ -76,6 +76,7 @@ class MDTSession:
     created_at: float = field(default_factory=time.time)
     resolved_at: float = 0.0
     timeout_seconds: int = 300                      # max wait for all agents
+    rounds: int = 0                                  # MDT debate rounds (L4 multi-round)
     window_verdict: dict[str, Any] | None = None    # time-window composite verdict (haip time_window)
     window_escalated: bool = False                  # True when window expired / parent deadline exceeded
 
