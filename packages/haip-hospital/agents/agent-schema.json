@@ -21,7 +21,7 @@
     },
     "type": {
       "type": "string",
-      "enum": ["business"]
+      "enum": ["business", "specialist", "master_data", "architecture"]
     },
     "department": {
       "type": "string"

@@ -2,7 +2,7 @@ name: medical-docs
 cn_name: 病历书写辅助
 version: 1.0.0
 type: specialist
-port: 0
+port: 8815
 department: 医务处
 aliases:
 - 病历助手

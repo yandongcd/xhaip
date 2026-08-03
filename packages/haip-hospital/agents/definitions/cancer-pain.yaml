@@ -2,6 +2,7 @@ name: cancer-pain
 cn_name: 癌性疼痛管理
 version: 1.0.0
 type: specialist
+port: 8817
 department: 疼痛科
 aliases:
 - 癌性疼痛

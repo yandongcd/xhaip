@@ -2,6 +2,7 @@ name: chronic-pain
 cn_name: 慢性疼痛综合评估
 version: 1.0.0
 type: specialist
+port: 8818
 department: 疼痛科
 aliases:
 - 慢性疼痛

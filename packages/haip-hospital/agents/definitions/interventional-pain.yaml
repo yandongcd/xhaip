@@ -2,6 +2,7 @@ name: interventional-pain
 cn_name: 介入疼痛治疗评估
 version: 1.0.0
 type: specialist
+port: 8823
 department: 疼痛科
 aliases:
 - 介入疼痛

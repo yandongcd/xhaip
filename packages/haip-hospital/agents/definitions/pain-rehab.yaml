@@ -2,6 +2,7 @@ name: pain-rehab
 cn_name: 疼痛康复管理
 version: 1.0.0
 type: specialist
+port: 8824
 department: 疼痛科
 aliases:
 - 疼痛康复
