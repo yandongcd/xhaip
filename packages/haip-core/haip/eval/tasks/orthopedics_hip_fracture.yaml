@@ -1,0 +1,157 @@
+# 骨科髋部骨折 MDT 通路评测任务模板 (v0.1)
+# 对齐 CP-Env 临床路径思想: 分诊→时机→分型→方案→并发症→护理→随访
+# 金标准来源: knowledge/rules/*.yaml (timing/completeness/surgery_type/complication)
+name: orthopedics_hip_fracture
+cn_name: 骨科髋部骨折 MDT 通路
+department: orthopedic_surgery
+description: 老年髋部骨折全流程决策评测 — 11 阶段通路关键决策点
+weight: 1.0
+
+stages:
+  - id: triage
+    name: 分诊与检查清单
+    tool: checklist
+    inputs:
+      symptoms: list
+      conditions: list
+      age: int
+    checkpoints:
+      - id: triage_triggered
+        type: rule
+        field: total_triggers
+        op: ">="
+        value: 1
+        weight: 0.5
+        message: "至少触发 1 项检查清单"
+      - id: triage_recommendation
+        type: rule
+        field: recommendation
+        op: nonempty
+        weight: 0.5
+        message: "分诊推荐结论非空"
+
+  - id: timing
+    name: 手术时机 T2 裁决
+    tool: timing_decision
+    inputs:
+      labs: dict
+      conditions: list
+    checkpoints:
+      - id: timing_urgency_valid
+        type: rule
+        field: urgency
+        op: in
+        value: [emergency, urgent, elective]
+        weight: 0.3
+        message: "urgency 取值合法"
+      - id: timing_matches_gold
+        type: gold
+        field: urgency
+        weight: 0.5
+        message: "与金标准 (timing_rules) 一致"
+      - id: timing_evidence
+        type: rule
+        field: evidence
+        op: nonempty
+        weight: 0.2
+        message: "含指南引用证据"
+
+  - id: classify
+    name: 骨折分型
+    tool: classify_fracture
+    inputs:
+      xray_findings: dict
+    checkpoints:
+      - id: classify_type_known
+        type: rule
+        field: classification
+        op: nonempty
+        weight: 0.6
+        message: "分型结果已判定"
+      - id: classify_stability
+        type: rule
+        field: stability
+        op: in
+        value: ["stable", "unstable"]
+        weight: 0.4
+        message: "稳定性判定"
+
+  - id: surgery_plan
+    name: 手术方案
+    tool: surgical_plan
+    inputs:
+      diagnosis: str
+      fracture_type: str
+      age: int
+    checkpoints:
+      - id: plan_recommended
+        type: rule
+        field: procedure
+        op: nonempty
+        weight: 1.0
+        message: "手术方案非空"
+
+  - id: complications
+    name: 并发症预测
+    tool: complication_risk
+    inputs:
+      patient: dict
+    checkpoints:
+      - id: comp_overall
+        type: rule
+        field: overall_risk
+        op: in
+        value: [low, moderate, high]
+        weight: 0.5
+        message: "总体风险等级合法"
+      - id: comp_prevention
+        type: rule
+        field: prevention
+        op: nonempty
+        weight: 0.5
+        message: "预防措施非空"
+
+  - id: nursing
+    name: 围术期护理
+    tool: nursing_plan
+    inputs:
+      patient: dict
+    checkpoints:
+      - id: nursing_stages
+        type: rule
+        field: plan
+        op: nonempty
+        weight: 1.0
+        message: "护理计划非空"
+
+  - id: followup
+    name: 随访计划
+    tool: followup_plan
+    inputs:
+      patient: dict
+    checkpoints:
+      - id: followup_schedule
+        type: rule
+        field: schedule
+        op: nonempty
+        weight: 1.0
+        message: "随访时间点非空"
+
+dimensions:
+  efficacy: 0.40    # 临床疗效: gold 匹配 + 关键决策正确
+  process: 0.35     # 流程能力: 阶段完整 + 工具调用 + 顺序
+  ethics: 0.25      # 专业伦理: 引用合规 + guard + 降级行为
+
+ethics_rules:
+  - id: ethics_citation
+    check: citations_in_output
+    weight: 0.4
+    message: "输出含指南引用"
+  - id: ethics_fallback
+    check: graceful_degradation
+    weight: 0.3
+    message: "LLM 失败时优雅降级 (无 error 泄漏)"
+  - id: ethics_disclaimer
+    check: disclaimer_present
+    weight: 0.3
+    message: "含 AI 辅助声明"
