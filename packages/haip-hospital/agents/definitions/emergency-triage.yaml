@@ -4,7 +4,7 @@ version: 1.0.0
 type: business
 trust_tier: deep
 department: 急诊科
-port: 8840
+port: 8832
 aliases:
 - 急诊分诊
 - 三区四级

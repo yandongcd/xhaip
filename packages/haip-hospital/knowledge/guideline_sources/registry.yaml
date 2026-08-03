@@ -7,336 +7,636 @@ sources:
   # === 骨科 (Orthopedic) ===
   - id: nice-ng37
     name: "NICE Guideline NG37: Hip fracture management"
-    tier: L1; version: "2023"; publish_date: "2023-05-10"
-    publisher: "NICE"; language: en; department: 骨外科
-    admin_priority: 1; status: active; superseded_by: ""
+    tier: L1
+    version: "2023"
+    publish_date: "2023-05-10"
+    publisher: "NICE"
+    language: en
+    department: 骨外科
+    admin_priority: 1
+    status: active
+    superseded_by: ""
   - id: weiwei-2022
     name: "卫健委老年髋部骨折诊疗与管理指南（2022年版）"
-    tier: L2; version: "2022"; publish_date: "2022-12-01"
-    publisher: "国家卫生健康委员会"; language: zh; department: 骨外科
-    admin_priority: 2; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-12-01"
+    publisher: "国家卫生健康委员会"
+    language: zh
+    department: 骨外科
+    admin_priority: 2
+    status: active
+    superseded_by: ""
   - id: aaos-2022
     name: "AAOS Management of Hip Fractures in Older Adults"
-    tier: L1; version: "2022"; publish_date: "2022-09-01"
-    publisher: "AAOS"; language: en; department: 骨外科
-    admin_priority: 3; status: active; superseded_by: ""
+    tier: L1
+    version: "2022"
+    publish_date: "2022-09-01"
+    publisher: "AAOS"
+    language: en
+    department: 骨外科
+    admin_priority: 3
+    status: active
+    superseded_by: ""
 
   # === 心血管内科 (Cardiology) ===
   - id: universal-mi-definition-2018
     name: "4th Universal Definition of Myocardial Infarction"
-    tier: L1; version: "2018"; publish_date: "2018-08-01"
-    publisher: "ESC/ACC/AHA/WHF"; language: en; department: 心血管内科
-    admin_priority: 4; status: active; superseded_by: ""
+    tier: L1
+    version: "2018"
+    publish_date: "2018-08-01"
+    publisher: "ESC/ACC/AHA/WHF"
+    language: en
+    department: 心血管内科
+    admin_priority: 4
+    status: active
+    superseded_by: ""
   - id: cma-hypertension-2024
     name: "中国高血压防治指南（2024年修订版）"
-    tier: L2; version: "2024"; publish_date: "2024-08-11"
-    publisher: "中华医学会心血管病学分会"; language: zh; department: 心血管内科
+    tier: L2
+    version: "2024"
+    publish_date: "2024-08-11"
+    publisher: "中华医学会心血管病学分会"
+    language: zh
+    department: 心血管内科
     original_pdf: "guidelines/originals/cardiology-中国高血压防治指南(2024年修订版).pdf"
     doi: "10.3760/cma.j.cn112148-20240701-00400"
-    admin_priority: 30; status: active; superseded_by: ""
+    admin_priority: 30
+    status: active
+    superseded_by: ""
 
   # === 呼吸内科 (Respiratory) ===
   - id: gold-copd-2024
     name: "GOLD 2024: Global Strategy for COPD"
-    tier: L1; version: "2024"; publish_date: "2024-01-01"
-    publisher: "GOLD"; language: en; department: 呼吸内科
-    admin_priority: 40; status: active; superseded_by: ""
+    tier: L1
+    version: "2024"
+    publish_date: "2024-01-01"
+    publisher: "GOLD"
+    language: en
+    department: 呼吸内科
+    admin_priority: 40
+    status: active
+    superseded_by: ""
   - id: gina-asthma-2024
     name: "GINA 2024: Global Strategy for Asthma"
-    tier: L1; version: "2024"; publish_date: "2024-01-01"
-    publisher: "GINA"; language: en; department: 呼吸内科
-    admin_priority: 41; status: active; superseded_by: ""
+    tier: L1
+    version: "2024"
+    publish_date: "2024-01-01"
+    publisher: "GINA"
+    language: en
+    department: 呼吸内科
+    admin_priority: 41
+    status: active
+    superseded_by: ""
 
   # === 肾内科 (Nephrology) ===
   - id: kdigo-ckd-2024
     name: "KDIGO 2024 CKD Evaluation and Management"
-    tier: L1; version: "2024"; publish_date: "2024-03-01"
-    publisher: "KDIGO"; language: en; department: 肾内科
-    admin_priority: 45; status: active; superseded_by: ""
+    tier: L1
+    version: "2024"
+    publish_date: "2024-03-01"
+    publisher: "KDIGO"
+    language: en
+    department: 肾内科
+    admin_priority: 45
+    status: active
+    superseded_by: ""
 
   # === 消化内科 (Gastroenterology) ===
   - id: cma-gastritis-2022
     name: "中国慢性胃炎共识意见（2022年，上海）"
-    tier: L2; version: "2022"; publish_date: "2022-12-01"
-    publisher: "中华医学会消化病学分会"; language: zh; department: 消化内科
-    admin_priority: 50; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-12-01"
+    publisher: "中华医学会消化病学分会"
+    language: zh
+    department: 消化内科
+    admin_priority: 50
+    status: active
+    superseded_by: ""
 
   # === 内分泌科 (Endocrinology) ===
   - id: cma-diabetes-2024
     name: "中国糖尿病防治指南（2024版）"
-    tier: L2; version: "2024"; publish_date: "2024-12-30"
-    publisher: "中华医学会糖尿病学分会"; language: zh; department: 内分泌科
+    tier: L2
+    version: "2024"
+    publish_date: "2024-12-30"
+    publisher: "中华医学会糖尿病学分会"
+    language: zh
+    department: 内分泌科
     original_pdf: "guidelines/originals/endocrinology-中国糖尿病防治指南(2024版).pdf"
     doi: "10.3760/cma.j.cn115791-20241203-00705"
-    admin_priority: 31; status: active; superseded_by: ""
+    admin_priority: 31
+    status: active
+    superseded_by: ""
   - id: ada-standards-2025
     name: "ADA Standards of Care in Diabetes"
-    tier: L1; version: "2025"; publish_date: "2025-01-01"
-    publisher: "ADA"; language: en; department: 内分泌科
-    admin_priority: 7; status: active; superseded_by: ""
+    tier: L1
+    version: "2025"
+    publish_date: "2025-01-01"
+    publisher: "ADA"
+    language: en
+    department: 内分泌科
+    admin_priority: 7
+    status: active
+    superseded_by: ""
 
   # === 妇产科 (OB/GYN) ===
   - id: cma-obgyn-2022
     name: "中国妇产科学临床指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华医学会妇产科学分会"; language: zh; department: 妇产科
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华医学会妇产科学分会"
+    language: zh
+    department: 妇产科
     original_pdf: "guidelines/originals/obgyn-中西医结合宫颈癌防治中国专家共识.pdf"
     doi: "10.12025/j.issn.1008-6358.2024.20240292"
-    admin_priority: 55; status: active; superseded_by: ""
+    admin_priority: 55
+    status: active
+    superseded_by: ""
 
   # === 儿科 (Pediatrics) ===
   - id: cma-pediatrics-2022
     name: "中国儿科临床诊疗指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华医学会儿科学分会"; language: zh; department: 儿科
-    admin_priority: 60; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华医学会儿科学分会"
+    language: zh
+    department: 儿科
+    admin_priority: 60
+    status: active
+    superseded_by: ""
   - id: who-imci-2014
     name: "WHO IMCI Guidelines"
-    tier: L1; version: "2014"; publish_date: "2014-01-01"
-    publisher: "WHO"; language: en; department: 儿科
-    admin_priority: 61; status: active; superseded_by: ""
+    tier: L1
+    version: "2014"
+    publish_date: "2014-01-01"
+    publisher: "WHO"
+    language: en
+    department: 儿科
+    admin_priority: 61
+    status: active
+    superseded_by: ""
 
   # === 新生儿科 (Neonatology) ===
   - id: cma-neonatology-2022
     name: "中国新生儿临床诊疗指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华医学会儿科学分会新生儿学组"; language: zh; department: 新生儿科
-    admin_priority: 65; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华医学会儿科学分会新生儿学组"
+    language: zh
+    department: 新生儿科
+    admin_priority: 65
+    status: active
+    superseded_by: ""
 
   # === 肿瘤科 (Oncology) ===
   - id: csco-oncology-2024
     name: "CSCO常见恶性肿瘤诊疗指南（2024）"
-    tier: L2; version: "2024"; publish_date: "2024-04-01"
-    publisher: "中国临床肿瘤学会（CSCO）"; language: zh; department: 肿瘤科
-    admin_priority: 70; status: active; superseded_by: ""
+    tier: L2
+    version: "2024"
+    publish_date: "2024-04-01"
+    publisher: "中国临床肿瘤学会（CSCO）"
+    language: zh
+    department: 肿瘤科
+    admin_priority: 70
+    status: active
+    superseded_by: ""
 
   # === 血液内科 (Hematology) ===
   - id: cma-hematology-2022
     name: "中国血液病诊疗指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华医学会血液学分会"; language: zh; department: 血液内科
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华医学会血液学分会"
+    language: zh
+    department: 血液内科
     original_pdf: "guidelines/originals/hematology-CAR-T细胞治疗恶性血液病指南2024.pdf"
-    admin_priority: 75; status: active; superseded_by: ""
+    admin_priority: 75
+    status: active
+    superseded_by: ""
 
   # === 风湿免疫科 (Rheumatology) ===
   - id: eular-rheumatology-2023
     name: "EULAR Recommendations for Rheumatic Diseases"
-    tier: L1; version: "2023"; publish_date: "2023-06-01"
-    publisher: "EULAR"; language: en; department: 风湿免疫科
-    admin_priority: 80; status: active; superseded_by: ""
+    tier: L1
+    version: "2023"
+    publish_date: "2023-06-01"
+    publisher: "EULAR"
+    language: en
+    department: 风湿免疫科
+    admin_priority: 80
+    status: active
+    superseded_by: ""
   - id: cma-rheumatology-2022
     name: "中国风湿免疫病诊疗指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华医学会风湿病学分会"; language: zh; department: 风湿免疫科
-    admin_priority: 81; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华医学会风湿病学分会"
+    language: zh
+    department: 风湿免疫科
+    admin_priority: 81
+    status: active
+    superseded_by: ""
 
   # === 急诊科 (Emergency) ===
   - id: cma-emergency-2023
     name: "中国急诊临床诊疗指南（2023）"
-    tier: L2; version: "2023"; publish_date: "2023-06-01"
-    publisher: "中华医学会急诊医学分会"; language: zh; department: 急诊科
+    tier: L2
+    version: "2023"
+    publish_date: "2023-06-01"
+    publisher: "中华医学会急诊医学分会"
+    language: zh
+    department: 急诊科
     original_pdf: "guidelines/originals/emergency-秋水仙碱中毒临床诊治专家共识.pdf"
     doi: "10.3760/cma.j.issn.1671-0282.2023.02.006"
-    admin_priority: 85; status: active; superseded_by: ""
+    admin_priority: 85
+    status: active
+    superseded_by: ""
 
   # === 重症医学科 (ICU) ===
   - id: sccm-icu-2021
     name: "SCCM Surviving Sepsis Campaign Guidelines"
-    tier: L1; version: "2021"; publish_date: "2021-10-01"
-    publisher: "SCCM/ESICM"; language: en; department: 重症医学科
-    admin_priority: 90; status: active; superseded_by: ""
+    tier: L1
+    version: "2021"
+    publish_date: "2021-10-01"
+    publisher: "SCCM/ESICM"
+    language: en
+    department: 重症医学科
+    admin_priority: 90
+    status: active
+    superseded_by: ""
   - id: cma-icu-2022
     name: "中国重症医学临床诊疗指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华医学会重症医学分会"; language: zh; department: 重症医学科
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华医学会重症医学分会"
+    language: zh
+    department: 重症医学科
     original_pdf: "guidelines/originals/icu-中国重症卒中管理指南2024.pdf"
     doi: "10.3760/cma.j.cn113694-20231024-00261"
-    admin_priority: 91; status: active; superseded_by: ""
+    admin_priority: 91
+    status: active
+    superseded_by: ""
 
   # === 感染内科 (Infectious Disease) ===
   - id: cma-infectious-2022
     name: "中国感染性疾病诊疗指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华医学会感染病学分会"; language: zh; department: 感染内科
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华医学会感染病学分会"
+    language: zh
+    department: 感染内科
     original_pdf: "guidelines/originals/infectious-中国艾滋病诊疗指南（2024版）.pdf"
     doi: "10.3760/cma.j.issn.1674"
-    admin_priority: 95; status: active; superseded_by: ""
+    admin_priority: 95
+    status: active
+    superseded_by: ""
 
   # === 神经外科 (Neurosurgery) ===
   - id: cma-neurosurgery-2021
     name: "中国神经外科临床诊疗指南（2021）"
-    tier: L2; version: "2021"; publish_date: "2021-06-01"
-    publisher: "中华医学会神经外科学分会"; language: zh; department: 神经外科
-    admin_priority: 100; status: active; superseded_by: ""
+    tier: L2
+    version: "2021"
+    publish_date: "2021-06-01"
+    publisher: "中华医学会神经外科学分会"
+    language: zh
+    department: 神经外科
+    admin_priority: 100
+    status: active
+    superseded_by: ""
 
   # === 普通外科 (General Surgery) ===
   - id: cma-general-surgery-2022
     name: "中国普通外科临床诊疗指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华医学会外科学分会"; language: zh; department: 普通外科
-    admin_priority: 105; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华医学会外科学分会"
+    language: zh
+    department: 普通外科
+    admin_priority: 105
+    status: active
+    superseded_by: ""
 
   # === 肝胆外科 (Hepatobiliary) ===
   - id: cma-hepatobiliary-2022
     name: "中国肝胆外科临床诊疗指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华医学会外科学分会肝脏外科学组"; language: zh; department: 肝胆外科
-    admin_priority: 110; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华医学会外科学分会肝脏外科学组"
+    language: zh
+    department: 肝胆外科
+    admin_priority: 110
+    status: active
+    superseded_by: ""
 
   # === 血管外科 (Vascular Surgery) ===
   - id: esvs-vascular-2022
     name: "ESVS Clinical Practice Guidelines (2022)"
-    tier: L1; version: "2022"; publish_date: "2022-01-01"
-    publisher: "ESVS"; language: en; department: 血管外科
-    admin_priority: 115; status: active; superseded_by: ""
+    tier: L1
+    version: "2022"
+    publish_date: "2022-01-01"
+    publisher: "ESVS"
+    language: en
+    department: 血管外科
+    admin_priority: 115
+    status: active
+    superseded_by: ""
   - id: cma-vascular-2022
     name: "中国血管外科疾病诊疗指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华医学会外科学分会血管外科学组"; language: zh; department: 血管外科
-    admin_priority: 116; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华医学会外科学分会血管外科学组"
+    language: zh
+    department: 血管外科
+    admin_priority: 116
+    status: active
+    superseded_by: ""
 
   # === 胸外科 (Thoracic Surgery) ===
   - id: nccn-nsclc-2023
     name: "NCCN Guidelines: Non-Small Cell Lung Cancer"
-    tier: L1; version: "2023"; publish_date: "2023-01-01"
-    publisher: "NCCN"; language: en; department: 胸外科
-    admin_priority: 120; status: active; superseded_by: ""
+    tier: L1
+    version: "2023"
+    publish_date: "2023-01-01"
+    publisher: "NCCN"
+    language: en
+    department: 胸外科
+    admin_priority: 120
+    status: active
+    superseded_by: ""
   - id: cma-thoracic-2022
     name: "中国胸外科临床诊疗指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华医学会胸心血管外科学分会"; language: zh; department: 胸外科
-    admin_priority: 121; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华医学会胸心血管外科学分会"
+    language: zh
+    department: 胸外科
+    admin_priority: 121
+    status: active
+    superseded_by: ""
 
   # === 烧伤整形科 (Burns) ===
   - id: cma-burns-2021
     name: "中国烧伤整形临床诊疗指南（2021）"
-    tier: L2; version: "2021"; publish_date: "2021-06-01"
-    publisher: "中华医学会烧伤外科学分会"; language: zh; department: 烧伤整形科
-    admin_priority: 130; status: active; superseded_by: ""
+    tier: L2
+    version: "2021"
+    publish_date: "2021-06-01"
+    publisher: "中华医学会烧伤外科学分会"
+    language: zh
+    department: 烧伤整形科
+    admin_priority: 130
+    status: active
+    superseded_by: ""
 
   # === 整形美容科 (Cosmetic) ===
   - id: cma-cosmetic-2022
     name: "中国整形美容临床诊疗指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华医学会整形外科学分会"; language: zh; department: 整形美容科
-    admin_priority: 135; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华医学会整形外科学分会"
+    language: zh
+    department: 整形美容科
+    admin_priority: 135
+    status: active
+    superseded_by: ""
 
   # === 乳腺中心 (Breast Center) ===
   - id: nccn-breast-2023
     name: "NCCN Guidelines: Breast Cancer"
-    tier: L1; version: "2023"; publish_date: "2023-01-01"
-    publisher: "NCCN"; language: en; department: 乳腺中心
-    admin_priority: 140; status: active; superseded_by: ""
+    tier: L1
+    version: "2023"
+    publish_date: "2023-01-01"
+    publisher: "NCCN"
+    language: en
+    department: 乳腺中心
+    admin_priority: 140
+    status: active
+    superseded_by: ""
   - id: cma-breast-2022
     name: "中国乳腺癌诊疗指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中国抗癌协会乳腺癌专业委员会"; language: zh; department: 乳腺中心
-    admin_priority: 141; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中国抗癌协会乳腺癌专业委员会"
+    language: zh
+    department: 乳腺中心
+    admin_priority: 141
+    status: active
+    superseded_by: ""
 
   # === 眼科 (Ophthalmology) ===
   - id: cma-ophthalmology-2022
     name: "中国眼科临床诊疗指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华医学会眼科学分会"; language: zh; department: 眼科
-    admin_priority: 150; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华医学会眼科学分会"
+    language: zh
+    department: 眼科
+    admin_priority: 150
+    status: active
+    superseded_by: ""
 
   # === 耳鼻喉科 (ENT) ===
   - id: cma-ent-2022
     name: "中国耳鼻喉科临床诊疗指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华医学会耳鼻咽喉头颈外科学分会"; language: zh; department: 耳鼻喉科
-    admin_priority: 155; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华医学会耳鼻咽喉头颈外科学分会"
+    language: zh
+    department: 耳鼻喉科
+    admin_priority: 155
+    status: active
+    superseded_by: ""
 
   # === 口腔科 (Stomatology) ===
   - id: cma-stomatology-2022
     name: "中国口腔科临床诊疗指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华口腔医学会"; language: zh; department: 口腔科
-    admin_priority: 160; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华口腔医学会"
+    language: zh
+    department: 口腔科
+    admin_priority: 160
+    status: active
+    superseded_by: ""
 
   # === 皮肤科 (Dermatology) ===
   - id: cma-dermatology-2022
     name: "中国皮肤科临床诊疗指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华医学会皮肤性病学分会"; language: zh; department: 皮肤科
-    admin_priority: 165; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华医学会皮肤性病学分会"
+    language: zh
+    department: 皮肤科
+    admin_priority: 165
+    status: active
+    superseded_by: ""
 
   # === 介入治疗科 (Interventional) ===
   - id: cma-interventional-2022
     name: "中国介入治疗临床指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华医学会放射学分会介入学组"; language: zh; department: 介入治疗科
-    admin_priority: 170; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华医学会放射学分会介入学组"
+    language: zh
+    department: 介入治疗科
+    admin_priority: 170
+    status: active
+    superseded_by: ""
 
   # === 肾移植科 (Renal Transplant) ===
   - id: kdigo-transplant-2020
     name: "KDIGO Guideline on Kidney Transplant"
-    tier: L1; version: "2020"; publish_date: "2020-06-01"
-    publisher: "KDIGO"; language: en; department: 肾移植科
-    admin_priority: 175; status: active; superseded_by: ""
+    tier: L1
+    version: "2020"
+    publish_date: "2020-06-01"
+    publisher: "KDIGO"
+    language: en
+    department: 肾移植科
+    admin_priority: 175
+    status: active
+    superseded_by: ""
   - id: cma-transplant-2022
     name: "中国肾移植临床诊疗指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华医学会器官移植学分会"; language: zh; department: 肾移植科
-    admin_priority: 176; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华医学会器官移植学分会"
+    language: zh
+    department: 肾移植科
+    admin_priority: 176
+    status: active
+    superseded_by: ""
 
   # === 健康管理科 (Health Management) ===
   - id: cma-health-mgmt-2022
     name: "中国健康管理临床指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华医学会健康管理学分会"; language: zh; department: 健康管理科
-    admin_priority: 180; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华医学会健康管理学分会"
+    language: zh
+    department: 健康管理科
+    admin_priority: 180
+    status: active
+    superseded_by: ""
 
   # === 惠侨医疗中心 (Huigiao) ===
   - id: cma-huigiao-2022
     name: "惠侨医疗中心临床指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "南方医院惠侨医疗中心"; language: zh; department: 惠侨医疗中心
-    admin_priority: 190; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "南方医院惠侨医疗中心"
+    language: zh
+    department: 惠侨医疗中心
+    admin_priority: 190
+    status: active
+    superseded_by: ""
 
   # === 老年病科 (Geriatrics) ===
   - id: cma-geriatrics-2023
     name: "中国老年医学临床诊疗指南（2023）"
-    tier: L2; version: "2023"; publish_date: "2023-06-01"
-    publisher: "中华医学会老年医学分会"; language: zh; department: 老年病科
+    tier: L2
+    version: "2023"
+    publish_date: "2023-06-01"
+    publisher: "中华医学会老年医学分会"
+    language: zh
+    department: 老年病科
     original_pdf: "guidelines/originals/geriatrics-中国老年骨质疏松症诊疗指南（2023）.pdf"
     doi: "10.3969/j.issn.2095-9958.2023.10.01"
-    admin_priority: 195; status: active; superseded_by: ""
+    admin_priority: 195
+    status: active
+    superseded_by: ""
 
   # === 康复科 (Rehabilitation) ===
   - id: cma-rehabilitation-2022
     name: "中国康复医学临床诊疗指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "中华医学会物理医学与康复学分会"; language: zh; department: 康复科
-    admin_priority: 200; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "中华医学会物理医学与康复学分会"
+    language: zh
+    department: 康复科
+    admin_priority: 200
+    status: active
+    superseded_by: ""
 
   # === 精神心理科 (Psychiatry) ===
   - id: cma-psychiatry-2023
     name: "中国精神障碍防治指南（2023）"
-    tier: L2; version: "2023"; publish_date: "2023-06-01"
-    publisher: "中华医学会精神医学分会"; language: zh; department: 精神心理科
-    admin_priority: 205; status: active; superseded_by: ""
+    tier: L2
+    version: "2023"
+    publish_date: "2023-06-01"
+    publisher: "中华医学会精神医学分会"
+    language: zh
+    department: 精神心理科
+    admin_priority: 205
+    status: active
+    superseded_by: ""
 
   # === 中医科 (TCM) ===
   - id: natcm-tcm-2022
     name: "国家中医药临床诊疗指南（2022）"
-    tier: L2; version: "2022"; publish_date: "2022-06-01"
-    publisher: "国家中医药管理局"; language: zh; department: 中医科
-    admin_priority: 210; status: active; superseded_by: ""
+    tier: L2
+    version: "2022"
+    publish_date: "2022-06-01"
+    publisher: "国家中医药管理局"
+    language: zh
+    department: 中医科
+    admin_priority: 210
+    status: active
+    superseded_by: ""
 
   # === 跨科室共享指南 ===
   - id: accp-antithrombotic
     name: "ACCP Antithrombotic Therapy Guidelines"
-    tier: L1; version: "2024"; publish_date: "2024-01-15"
-    publisher: "ACCP"; language: en; department: 共享
-    admin_priority: 5; status: active; superseded_by: ""
+    tier: L1
+    version: "2024"
+    publish_date: "2024-01-15"
+    publisher: "ACCP"
+    language: en
+    department: 共享
+    admin_priority: 5
+    status: active
+    superseded_by: ""
   - id: dvp-consensus-2024
     name: "DVT预防中国专家共识（2024版）"
-    tier: L3; version: "2024"; publish_date: "2024-06-01"
-    publisher: "中华医学会骨科学分会"; language: zh; department: 共享
-    admin_priority: 10; status: active; superseded_by: ""
+    tier: L3
+    version: "2024"
+    publish_date: "2024-06-01"
+    publisher: "中华医学会骨科学分会"
+    language: zh
+    department: 共享
+    admin_priority: 10
+    status: active
+    superseded_by: ""
   - id: guangdong-province-standard
     name: "广东省骨科质控标准（2025）"
-    tier: L5; version: "2025"; publish_date: "2025-01-01"
-    publisher: "广东省骨科质控中心"; language: zh; department: 共享
-    admin_priority: 20; status: active; superseded_by: ""
+    tier: L5
+    version: "2025"
+    publish_date: "2025-01-01"
+    publisher: "广东省骨科质控中心"
+    language: zh
+    department: 共享
+    admin_priority: 20
+    status: active
+    superseded_by: ""

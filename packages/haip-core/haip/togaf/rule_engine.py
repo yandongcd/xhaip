@@ -22,12 +22,15 @@ Condition combinators: and, or (arrays of sub-conditions)
 
 from __future__ import annotations
 
+import logging
 import operator
 import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent  # xhaip root
 RULES_DIR = Path(os.environ.get(
@@ -104,7 +107,11 @@ class RuleEngine:
                     dept = data["department"]
                     self._rules.setdefault(dept, []).append(data)
                     count += 1
-            except Exception:
+            except Exception as exc:
+                logger.warning(
+                    "规则文件解析失败，已跳过: %s — %s: %s",
+                    yf, type(exc).__name__, exc,
+                )
                 continue
         self._loaded = True
         return count

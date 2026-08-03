@@ -4,7 +4,7 @@ version: 1.0.0
 type: specialist
 trust_tier: deep
 department: 麻醉科
-port: 8820
+port: 8822
 aliases:
 - 麻醉科
 - 麻醉评估

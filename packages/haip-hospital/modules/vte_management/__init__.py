@@ -27,6 +27,23 @@ def _get_patient(kwargs: dict, agent: KnowledgeAgent = _agent):
     return agent.get_patient_from_kwargs(kwargs)
 
 
+def _pick(labs: dict | None, *keys: str):
+    """取首个存在的检验值 — 大小写/连字符-下划线容错."""
+    if not labs:
+        return None
+    for k in keys:
+        if k in labs:
+            return labs[k]
+    norm: dict = {}
+    for k, v in labs.items():
+        norm[str(k).lower().replace("-", "_")] = v
+    for k in keys:
+        nk = str(k).lower().replace("-", "_")
+        if nk in norm:
+            return norm[nk]
+    return None
+
+
 # ── Caprini / Wells / Padua 风险评分 ──
 
 def _caprini_risk(surgery_type: str = "", age: int = 0, bmi: float = 0.0,
@@ -211,7 +228,7 @@ def assess_risk(patient_id: str = "", scenario: str = "surgery",
     dx = p.get("diagnosis", "")
     surgery_type = kwargs.get("surgery_type", "")
     labs = p.get("lab_results", {})
-    ddimer = float(labs.get("D-dimer", 0.5) or 0.5)
+    ddimer = float(_pick(labs, "D_Dimer", "D-dimer", "D_dimer", "D-Dimer") or 0.5)
     has_cancer = "癌" in dx or "肿瘤" in dx or "malignant" in dx.lower()
     has_vte = "血栓" in dx or "栓塞" in dx or "VTE" in dx.upper()
 

@@ -19,10 +19,16 @@ rules:
     description: eGFR < 60 或 肾损伤标志 ≥3月 → CKD
     condition:
       or:
-        - field: lab_results.eGFR; operator: "<"; value: 60
+        - field: lab_results.eGFR
+          operator: "<"
+          value: 60
         - and:
-          - field: lab_results.UACR; operator: ">="; value: 30
-          - field: lab_results.duration; operator: ">="; value: 3
+          - field: lab_results.UACR
+            operator: ">="
+            value: 30
+          - field: lab_results.duration
+            operator: ">="
+            value: 3
     result:
       diagnosis: 慢性肾脏病
       staging: CGA分期（病因-GFR-白蛋白尿）
@@ -30,25 +36,38 @@ rules:
   - id: ckd-gfr-stage
     description: CKD GFR分期
     condition:
-      field: diagnosis; operator: contains; value: CKD
+      field: diagnosis
+      operator: contains
+      value: CKD
     result:
       staging:
-        - stage: G1; criteria: "eGFR ≥90 + 肾损伤证据"
-        - stage: G2; criteria: "eGFR 60-89 + 肾损伤证据"
-        - stage: G3a; criteria: "eGFR 45-59"
-        - stage: G3b; criteria: "eGFR 30-44"
-        - stage: G4; criteria: "eGFR 15-29"
-        - stage: G5; criteria: "eGFR <15 或 透析"
+        - stage: G1
+          criteria: "eGFR ≥90 + 肾损伤证据"
+        - stage: G2
+          criteria: "eGFR 60-89 + 肾损伤证据"
+        - stage: G3a
+          criteria: "eGFR 45-59"
+        - stage: G3b
+          criteria: "eGFR 30-44"
+        - stage: G4
+          criteria: "eGFR 15-29"
+        - stage: G5
+          criteria: "eGFR <15 或 透析"
 
   - id: ckd-albuminuria
     description: CKD白蛋白尿分期
     condition:
-      field: diagnosis; operator: contains; value: CKD
+      field: diagnosis
+      operator: contains
+      value: CKD
     result:
       staging:
-        - stage: A1; criteria: "UACR <30 mg/g"
-        - stage: A2; criteria: "UACR 30-300 mg/g"
-        - stage: A3; criteria: "UACR >300 mg/g"
+        - stage: A1
+          criteria: "UACR <30 mg/g"
+        - stage: A2
+          criteria: "UACR 30-300 mg/g"
+        - stage: A3
+          criteria: "UACR >300 mg/g"
 
 ---
 rule_type: treatment
@@ -69,8 +88,12 @@ rules:
     description: RAAS抑制剂用于蛋白尿性CKD
     condition:
       and:
-        - field: diagnosis; operator: contains; value: CKD
-        - field: lab_results.UACR; operator: ">="; value: 30
+        - field: diagnosis
+          operator: contains
+          value: CKD
+        - field: lab_results.UACR
+          operator: ">="
+          value: 30
     result:
       treatment: ACEI/ARB
       medications:
@@ -82,8 +105,12 @@ rules:
     description: SGLT2i用于CKD
     condition:
       and:
-        - field: diagnosis; operator: contains; value: CKD
-        - field: lab_results.eGFR; operator: ">="; value: 20
+        - field: diagnosis
+          operator: contains
+          value: CKD
+        - field: lab_results.eGFR
+          operator: ">="
+          value: 20
     result:
       treatment: SGLT2i
       medications:
@@ -94,7 +121,9 @@ rules:
   - id: ckd-bp-target
     description: CKD降压目标
     condition:
-      field: diagnosis; operator: contains; value: CKD
+      field: diagnosis
+      operator: contains
+      value: CKD
     result:
       target_bp: "<120 mmHg (SBP, 标准化测量)"
       medications_first_line:
@@ -106,8 +135,12 @@ rules:
     description: 肾性贫血管理
     condition:
       and:
-        - field: diagnosis; operator: contains; value: CKD
-        - field: lab_results.Hb; operator: "<"; value: 110
+        - field: diagnosis
+          operator: contains
+          value: CKD
+        - field: lab_results.Hb
+          operator: "<"
+          value: 110
     result:
       target_hb: "100-115 g/L (ESA治疗); 110-120 g/L (HIF-PHI)"
       treatment:
@@ -119,8 +152,12 @@ rules:
     description: CKD矿物质骨异常
     condition:
       and:
-        - field: diagnosis; operator: contains; value: CKD
-        - field: lab_results.eGFR; operator: "<"; value: 45
+        - field: diagnosis
+          operator: contains
+          value: CKD
+        - field: lab_results.eGFR
+          operator: "<"
+          value: 45
     result:
       monitoring:
         - "血钙/磷/PTH: G3a起每6-12月; G4起每3-6月; G5每1-3月"
@@ -147,13 +184,23 @@ rules:
   - id: ckd-followup
     description: CKD分层随访
     condition:
-      field: diagnosis; operator: contains; value: CKD
+      field: diagnosis
+      operator: contains
+      value: CKD
     result:
       followup_schedule:
-        - stage: G1-G2; frequency: 每年; items: "eGFR/UACR/BP"
-        - stage: G3a-G3b; frequency: 每6月; items: "eGFR/UACR/BP/Ca/P/K"
-        - stage: G4; frequency: 每3月; items: "eGFR/UACR/BP/Ca/P/K/Hb/HCO3"
-        - stage: G5; frequency: 每1-2月; items: "全面评估 + RRT教育"
+        - stage: G1-G2
+          frequency: 每年
+          items: "eGFR/UACR/BP"
+        - stage: G3a-G3b
+          frequency: 每6月
+          items: "eGFR/UACR/BP/Ca/P/K"
+        - stage: G4
+          frequency: 每3月
+          items: "eGFR/UACR/BP/Ca/P/K/Hb/HCO3"
+        - stage: G5
+          frequency: 每1-2月
+          items: "全面评估 + RRT教育"
       red_flags:
         - eGFR下降>5 mL/min/年
         - 血钾>5.5 mmol/L
@@ -163,8 +210,12 @@ rules:
     description: 肾脏替代治疗转诊指征
     condition:
       and:
-        - field: diagnosis; operator: contains; value: CKD
-        - field: lab_results.eGFR; operator: "<"; value: 20
+        - field: diagnosis
+          operator: contains
+          value: CKD
+        - field: lab_results.eGFR
+          operator: "<"
+          value: 20
     result:
       recommendation: "转诊肾科评估RRT方案"
       timing: "eGFR 15-20 开始准备（造瘘/PD导管）；eGFR<10 启动透析"

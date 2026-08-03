@@ -17,6 +17,23 @@ _GUIDELINES = [
 ]
 _agent.rule_engine.load_all()
 
+
+def _pick(labs: dict | None, *keys: str):
+    """取首个存在的检验值 — 大小写/连字符-下划线容错."""
+    if not labs:
+        return None
+    for k in keys:
+        if k in labs:
+            return labs[k]
+    norm: dict = {}
+    for k, v in labs.items():
+        norm[str(k).lower().replace("-", "_")] = v
+    for k in keys:
+        nk = str(k).lower().replace("-", "_")
+        if nk in norm:
+            return norm[nk]
+    return None
+
 # ICD-10 → CVD event mapping
 CVD_ICD_CODES = {
     "AMI": ["I21", "I22"], "STEMI": ["I21.0", "I21.1", "I21.2", "I21.3"],
@@ -64,7 +81,7 @@ def event_identify(**kwargs) -> dict:
         events.append({"event": "心房颤动(AF)", "type": "arrhythmia", "severity": "medium"})
 
     # Lab evidence
-    troponin = float(labs.get("troponin", 0) or 0)
+    troponin = float(_pick(labs, "troponin", "Troponin", "cTnI", "hsTnI") or 0)
     if troponin > 0.5 and not events:
         events.append({"event": "疑似心肌损伤(troponin升高)", "type": "cardiac", "severity": "pending"})
 

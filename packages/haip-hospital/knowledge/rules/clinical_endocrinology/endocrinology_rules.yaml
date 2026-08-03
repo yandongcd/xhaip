@@ -18,7 +18,9 @@ rules:
   - id: dm-diagnose-fpg
     description: 空腹血糖 ≥7.0 mmol/L → 糖尿病
     condition:
-      field: lab_results.FPG; operator: ">="; value: 7.0
+      field: lab_results.FPG
+      operator: ">="
+      value: 7.0
     result:
       diagnosis: 糖尿病
       criteria: 空腹血糖
@@ -26,7 +28,9 @@ rules:
   - id: dm-diagnose-ogtt
     description: OGTT 2h ≥11.1 mmol/L → 糖尿病
     condition:
-      field: lab_results.OGTT_2h; operator: ">="; value: 11.1
+      field: lab_results.OGTT_2h
+      operator: ">="
+      value: 11.1
     result:
       diagnosis: 糖尿病
       criteria: OGTT 2h 血糖
@@ -34,7 +38,9 @@ rules:
   - id: dm-diagnose-hba1c
     description: HbA1c ≥6.5% → 糖尿病
     condition:
-      field: lab_results.HbA1c; operator: ">="; value: 6.5
+      field: lab_results.HbA1c
+      operator: ">="
+      value: 6.5
     result:
       diagnosis: 糖尿病
       criteria: HbA1c
@@ -44,11 +50,19 @@ rules:
     condition:
       or:
         - and:
-          - field: lab_results.FPG; operator: ">="; value: 6.1
-          - field: lab_results.FPG; operator: "<"; value: 7.0
+          - field: lab_results.FPG
+            operator: ">="
+            value: 6.1
+          - field: lab_results.FPG
+            operator: "<"
+            value: 7.0
         - and:
-          - field: lab_results.OGTT_2h; operator: ">="; value: 7.8
-          - field: lab_results.OGTT_2h; operator: "<"; value: 11.1
+          - field: lab_results.OGTT_2h
+            operator: ">="
+            value: 7.8
+          - field: lab_results.OGTT_2h
+            operator: "<"
+            value: 11.1
     result:
       diagnosis: 糖尿病前期
       recommendation: 生活方式干预/年度筛查
@@ -57,9 +71,15 @@ rules:
     description: 糖尿病分型判断
     condition:
       or:
-        - field: diagnosis; operator: contains; value: 1型糖尿病
-        - field: diagnosis; operator: contains; value: 2型糖尿病
-        - field: diagnosis; operator: contains; value: 妊娠期糖尿病
+        - field: diagnosis
+          operator: contains
+          value: 1型糖尿病
+        - field: diagnosis
+          operator: contains
+          value: 2型糖尿病
+        - field: diagnosis
+          operator: contains
+          value: 妊娠期糖尿病
     result:
       actions:
         - GAD抗体检测 (疑1型)
@@ -85,7 +105,9 @@ rules:
   - id: dm-lifestyle
     description: 糖尿病生活方式干预
     condition:
-      field: diagnosis; operator: contains; value: 糖尿病
+      field: diagnosis
+      operator: contains
+      value: 糖尿病
     result:
       treatment: 生活方式干预
       interventions:
@@ -97,7 +119,9 @@ rules:
   - id: dm-target-hba1c
     description: 血糖控制目标
     condition:
-      field: diagnosis; operator: contains; value: 糖尿病
+      field: diagnosis
+      operator: contains
+      value: 糖尿病
     result:
       target_hba1c: "<7.0% (一般); <6.5% (年轻/病程短); <8.0% (老年/合并症多)"
       target_fpg: "4.4-7.0 mmol/L"
@@ -107,8 +131,12 @@ rules:
     description: 二甲双胍一线治疗
     condition:
       and:
-        - field: diagnosis; operator: contains; value: 2型糖尿病
-        - field: eGFR; operator: ">="; value: 30
+        - field: diagnosis
+          operator: contains
+          value: 2型糖尿病
+        - field: eGFR
+          operator: ">="
+          value: 30
     result:
       treatment: 二甲双胍
       dose: "起始500mg bid，逐渐增至2000mg/天"
@@ -120,11 +148,19 @@ rules:
     description: ASCVD/CKD患者优选SGLT2i/GLP-1RA
     condition:
       and:
-        - field: diagnosis; operator: contains; value: 2型糖尿病
+        - field: diagnosis
+          operator: contains
+          value: 2型糖尿病
         - or:
-          - field: diagnosis; operator: contains; value: 心血管疾病
-          - field: diagnosis; operator: contains; value: 心力衰竭
-          - field: diagnosis; operator: contains; value: 慢性肾脏病
+          - field: diagnosis
+            operator: contains
+            value: 心血管疾病
+          - field: diagnosis
+            operator: contains
+            value: 心力衰竭
+          - field: diagnosis
+            operator: contains
+            value: 慢性肾脏病
     result:
       treatment: SGLT2i / GLP-1RA 优先
       medications:
@@ -137,11 +173,19 @@ rules:
     condition:
       or:
         - and:
-          - field: lab_results.HbA1c; operator: ">="; value: 9.0
-          - field: diagnosis; operator: contains; value: 新诊断
+          - field: lab_results.HbA1c
+            operator: ">="
+            value: 9.0
+          - field: diagnosis
+            operator: contains
+            value: 新诊断
         - and:
-          - field: lab_results.HbA1c; operator: ">="; value: 8.5
-          - field: treatment_history.oral_drugs_failed; operator: equals; value: true
+          - field: lab_results.HbA1c
+            operator: ">="
+            value: 8.5
+          - field: treatment_history.oral_drugs_failed
+            operator: equals
+            value: true
     result:
       treatment: 胰岛素起始治疗
       regimen: 基础胰岛素 (甘精/德谷) + 二甲双胍
@@ -150,14 +194,21 @@ rules:
   - id: dm-complication-screen
     description: 糖尿病并发症筛查
     condition:
-      field: diagnosis; operator: contains; value: 糖尿病
+      field: diagnosis
+      operator: contains
+      value: 糖尿病
     result:
       screenings:
-        - item: 眼底检查; frequency: 每年1次
-        - item: 尿微量白蛋白/肌酐比值; frequency: 每年1次
-        - item: 血肌酐/eGFR; frequency: 每年1-2次
-        - item: 足部检查; frequency: 每次随访
-        - item: 心电图; frequency: 每年1次
+        - item: 眼底检查
+          frequency: 每年1次
+        - item: 尿微量白蛋白/肌酐比值
+          frequency: 每年1次
+        - item: 血肌酐/eGFR
+          frequency: 每年1-2次
+        - item: 足部检查
+          frequency: 每次随访
+        - item: 心电图
+          frequency: 每年1次
 
 ---
 rule_type: acute_care
@@ -179,9 +230,15 @@ rules:
     description: 糖尿病酮症酸中毒识别
     condition:
       and:
-        - field: diagnosis; operator: contains; value: 糖尿病
-        - field: lab_results.ketone; operator: ">="; value: 3.0
-        - field: lab_results.pH; operator: "<"; value: 7.3
+        - field: diagnosis
+          operator: contains
+          value: 糖尿病
+        - field: lab_results.ketone
+          operator: ">="
+          value: 3.0
+        - field: lab_results.pH
+          operator: "<"
+          value: 7.3
     result:
       diagnosis: 糖尿病酮症酸中毒
       severity: 危重
@@ -196,9 +253,15 @@ rules:
     description: 高血糖高渗状态识别
     condition:
       and:
-        - field: diagnosis; operator: contains; value: 糖尿病
-        - field: lab_results.glucose; operator: ">="; value: 33.3
-        - field: lab_results.osmolarity; operator: ">="; value: 320
+        - field: diagnosis
+          operator: contains
+          value: 糖尿病
+        - field: lab_results.glucose
+          operator: ">="
+          value: 33.3
+        - field: lab_results.osmolarity
+          operator: ">="
+          value: 320
     result:
       diagnosis: 高血糖高渗状态
       severity: 危重
@@ -223,10 +286,13 @@ rules:
   - id: dm-followup-3m
     description: 糖尿病3个月随访
     condition:
-      field: diagnosis; operator: contains; value: 糖尿病
+      field: diagnosis
+      operator: contains
+      value: 糖尿病
     result:
       followup_schedule:
-        - time: 每3个月; items:
+        - time: 每3个月
+          items:
           - HbA1c
           - 空腹/餐后血糖
           - 体重/BMI
@@ -237,7 +303,9 @@ rules:
   - id: dm-followup-annual
     description: 糖尿病年度全面评估
     condition:
-      field: diagnosis; operator: contains; value: 糖尿病
+      field: diagnosis
+      operator: contains
+      value: 糖尿病
     result:
       annual_review:
         - 血脂全套

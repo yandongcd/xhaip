@@ -28,6 +28,23 @@ _GUIDELINES = [
 _agent.rule_engine.load_all()
 
 
+def _pick(labs: dict | None, *keys: str):
+    """取首个存在的检验值 — 大小写/连字符-下划线容错."""
+    if not labs:
+        return None
+    for k in keys:
+        if k in labs:
+            return labs[k]
+    norm: dict = {}
+    for k, v in labs.items():
+        norm[str(k).lower().replace("-", "_")] = v
+    for k in keys:
+        nk = str(k).lower().replace("-", "_")
+        if nk in norm:
+            return norm[nk]
+    return None
+
+
 # ═══════════════════════════════════════════════════════════
 # RCRI Risk Factors
 # ═══════════════════════════════════════════════════════════
@@ -112,8 +129,8 @@ def evaluate(
     # Resolve lab values: explicit params take precedence over patient data
     cr = labs.get("creatinine", labs.get("Cr",
         lab_results.get("creatinine", lab_results.get("Cr", 0))))
-    troponin = labs.get("troponin", labs.get("cTnI",
-        lab_results.get("troponin", 0)))
+    troponin = _pick(labs, "troponin", "Troponin", "cTnI", "hsTnI") or \
+        _pick(lab_results, "troponin", "Troponin", "cTnI", "hsTnI") or 0
     ckmb = labs.get("ckmb", labs.get("CK-MB", 0))
 
     past = patient.get("past_history", "")
@@ -259,7 +276,7 @@ def evaluate_mi(
 
     # Resolve troponin: explicit param > patient lab_results
     if not troponin:
-        troponin = float(lab_results.get("troponin", 0))
+        troponin = float(_pick(lab_results, "troponin", "Troponin", "cTnI", "hsTnI") or 0)
 
     past = patient.get("past_history", "")
     diagnosis = patient.get("diagnosis", "")

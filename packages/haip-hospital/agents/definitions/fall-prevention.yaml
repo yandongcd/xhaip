@@ -1,0 +1,47 @@
+name: fall-prevention
+cn_name: 住院患者跌倒防护智能体
+version: 1.0.0
+type: business
+trust_tier: standard
+department: 护理部
+port: 8863
+aliases:
+- 跌倒防护
+- 跌倒预防
+- fall prevention
+prompt:
+  system: 你是南方医院护理部跌倒防护AI助手。请基于Morse/Hendrich II跌倒风险评估模型，对住院患者进行跌倒风险评估和个性化防护建议。所有评估结果须经责任护士确认。
+  temperature: 0.2
+tools:
+- name: morse_assess
+  description: Morse跌倒风险评估 — 6因素评分 + 风险分级
+  handler: fall_prevention.morse_assess
+  input:
+    patient_id: str
+- name: prevention_plan
+  description: 个性化跌倒防护方案 — 环境/行为/药物/教育多维度
+  handler: fall_prevention.prevention_plan
+  input:
+    patient_id: str
+    morse_score: int
+    risk_level: str
+- name: postop_check
+  description: 术后麻醉恢复期跌倒风险评估 — 麻醉后24h高危窗口
+  handler: fall_prevention.postop_check
+  input:
+    patient_id: str
+    surgery_date: str
+    anesthesia_type: str
+guard:
+  triggers:
+  - 跌倒高危
+  - 麻醉后跌倒
+  - 步态不稳
+  high_risk_scenarios:
+  - Morse>45
+  - 术后24h+步态不稳
+  - 跌倒史+高龄
+  citation:
+    required: true
+    min_sources: 1
+    min_trust: T1

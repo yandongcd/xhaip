@@ -202,7 +202,7 @@ drugs:
     timing: "手术结束前"
     route: [IV]
     contraindications: [QTc延长, 低钾, 低镁, 重症肌无力, 锥体外系疾病, 帕金森病, 终末期肾病]
-    side_effects: [QT间期延长(短暂性), 锥体外系症状(儿童年长史, >50-75μg/kg), 镇静]
+    side_effects: [QT间期延长(短暂性), "锥体外系症状(儿童年长史, >50-75μg/kg)", 镇静]
     fda_black_box: "2001年FDA对大剂量(>25mg)心源性猝死风险发出黑框警告，小剂量用于PONV被认为是安全的"
     evidence_level: moderate
     guideline_refs: [R14.3]

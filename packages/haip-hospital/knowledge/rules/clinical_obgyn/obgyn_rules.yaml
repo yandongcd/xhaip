@@ -201,9 +201,12 @@ rules:
       value: postpartum
     result:
       followup_schedule:
-        - time: 产后 7 天; items: "切口/会阴愈合 + 子宫复旧 + 泌乳评估"
-        - time: 产后 42 天; items: "盆底功能 + 产后抑郁筛查 (EPDS) + 避孕指导 + 子宫 B 超"
-        - time: 产后 3 个月; items: "贫血纠正 + 甲状腺功能复查 (妊娠期甲减)"
+        - time: 产后 7 天
+          items: "切口/会阴愈合 + 子宫复旧 + 泌乳评估"
+        - time: 产后 42 天
+          items: "盆底功能 + 产后抑郁筛查 (EPDS) + 避孕指导 + 子宫 B 超"
+        - time: 产后 3 个月
+          items: "贫血纠正 + 甲状腺功能复查 (妊娠期甲减)"
       red_flags:
         - 产后出血 > 1000mL → 住院观察
         - EPDS 评分 ≥ 13 → 精神科会诊
@@ -221,7 +224,10 @@ rules:
           value: 25
     result:
       screening_schedule:
-        - method: "HPV 初筛 (25-64岁)"; interval: "每 5 年"
-        - method: "TCT+HPV 联合 (30-64岁)"; interval: "每 5 年"
-        - method: "TCT 单独 (25-29岁)"; interval: "每 3 年"
+        - method: "HPV 初筛 (25-64岁)"
+          interval: "每 5 年"
+        - method: "TCT+HPV 联合 (30-64岁)"
+          interval: "每 5 年"
+        - method: "TCT 单独 (25-29岁)"
+          interval: "每 3 年"
       stop: "65 岁以上既往筛查充分可停止"

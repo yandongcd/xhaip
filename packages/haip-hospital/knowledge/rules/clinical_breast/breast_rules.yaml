@@ -6,7 +6,7 @@ business_process: bp-breast-diagnosis
 data_entities:
   consumes: [de-patient, de-imaging, de-pathology, de-lab-tumor]
   produces: [de-diagnosis-result]
-guideline: NCCN Guidelines: Breast Cancer (2023) / 中国乳腺癌诊疗指南 (2022)
+guideline: "NCCN Guidelines: Breast Cancer (2023) / 中国乳腺癌诊疗指南 (2022)"
 stakeholder: 乳腺外科医师需根据影像与病理制定个体化治疗方案
 version: "1.0.0"
 
@@ -78,7 +78,7 @@ business_process: bp-breast-treatment
 data_entities:
   consumes: [de-patient, de-pathology, de-imaging]
   produces: [de-treatment-plan]
-guideline: NCCN Guidelines: Breast Cancer (2023) / 中国乳腺癌诊疗指南 (2022)
+guideline: "NCCN Guidelines: Breast Cancer (2023) / 中国乳腺癌诊疗指南 (2022)"
 stakeholder: 乳腺外科医师制定手术及系统治疗方案
 version: "1.0.0"
 
@@ -160,7 +160,7 @@ business_process: bp-breast-followup
 data_entities:
   consumes: [de-patient, de-imaging, de-lab-tumor]
   produces: [de-followup-plan]
-guideline: NCCN Guidelines: Breast Cancer Survivorship (2023)
+guideline: "NCCN Guidelines: Breast Cancer Survivorship (2023)"
 stakeholder: 乳腺外科医师需制定长期随访计划
 version: "1.0.0"
 

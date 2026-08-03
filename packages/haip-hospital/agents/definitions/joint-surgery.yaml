@@ -3,7 +3,7 @@ cn_name: 关节与骨病外科智能体
 version: 1.0.0
 type: business
 department: 关节与骨病外科
-port: 8843
+port: 8861
 aliases:
 - 关节外科
 - 关节骨科

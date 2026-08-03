@@ -19,6 +19,23 @@ _GUIDELINES = [
 _agent.rule_engine.load_all()
 
 
+def _pick(labs: dict | None, *keys: str):
+    """取首个存在的检验值 — 大小写/连字符-下划线容错."""
+    if not labs:
+        return None
+    for k in keys:
+        if k in labs:
+            return labs[k]
+    norm: dict = {}
+    for k, v in labs.items():
+        norm[str(k).lower().replace("-", "_")] = v
+    for k in keys:
+        nk = str(k).lower().replace("-", "_")
+        if nk in norm:
+            return norm[nk]
+    return None
+
+
 _CLAVIEN_DINDO = {
     "I": "偏离正常恢复, 无需药物/手术/内镜/介入干预 (允许: 止吐/退热/止痛/利尿/电解质/理疗, 床旁切口敞开)",
     "II": "需药物治疗: 输血/TPN/抗生素/抗凝(不包括Grade I允许的药物)",
@@ -159,8 +176,8 @@ def complication_scan(patient_id: str = "", postop_day: int = 1,
     crp = float(labs.get("crp", 20) or 20)
     hb = float(labs.get("hb", 120) or 120)
     cr = float(labs.get("creatinine", 80) or 80)
-    amylase = float(labs.get("amylase", 50) or 50)
-    troponin = float(labs.get("troponin", 0.01) or 0.01)
+    amylase = float(_pick(labs, "amylase", "Amylase") or 50)
+    troponin = float(_pick(labs, "troponin", "Troponin", "cTnI", "hsTnI") or 0.01)
     albumin = float(labs.get("albumin", 35) or 35)
     plt = float(labs.get("platelet", 200) or 200)
     inr = float(labs.get("INR", 1.0) or 1.0)
@@ -180,7 +197,7 @@ def complication_scan(patient_id: str = "", postop_day: int = 1,
             findings.append({
                 "complication": _COMPLICATION_CRITERIA["pancreatic_fistula"],
                 "grade": "II",
-                "evidence": [f"引流液淀粉酶={amylase} (>3xULN)", f"CRP={crp} (>150)", f"WBC={wbc} (>12)"],
+                "evidence": [f"血清淀粉酶={amylase} (>3xULN对照; 引流液标准)", f"CRP={crp} (>150)", f"WBC={wbc} (>12)"],
             })
             overall_grade = max_grade(overall_grade, "II")
         else:

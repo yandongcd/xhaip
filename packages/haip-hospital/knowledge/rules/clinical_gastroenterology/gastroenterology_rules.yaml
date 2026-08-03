@@ -19,9 +19,15 @@ rules:
     description: H.pylori检测指征
     condition:
       or:
-        - field: symptoms; operator: contains; value: 上腹痛
-        - field: symptoms; operator: contains; value: 腹胀
-        - field: symptoms; operator: contains; value: 消化不良
+        - field: symptoms
+          operator: contains
+          value: 上腹痛
+        - field: symptoms
+          operator: contains
+          value: 腹胀
+        - field: symptoms
+          operator: contains
+          value: 消化不良
     result:
       test: H.pylori检测
       methods:
@@ -32,7 +38,9 @@ rules:
   - id: gastritis-classify
     description: 慢性胃炎分类
     condition:
-      field: endoscopy; operator: contains; value: 胃炎
+      field: endoscopy
+      operator: contains
+      value: 胃炎
     result:
       classification:
         - 慢性非萎缩性胃炎 (CNAG)
@@ -43,7 +51,9 @@ rules:
   - id: gastritis-olga
     description: OLGA/OLGIM分期评估
     condition:
-      field: endoscopy; operator: contains; value: 萎缩
+      field: endoscopy
+      operator: contains
+      value: 萎缩
     result:
       staging: "OLGA III-IV期或OLGIM III-IV期为胃癌高风险"
       followup: "OLGA II+ → 每1-3年胃镜监测"
@@ -66,7 +76,9 @@ rules:
   - id: hp-eradication
     description: H.pylori根除治疗（铋剂四联）
     condition:
-      field: lab_results.Hp; operator: equals; value: positive
+      field: lab_results.Hp
+      operator: equals
+      value: positive
     result:
       treatment: 铋剂四联疗法 14天
       regimen:
@@ -80,7 +92,9 @@ rules:
   - id: gastritis-symptom
     description: 慢性胃炎对症治疗
     condition:
-      field: diagnosis; operator: contains; value: 胃炎
+      field: diagnosis
+      operator: contains
+      value: 胃炎
     result:
       treatment: 对症治疗
       medications:
@@ -92,7 +106,9 @@ rules:
   - id: peptic-ulcer
     description: 消化性溃疡治疗
     condition:
-      field: diagnosis; operator: contains; value: 溃疡
+      field: diagnosis
+      operator: contains
+      value: 溃疡
     result:
       treatment: PPI + Hp根除
       medications:
@@ -121,21 +137,31 @@ rules:
     description: 萎缩性胃炎内镜监测
     condition:
       and:
-        - field: diagnosis; operator: contains; value: 萎缩性胃炎
-        - field: pathology.OLGA; operator: ">="; value: 2
+        - field: diagnosis
+          operator: contains
+          value: 萎缩性胃炎
+        - field: pathology.OLGA
+          operator: ">="
+          value: 2
     result:
       surveillance:
-        - risk: OLGA I-II; interval: 每3年
-        - risk: OLGA III-IV; interval: 每1-2年
-        - risk: 低级别上皮内瘤变; interval: 每6-12月
-        - risk: 高级别上皮内瘤变; action: 立即ESD
+        - risk: OLGA I-II
+          interval: 每3年
+        - risk: OLGA III-IV
+          interval: 每1-2年
+        - risk: 低级别上皮内瘤变
+          interval: 每6-12月
+        - risk: 高级别上皮内瘤变
+          action: 立即ESD
       red_flags:
         - 新发消瘦/贫血/黑便 → 紧急胃镜
 
   - id: hp-retest
     description: Hp根除后复查
     condition:
-      field: treatment; operator: contains; value: 根除Hp
+      field: treatment
+      operator: contains
+      value: 根除Hp
     result:
       retest: 停药≥4周后C13/C14呼气试验
       actions:

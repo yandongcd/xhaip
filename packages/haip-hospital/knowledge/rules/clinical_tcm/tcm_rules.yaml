@@ -109,12 +109,24 @@ rules:
     result:
       assessment: 心系病证
       syndromes:
-        - pattern: 心气虚; key: 心悸+气短+自汗+脉弱; treatment: 养心汤 / 炙甘草汤
-        - pattern: 心血虚; key: 心悸+健忘+失眠+面白+脉细; treatment: 归脾汤
-        - pattern: 心阴虚; key: 心悸+心烦+失眠+盗汗+舌红少苔; treatment: 天王补心丹
-        - pattern: 心阳虚; key: 心悸+畏寒肢冷+面浮+脉沉迟; treatment: 桂枝甘草龙骨牡蛎汤
-        - pattern: 心火亢盛; key: 心烦+口舌生疮+尿赤+舌尖红; treatment: 导赤散 / 黄连解毒汤
-        - pattern: 心脉痹阻; key: 胸闷痛+痛引肩背+唇舌紫暗+脉涩; treatment: 血府逐瘀汤
+        - pattern: 心气虚
+          key: 心悸+气短+自汗+脉弱
+          treatment: 养心汤 / 炙甘草汤
+        - pattern: 心血虚
+          key: 心悸+健忘+失眠+面白+脉细
+          treatment: 归脾汤
+        - pattern: 心阴虚
+          key: 心悸+心烦+失眠+盗汗+舌红少苔
+          treatment: 天王补心丹
+        - pattern: 心阳虚
+          key: 心悸+畏寒肢冷+面浮+脉沉迟
+          treatment: 桂枝甘草龙骨牡蛎汤
+        - pattern: 心火亢盛
+          key: 心烦+口舌生疮+尿赤+舌尖红
+          treatment: 导赤散 / 黄连解毒汤
+        - pattern: 心脉痹阻
+          key: 胸闷痛+痛引肩背+唇舌紫暗+脉涩
+          treatment: 血府逐瘀汤
 
   - id: tcm-zangfu-liver
     description: 脏腑辨证 — 肝系病证
@@ -125,12 +137,24 @@ rules:
     result:
       assessment: 肝系病证
       syndromes:
-        - pattern: 肝气郁结; key: 胁肋胀痛+善太息+脉弦; treatment: 柴胡疏肝散
-        - pattern: 肝火上炎; key: 头痛目赤+口苦+急躁易怒+舌红苔黄脉弦数; treatment: 龙胆泻肝汤
-        - pattern: 肝阳上亢; key: 眩晕耳鸣+头胀痛+腰膝酸软+脉弦细数; treatment: 天麻钩藤饮
-        - pattern: 肝血虚; key: 头晕眼花+视力减退+肢麻+爪甲不荣; treatment: 四物汤 / 补肝汤
-        - pattern: 肝阴虚; key: 头晕+目涩+胁隐痛+舌红少津; treatment: 一贯煎
-        - pattern: 肝风内动; key: 眩晕欲仆+肢麻震颤+舌强语謇; treatment: 镇肝熄风汤
+        - pattern: 肝气郁结
+          key: 胁肋胀痛+善太息+脉弦
+          treatment: 柴胡疏肝散
+        - pattern: 肝火上炎
+          key: 头痛目赤+口苦+急躁易怒+舌红苔黄脉弦数
+          treatment: 龙胆泻肝汤
+        - pattern: 肝阳上亢
+          key: 眩晕耳鸣+头胀痛+腰膝酸软+脉弦细数
+          treatment: 天麻钩藤饮
+        - pattern: 肝血虚
+          key: 头晕眼花+视力减退+肢麻+爪甲不荣
+          treatment: 四物汤 / 补肝汤
+        - pattern: 肝阴虚
+          key: 头晕+目涩+胁隐痛+舌红少津
+          treatment: 一贯煎
+        - pattern: 肝风内动
+          key: 眩晕欲仆+肢麻震颤+舌强语謇
+          treatment: 镇肝熄风汤
 
   - id: tcm-zangfu-spleen
     description: 脏腑辨证 — 脾系病证
@@ -141,12 +165,24 @@ rules:
     result:
       assessment: 脾系病证
       syndromes:
-        - pattern: 脾气虚; key: 食少+腹胀+便溏+乏力+舌淡; treatment: 四君子汤
-        - pattern: 脾阳虚; key: 腹胀+冷痛+下利清谷+形寒; treatment: 理中丸
-        - pattern: 脾气下陷; key: 脘腹坠胀+久泻脱肛+内脏下垂; treatment: 补中益气汤
-        - pattern: 脾不统血; key: 便血/崩漏+面色萎黄+舌淡; treatment: 归脾汤
-        - pattern: 寒湿困脾; key: 脘痞+头身困重+苔白腻; treatment: 藿香正气散 / 平胃散
-        - pattern: 湿热蕴脾; key: 脘痞+口苦+身黄+苔黄腻; treatment: 茵陈蒿汤
+        - pattern: 脾气虚
+          key: 食少+腹胀+便溏+乏力+舌淡
+          treatment: 四君子汤
+        - pattern: 脾阳虚
+          key: 腹胀+冷痛+下利清谷+形寒
+          treatment: 理中丸
+        - pattern: 脾气下陷
+          key: 脘腹坠胀+久泻脱肛+内脏下垂
+          treatment: 补中益气汤
+        - pattern: 脾不统血
+          key: 便血/崩漏+面色萎黄+舌淡
+          treatment: 归脾汤
+        - pattern: 寒湿困脾
+          key: 脘痞+头身困重+苔白腻
+          treatment: 藿香正气散 / 平胃散
+        - pattern: 湿热蕴脾
+          key: 脘痞+口苦+身黄+苔黄腻
+          treatment: 茵陈蒿汤
 
   - id: tcm-zangfu-lung
     description: 脏腑辨证 — 肺系病证
@@ -157,12 +193,24 @@ rules:
     result:
       assessment: 肺系病证
       syndromes:
-        - pattern: 肺气虚; key: 咳喘无力+气短+自汗+易感冒; treatment: 玉屏风散 / 补肺汤
-        - pattern: 肺阴虚; key: 干咳少痰+潮热盗汗+舌红少苔; treatment: 百合固金汤
-        - pattern: 风寒束肺; key: 咳嗽+痰白稀+恶寒发热+脉浮紧; treatment: 麻黄汤 / 三拗汤
-        - pattern: 风热犯肺; key: 咳嗽+痰黄稠+咽痛+脉浮数; treatment: 银翘散 / 桑菊饮
-        - pattern: 痰热壅肺; key: 咳喘+痰黄黏+胸痛+舌红苔黄腻; treatment: 清气化痰丸
-        - pattern: 痰湿阻肺; key: 咳喘+痰多白黏+胸闷+苔白腻; treatment: 二陈汤 / 三子养亲汤
+        - pattern: 肺气虚
+          key: 咳喘无力+气短+自汗+易感冒
+          treatment: 玉屏风散 / 补肺汤
+        - pattern: 肺阴虚
+          key: 干咳少痰+潮热盗汗+舌红少苔
+          treatment: 百合固金汤
+        - pattern: 风寒束肺
+          key: 咳嗽+痰白稀+恶寒发热+脉浮紧
+          treatment: 麻黄汤 / 三拗汤
+        - pattern: 风热犯肺
+          key: 咳嗽+痰黄稠+咽痛+脉浮数
+          treatment: 银翘散 / 桑菊饮
+        - pattern: 痰热壅肺
+          key: 咳喘+痰黄黏+胸痛+舌红苔黄腻
+          treatment: 清气化痰丸
+        - pattern: 痰湿阻肺
+          key: 咳喘+痰多白黏+胸闷+苔白腻
+          treatment: 二陈汤 / 三子养亲汤
 
   - id: tcm-zangfu-kidney
     description: 脏腑辨证 — 肾系病证
@@ -173,12 +221,24 @@ rules:
     result:
       assessment: 肾系病证
       syndromes:
-        - pattern: 肾阳虚; key: 腰膝冷痛+畏寒肢冷+阳痿/宫寒+夜尿多+脉沉弱; treatment: 金匮肾气丸 / 右归丸
-        - pattern: 肾阴虚; key: 腰膝酸软+头晕耳鸣+五心烦热+舌红少苔; treatment: 六味地黄丸 / 左归丸
-        - pattern: 肾精不足; key: 发育迟缓/早衰+齿摇发脱+健忘; treatment: 河车大造丸
-        - pattern: 肾气不固; key: 滑精早泄+尿频遗尿+白带清稀; treatment: 金锁固精丸 / 缩泉丸
-        - pattern: 肾不纳气; key: 咳喘+呼多吸少+动则喘甚+腰膝酸软; treatment: 人参蛤蚧散 / 七味都气丸
-        - pattern: 膀胱湿热; key: 尿频急痛+尿黄赤+舌红苔黄腻; treatment: 八正散
+        - pattern: 肾阳虚
+          key: 腰膝冷痛+畏寒肢冷+阳痿/宫寒+夜尿多+脉沉弱
+          treatment: 金匮肾气丸 / 右归丸
+        - pattern: 肾阴虚
+          key: 腰膝酸软+头晕耳鸣+五心烦热+舌红少苔
+          treatment: 六味地黄丸 / 左归丸
+        - pattern: 肾精不足
+          key: 发育迟缓/早衰+齿摇发脱+健忘
+          treatment: 河车大造丸
+        - pattern: 肾气不固
+          key: 滑精早泄+尿频遗尿+白带清稀
+          treatment: 金锁固精丸 / 缩泉丸
+        - pattern: 肾不纳气
+          key: 咳喘+呼多吸少+动则喘甚+腰膝酸软
+          treatment: 人参蛤蚧散 / 七味都气丸
+        - pattern: 膀胱湿热
+          key: 尿频急痛+尿黄赤+舌红苔黄腻
+          treatment: 八正散
 
   - id: tcm-common-cold
     description: 常见病 — 感冒辨证论治
@@ -189,10 +249,22 @@ rules:
     result:
       treatment: 感冒中医分型论治
       patterns:
-        - pattern: 风寒感冒; key: 恶寒重发热轻+无汗+鼻塞清涕+苔薄白脉浮紧; formula: 荆防败毒散; patent_medicine: 感冒清热颗粒
-        - pattern: 风热感冒; key: 发热重恶寒轻+咽痛+涕黄+苔薄黄脉浮数; formula: 银翘散; patent_medicine: 银翘解毒片 / 双黄连口服液
-        - pattern: 暑湿感冒; key: 发热+头身困重+胸闷脘痞+苔黄腻脉濡数; formula: 新加香薷饮; patent_medicine: 藿香正气水
-        - pattern: 气虚感冒; key: 反复感冒+气短乏力+恶风自汗; formula: 参苏饮; patent_medicine: 玉屏风颗粒（预防）
+        - pattern: 风寒感冒
+          key: 恶寒重发热轻+无汗+鼻塞清涕+苔薄白脉浮紧
+          formula: 荆防败毒散
+          patent_medicine: 感冒清热颗粒
+        - pattern: 风热感冒
+          key: 发热重恶寒轻+咽痛+涕黄+苔薄黄脉浮数
+          formula: 银翘散
+          patent_medicine: 银翘解毒片 / 双黄连口服液
+        - pattern: 暑湿感冒
+          key: 发热+头身困重+胸闷脘痞+苔黄腻脉濡数
+          formula: 新加香薷饮
+          patent_medicine: 藿香正气水
+        - pattern: 气虚感冒
+          key: 反复感冒+气短乏力+恶风自汗
+          formula: 参苏饮
+          patent_medicine: 玉屏风颗粒（预防）
 
   - id: tcm-common-insomnia
     description: 常见病 — 不寐（失眠）辨证论治
@@ -203,11 +275,26 @@ rules:
     result:
       treatment: 不寐中医分型论治
       patterns:
-        - pattern: 肝火扰心; key: 失眠多梦+急躁易怒+口苦+脉弦数; formula: 龙胆泻肝汤; patent_medicine: 龙胆泻肝丸
-        - pattern: 痰热扰心; key: 心烦不寐+胸闷脘痞+苔黄腻; formula: 黄连温胆汤; patent_medicine: 安神温胆丸
-        - pattern: 心脾两虚; key: 多梦易醒+心悸健忘+食少乏力+舌淡; formula: 归脾汤; patent_medicine: 归脾丸
-        - pattern: 心肾不交; key: 心烦不寐+腰膝酸软+盗汗+舌红少苔; formula: 六味地黄丸合交泰丸; patent_medicine: 天王补心丹
-        - pattern: 心胆气虚; key: 虚烦不寐+易惊+气短自汗; formula: 安神定志丸; patent_medicine: 安神补脑液
+        - pattern: 肝火扰心
+          key: 失眠多梦+急躁易怒+口苦+脉弦数
+          formula: 龙胆泻肝汤
+          patent_medicine: 龙胆泻肝丸
+        - pattern: 痰热扰心
+          key: 心烦不寐+胸闷脘痞+苔黄腻
+          formula: 黄连温胆汤
+          patent_medicine: 安神温胆丸
+        - pattern: 心脾两虚
+          key: 多梦易醒+心悸健忘+食少乏力+舌淡
+          formula: 归脾汤
+          patent_medicine: 归脾丸
+        - pattern: 心肾不交
+          key: 心烦不寐+腰膝酸软+盗汗+舌红少苔
+          formula: 六味地黄丸合交泰丸
+          patent_medicine: 天王补心丹
+        - pattern: 心胆气虚
+          key: 虚烦不寐+易惊+气短自汗
+          formula: 安神定志丸
+          patent_medicine: 安神补脑液
 
   - id: tcm-common-constipation
     description: 常见病 — 便秘辨证论治
@@ -218,13 +305,27 @@ rules:
     result:
       treatment: 便秘中医分型论治
       patterns:
-        - pattern: 热秘（肠胃积热）; key: 大便干结+腹胀痛+口臭+苔黄燥; formula: 麻子仁丸
-        - pattern: 气秘（气机郁滞）; key: 欲便不得+嗳气+胁痞+脉弦; formula: 六磨汤
-        - pattern: 冷秘（阴寒凝滞）; key: 大便艰涩+腹冷痛+苔白脉沉迟; formula: 大黄附子汤 / 温脾汤
-        - pattern: 气虚秘; key: 努挣乏力+气短+便后疲乏; formula: 黄芪汤
-        - pattern: 血虚秘; key: 大便干结+面白心悸+舌淡脉细; formula: 润肠丸
-        - pattern: 阴虚秘; key: 大便干如羊粪+口干+舌红少苔; formula: 增液汤
-        - pattern: 阳虚秘; key: 大便艰涩+小便清长+畏寒+脉沉迟; formula: 济川煎
+        - pattern: 热秘（肠胃积热）
+          key: 大便干结+腹胀痛+口臭+苔黄燥
+          formula: 麻子仁丸
+        - pattern: 气秘（气机郁滞）
+          key: 欲便不得+嗳气+胁痞+脉弦
+          formula: 六磨汤
+        - pattern: 冷秘（阴寒凝滞）
+          key: 大便艰涩+腹冷痛+苔白脉沉迟
+          formula: 大黄附子汤 / 温脾汤
+        - pattern: 气虚秘
+          key: 努挣乏力+气短+便后疲乏
+          formula: 黄芪汤
+        - pattern: 血虚秘
+          key: 大便干结+面白心悸+舌淡脉细
+          formula: 润肠丸
+        - pattern: 阴虚秘
+          key: 大便干如羊粪+口干+舌红少苔
+          formula: 增液汤
+        - pattern: 阳虚秘
+          key: 大便艰涩+小便清长+畏寒+脉沉迟
+          formula: 济川煎
 
   - id: tcm-common-headache
     description: 常见病 — 头痛辨证论治
@@ -235,12 +336,24 @@ rules:
     result:
       treatment: 头痛中医分型论治
       patterns:
-        - pattern: 风寒头痛; key: 头痛连项+恶风畏寒+苔薄白; formula: 川芎茶调散
-        - pattern: 风热头痛; key: 头胀痛+发热咽痛+苔薄黄; formula: 芎芷石膏汤
-        - pattern: 肝阳头痛; key: 头胀痛/跳痛+眩晕+烦躁易怒+脉弦; formula: 天麻钩藤饮
-        - pattern: 痰浊头痛; key: 头重痛+昏蒙+呕吐痰涎+苔白腻; formula: 半夏白术天麻汤
-        - pattern: 瘀血头痛; key: 头痛如刺+固定不移+舌紫暗; formula: 通窍活血汤
-        - pattern: 血虚头痛; key: 头痛隐隐+空痛+劳累加重+心悸; formula: 加味四物汤
+        - pattern: 风寒头痛
+          key: 头痛连项+恶风畏寒+苔薄白
+          formula: 川芎茶调散
+        - pattern: 风热头痛
+          key: 头胀痛+发热咽痛+苔薄黄
+          formula: 芎芷石膏汤
+        - pattern: 肝阳头痛
+          key: 头胀痛/跳痛+眩晕+烦躁易怒+脉弦
+          formula: 天麻钩藤饮
+        - pattern: 痰浊头痛
+          key: 头重痛+昏蒙+呕吐痰涎+苔白腻
+          formula: 半夏白术天麻汤
+        - pattern: 瘀血头痛
+          key: 头痛如刺+固定不移+舌紫暗
+          formula: 通窍活血汤
+        - pattern: 血虚头痛
+          key: 头痛隐隐+空痛+劳累加重+心悸
+          formula: 加味四物汤
 
   - id: tcm-acu-point-selection
     description: 针灸选穴原则
@@ -418,11 +531,20 @@ rules:
     result:
       assessment: 中西药相互作用
       high_risk_interactions:
-        - herbs: 丹参/当归/银杏叶 → 西药（华法林/阿司匹林/氯吡格雷）; effect: 增加出血风险; action: PT/INR 监测 + 避免联用
-        - herbs: 甘草/甘遂 → 西药（利尿剂/糖皮质激素/地高辛）; effect: 甘草致假性醛固酮增多症（低钾+高血压）; action: 监测 K⁺ + BP
-        - herbs: 麻黄/附子 → 西药（MAOIs/SSRIs/caffeine）; effect: 5-HT 综合征/高血压危象; action: 禁止联用
-        - herbs: 五味子/水飞蓟 → 西药（经 CYP3A4 代谢药物）; effect: 改变药物代谢; action: 监测血药浓度 + 剂量调整
-        - herbs: 大黄/番泻叶 → 西药（华法林/口服避孕药）; effect: 肠道蠕动加速—降低吸收
+        - herbs: 丹参/当归/银杏叶 → 西药（华法林/阿司匹林/氯吡格雷）
+          effect: 增加出血风险
+          action: PT/INR 监测 + 避免联用
+        - herbs: 甘草/甘遂 → 西药（利尿剂/糖皮质激素/地高辛）
+          effect: 甘草致假性醛固酮增多症（低钾+高血压）
+          action: 监测 K⁺ + BP
+        - herbs: 麻黄/附子 → 西药（MAOIs/SSRIs/caffeine）
+          effect: 5-HT 综合征/高血压危象
+          action: 禁止联用
+        - herbs: 五味子/水飞蓟 → 西药（经 CYP3A4 代谢药物）
+          effect: 改变药物代谢
+          action: 监测血药浓度 + 剂量调整
+        - herbs: 大黄/番泻叶 → 西药（华法林/口服避孕药）
+          effect: 肠道蠕动加速—降低吸收
       general_principle: 中西药间隔 ≥ 1-2h 服用作为最低安全措施
 
   - id: tcm-constitution-neutral

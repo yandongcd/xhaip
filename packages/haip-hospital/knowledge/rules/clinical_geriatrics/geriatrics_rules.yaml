@@ -89,15 +89,28 @@ rules:
     result:
       assessment: Fried 衰弱表型
       criteria:
-        - id: F1; name: 不明原因体重下降; threshold: "1 年内下降 > 5% 或 > 4.5kg"
-        - id: F2; name: 自述疲乏; threshold: "CES-D 量表 ≥ 2-3 分"
-        - id: F3; name: 活动量减少; threshold: "明达休闲活动问卷（男性 < 383kcal/周，女性 < 270kcal/周）"
-        - id: F4; name: 行走速度减慢; threshold: "4.57m 步行时间 ≥ 7s（身高 ≤ 159cm）或 ≥ 6s（身高 > 159cm）"
-        - id: F5; name: 握力下降; threshold: "BMI ≤ 24: 男 ≤ 29kg 女 ≤ 17kg；BMI > 24: 男 ≤ 30kg 女 ≤ 17kg"
+        - id: F1
+          name: 不明原因体重下降
+          threshold: "1 年内下降 > 5% 或 > 4.5kg"
+        - id: F2
+          name: 自述疲乏
+          threshold: "CES-D 量表 ≥ 2-3 分"
+        - id: F3
+          name: 活动量减少
+          threshold: "明达休闲活动问卷（男性 < 383kcal/周，女性 < 270kcal/周）"
+        - id: F4
+          name: 行走速度减慢
+          threshold: "4.57m 步行时间 ≥ 7s（身高 ≤ 159cm）或 ≥ 6s（身高 > 159cm）"
+        - id: F5
+          name: 握力下降
+          threshold: "BMI ≤ 24: 男 ≤ 29kg 女 ≤ 17kg；BMI > 24: 男 ≤ 30kg 女 ≤ 17kg"
       grading:
-        - count: 0; label: 无衰弱（Robust）
-        - count: "1-2"; label: 衰弱前期（Pre-frail）
-        - count: "≥ 3"; label: 衰弱（Frail）
+        - count: 0
+          label: 无衰弱（Robust）
+        - count: "1-2"
+          label: 衰弱前期（Pre-frail）
+        - count: "≥ 3"
+          label: 衰弱（Frail）
 
   - id: ge-frailty-prefrail
     description: 衰弱前期 → 干预
@@ -134,10 +147,18 @@ rules:
     result:
       diagnosis: 跌倒风险评估（TUG）
       grading:
-        - range: "< 10s"; label: 正常（低风险）; action: 常规运动建议
-        - range: "10-19s"; label: 中度跌倒风险; action: 步态训练 + 平衡训练 + 环境改造
-        - range: "20-29s"; label: 高度跌倒风险; action: 物理治疗 + 助行器具 + 居家安全改造
-        - range: "≥ 30s"; label: 极高跌倒风险; action: 全面评估 + 多因素干预 + 照护升级
+        - range: "< 10s"
+          label: 正常（低风险）
+          action: 常规运动建议
+        - range: "10-19s"
+          label: 中度跌倒风险
+          action: 步态训练 + 平衡训练 + 环境改造
+        - range: "20-29s"
+          label: 高度跌倒风险
+          action: 物理治疗 + 助行器具 + 居家安全改造
+        - range: "≥ 30s"
+          label: 极高跌倒风险
+          action: 全面评估 + 多因素干预 + 照护升级
 
   - id: ge-falls-tinetti
     description: Tinetti 平衡与步态量表
@@ -175,10 +196,18 @@ rules:
     result:
       assessment: CAM 谵妄评估法
       criteria:
-        - id: C1; name: 急性起病与波动性病程; assessment: 精神状态急性改变 + 日间波动
-        - id: C2; name: 注意力缺损; assessment: 不能集中注意力或注意力易转移
-        - id: C3; name: 思维紊乱; assessment: 思维不连贯或答非所问
-        - id: C4; name: 意识水平改变; assessment: 警觉/嗜睡/昏睡/昏迷
+        - id: C1
+          name: 急性起病与波动性病程
+          assessment: 精神状态急性改变 + 日间波动
+        - id: C2
+          name: 注意力缺损
+          assessment: 不能集中注意力或注意力易转移
+        - id: C3
+          name: 思维紊乱
+          assessment: 思维不连贯或答非所问
+        - id: C4
+          name: 意识水平改变
+          assessment: 警觉/嗜睡/昏睡/昏迷
       positive: "C1 + C2 + (C3 或 C4) = CAM 阳性（谵妄）"
 
   - id: ge-delirium-prevention
@@ -272,9 +301,15 @@ rules:
     result:
       assessment: MNA-SF 简易营养评估
       scoring:
-        - range: "12-14"; label: 营养正常; action: 常规监测
-        - range: "8-11"; label: 营养不良风险; action: 营养评估 + 3 天饮食记录 + 营养指导
-        - range: "0-7"; label: 营养不良; action: 全面营养评估 + 个体化营养支持 + 营养师会诊
+        - range: "12-14"
+          label: 营养正常
+          action: 常规监测
+        - range: "8-11"
+          label: 营养不良风险
+          action: 营养评估 + 3 天饮食记录 + 营养指导
+        - range: "0-7"
+          label: 营养不良
+          action: 全面营养评估 + 个体化营养支持 + 营养师会诊
 
   - id: ge-nutrition-malnutrition
     description: 老年营养不良 → 干预
