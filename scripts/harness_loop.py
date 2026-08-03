@@ -307,13 +307,16 @@ def auto_fix_issues(report: dict, already_fixed: set) -> int:
 
 
 def commit_if_changes(cycle: int):
-    ret, out = run_command(["git", "add", "-A"])
+    run_command(["git", "add",
+                 "packages/haip-hospital/agents/definitions",
+                 "packages/haip-hospital/knowledge",
+                 "packages/haip-hospital/modules",
+                 "docs/guidelines"])
     ret2, out2 = run_command(["git", "status", "--short"])
     if out2.strip():
         msg = f"auto: MetaHarness loop cycle #{cycle} — self-healing fixes"
         run_command(["git", "commit", "-m", msg])
-        run_command(["git", "push", "origin", "master"], timeout=120)
-        log(f"  Committed + pushed changes ({len(out2.splitlines())} files)")
+        log(f"  Committed changes ({len(out2.splitlines())} files)")
         return True
     return False
 

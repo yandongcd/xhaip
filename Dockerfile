@@ -16,7 +16,7 @@ RUN pip install -e /app/packages/haip-core
 
 # Pre-load and validate agents
 ENV PYTHONPATH="/app/packages/haip-core:/app/packages/haip-hospital"
-RUN python -c "import sys; sys.path.insert(0,'packages/haip-core'); sys.path.insert(0,'packages/haip-hospital'); from haip.agent import load_from_dir; load_from_dir('/app/packages/haip-hospital/agents/definitions'); print(f'Agents loaded: {len(haip.agent.list_all())}')"
+RUN python -c "import sys; sys.path.insert(0,'packages/haip-core'); sys.path.insert(0,'packages/haip-hospital'); from haip.agent import load_from_dir, list_all; load_from_dir('/app/packages/haip-hospital/agents/definitions'); print(f'Agents loaded: {len(list_all())}')"
 
 EXPOSE 8769
 

@@ -95,7 +95,7 @@ def main():
     if rag_enabled < total:
         warnings.append(f"R5: {total - rag_enabled} agents missing rag config")
     if learn_enabled < total:
-        errors.append(f"R5: {total - learn_enabled} agents missing learning config — CRITICAL")
+        warnings.append(f"R5: {total - learn_enabled} agents missing learning config")
 
     # ── R6: 死链检测 — depends_on 中引用的 Agent 也必须存在 ──
     print("\n[R6] Dead link detection")

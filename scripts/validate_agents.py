@@ -12,7 +12,7 @@ except ImportError:
     sys.exit(1)
 
 AGENT_DIR = Path(__file__).resolve().parent.parent / "packages" / "haip-hospital" / "agents" / "definitions"
-SCHEMA_PATH = Path(__file__).resolve().parent / "agent-schema.json"
+SCHEMA_PATH = Path(__file__).resolve().parent.parent / "packages" / "haip-hospital" / "agents" / "agent-schema.json"
 
 
 def main():
