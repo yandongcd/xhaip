@@ -79,7 +79,7 @@ class TraceRecorder:
         self.trace.steps.append(DecisionStep(
             step="规则执行",
             source=source or rule_id,
-            condition=condition[:80],
+            input_summary=condition[:80],
             output_summary=verdict[:200],
         ))
 
