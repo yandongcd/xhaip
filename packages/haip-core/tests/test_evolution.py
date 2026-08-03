@@ -86,7 +86,7 @@ def test_validate_with_cases_passes(mem):
         source_failure="", status="pending",
     ))
     from haip.evolution.validate import validate_experience
-    result = validate_experience("e3", memory=mem, min_trials=3, pass_rate=0.6)
+    result = validate_experience("e3", memory=mem, mode="fixed", min_trials=3, pass_rate=0.6)
     assert result["trials"] >= 3
     assert result["verdict"] == "validated"
     assert mem.get_experience("e3")["status"] == "validated"
@@ -146,7 +146,30 @@ def test_validate_undecidable_not_counted(mem):
         source_failure="", status="pending",
     ))
     from haip.evolution.validate import validate_experience
-    result = validate_experience("e6", memory=mem, min_trials=3, pass_rate=0.6)
+    result = validate_experience("e6", memory=mem, mode="fixed", min_trials=3, pass_rate=0.6)
     assert result["verdict"] == "pending"  # 无法判断 → 不误判 validated
     assert result["undecidable"] >= 3
     assert result["trials"] == 0
+
+
+def test_validate_sprt_mode_keeps_pending(mem):
+    """SPRT: 小样本无法拒绝 H0/H1 → 保持 pending (贝叶斯序贯)."""
+    from haip.evolution.memory_base import CaseEntry, ExperienceEntry
+    for i in range(4):
+        mem.add_case(CaseEntry(
+            case_id=f"cs{i}", agent="orthopedic-surgery", task="t",
+            question=f"诊断: 髋部骨折 患者{i}",
+            answer={"urgency": "emergency"}, gold={"urgency": "emergency"},
+        ))
+    mem.add_experience(ExperienceEntry(
+        exp_id="e7", agent="orthopedic-surgery",
+        trigger="诊断: 髋部骨折，判定 urgency=urgent",
+        rule="复查", action="48h 急诊手术建议", source_failure="", status="pending",
+    ))
+    from haip.evolution.validate import validate_experience
+    result = validate_experience("e7", memory=mem, mode="sprt")
+    # SPRT with 4/4 passed at α=5%, β=10%, P0=0.55, P1=0.75
+    # llr = 4*log(0.75/0.55) + 0*log(0.25/0.45) ≈ 4*0.31 = 1.24
+    # a = log(0.9/0.05) = log(18) ≈ 2.89 → llr < a → pending
+    assert result["verdict"] == "pending"
+    assert result["mode"] == "sprt"

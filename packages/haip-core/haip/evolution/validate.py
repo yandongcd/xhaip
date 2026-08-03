@@ -1,8 +1,9 @@
-"""验证闸门 — 经验在相似案例上的通过率验证 (SEAL experience validation 量化版).
+"""验证闸门 — 经验在相似案例上的通过率验证.
 
-SEAL: 原则在 exemplar cases 上测试, 判定标准模糊
-增强: 明确阈值 (pass_rate >= 0.6 且 trials >= 3 → validated),
-     通过率不足 → rejected; 支持人工审批 → approved.
+v1: 固定阈值 (trials>=3, pass_rate>=0.6) — 实现简单但无统计学基础.
+v2 (AI-2): Sequential Probability Ratio Test (SPRT) — 贝叶斯框架,
+  有 95% 置信度时判定 validated/rejected, 否则保持 pending 持续收集证据.
+  消除小样本误判 + 假阳性风险量化.
 """
 
 from __future__ import annotations
@@ -11,8 +12,16 @@ from typing import Any
 
 from haip.evolution.memory_base import EvolutionMemory, get_evolution_memory
 
-VALIDATE_MIN_TRIALS = 3
-VALIDATE_PASS_RATE = 0.6
+# SPRT 参数 (可调节)
+ALPHA = 0.05          # Type I error: validated 但实际不成立 (≤5%)
+BETA = 0.10           # Type II error: rejected 但实际成立 (≤10%)
+P0 = 0.55             # H0: pass_rate ≤ P0 (不合格)
+P1 = 0.75             # H1: pass_rate ≥ P1 (合格)
+MIN_TRIALS = 3        # 最少试验次数 (防止过早判定)
+
+# 固定阈值模式 (legacy)
+FIXED_MIN_TRIALS = 3
+FIXED_PASS_RATE = 0.6
 
 
 def _rule_applies(exp: dict[str, Any], case: dict[str, Any]) -> bool:
@@ -49,15 +58,42 @@ def _rule_suggests(exp: dict[str, Any], case: dict[str, Any]) -> bool | None:
     return None
 
 
+def _sprt_verdict(trials: int, passed: int) -> str:
+    """Sequential Probability Ratio Test.
+
+    计算似然比 λ = P(X|H1) / P(X|H0) where X~Binomial.
+    若 λ ≥ (1-β)/α → accept H1 (validated)
+    若 λ ≤ β/(1-α) → accept H0 (rejected)
+    否则 → pending (继续收集证据)
+    """
+    import math
+    if trials < MIN_TRIALS:
+        return "pending"
+
+    a = math.log((1 - BETA) / ALPHA)       # upper bound log
+    b = math.log(BETA / (1 - ALPHA))        # lower bound log
+
+    # 对数似然比
+    llr = passed * math.log(P1 / P0) + (trials - passed) * math.log((1 - P1) / (1 - P0))
+
+    if llr >= a:
+        posterior = passed / trials
+        return "validated" if posterior >= FIXED_PASS_RATE else "pending"
+    if llr <= b:
+        return "rejected"
+    return "pending"
+
+
 def validate_experience(
     exp_id: str,
     memory: EvolutionMemory | None = None,
-    min_trials: int = VALIDATE_MIN_TRIALS,
-    pass_rate: float = VALIDATE_PASS_RATE,
+    mode: str = "sprt",
+    **overrides: Any,
 ) -> dict[str, Any]:
-    """对 pending 经验执行验证: 在相似案例库上检验.
+    """对 pending 经验执行验证 (SPRT 贝叶斯模式 或 固定阈值模式).
 
-    返回 {exp_id, trials, pass_count, pass_rate, verdict, detail}
+    mode='sprt': SPRT 序贯检验 (推荐, 自动控制 α=5% β=10%)
+    mode='fixed': 固定阈值 trials>=3, pass_rate>=0.6 (legacy)
     """
     memory = memory or get_evolution_memory()
     exp = memory.get_experience(exp_id)
@@ -65,6 +101,9 @@ def validate_experience(
         return {"exp_id": exp_id, "verdict": "unknown", "detail": "经验不存在"}
     if exp["status"] in ("validated", "approved", "rejected"):
         return {"exp_id": exp_id, "verdict": exp["status"], "detail": "已终态"}
+
+    min_trials = overrides.get("min_trials", MIN_TRIALS)
+    pass_rate_threshold = overrides.get("pass_rate", FIXED_PASS_RATE)
 
     cases = memory.search_cases(exp["agent"], exp["trigger"], k=10)
     trials = 0
@@ -86,17 +125,18 @@ def validate_experience(
         else:
             detail_parts.append(f"✗ {case['case_id']}")
 
-    if trials < min_trials:
-        verdict = "pending"  # 样本不足, 保持待验证
-        status = "pending"
-    else:
-        rate = passed / trials
-        if rate >= pass_rate:
-            verdict = "validated"
-            status = "validated"
+    if mode == "sprt":
+        verdict = _sprt_verdict(trials, passed)
+    elif mode == "fixed":
+        if trials < min_trials:
+            verdict = "pending"
         else:
-            verdict = "rejected"
-            status = "rejected"
+            rate = passed / trials
+            verdict = "validated" if rate >= pass_rate_threshold else "rejected"
+    else:
+        verdict = "pending"
+
+    status = "pending" if verdict == "pending" else verdict
 
     memory.update_experience(
         exp_id, status=status, trials=trials, pass_count=passed,
@@ -106,7 +146,7 @@ def validate_experience(
     return {
         "exp_id": exp_id, "trials": trials, "pass_count": passed,
         "pass_rate": rate_now, "verdict": verdict,
-        "undecidable": undecidable,
+        "undecidable": undecidable, "mode": mode,
         "detail": "; ".join(detail_parts[:6]) or "无适用案例",
     }
 

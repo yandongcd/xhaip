@@ -65,7 +65,7 @@ def evolve_from_eval(
         failed_items=failed,
     )
     memory.add_experience(exp)
-    verdict = validate_experience(exp.exp_id, memory=memory)
+    verdict = validate_experience(exp.exp_id, memory=memory, mode="sprt")
     return {"action": "reflect", "exp_id": exp.exp_id, "verdict": verdict["verdict"]}
 
 
