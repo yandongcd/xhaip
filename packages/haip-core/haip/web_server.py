@@ -161,6 +161,9 @@ async def lifespan(app: FastAPI):
     # 安全基线检查 (HAIP_ENV=production 时违规阻断启动)
     from haip.security_baseline import check_security_baseline
     check_security_baseline()
+    # License 校验 (生产模式无效/过期 → 阻断启动; 开发模式仅告警)
+    from haip.licensing import enforce_startup
+    enforce_startup()
     _seed_default_admin()
     from haip.auth import get_auth_service
     get_auth_service().seed_demo_identities()

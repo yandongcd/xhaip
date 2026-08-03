@@ -261,6 +261,14 @@ class AuthService:
         if not verify_password(password, user["password_hash"]):
             raise ValueError("Invalid username or password")
 
+        # License 容量校验 (生产模式: 活跃用户数超过 max_users → 拒绝登录; 开发模式放行)
+        from haip.licensing import check_user_capacity
+        allowed, reason = check_user_capacity(
+            sum(1 for u in self._users.values() if u["is_active"]))
+        if not allowed:
+            logger.warning("[license] 登录被拒绝 (user=%s): %s", username, reason)
+            raise ValueError(reason)
+
         roles = user["roles"]
         permissions = get_permissions_for_roles(roles)
 
