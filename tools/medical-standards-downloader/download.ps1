@@ -1,4 +1,4 @@
-# Medical Standards Downloader (PowerShell)
+﻿# Medical Standards Downloader (PowerShell)
 # Downloads freely available clinical guidelines and standards
 
 param(
@@ -72,7 +72,7 @@ $Downloads = @(
     @{Name="ESUR-CONTRAST-V10"; Title="ESUR Contrast Agent Guidelines v10"; URL="https://www.esur.org/esur-guidelines-on-contrast-agents/"; Cat="radiology"},
 
     # GINA
-    @{Name="GINA-ASTHMA-2024"; Title="GINA 2024 Asthma Report"; URL="https://ginasthma.org/2024-report/"; Cat="respiratory"},
+    @{Name="GINA-ASTHMA-2024"; Title="GINA 2024 Asthma Report"; URL="https://ginasthma.org/2024-report/"; Cat="respiratory"}
 )
 
 # ── Download Logic ───────────────────────────────────────────────────────
@@ -86,6 +86,18 @@ Write-Host "=" * 70
 Write-Host "  XHAIP Medical Standards Download Tool"
 Write-Host "=" * 70
 Write-Host ""
+
+if ($List) {
+    $files = Get-ChildItem -Path $OutputDir -ErrorAction SilentlyContinue
+    Write-Host "  Files in ${OutputDir}:"
+    if ($files) {
+        $files | ForEach-Object { Write-Host "    - $($_.Name)" }
+    } else {
+        Write-Host "    (empty)"
+    }
+    Write-Host "  Total: $($files.Count) files"
+    exit 0
+}
 
 foreach ($item in $Downloads) {
     if ($Category -and $item.Cat -ne $Category) { continue }
@@ -153,7 +165,7 @@ $CN_Standards = @(
     @{Name="CN-LIVER-GUIDE"; Title="原发性肝癌诊疗指南 2024"; URL="http://www.nhc.gov.cn/"},
     @{Name="CN-ENDOMETRIAL"; Title="子宫内膜癌诊治指南"; URL="http://www.nhc.gov.cn/"},
     @{Name="CN-GLCOMA-2025"; Title="中国青光眼诊疗指南 2025"; URL="http://www.nhc.gov.cn/"},
-    @{Name="CN-STROKE-2024"; Title="中国急性缺血性脑卒中诊治指南 2023"; URL="http://www.nhc.gov.cn/"},
+    @{Name="CN-STROKE-2024"; Title="中国急性缺血性脑卒中诊治指南 2023"; URL="http://www.nhc.gov.cn/"}
 )
 
 foreach ($item in $CN_Standards) {

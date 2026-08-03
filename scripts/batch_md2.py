@@ -16,7 +16,7 @@ def clean_text(s: str) -> str:
 
 def pdf_to_md_minimax(fp: Path) -> str:
     """Use minimax-pdf reformat_parse.py to extract PDF content."""
-    if PDF_SKILL_DIR.is_dir():
+    if (PDF_SKILL_DIR / "reformat_parse.py").is_file():
         try:
             result = subprocess.run(
                 ["py", str(PDF_SKILL_DIR / "reformat_parse.py"),

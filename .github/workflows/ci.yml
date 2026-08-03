@@ -75,7 +75,7 @@ sys.exit(errors)
       - name: Install dependencies
         run: pip install -e "packages/haip-core[dev]"
       - name: Contract + unit tests
-        run: python -m pytest packages/haip-core/tests/ -m "contract or unit" --tb=short
+        run: python -m pytest packages/haip-core/tests/ tests/test_self_contained.py --tb=short
 
   integration:
     name: "Integration tests"

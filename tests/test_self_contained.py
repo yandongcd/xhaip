@@ -53,6 +53,9 @@ def test_sitecustomize_injects_internal_paths():
     for rel in ("packages/haip-core", "packages/haip-hospital",
                 "packages/haip-hospital/modules"):
         assert str(ROOT / rel) in sys.path, f"{rel} 未注入 sys.path"
+    idx = [sys.path.index(str(ROOT / r)) for r in
+           ("packages/haip-core", "packages/haip-hospital", "packages/haip-hospital/modules")]
+    assert idx == sorted(idx, reverse=True), "内部路径应按序注入 (modules 优先级最高)"
 
 
 def test_no_external_absolute_paths():
