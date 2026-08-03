@@ -341,7 +341,11 @@ class SessionService:
 # ── InMemorySessionService ──
 
 class InMemorySessionService:
-    """无持久化的会话服务 — 带 LRU + TTL 淘汰."""
+    """无持久化的会话服务 — 带 LRU + TTL 淘汰.
+
+    会话按 (user_id, session_id) 复合键隔离 — 与 SQLite 后端相同的
+    user 作用域语义 (IDOR 修复): 同名 session_id 在不同用户间互不可见。
+    """
 
     def __init__(self, max_sessions: int = 1000, session_ttl: float = 3600.0):
         self._sessions: dict[str, AgentSession] = {}
@@ -349,6 +353,10 @@ class InMemorySessionService:
         self._max_sessions = max_sessions
         self._session_ttl = session_ttl
         self._lock = threading.Lock()
+
+    @staticmethod
+    def _key(user_id: str, session_id: str) -> str:
+        return f"{user_id}:{session_id}"
 
     def _evict_expired(self, now: float) -> None:
         expired = [
@@ -373,32 +381,36 @@ class InMemorySessionService:
             self._evict_expired(time.time())
             if len(self._sessions) >= self._max_sessions:
                 self._evict_lru()
-            self._sessions[sid] = s
-            self._access_times[sid] = time.time()
+            key = self._key(user_id, sid)
+            self._sessions[key] = s
+            self._access_times[key] = time.time()
         return s
 
     def get_session(self, session_id, app_name="xhaip", user_id="default") -> AgentSession | None:
-        s = self._sessions.get(session_id)
+        key = self._key(user_id, session_id)
+        s = self._sessions.get(key)
         if s is not None:
-            self._access_times[session_id] = time.time()
+            self._access_times[key] = time.time()
         return s
 
     def get_or_create_session(self, session_id, app_name="xhaip", user_id="default") -> AgentSession:
-        s = self._sessions.get(session_id)
-        if s is not None:
-            self._access_times[session_id] = time.time()
-            return s
-        return self.create_session(app_name, user_id, session_id=session_id)
+        s = self.get_session(session_id, app_name, user_id)
+        return s if s is not None else self.create_session(app_name, user_id, session_id=session_id)
 
     def list_sessions(self, app_name="xhaip", user_id="default", limit=50) -> list[dict]:
         return [{"id": s.id, "last_update": s.last_update,
                  "state_keys": list(s.state.keys())}
-                for s in list(self._sessions.values())[:limit]]
+                for s in list(self._sessions.values())
+                if s.user_id == user_id][:limit]
 
     def delete_session(self, session_id) -> bool:
         with self._lock:
-            self._access_times.pop(session_id, None)
-            return self._sessions.pop(session_id, None) is not None
+            key = next((k for k, s in self._sessions.items() if s.id == session_id), None)
+            if key is None:
+                return False
+            self._access_times.pop(key, None)
+            self._sessions.pop(key, None)
+            return True
 
     def append_event(self, session: AgentSession, event: Event) -> None:
         if event.partial:
@@ -407,7 +419,7 @@ class InMemorySessionService:
             if event.state_delta:
                 session.apply_delta(event.state_delta)
             session.events.append(event)
-            self._access_times[session.id] = time.time()
+            self._access_times[self._key(session.user_id, session.id)] = time.time()
 
     def rewind_session(self, session: AgentSession, keep_events: int) -> None:
         if keep_events >= len(session.events):

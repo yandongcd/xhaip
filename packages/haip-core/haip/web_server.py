@@ -235,11 +235,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Auth middleware — validates JWT on protected routes
-from haip.auth.middleware import AuthMiddleware
-
-app.add_middleware(AuthMiddleware)
-
 # Audit middleware — records all API calls
 from haip.audit.middleware import AuditMiddleware
 
@@ -261,6 +256,14 @@ app.add_middleware(
     window=rl_cfg["window"],
     enabled=rl_cfg["enabled"],
 )
+
+# Auth middleware — validates JWT on protected routes.
+# 必须最后添加: Starlette 按添加顺序的逆序构建中间件栈, 最后添加的在外层先执行。
+# 因此 Auth 最先运行并填充 request.state.current_user, 之后 Audit / RateLimit
+# 读取用户身份时才不会拿到 None (IDOR 无关的 P1-2 中间件顺序修复)。
+from haip.auth.middleware import AuthMiddleware
+
+app.add_middleware(AuthMiddleware)
 
 # Auth API router
 from haip.auth import auth_router
@@ -741,7 +744,9 @@ async def stream_call(body: StreamRequest, request: Request):
     query = body.query or body.params.get("query", "")
     max_steps = body.max_steps
     session_id = body.session_id
-    user_id = body.user_id
+    # 会话 user 作用域取自 JWT 身份 (body.user_id 保持兼容但不可信, 忽略之)
+    _user = getattr(request.state, "current_user", None)
+    user_id = str(_user["user_id"]) if _user and _user.get("user_id") else "anonymous"
 
     if not agent or not query:
         raise HTTPException(status_code=400, detail={"status": "error", "error": "Missing agent or query"})
@@ -762,24 +767,35 @@ async def stream_call(body: StreamRequest, request: Request):
 
 # ── Session API (v1.2) ──
 
+def _session_user_id(request: Request) -> str:
+    """从 JWT 身份派生会话 user 作用域 — 客户端参数不可信 (IDOR 修复)。
+
+    匿名/无身份请求 (如 dev 免登录之外的兜底) 归入稳定伪用户 "anonymous",
+    所有匿名用户共享同一作用域, 但认证用户之间完全隔离。
+    """
+    user = getattr(request.state, "current_user", None)
+    if user and user.get("user_id"):
+        return str(user["user_id"])
+    return "anonymous"
+
+
 @app.post("/api/sessions")
-def create_session(payload: dict = Body(default_factory=dict)):
-    """创建新会话. POST body: {"user_id": "doctor1", "state": {...}}"""
+def create_session(request: Request, payload: dict = Body(default_factory=dict)):
+    """创建新会话. POST body: {"state": {...}} — 用户身份取自 JWT, 忽略 body.user_id."""
     from haip.session.store import SessionService
     svc = SessionService(_get_session_db_path())
     s = svc.create_session(
-        user_id=payload.get("user_id", "default"),
+        user_id=_session_user_id(request),
         state=payload.get("state"),
     )
     return {"session_id": s.id, "created_at": s.last_update}
 
-
 @app.get("/api/sessions/{session_id}")
-def get_session(session_id: str, user_id: str = "default"):
-    """获取会话详情（含 events 和 state）."""
+def get_session(session_id: str, request: Request):
+    """获取会话详情（含 events 和 state）— 会话按当前认证用户作用域隔离."""
     from haip.session.store import SessionService
     svc = SessionService(_get_session_db_path())
-    s = svc.get_session(session_id, user_id=user_id)
+    s = svc.get_session(session_id, user_id=_session_user_id(request))
     if s is None:
         raise HTTPException(status_code=404, detail={"error": "Session not found"})
     return {
@@ -792,19 +808,20 @@ def get_session(session_id: str, user_id: str = "default"):
 
 
 @app.get("/api/sessions")
-def list_sessions(user_id: str = "default", limit: int = 20):
-    """列出用户的会话列表."""
+def list_sessions(request: Request, limit: int = 20):
+    """列出当前认证用户的会话列表 (user 作用域取自 JWT, 忽略客户端参数)."""
     from haip.session.store import SessionService
     svc = SessionService(_get_session_db_path())
-    return svc.list_sessions(user_id=user_id, limit=limit)
+    return svc.list_sessions(user_id=_session_user_id(request), limit=limit)
 
 
 @app.post("/api/sessions/{session_id}/rewind")
-def rewind_session(session_id: str, payload: dict = Body(default_factory=dict)):
-    """回滚会话到指定事件数. POST body: {"keep_events": 5}"""
+def rewind_session(session_id: str, request: Request,
+                   payload: dict = Body(default_factory=dict)):
+    """回滚会话到指定事件数. POST body: {"keep_events": 5} — 会话归属校验同 get_session."""
     from haip.session.store import SessionService
     svc = SessionService(_get_session_db_path())
-    s = svc.get_session(session_id)
+    s = svc.get_session(session_id, user_id=_session_user_id(request))
     if s is None:
         raise HTTPException(status_code=404, detail={"error": "Session not found"})
     svc.rewind_session(s, payload.get("keep_events", 0))

@@ -10,6 +10,7 @@
   7. 通用 UI 端点
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -369,3 +370,157 @@ class TestHistoryEndpoint:
         data = r.json()
         assert len(data) >= 1
         assert data[-1]["agent"] == "pharmacy"
+
+
+class TestAuditUserTracking:
+    """P1-2: 中间件顺序 — Auth 必须先于 Audit 执行, 审计事件须记录 user_id.
+
+    旧顺序 (RateLimit→Metrics→Audit→Auth) 下 Audit 在 Auth 之前读取
+    request.state.current_user → 恒为 None; 修复后 Auth 最外层先执行。
+    """
+
+    def test_audit_records_test_mode_user(self):
+        from haip.audit import get_audit_logger
+        logger = get_audit_logger()
+        before = len(logger.query(resource="/api/agents", user_id="test-user"))
+        r = client.get("/api/agents")
+        assert r.status_code == 200
+        events = logger.query(resource="/api/agents", user_id="test-user")
+        assert len(events) > before, "审计事件缺少 user_id — Auth 未先于 Audit 执行"
+
+    def test_audit_records_jwt_user(self):
+        """生产模式 + 真实 JWT: 审计事件 user_id = token 身份."""
+        os.environ["HAIP_TEST_MODE"] = "false"
+        os.environ["HAIP_ENV"] = "production"
+        try:
+            from haip.agent import _registry, load_from_dir
+            from haip.audit import get_audit_logger
+            from haip.auth.jwt import create_access_token
+            from haip.web_server import YAML_DIR
+            from haip.web_server import app as app2
+            if len(_registry) < 14:
+                load_from_dir(str(YAML_DIR))
+            c2 = TestClient(app2)
+            token, _ = create_access_token(
+                "audit_doc_1", "audit", ["doctor"], ["agent:read"])
+            logger = get_audit_logger()
+            before = len(logger.query(resource="/api/agents", user_id="audit_doc_1"))
+            r = c2.get("/api/agents", headers={"Authorization": f"Bearer {token}"})
+            assert r.status_code == 200, r.text[:200]
+            after = logger.query(resource="/api/agents", user_id="audit_doc_1")
+            assert len(after) > before, "JWT 请求的审计事件必须记录 token 中的 user_id"
+        finally:
+            os.environ["HAIP_TEST_MODE"] = "true"
+            os.environ.pop("HAIP_ENV", None)
+
+
+class TestSessionUserScoping:
+    """P1-3: 会话 IDOR — user 作用域取自 JWT, 客户端 user_id 参数被忽略."""
+
+    def _prod_client(self):
+        from haip.agent import _registry, load_from_dir
+        from haip.web_server import YAML_DIR
+        from haip.web_server import app as app2
+        if len(_registry) < 14:
+            load_from_dir(str(YAML_DIR))
+        return TestClient(app2)
+
+    @staticmethod
+    def _token(user_id: str) -> str:
+        from haip.auth.jwt import create_access_token
+        token, _ = create_access_token(user_id, user_id, ["doctor"], ["agent:read"])
+        return token
+
+    def test_session_isolation_between_users(self, monkeypatch, tmp_path):
+        """u2 无法读取/回滚 u1 的会话; 客户端传 user_id 参数被忽略 (仅认 JWT)."""
+        monkeypatch.setattr(
+            "haip.web_server._get_session_db_path",
+            lambda: str(tmp_path / "sessions.db"),
+        )
+        os.environ["HAIP_TEST_MODE"] = "false"
+        os.environ["HAIP_ENV"] = "production"
+        try:
+            c = self._prod_client()
+            h1 = {"Authorization": f"Bearer {self._token('sess_u1')}"}
+            h2 = {"Authorization": f"Bearer {self._token('sess_u2')}"}
+
+            r = c.post("/api/sessions", json={"state": {"owner": "u1"}}, headers=h1)
+            assert r.status_code == 200, r.text[:200]
+            sid = r.json()["session_id"]
+
+            # IDOR 主断言: u2 携带 user_id=sess_u1 也读不到 u1 的会话
+            r2 = c.get(f"/api/sessions/{sid}?user_id=sess_u1", headers=h2)
+            assert r2.status_code == 404, "IDOR: u2 不应能读取 u1 的会话"
+
+            # u1 可读; 即使客户端乱传 user_id 参数也忽略, 仅认 JWT 身份
+            r3 = c.get(f"/api/sessions/{sid}?user_id=whatever", headers=h1)
+            assert r3.status_code == 200
+            assert r3.json()["user_id"] == "sess_u1"
+
+            # 列表 user 作用域
+            r4 = c.get("/api/sessions?user_id=sess_u1", headers=h2)
+            assert r4.status_code == 200
+            assert all(s["id"] != sid for s in r4.json()), "u2 列表不应包含 u1 的会话"
+            r5 = c.get("/api/sessions", headers=h1)
+            assert any(s["id"] == sid for s in r5.json())
+
+            # rewind 归属校验
+            r6 = c.post(f"/api/sessions/{sid}/rewind", json={"keep_events": 0}, headers=h2)
+            assert r6.status_code == 404, "IDOR: u2 不应能 rewind u1 的会话"
+        finally:
+            os.environ["HAIP_TEST_MODE"] = "true"
+            os.environ.pop("HAIP_ENV", None)
+
+    def test_create_session_ignores_body_user_id(self, monkeypatch, tmp_path):
+        """create_session 忽略 body.user_id — 会话归属 JWT 用户."""
+        monkeypatch.setattr(
+            "haip.web_server._get_session_db_path",
+            lambda: str(tmp_path / "sessions.db"),
+        )
+        os.environ["HAIP_TEST_MODE"] = "false"
+        os.environ["HAIP_ENV"] = "production"
+        try:
+            c = self._prod_client()
+            h2 = {"Authorization": f"Bearer {self._token('sess_u2')}"}
+            r = c.post("/api/sessions", json={
+                "user_id": "sess_u1", "state": {"owner": "u2"},
+            }, headers=h2)
+            assert r.status_code == 200, r.text[:200]
+            sid = r.json()["session_id"]
+            # 会话归 sess_u2 — u1 读不到
+            r1 = c.get(f"/api/sessions/{sid}?user_id=sess_u2", headers={
+                "Authorization": f"Bearer {self._token('sess_u1')}"})
+            assert r1.status_code == 404
+            r2 = c.get(f"/api/sessions/{sid}", headers=h2)
+            assert r2.status_code == 200
+            assert r2.json()["user_id"] == "sess_u2"
+        finally:
+            os.environ["HAIP_TEST_MODE"] = "true"
+            os.environ.pop("HAIP_ENV", None)
+
+    def test_sessions_anonymous_dev_mode_still_works(self, monkeypatch, tmp_path):
+        """匿名 dev 模式 (loopback 免登录) 会话端点仍可用 — 稳定伪用户作用域."""
+        monkeypatch.setattr(
+            "haip.web_server._get_session_db_path",
+            lambda: str(tmp_path / "sessions.db"),
+        )
+        os.environ["HAIP_TEST_MODE"] = "false"
+        old_env = os.environ.pop("HAIP_ENV", None)
+        old_strict = os.environ.pop("HAIP_STRICT_SECURITY", None)
+        try:
+            c = TestClient(app, client=("127.0.0.1", 12345))
+            r = c.post("/api/sessions", json={"state": {"x": 1}})
+            assert r.status_code == 200, f"dev 模式匿名会话创建失败: {r.text[:200]}"
+            sid = r.json()["session_id"]
+            r2 = c.get(f"/api/sessions/{sid}")
+            assert r2.status_code == 200
+            assert r2.json()["user_id"] == "dev-user"
+            r3 = c.get("/api/sessions")
+            assert r3.status_code == 200
+            assert any(s["id"] == sid for s in r3.json())
+        finally:
+            os.environ["HAIP_TEST_MODE"] = "true"
+            if old_env is not None:
+                os.environ["HAIP_ENV"] = old_env
+            if old_strict is not None:
+                os.environ["HAIP_STRICT_SECURITY"] = old_strict

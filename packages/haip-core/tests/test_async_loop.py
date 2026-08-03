@@ -96,6 +96,14 @@ class TestSessionService:
         sessions = self.svc.list_sessions(user_id="u1")
         assert len(sessions) == 2
 
+    def test_sqlite_get_session_user_scoped(self):
+        """P1-3: SQLite get_session 按 (id, app_name, user_id) 作用域 —
+        同名 session_id 跨用户互不可见 (HTTP 层依赖此语义防 IDOR)."""
+        s = self.svc.create_session(user_id="u1", session_id="shared")
+        assert s.id == "shared"
+        assert self.svc.get_session("shared", user_id="u1") is not None
+        assert self.svc.get_session("shared", user_id="u2") is None
+
 
 class TestInMemorySessionService:
     def test_basic_operations(self):
@@ -111,6 +119,31 @@ class TestInMemorySessionService:
         svc.end_invocation(s)
         # temp: 前缀在 end_invocation 清除
         assert "temp:" not in "".join(e.content or "" for e in s.events) or len(s.events) == 1
+
+    def test_inmemory_user_scoped_same_session_id(self):
+        """P1-3: InMemory 会话按 (user_id, session_id) 复合键隔离 — 与 SQLite 后端一致."""
+        svc = InMemorySessionService()
+        s1 = svc.get_or_create_session("default", user_id="u1")
+        s2 = svc.get_or_create_session("default", user_id="u2")
+        assert s1 is not s2, "不同用户同名 session_id 必须得到不同会话"
+
+        svc.append_event(s1, Event.user_message("u1 secret"))
+        assert len(s1.events) == 1
+        assert len(s2.events) == 0, "u2 不得看到 u1 会话的事件"
+
+        assert svc.get_session("default", user_id="u1") is s1
+        assert svc.get_session("default", user_id="u2") is s2
+        assert svc.get_session("default", user_id="u3") is None
+
+    def test_inmemory_list_sessions_user_scoped(self):
+        """P1-3: InMemory list_sessions 只返回当前用户会话."""
+        svc = InMemorySessionService()
+        svc.get_or_create_session("a", user_id="u1")
+        svc.get_or_create_session("b", user_id="u1")
+        svc.get_or_create_session("a", user_id="u2")
+        assert len(svc.list_sessions(user_id="u1")) == 2
+        assert len(svc.list_sessions(user_id="u2")) == 1
+        assert {s["id"] for s in svc.list_sessions(user_id="u2")} == {"a"}
 
 
 class TestEventsToMessages:
