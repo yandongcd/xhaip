@@ -88,12 +88,14 @@ stages:
   role_ids:
   - attending
   - resident
+  tool: birads_classify
 - order: 3
   id: risk-predict
   label: 风险预测
   desc: Tyrer-Cuzick/Gail模型+BRCA+乳腺密度+活检史 -> 极高/高/中/一般风险分层
   role_ids:
   - attending
+  tool: risk_predict
 - order: 4
   id: biopsy-plan
   label: 活检决策
@@ -106,6 +108,7 @@ stages:
   desc: BI-RADS 5->活检+标记物+腋窝超声+MRI->MDT(外科+肿瘤+放疗+病理+影像)
   role_ids:
   - attending
+  tool: followup_recommend
 - order: 6
   id: followup
   label: 随访规划
@@ -113,6 +116,7 @@ stages:
   role_ids:
   - attending
   - nurse
+  tool: followup_recommend
 ui:
   template: chat-with-role-switcher
   roles:

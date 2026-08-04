@@ -139,6 +139,7 @@ stages:
   - attending
   - surgeon
   - radiologist
+  tool: stenosis_assessment
 - order: 3
   id: surgery
   label: 手术执行
@@ -147,6 +148,7 @@ stages:
   - attending
   - surgeon
   - anesthesiologist
+  tool: cobb_severity
 - order: 4
   id: postop-care
   label: 术后管理

@@ -98,6 +98,7 @@ stages:
   role_ids:
   - attending
   - anesthesiologist
+  tool: assess_ponv
 - order: 2
   id: prophylaxis
   label: 预防方案
@@ -105,6 +106,7 @@ stages:
   role_ids:
   - attending
   - anesthesiologist
+  tool: prophylaxis_plan
 - order: 3
   id: rescue
   label: 补救治疗
@@ -112,12 +114,14 @@ stages:
   role_ids:
   - anesthesiologist
   - nurse
+  tool: rescue_mgmt
 - order: 4
   id: followup
   label: 随访
   desc: 24h/48h症状评分、D3/D7问卷推送、PDNV风险评估与干预
   role_ids:
   - nurse
+  tool: discharge_followup
 learning:
   enabled: true
   auto_apply:

@@ -65,6 +65,7 @@ stages:
   role_ids:
   - pharmacist
   - dietitian
+  tool: nutrition_screen
 - order: 2
   id: energy
   label: 能量目标计算
@@ -72,12 +73,14 @@ stages:
   role_ids:
   - pharmacist
   - dietitian
+  tool: energy_calculate
 - order: 3
   id: formula
   label: 处方配比设计
   desc: 糖脂比/氨基酸/电解质/维生素/微量元素全合一配方
   role_ids:
   - pharmacist
+  tool: formula_design
 - order: 4
   id: safety
   label: 配伍安全审核
@@ -85,6 +88,7 @@ stages:
   role_ids:
   - pharmacist
   - quality_director
+  tool: safety_check
 depends_on:
 - agent: medical-record
   version: '>=1.0'

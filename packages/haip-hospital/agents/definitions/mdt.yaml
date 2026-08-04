@@ -74,6 +74,7 @@ stages:
   - surgeon
   - radiologist
   - oncologist
+  tool: mdt_aggregate
 - order: 3
   id: decision
   label: 决策执行

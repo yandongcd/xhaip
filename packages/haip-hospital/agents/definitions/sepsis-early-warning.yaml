@@ -63,6 +63,7 @@ stages:
   role_ids:
   - technician
   - resident
+  tool: immune_status
 - order: 2
   id: sepsis-score
   label: 脓毒症评分
@@ -70,12 +71,14 @@ stages:
   role_ids:
   - resident
   - icu_doctor
+  tool: sepsis_score
 - order: 3
   id: mortality-risk
   label: 死亡风险预测
   desc: 28天死亡风险多因素模型 (年龄/淋巴细胞轨迹/NLR/SOFA/合并症)
   role_ids:
   - icu_doctor
+  tool: mortality_risk
 - order: 4
   id: warning-escalate
   label: 分级预警推送
@@ -84,6 +87,7 @@ stages:
   - icu_doctor
   - resident
   - head_nurse
+  tool: early_warning
 depends_on:
 - agent: lab-critical-value
   version: '>=1.0'

@@ -76,6 +76,7 @@ stages:
   role: 主治医师
   role_ids:
   - attending
+  tool: growth_assess
 - order: 3
   id: diagnose
   label: 诊断分级
@@ -83,6 +84,7 @@ stages:
   role: 主治医师
   role_ids:
   - attending
+  tool: imci_diagnose
 - order: 4
   id: dosing
   label: 用药方案
@@ -90,6 +92,7 @@ stages:
   role: 主治医师
   role_ids:
   - attending
+  tool: dose_calculate
 - order: 5
   id: treatment
   label: 治疗执行

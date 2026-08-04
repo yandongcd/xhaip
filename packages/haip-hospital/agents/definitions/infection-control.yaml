@@ -77,12 +77,14 @@ stages:
   role_ids:
   - infection_control
   - microbiologist
+  tool: mdro_surveillance
 - order: 2
   id: detect
   label: 暴发检测
   desc: 时空聚集分析(≥3例同病区7d→橙色预警,≥5例→红色预警)、调查启动
   role_ids:
   - infection_control
+  tool: outbreak_detection
 - order: 3
   id: bundle
   label: 集束化依从
@@ -90,6 +92,7 @@ stages:
   role_ids:
   - infection_control
   - nurse
+  tool: hai_bundle_compliance
 - order: 4
   id: report
   label: 报告与改进

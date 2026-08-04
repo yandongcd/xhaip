@@ -105,6 +105,7 @@ stages:
   - resident
   - head_nurse
   - rehab_therapist
+  tool: bp_preop
 - order: 3
   id: surgery
   label: 手术执行
@@ -114,6 +115,7 @@ stages:
   - surgeon
   - anesthesiologist
   - instrument_nurse
+  tool: bp_surgery
 - order: 4
   id: postop-care
   label: 术后管理
@@ -122,6 +124,7 @@ stages:
   - attending
   - resident
   - head_nurse
+  tool: bp_followup
 - order: 5
   id: recovery
   label: 康复出院
@@ -138,6 +141,7 @@ stages:
   role_ids:
   - attending
   - resident
+  tool: bp_followup
 rag:
   enabled: true
   top_k: 5

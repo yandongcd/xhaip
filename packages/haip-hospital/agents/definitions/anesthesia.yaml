@@ -83,6 +83,7 @@ stages:
   role_ids:
   - attending
   - anesthesiologist
+  tool: anesthesia_plan
 - order: 3
   id: intraop
   label: 麻醉执行
@@ -90,6 +91,7 @@ stages:
   role_ids:
   - anesthesiologist
   - nurse
+  tool: anesthesia_plan
 - order: 4
   id: postop
   label: 术后管理
@@ -97,6 +99,7 @@ stages:
   role_ids:
   - anesthesiologist
   - nurse
+  tool: anticoagulation_bridge
 rag:
   enabled: true
   top_k: 5

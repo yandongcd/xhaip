@@ -280,6 +280,7 @@ stages:
   - attending
   - resident
   - head_nurse
+  tool: checklist
 - order: 2
   id: classify
   label: 骨折分型
@@ -287,6 +288,7 @@ stages:
   role_ids:
   - attending
   - resident
+  tool: classify_fracture
 - order: 3
   id: preop-eval
   label: 术前评估
@@ -303,6 +305,7 @@ stages:
   - attending
   - anesthesiologist
   - icu_doctor
+  tool: mdt_aggregate
 - order: 5
   id: timing
   label: 手术时机
@@ -310,6 +313,7 @@ stages:
   role_ids:
   - attending
   - anesthesiologist
+  tool: timing_decision
 - order: 6
   id: complications
   label: 并发症预测
@@ -318,6 +322,7 @@ stages:
   - attending
   - resident
   - icu_doctor
+  tool: complication_risk
 - order: 7
   id: surgery
   label: 手术执行
@@ -334,6 +339,7 @@ stages:
   - head_nurse
   - instrument_nurse
   - attending
+  tool: nursing_plan
 - order: 9
   id: rehab
   label: 康复训练
@@ -342,6 +348,7 @@ stages:
   - rehab_therapist
   - attending
   - head_nurse
+  tool: rehab_track
 - order: 10
   id: followup
   label: 长期随访
@@ -349,6 +356,7 @@ stages:
   role_ids:
   - attending
   - rehab_therapist
+  tool: followup_plan
 - order: 11
   id: quality
   label: 质控审计
@@ -356,6 +364,7 @@ stages:
   role_ids:
   - attending
   - head_nurse
+  tool: quality_audit
 rag:
   enabled: true
   top_k: 5

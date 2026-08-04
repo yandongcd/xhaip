@@ -48,12 +48,14 @@ stages:
   role_ids:
   - attending
   - nurse
+  tool: assess_acute
 - order: 2
   id: analgesia
   label: 镇痛方案
   desc: WHO阶梯镇痛、PCA参数设定、多模式镇痛
   role_ids:
   - attending
+  tool: manage_pca
 - order: 3
   id: monitor
   label: 效果监测

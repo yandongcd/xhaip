@@ -86,6 +86,7 @@ stages:
   role_ids:
   - attending
   - resident
+  tool: bp_preop
 - order: 2
   id: procedure
   label: 介入操作
@@ -101,12 +102,14 @@ stages:
   role_ids:
   - attending
   - head_nurse
+  tool: bp_followup
 - order: 4
   id: followup
   label: 随访评估
   desc: 影像复查、疗效评估、再狭窄监测
   role_ids:
   - attending
+  tool: bp_followup
 rag:
   enabled: true
   top_k: 5

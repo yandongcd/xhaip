@@ -185,6 +185,7 @@ stages:
   role_ids:
   - dietitian
   - nurse
+  tool: nrs2002_screen
 - order: 2
   id: assess
   label: 营养评估

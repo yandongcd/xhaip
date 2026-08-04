@@ -68,6 +68,7 @@ stages:
   - attending
   - resident
   - head_nurse
+  tool: bp_reception
 - order: 2
   id: exam
   label: 辅助检查
@@ -75,12 +76,14 @@ stages:
   role_ids:
   - attending
   - resident
+  tool: bp_exam
 - order: 3
   id: diagnosis
   label: 诊断与分型
   desc: 明确诊断、疾病分型分期、鉴别诊断、合并症评估
   role_ids:
   - attending
+  tool: bp_diagnosis
 - order: 4
   id: treatment-plan
   label: 治疗方案
@@ -103,6 +106,7 @@ stages:
   role_ids:
   - attending
   - head_nurse
+  tool: bp_followup
 guard:
   triggers:
   - GDMT四联疗法

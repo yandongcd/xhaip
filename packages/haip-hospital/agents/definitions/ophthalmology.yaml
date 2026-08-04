@@ -68,12 +68,14 @@ stages:
   role_ids:
   - attending
   - technician
+  tool: bp_exam
 - order: 3
   id: diagnosis
   label: 诊断与分级
   desc: 明确诊断、疾病分型分级、鉴别诊断
   role_ids:
   - attending
+  tool: bp_diagnosis
 - order: 4
   id: treatment
   label: 治疗方案
@@ -81,6 +83,7 @@ stages:
   role_ids:
   - attending
   - head
+  tool: bp_treatment
 - order: 5
   id: followup
   label: 复查随访
@@ -88,6 +91,7 @@ stages:
   role_ids:
   - attending
   - resident
+  tool: bp_followup
 guard:
   triggers:
   - 诊断决策

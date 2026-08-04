@@ -111,6 +111,7 @@ stages:
   - attending
   - immunologist
   - head_nurse
+  tool: bp_followup
 - order: 5
   id: long-term
   label: 长期随访

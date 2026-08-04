@@ -70,6 +70,7 @@ stages:
   role_ids:
   - attending
   - resident
+  tool: screening_recommend
 - order: 2
   id: biochemical
   label: 生化初筛
@@ -84,6 +85,7 @@ stages:
   desc: 卡托普利/盐水负荷→PA  可乐定抑制→PHEO  24h UFC→Cushing
   role_ids:
   - attending
+  tool: screening_recommend
 - order: 4
   id: imaging
   label: 影像定位
@@ -97,6 +99,7 @@ stages:
   role_ids:
   - attending
   - pharmacist
+  tool: referral_decision
 - order: 6
   id: treatment
   label: 病因治疗

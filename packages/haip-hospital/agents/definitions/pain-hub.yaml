@@ -46,6 +46,7 @@ stages:
   role: 主治医师
   role_ids:
   - attending
+  tool: triage
 - order: 2
   id: acute
   label: 急性评估

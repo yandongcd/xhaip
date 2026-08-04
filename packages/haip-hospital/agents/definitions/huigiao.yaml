@@ -67,6 +67,7 @@ stages:
   - attending
   - resident
   - head_nurse
+  tool: bp_reception
 - order: 2
   id: bp-exam
   label: 检查检验
@@ -76,6 +77,7 @@ stages:
   - attending
   - resident
   - head_nurse
+  tool: bp_exam
 - order: 3
   id: bp-diagnosis
   label: 诊断确认
@@ -85,6 +87,7 @@ stages:
   - attending
   - resident
   - head_nurse
+  tool: bp_diagnosis
 - order: 4
   id: bp-treatment
   label: 治疗执行
@@ -94,6 +97,7 @@ stages:
   - attending
   - resident
   - head_nurse
+  tool: bp_treatment
 - order: 5
   id: bp-followup
   label: 随访管理
@@ -103,6 +107,7 @@ stages:
   - attending
   - resident
   - head_nurse
+  tool: bp_followup
 guard:
   triggers:
   - 诊断决策

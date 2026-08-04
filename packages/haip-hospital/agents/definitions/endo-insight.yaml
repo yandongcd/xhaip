@@ -96,6 +96,7 @@ stages:
   role_ids:
   - attending
   - technician
+  tool: report_parse
 - order: 3
   id: report-parsing
   label: 报告解析
@@ -103,6 +104,7 @@ stages:
   role_ids:
   - attending
   - resident
+  tool: report_parse
 - order: 4
   id: risk-assessment
   label: 风险评估
@@ -110,6 +112,7 @@ stages:
   role_ids:
   - attending
   - pharmacist
+  tool: risk_assessment
 - order: 5
   id: post-procedure
   label: 术后管理
@@ -118,6 +121,7 @@ stages:
   - attending
   - resident
   - nurse
+  tool: post_procedure_plan
 - order: 6
   id: followup
   label: 随访规划
@@ -125,6 +129,7 @@ stages:
   role_ids:
   - attending
   - nurse
+  tool: followup_reminder
 ui:
   template: chat-with-role-switcher
   roles:

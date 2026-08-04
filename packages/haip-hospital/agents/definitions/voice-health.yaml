@@ -59,6 +59,7 @@ stages:
   role_ids:
   - attending
   - slp_therapist
+  tool: voice_assess
 - order: 2
   id: therapy
   label: 嗓音治疗
@@ -66,6 +67,7 @@ stages:
   role_ids:
   - attending
   - slp_therapist
+  tool: voice_assess
 - order: 3
   id: followup
   label: 随访

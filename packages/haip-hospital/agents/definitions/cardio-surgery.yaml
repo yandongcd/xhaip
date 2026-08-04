@@ -86,6 +86,7 @@ stages:
   - attending
   - resident
   - cardiologist
+  tool: surgical_assess
 - order: 2
   id: preop-optimize
   label: 术前优化
@@ -94,6 +95,7 @@ stages:
   - attending
   - resident
   - head_nurse
+  tool: surgical_assess
 - order: 3
   id: surgery
   label: 手术执行
@@ -103,6 +105,7 @@ stages:
   - surgeon
   - anesthesiologist
   - perfusionist
+  tool: surgical_assess
 - order: 4
   id: postop-icu
   label: ICU监护

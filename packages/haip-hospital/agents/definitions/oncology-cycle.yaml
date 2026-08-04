@@ -100,6 +100,7 @@ stages:
   role_ids:
   - attending
   - pharmacist
+  tool: cycle_plan
 - order: 3
   id: risk-screening
   label: 风险筛查
@@ -107,12 +108,14 @@ stages:
   role_ids:
   - attending
   - pharmacist
+  tool: risk_screening
 - order: 4
   id: doctor-endpoint
   label: 医生端输出
   desc: 诊疗摘要+风险分层+返院决策建议
   role_ids:
   - attending
+  tool: tri_endpoint
 - order: 5
   id: nurse-endpoint
   label: 护士端输出
@@ -120,6 +123,7 @@ stages:
   role_ids:
   - attending
   - nurse
+  tool: tri_endpoint
 - order: 6
   id: patient-endpoint
   label: 患者端输出
@@ -128,6 +132,7 @@ stages:
   - attending
   - nurse
   - head_nurse
+  tool: tri_endpoint
 ui:
   template: chat-with-role-switcher
   roles:

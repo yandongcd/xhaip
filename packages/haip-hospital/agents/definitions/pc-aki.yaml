@@ -72,12 +72,14 @@ stages:
   role_ids:
   - attending
   - nurse
+  tool: risk_screen
 - order: 2
   id: prevent
   label: 预防方案
   desc: 水化方案(NS 1mL/kg/h×12h)、药物调整(二甲双胍停用/ACEI/ARB/NSAIDs)、对比剂选择(等渗/低渗)
   role_ids:
   - attending
+  tool: prevention_plan
 - order: 3
   id: monitor
   label: 术后监测
@@ -85,6 +87,7 @@ stages:
   role_ids:
   - attending
   - nurse
+  tool: nursing_checklist
 learning:
   enabled: true
   auto_apply:

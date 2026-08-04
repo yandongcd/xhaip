@@ -78,6 +78,7 @@ stages:
   role_ids:
   - triage_nurse
   - emergency_doctor
+  tool: triage_assess
 - order: 2
   id: green-channel
   label: 绿色通道
@@ -85,6 +86,7 @@ stages:
   role_ids:
   - emergency_doctor
   - nurse
+  tool: green_channel_check
 - order: 3
   id: disposition
   label: 处置分流

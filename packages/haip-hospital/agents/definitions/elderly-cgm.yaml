@@ -81,6 +81,7 @@ stages:
   role_ids:
   - attending
   - resident
+  tool: cgm_analysis
 - order: 2
   id: risk-stratify
   label: 风险分层
@@ -95,6 +96,7 @@ stages:
   role_ids:
   - attending
   - nurse
+  tool: hypo_predict
 - order: 4
   id: regimen-adjust
   label: 方案调整
@@ -102,6 +104,7 @@ stages:
   role_ids:
   - attending
   - pharmacist
+  tool: regimen_optimize
 - order: 5
   id: nutrition
   label: 营养协同
@@ -117,6 +120,7 @@ stages:
   - attending
   - nurse
   - head_nurse
+  tool: regimen_optimize
 ui:
   template: chat-with-role-switcher
   roles:

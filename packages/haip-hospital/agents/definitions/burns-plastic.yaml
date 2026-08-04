@@ -135,6 +135,7 @@ stages:
   role_ids:
   - attending
   - rehab_therapist
+  tool: bp_followup
 rag:
   enabled: true
   top_k: 5

@@ -66,6 +66,7 @@ stages:
   role_ids:
   - attending
   - triage_nurse
+  tool: bp_triage
 - order: 2
   id: rescue
   label: 紧急救治
@@ -74,6 +75,7 @@ stages:
   - attending
   - emergency_doctor
   - head_nurse
+  tool: bp_rescue
 - order: 3
   id: exam-diagnosis
   label: 快速诊断
@@ -89,6 +91,7 @@ stages:
   - attending
   - emergency_doctor
   - head_nurse
+  tool: bp_triage
 - order: 5
   id: disposition
   label: 分流决策

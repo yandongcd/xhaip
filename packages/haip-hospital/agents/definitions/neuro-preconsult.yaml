@@ -73,6 +73,7 @@ stages:
   role_ids:
   - attending
   - resident
+  tool: history_collect
 - order: 2
   id: gcs-scoring
   label: GCS评分
@@ -87,12 +88,14 @@ stages:
   desc: 12项急症(SAH/脑疝/脊髓压迫/马尾/垂体卒中/癫痫/GCS↓)+WFNS SAH I-V
   role_ids:
   - attending
+  tool: red_flag_screen
 - order: 4
   id: imaging-triage
   label: 影像分流
   desc: 出血→CT / 占位→MRI增强 / 血管→CTA/MRA/DSA / 脊柱→MRI脊柱
   role_ids:
   - attending
+  tool: summary_generate
 - order: 5
   id: surgical-timing
   label: 手术时机
@@ -100,6 +103,7 @@ stages:
   role_ids:
   - attending
   - anesthesiologist
+  tool: summary_generate
 - order: 6
   id: summary-review
   label: 摘要审核
@@ -107,6 +111,7 @@ stages:
   role_ids:
   - attending
   - head_nurse
+  tool: summary_generate
 ui:
   template: chat-with-role-switcher
   roles:

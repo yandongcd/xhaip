@@ -48,6 +48,7 @@ stages:
   desc: RCRI评分、Goldman指数、运动试验评估
   role_ids:
   - attending
+  tool: assess_cardiac
 - order: 2
   id: optimize
   label: 术前优化
@@ -62,6 +63,7 @@ stages:
   role_ids:
   - attending
   - cardiologist
+  tool: assess_mi
 ui:
   template: chat-with-role-switcher
   roles:

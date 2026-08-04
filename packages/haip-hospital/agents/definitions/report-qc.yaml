@@ -83,6 +83,7 @@ stages:
   desc: 描述-结论矛盾检测+危急值(气胸/游离气体/颅内出血/夹层/PE)漏标+测量一致性
   role_ids:
   - attending
+  tool: semantic_check
 - order: 3
   id: structured
   label: 结构评估
@@ -95,6 +96,7 @@ stages:
   desc: 四维加权(硬40%+语义30%+结构15%+及时15%) → A+/A/B/C/D → 签发/修改/退回
   role_ids:
   - attending
+  tool: qc_report
 - order: 5
   id: revision
   label: 修订建议

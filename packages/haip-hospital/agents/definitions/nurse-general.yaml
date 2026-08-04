@@ -179,18 +179,21 @@ stages:
   role_ids:
   - nurse
   - head_nurse
+  tool: vte_nursing_bundle
 - order: 3
   id: execution
   label: 护理执行
   desc: 基础护理、专科护理、用药管理
   role_ids:
   - nurse
+  tool: vte_nursing_bundle
 - order: 4
   id: discharge
   label: 出院指导
   desc: 健康宣教、随访计划、社区衔接
   role_ids:
   - nurse
+  tool: vte_nursing_bundle
 rag:
   enabled: true
   top_k: 5

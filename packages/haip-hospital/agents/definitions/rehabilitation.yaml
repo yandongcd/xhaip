@@ -69,6 +69,7 @@ stages:
   role_ids:
   - attending
   - therapist
+  tool: bp_exam
 - order: 3
   id: diagnosis
   label: 诊断分级
@@ -76,6 +77,7 @@ stages:
   role_ids:
   - attending
   - head_nurse
+  tool: bp_diagnosis
 - order: 4
   id: treatment
   label: 康复治疗
@@ -83,6 +85,7 @@ stages:
   role_ids:
   - therapist
   - nurse
+  tool: bp_treatment
 - order: 5
   id: progress
   label: 进展评估

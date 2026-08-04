@@ -54,12 +54,14 @@ stages:
   role_ids:
   - attending
   - technician
+  tool: assess_indications
 - order: 3
   id: followup
   label: 术后随访
   desc: 疗效评估、并发症监测、重复治疗计划
   role_ids:
   - attending
+  tool: postop_safety
 ui:
   template: chat-with-role-switcher
   roles:

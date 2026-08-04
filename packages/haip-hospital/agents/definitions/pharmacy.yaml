@@ -76,12 +76,14 @@ stages:
   desc: 17条审查规则(配伍禁忌/剂量/溶媒/抗生素/抗凝)、AI审核意见生成
   role_ids:
   - pharmacist
+  tool: review_rx
 - order: 2
   id: tpn
   label: TPN设计
   desc: 营养素计算→糖脂比→氨基酸→电解质→渗透压→Ca/P沉淀检查→ISO5级无菌配制
   role_ids:
   - pharmacist
+  tool: calculate_tpn
 - order: 3
   id: monitor
   label: 疗效监测

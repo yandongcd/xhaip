@@ -73,6 +73,7 @@ stages:
   role_ids:
   - attending
   - pharmacist
+  tool: order_audit
 - order: 2
   id: reconciliation
   label: 用药重整
@@ -80,18 +81,21 @@ stages:
   role_ids:
   - attending
   - pharmacist
+  tool: medication_reconciliation
 - order: 3
   id: adr-prediction
   label: ADR预警
   desc: 药物-药物+药物-过敏(交叉过敏5类)+药物-检验(K/Cr)三重预警
   role_ids:
   - pharmacist
+  tool: adr_alert
 - order: 4
   id: tdm-guidance
   label: TDM指导
   desc: 万古霉素AUC/MIC+氨基糖苷谷峰+地高辛+环孢素C0/C2 采血时机+目标范围
   role_ids:
   - pharmacist
+  tool: order_audit
 - order: 5
   id: dose-adjustment
   label: 剂量调整
@@ -99,6 +103,7 @@ stages:
   role_ids:
   - attending
   - pharmacist
+  tool: order_audit
 - order: 6
   id: patient-education
   label: 用药教育
@@ -107,6 +112,7 @@ stages:
   - pharmacist
   - nurse
   - head_nurse
+  tool: medication_reconciliation
 ui:
   template: chat-with-role-switcher
   roles:

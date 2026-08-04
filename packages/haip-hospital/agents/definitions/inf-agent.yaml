@@ -101,6 +101,7 @@ stages:
   role_ids:
   - attending
   - technician
+  tool: test_recommend
 - order: 3
   id: infection-typing
   label: 感染类型判别
@@ -115,6 +116,7 @@ stages:
   role_ids:
   - attending
   - emergency_doctor
+  tool: sepsis_screening
 - order: 5
   id: antimicrobial-decision
   label: 抗感染决策
@@ -122,6 +124,7 @@ stages:
   role_ids:
   - attending
   - pharmacist
+  tool: antimicrobial_advice
 - order: 6
   id: antibiogram-review
   label: 药敏复评
@@ -129,6 +132,7 @@ stages:
   role_ids:
   - attending
   - pharmacist
+  tool: antibiogram
 ui:
   template: chat-with-role-switcher
   roles:

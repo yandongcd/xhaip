@@ -84,12 +84,14 @@ stages:
   - attending
   - resident
   - intern
+  tool: case_teaching
 - order: 3
   id: assessment
   label: 学习评估
   desc: 知识要点测试、临床推理能力评估、学习路径进度跟踪
   role_ids:
   - attending
+  tool: learning_path
 ui:
   roles:
   - id: resident

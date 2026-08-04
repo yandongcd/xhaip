@@ -47,12 +47,14 @@ stages:
   desc: 疼痛强度、部位、类型、爆发痛评估
   role_ids:
   - attending
+  tool: assess_cancer
 - order: 2
   id: titration
   label: 阿片滴定
   desc: 起始剂量、滴定速度、不良反应管理
   role_ids:
   - attending
+  tool: opioid_safety
 - order: 3
   id: maintenance
   label: 维持治疗
@@ -66,6 +68,7 @@ stages:
   role_ids:
   - attending
   - nurse
+  tool: palliative_refer
 ui:
   template: chat-with-role-switcher
   roles:

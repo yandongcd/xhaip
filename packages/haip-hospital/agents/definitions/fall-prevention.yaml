@@ -60,6 +60,7 @@ stages:
   role_ids:
   - head_nurse
   - nurse
+  tool: prevention_plan
 - order: 3
   id: postop-watch
   label: 术后高危监测
@@ -67,6 +68,7 @@ stages:
   role_ids:
   - nurse
   - anesthesiologist
+  tool: postop_check
 ui:
   roles:
   - id: attending

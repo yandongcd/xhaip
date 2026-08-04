@@ -90,6 +90,7 @@ stages:
   - attending
   - midwife
   - neonatologist
+  tool: bp_treatment
 - order: 4
   id: postpartum
   label: 产后监护
@@ -98,6 +99,7 @@ stages:
   - attending
   - midwife
   - head_nurse
+  tool: bp_nursing
 - order: 5
   id: neonatal
   label: 新生儿管理
@@ -112,6 +114,7 @@ stages:
   role_ids:
   - attending
   - midwife
+  tool: bp_followup
 rag:
   enabled: true
   top_k: 5

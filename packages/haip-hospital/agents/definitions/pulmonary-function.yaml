@@ -97,6 +97,7 @@ stages:
   role_ids:
   - attending
   - technician
+  tool: pft_interpret
 - order: 2
   id: pattern-classify
   label: 模式判读
@@ -104,12 +105,14 @@ stages:
   role_ids:
   - attending
   - resident
+  tool: pft_interpret
 - order: 3
   id: bdr-challenge
   label: 舒张/激发试验
   desc: BDR定量(FEV1Δ≥12%+200mL)+PC20激发+ACO鉴别
   role_ids:
   - attending
+  tool: bronchodilator_test
 - order: 4
   id: copd-staging
   label: COPD综合评估
@@ -124,6 +127,7 @@ stages:
   role_ids:
   - attending
   - anesthesiologist
+  tool: preop_assessment
 - order: 6
   id: followup
   label: 随访追踪

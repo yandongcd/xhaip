@@ -92,18 +92,21 @@ stages:
   role_ids:
   - attending
   - resident
+  tool: pattern_match
 - order: 4
   id: trend-analysis
   label: 趋势分析
   desc: 抗体滴度时序变化(4倍=显著) + 新抗体预警 + 疾病活动度关联
   role_ids:
   - attending
+  tool: trend_track
 - order: 5
   id: disease-orientation
   label: 疾病指向
   desc: 鉴别诊断排序 + ANCA器官评估 + APS分层 + 临床标准校验
   role_ids:
   - attending
+  tool: disease_orientation
 - order: 6
   id: rheumatology-referral
   label: 风湿会诊
@@ -111,6 +114,7 @@ stages:
   role_ids:
   - attending
   - pharmacist
+  tool: pattern_match
 ui:
   template: chat-with-role-switcher
   roles:

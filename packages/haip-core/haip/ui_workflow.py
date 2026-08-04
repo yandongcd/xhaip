@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import json
 import re
 from pathlib import Path
@@ -9,8 +10,21 @@ from pathlib import Path
 from haip.patients import load_patients
 
 
+def _esc(s: str | None) -> str:
+    """HTML 转义 — 所有 HTML 插值点统一转义 (纵深防御, 防 XSS)."""
+    return html.escape(str(s or ""), quote=True)
+
+
+def _js_safe_json(obj) -> str:
+    """JSON 序列化并转义 < — 防止注入 HTML script 块提前闭合或标签注入 (XSS).
+
+    \\u003c 是合法 JSON/JS 转义 (解析为 <), 但 HTML 解析器不会识别为标签起始.
+    """
+    return json.dumps(obj, ensure_ascii=False).replace("<", "\\u003c")
+
+
 def _match_tool(stage_id: str, stage_label: str, tools: list[dict]) -> str:
-    """阶段 → 工具名映射: 精确 id > id 子串 > label 子串 > 首工具兜底."""
+    """阶段 → 工具名映射: 精确 id > id 子串 > label 子串; 匹配失败返回空 (不静默绑定错误工具)."""
     norm = lambda s: re.sub(r"[^a-z0-9]", "", s.lower())
     sid, sl = norm(stage_id), norm(stage_label)
     names = [t["name"] for t in tools]
@@ -24,7 +38,7 @@ def _match_tool(stage_id: str, stage_label: str, tools: list[dict]) -> str:
         tn = norm(n)
         if sl and (sl in tn or tn in sl):
             return n
-    return names[0] if names else ""
+    return ""
 
 
 def _guideline_refs(department: str) -> str:
@@ -60,7 +74,7 @@ def build_workflow_ui_context(plugin) -> tuple[list[dict], dict]:
             "id": s.get("id", f"s{i}"),
             "label": s.get("label", f"阶段{i + 1}"),
             "description": s.get("desc", ""),
-            "tool": _match_tool(s.get("id", ""), s.get("label", ""), tools),
+            "tool": s.get("tool") or _match_tool(s.get("id", ""), s.get("label", ""), tools),
             "guideline_ref": guide_ref,
             "key_output": "",
             "role_ids": s.get("role_ids", []),
@@ -86,8 +100,8 @@ def _build_role_pills(roles: dict) -> tuple[str, str]:
         icon = rcfg.get("icon", "")
         role_label = rcfg.get("name", rid)
         pills += (
-            f'<button class="role-pill" data-role="{rid}" '
-            f'onclick="switchRole(\'{rid}\')">{icon} {role_label}</button>\n'
+            f'<button class="role-pill" data-role="{_esc(rid)}" '
+            f'onclick="switchRole(\'{_esc(rid)}\')">{_esc(icon)} {_esc(role_label)}</button>\n'
         )
     return pills, first_role
 
@@ -99,7 +113,7 @@ def _build_stage_nav(stages: list[dict]) -> str:
         items += (
             f'<div class="rb-item" data-stage="{s["order"]}" onclick="clickStage({s["order"]})">'
             f'<span class="rb-dot current"></span>'
-            f'<div class="rb-info"><div class="rb-name">{s["order"]}. {s["label"]}</div></div>'
+            f'<div class="rb-info"><div class="rb-name">{s["order"]}. {_esc(s["label"])}</div></div>'
             f'<span class="rb-status active-s">当前</span></div>\n'
         )
     return items
@@ -114,24 +128,34 @@ def _build_stage_panels(stages: list[dict]) -> str:
         panels += (
             f'<div class="stage-content{act}" id="stage-{s["order"]}">'
             f'<div class="stage-header"><span class="stage-badge">{s["order"]}</span>'
-            f'<div><h3>{s["label"]}</h3><p>{s["description"]}</p>'
-            f'<span class="guide-ref">{s.get("guideline_ref", "")}</span></div></div>'
+            f'<div><h3>{_esc(s["label"])}</h3><p>{_esc(s["description"])}</p>'
+            f'<span class="guide-ref">{_esc(s.get("guideline_ref", ""))}</span></div></div>'
             f'<div class="form-group"><label>参数</label>'
-            f'<textarea id="params-{s["id"]}" '
+            f'<textarea id="params-{_esc(s["id"])}" '
             f'placeholder="请先在左侧选择数字病人, 参数将自动填充"></textarea></div>'
             f'<div class="btn-row">'
-            f'<button class="btn-exec" onclick="callStage(\'{s["id"]}\',\'{tool_name}\')">'
-            f'▶ 执行 {s["label"]}</button>'
-            f'<button class="btn-guard" onclick="showGuard(\'{s["id"]}\')">🛡 安全校验</button>'
+        )
+        if tool_name:
+            panels += (
+                f'<button class="btn-exec" onclick="callStage(\'{_esc(s["id"])}\',\'{_esc(tool_name)}\')">'
+                f'▶ 执行 {_esc(s["label"])}</button>'
+            )
+        else:
+            panels += (
+                '<button class="btn-exec" disabled style="opacity:.5;cursor:not-allowed" '
+                'title="该阶段未绑定工具">▶ 执行 (未绑定工具)</button>'
+            )
+        panels += (
+            f'<button class="btn-guard" onclick="showGuard(\'{_esc(s["id"])}\')">🛡 安全校验</button>'
         )
         if i < len(stages) - 1:
             panels += (
                 f'<button class="btn-next" '
-                f'onclick="autoNext(\'{s["id"]}\',\'{stages[i + 1]["id"]}\')">→ 下一步</button>'
+                f'onclick="autoNext(\'{_esc(s["id"])}\',\'{_esc(stages[i + 1]["id"])}\')">→ 下一步</button>'
             )
         panels += (
             f'</div>'
-            f'<div class="result-box" id="result-{s["id"]}">'
+            f'<div class="result-box" id="result-{_esc(s["id"])}">'
             f'<span class="result-placeholder">点击「执行」开始...</span></div>'
             f'</div>\n'
         )
@@ -151,10 +175,6 @@ def render_workflow_ui(
     icon_map = {"business": "🏥", "specialist": "🔬", "master_data": "🗄️"}
     patients = load_patients(name)
 
-    wf_json = json.dumps(workflow_stages, ensure_ascii=False)
-    roles_json = json.dumps(roles, ensure_ascii=False)
-    patients_json = json.dumps(patients, ensure_ascii=False)
-
     # ── 角色 Pill ──
     role_pills, first_role = _build_role_pills(roles)
 
@@ -167,7 +187,7 @@ def render_workflow_ui(
     # ── Guard ──
     guard_html = ""
     if guard_triggers:
-        tags = " ".join(f'<span class="tag red">{t}</span>' for t in guard_triggers)
+        tags = " ".join(f'<span class="tag red">{_esc(t)}</span>' for t in guard_triggers)
         guard_html = (
             '<div class="rb-stats"><div class="rb-stat"><span>⚠ 高危触发</span></div>'
             f'<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px">{tags}</div></div>'
@@ -177,7 +197,7 @@ def render_workflow_ui(
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{cn_name} · 诊疗流程 — HAIP</title>
+<title>{_esc(cn_name)} · 诊疗流程 — HAIP</title>
 <style>
 :root{{
   --bg-default:#ffffff;--bg-overlay:#f6f8fa;--bg-inset:#f0f3f6;
@@ -275,7 +295,7 @@ body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Mic
 <body>
 
 <div class="header">
-  <h1>{icon_map.get(agent_type, '🏥')} {cn_name} 工作台</h1>
+  <h1>{icon_map.get(agent_type, '🏥')} {_esc(cn_name)} 工作台</h1>
   <div class="header-role">
     <span style="font-size:11px;color:var(--text3);padding:3px 4px 3px 0">角色:</span>
 {role_pills}
@@ -289,7 +309,7 @@ body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Mic
 <div class="app">
   <div class="leftbar">
     <div class="lb-search"><input type="text" id="patient-search" placeholder="搜索患者..." oninput="searchPatients()"></div>
-    <div class="lb-header">数字病人 · {cn_name}</div>
+    <div class="lb-header">数字病人 · {_esc(cn_name)}</div>
     <div class="patient-list" id="patient-list"></div>
     <div class="lb-footer">共 <strong id="lb-count">0</strong> 位患者</div>
   </div>
@@ -315,9 +335,10 @@ body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Mic
 <div class="toast" id="toast"></div>
 
 <script>
-var AGENT='{name}';var STAGES={wf_json};var ROLES={roles_json};
-var PATIENTS={patients_json};
-var CURRENT_ROLE='{first_role or "attending"}';
+var AGENT={_js_safe_json(name)};var STAGES={_js_safe_json(workflow_stages)};
+var ROLES={_js_safe_json(roles)};
+var PATIENTS={_js_safe_json(patients)};
+var CURRENT_ROLE={_js_safe_json(first_role or "attending")};
 var WORKFLOW_DATA={{}};
 var COMPLETED_STAGES=new Set();var STAGE_RESULTS={{}};
 var currentPatient=null;var currentStage=1;

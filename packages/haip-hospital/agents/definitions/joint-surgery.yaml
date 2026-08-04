@@ -189,6 +189,7 @@ stages:
   role_ids:
   - rehab_therapist
   - head_nurse
+  tool: eras_pathway
 - order: 6
   id: followup
   label: 长期随访

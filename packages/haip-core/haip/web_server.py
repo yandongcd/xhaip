@@ -218,13 +218,16 @@ app = FastAPI(title="xhaip v1.2 API", version="1.2.0", lifespan=lifespan)
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """Pydantic 校验失败 → 400 (缺必需字段视为客户端错误)."""
+    """Pydantic 校验失败 → 400 (缺必需字段/类型错误视为客户端错误)."""
     from fastapi.responses import JSONResponse
 
-    missing = [e["loc"][-1] for e in exc.errors() if e["type"] == "missing"]
+    errors = [
+        f"{'.'.join(str(x) for x in e['loc'] if x != 'body')}: {e['msg']}"
+        for e in exc.errors()
+    ]
     return JSONResponse(
         status_code=400,
-        content={"status": "error", "error": f"Missing field(s): {missing}"},
+        content={"status": "error", "error": "; ".join(errors) or "Invalid request"},
     )
 
 # Static files (CSS/JS)

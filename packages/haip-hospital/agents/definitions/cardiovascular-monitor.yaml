@@ -63,6 +63,7 @@ stages:
   role_ids:
   - attending
   - cardiologist
+  tool: event_identify
 - order: 2
   id: stratify
   label: 风险分层
@@ -70,18 +71,21 @@ stages:
   role_ids:
   - attending
   - cardiologist
+  tool: risk_stratify
 - order: 3
   id: plan
   label: 随访计划
   desc: 风险分层→随访频率/检查项目/干预目标
   role_ids:
   - attending
+  tool: followup_plan
 - order: 4
   id: report
   label: 报告输出
   desc: CVD事件报告卡自动填写、慢病管理报告、公共卫生上报
   role_ids:
   - attending
+  tool: public_health_report
 learning:
   enabled: true
   auto_apply:

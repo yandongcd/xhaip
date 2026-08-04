@@ -109,6 +109,7 @@ stages:
   desc: 补体基因Panel(CFH/CFI/MCP/CD46/C3/CFB/THBD/DGKE)+抗CFH抗体
   role_ids:
   - attending
+  tool: risk_stratify
 - order: 5
   id: treatment-decision
   label: 治疗决策
@@ -123,6 +124,7 @@ stages:
   role_ids:
   - attending
   - head_nurse
+  tool: monitoring_plan
 ui:
   template: chat-with-role-switcher
   roles:

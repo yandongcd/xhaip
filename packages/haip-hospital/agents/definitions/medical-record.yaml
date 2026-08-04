@@ -74,6 +74,7 @@ stages:
   - data_admin
   - data_analyst
   - dept_head
+  tool: get_exams
 guard:
   triggers:
   - 患者数据错误

@@ -103,6 +103,7 @@ stages:
   role_ids:
   - attending
   - pharmacist
+  tool: anticoagulation_guide
 - order: 4
   id: perioperative
   label: 围术期桥接
@@ -110,6 +111,7 @@ stages:
   role_ids:
   - attending
   - anesthesiologist
+  tool: perioperative_bridging
 - order: 5
   id: monitoring
   label: 症状监测
@@ -118,6 +120,7 @@ stages:
   - attending
   - nurse
   - head_nurse
+  tool: monitor_symptoms
 - order: 6
   id: followup
   label: 出院随访
@@ -125,6 +128,7 @@ stages:
   role_ids:
   - attending
   - nurse
+  tool: followup_plan
 ui:
   template: chat-with-role-switcher
   roles:

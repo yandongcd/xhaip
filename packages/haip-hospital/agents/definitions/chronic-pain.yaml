@@ -41,6 +41,7 @@ stages:
   desc: 疼痛史、功能影响、心理评估、用药史
   role_ids:
   - attending
+  tool: assess_chronic
 - order: 2
   id: multimodal
   label: 多模式治疗

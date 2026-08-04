@@ -41,12 +41,14 @@ stages:
   desc: 疼痛相关功能障碍评估、康复目标设定
   role_ids:
   - therapist
+  tool: assess_progress
 - order: 2
   id: rehab
   label: 康复治疗
   desc: 运动疗法、物理因子、作业治疗
   role_ids:
   - therapist
+  tool: exercise_rx
 - order: 3
   id: evaluate
   label: 效果评估

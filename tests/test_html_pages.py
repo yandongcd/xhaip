@@ -133,7 +133,7 @@ class TestWorkflowPages:
     def test_workflow_agent_var_is_agent_name(self):
         """JS AGENT 变量必须是 agent 技术名, 不能被角色名遮蔽."""
         resp = client.get("/workflow/orthopedic-surgery")
-        m = re.search(r"var AGENT='([^']+)'", resp.text)
+        m = re.search(r"var AGENT=[\"']([^\"']+)[\"']", resp.text)
         assert m, "no AGENT var"
         assert m.group(1) == "orthopedic-surgery", f"AGENT 被污染为: {m.group(1)}"
 

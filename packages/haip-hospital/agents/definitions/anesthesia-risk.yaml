@@ -55,6 +55,7 @@ stages:
   role_ids:
   - attending
   - anesthesiologist
+  tool: anesthesia_plan
 - order: 3
   id: execute
   label: 麻醉执行
@@ -62,6 +63,7 @@ stages:
   role_ids:
   - anesthesiologist
   - nurse
+  tool: anesthesia_plan
 - order: 4
   id: postop
   label: 术后管理
