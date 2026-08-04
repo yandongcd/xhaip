@@ -219,10 +219,11 @@ def complication_scan(patient_id: str = "", postop_day: int = 1,
         alerts.append("手术部位感染 — 检查切口(红肿/渗液/波动感)")
         overall_grade = max_grade(overall_grade, "II")
 
-    # 3. Hemorrhage
-    if hb < 80 or (hb < 100 and sbp < 90):
+    # 3. Hemorrhage — 血流动力学不稳定 (SBP<90+HR>110) 独立触发, 不依赖 Hb 数据
+    hemodynamically_unstable = sbp < 90 and hr > 110
+    if hb < 80 or (hb < 100 and sbp < 90) or hemodynamically_unstable:
         grade = "II" if hb >= 80 or sbp >= 90 else "IIIb"
-        if sbp < 90 and hr > 110:
+        if hemodynamically_unstable:
             grade = "IVa"
             alerts.append("术后出血+血流动力学不稳定 — 立即启动MTP!")
         findings.append({
