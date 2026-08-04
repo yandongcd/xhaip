@@ -210,6 +210,63 @@ class TestRBAC:
         assert "pharmacist" in PREDEFINED_ROLES
 
 
+class TestRequirePermission:
+    """require_permission FastAPI dependency — 401/403/200 三态 (审查补测)."""
+
+    @staticmethod
+    def _run(check, request):
+        import asyncio
+        return asyncio.run(check(request))
+
+    def test_unauthenticated_401(self):
+        from types import SimpleNamespace
+
+        from fastapi import HTTPException
+
+        from haip.auth.models import Permission
+        from haip.auth.rbac import require_permission
+
+        class FakeRequest:
+            def __init__(self):
+                self.state = SimpleNamespace(current_user=None)
+
+        check = require_permission(Permission.AGENT_EXECUTE)
+        with pytest.raises(HTTPException) as exc:
+            self._run(check, FakeRequest())
+        assert exc.value.status_code == 401
+
+    def test_insufficient_permission_403(self):
+        from types import SimpleNamespace
+
+        from fastapi import HTTPException
+
+        from haip.auth.models import Permission
+        from haip.auth.rbac import require_permission
+
+        class FakeRequest:
+            def __init__(self):
+                self.state = SimpleNamespace(current_user={"roles": ["intern"]})
+
+        check = require_permission(Permission.AGENT_EXECUTE)
+        with pytest.raises(HTTPException) as exc:
+            self._run(check, FakeRequest())
+        assert exc.value.status_code == 403
+
+    def test_authorized_returns_user(self):
+        from types import SimpleNamespace
+
+        from haip.auth.models import Permission
+        from haip.auth.rbac import require_permission
+
+        class FakeRequest:
+            def __init__(self):
+                self.state = SimpleNamespace(current_user={"roles": ["admin"], "user_id": "u1"})
+
+        check = require_permission(Permission.AGENT_EXECUTE)
+        user = self._run(check, FakeRequest())
+        assert user["user_id"] == "u1"
+
+
 # ── AuthService Tests ──
 
 
@@ -275,6 +332,43 @@ class TestAuthService:
         found = self.auth.get_user_by_id(user_data["id"])
         assert found is not None
         assert found["username"] == "doc1"
+
+
+class TestAuthServiceSqlite:
+    """SQLite 后端 — _load_from_db 持久化重载 (审查补测)."""
+
+    def test_reload_users_from_db(self, tmp_path):
+        from haip.auth import AuthService
+        db = str(tmp_path / "auth.db")
+        a = AuthService(db_path=db)
+        a.create_user("doc1", "Doctor@123", roles=["doctor"])
+        b = AuthService(db_path=db)
+        user = b.get_user("doc1")
+        assert user is not None, "_load_from_db 未重载持久化用户"
+        assert user["roles"] == ["doctor"]
+        assert "password_hash" in user
+
+    def test_corrupt_roles_falls_back_intern(self, tmp_path):
+        from haip.auth import AuthService
+        db = str(tmp_path / "auth.db")
+        a = AuthService(db_path=db)
+        a.create_user("doc1", "Doctor@123")
+        import sqlite3
+        conn = sqlite3.connect(db)
+        conn.execute("UPDATE users SET roles = ? WHERE username = ?", ("not-json{", "doc1"))
+        conn.commit()
+        conn.close()
+        b = AuthService(db_path=db)
+        assert b.get_user("doc1")["roles"] == ["intern"]
+
+    def test_inactive_flag_preserved(self, tmp_path):
+        from haip.auth import AuthService
+        db = str(tmp_path / "auth.db")
+        a = AuthService(db_path=db)
+        a.create_user("doc1", "Doctor@123")
+        a.set_active("doc1", False)
+        b = AuthService(db_path=db)
+        assert b.get_user("doc1")["is_active"] is False
 
 
 # ── Auth API Tests ──

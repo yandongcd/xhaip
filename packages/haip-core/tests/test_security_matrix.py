@@ -37,6 +37,39 @@ class TestSecurityBaseline:
         with pytest.raises(SecurityBaselineError):
             check_security_baseline()
 
+    def test_is_default_secret_matches_placeholders(self):
+        """占位符/默认值检测 (审查补测)."""
+        from haip.security_baseline import _is_default_secret
+        defaults = {
+            "change-this-to-a-random-string-in-production",
+            "replace-with-random",
+            "dev-secret",
+            "Admin@123456",
+        }
+        assert _is_default_secret("dev-secret", defaults)
+        assert _is_default_secret("  replace-with-random  ", defaults)  # strip
+        assert _is_default_secret("Admin@123456", defaults)
+        assert not _is_default_secret("", defaults)  # 空值走"未配置"分支
+        assert not _is_default_secret("A9f!k2xQ#zL7p", defaults)
+
+    def test_strict_mode_placeholder_value_raises(self, monkeypatch):
+        """命中占位符值 → strict 模式必须阻断 (审查补测)."""
+        from haip.security_baseline import SecurityBaselineError, check_security_baseline
+        monkeypatch.setenv("JWT_SECRET_KEY", "dev-secret")
+        monkeypatch.setenv("HAIP_ADMIN_PASSWORD", "replace-with-random")
+        monkeypatch.setenv("HAIP_DOCTOR_PASSWORD", "Doctor@123")
+        with pytest.raises(SecurityBaselineError):
+            check_security_baseline(strict=True)
+
+    def test_dev_mode_placeholder_warns_not_raises(self, monkeypatch, caplog):
+        """非 strict 模式下占位符仅 warning (审查补测)."""
+        from haip.security_baseline import check_security_baseline
+        monkeypatch.setenv("JWT_SECRET_KEY", "dev-secret")
+        monkeypatch.setenv("HAIP_ADMIN_PASSWORD", "Str0ng!Passw0rd")
+        monkeypatch.setenv("HAIP_DOCTOR_PASSWORD", "An0ther!Passw0rd")
+        violations = check_security_baseline(strict=False)
+        assert any("占位符" in v for v in violations)
+
 
 class TestPortalIdentityMatrix:
     """12 门户身份必须全部映射到已定义 RBAC 角色, 且关键权限不变量成立."""

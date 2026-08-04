@@ -222,7 +222,8 @@ def mdt_summary(mdt_result: dict | None = None, **kwargs) -> dict:
 
     opinions_md = ""
     for o in result.get("opinions", []):
-        opinions_md += f"- **{o['agent']}** (置信度 {o['confidence']:.0%}): {o['recommendation']}\n"
+        agent = o.get("agent", "?") if isinstance(o, dict) else "?"
+        opinions_md += f"- **{agent}** (置信度 {o.get('confidence', 0):.0%}): {o.get('recommendation', '')}\n"
         if o.get("citations"):
             opinions_md += f"  引用: {', '.join(o['citations'])}\n"
 
