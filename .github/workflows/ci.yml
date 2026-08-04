@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - name: Install dependencies
@@ -77,7 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - name: Install dependencies
@@ -117,7 +117,7 @@ sys.exit(errors)
     needs: [lint]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - name: Install dependencies
@@ -131,7 +131,7 @@ sys.exit(errors)
     needs: [unit]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - name: Install dependencies
@@ -145,7 +145,7 @@ sys.exit(errors)
     needs: [integration]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - name: Install dependencies
