@@ -247,9 +247,16 @@ class SessionService:
                      "last_update": r["last_update"],
                      "state_keys": list(json.loads(r["state_json"]).keys())} for r in rows]
 
-    def delete_session(self, session_id) -> bool:
+    def delete_session(self, session_id, user_id: str | None = None) -> bool:
+        """删除会话. user_id 提供时仅允许删除属于该用户的会话 (IDOR 防护)."""
         with self._lock, self._get_conn() as conn:
-            cur = conn.execute("DELETE FROM agent_sessions WHERE id = ?", (session_id,))
+            if user_id is not None:
+                cur = conn.execute(
+                    "DELETE FROM agent_sessions WHERE id = ? AND user_id = ?",
+                    (session_id, user_id),
+                )
+            else:
+                cur = conn.execute("DELETE FROM agent_sessions WHERE id = ?", (session_id,))
             conn.commit()
             return cur.rowcount > 0
 
@@ -403,11 +410,16 @@ class InMemorySessionService:
                 for s in list(self._sessions.values())
                 if s.user_id == user_id][:limit]
 
-    def delete_session(self, session_id) -> bool:
+    def delete_session(self, session_id, user_id: str | None = None) -> bool:
+        """删除会话. user_id 提供时仅允许删除属于该用户的会话 (IDOR 防护)."""
         with self._lock:
             key = next((k for k, s in self._sessions.items() if s.id == session_id), None)
             if key is None:
                 return False
+            if user_id is not None:
+                session = self._sessions[key]
+                if session.user_id != user_id:
+                    return False
             self._access_times.pop(key, None)
             self._sessions.pop(key, None)
             return True
