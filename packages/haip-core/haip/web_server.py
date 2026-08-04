@@ -215,6 +215,13 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="xhaip v1.2 API", version="1.2.0", lifespan=lifespan)
 
+# ── 按域拆分路由 (P1-6) ──
+from haip.api import routes_knowledge, routes_ortho, routes_signoff
+
+app.include_router(routes_ortho.router)
+app.include_router(routes_signoff.router)
+app.include_router(routes_knowledge.router)
+
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -1014,43 +1021,7 @@ def guard_verify(body: GuardRequest):
     }
 
 
-# ── 医生签核工作流 (M3 / C1) ──
-
-@app.get("/api/signoff/pending")
-def signoff_pending(limit: int = 100):
-    """待签核队列。"""
-    from haip.signoff import get_signoff_manager
-    return {"items": get_signoff_manager().list_pending(limit)}
-
-
-@app.get("/api/signoff/patient/{patient_id}")
-def signoff_by_patient(patient_id: str, limit: int = 100):
-    """患者维度签核留痕 (病历视角)。"""
-    from haip.signoff import get_signoff_manager
-    return {"items": get_signoff_manager().list_by_patient(patient_id, limit)}
-
-
-@app.post("/api/signoff/{signoff_id}/decision")
-def signoff_decide(signoff_id: str, request: Request, payload: dict = Body(default_factory=dict),
-                   _: dict = Depends(require_permission(Permission.AGENT_EXECUTE))):
-    """签核决定: {"decision": "approved|rejected", "reason": "..."}
-
-    签核人身份强制取自认证上下文 (request.state.current_user), 请求体的
-    reviewer_id 仅在无认证上下文时 (AUTH_ENABLED=false 的开发模式) 生效 —
-    防止伪造签核人 (商用红线)。要求 AGENT_EXECUTE 权限 (医生及以上)。
-    """
-    user = getattr(request.state, "current_user", None) or {}
-    reviewer = user.get("user_id") or payload.get("reviewer_id", "")
-    from haip.signoff import get_signoff_manager
-    try:
-        return get_signoff_manager().decide(
-            signoff_id,
-            reviewer_id=reviewer,
-            decision=payload.get("decision", ""),
-            reason=payload.get("reason", ""))
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail={"error": str(e)})
-
+# ── 医生签核工作流 (M3 / C1) — 已拆分至 haip/api/routes_signoff.py ──
 
 @app.get("/api/history")
 def history(limit: int = 20):
@@ -1058,22 +1029,7 @@ def history(limit: int = 20):
     return get_history(limit)
 
 
-# ── Knowledge API ──
-
-@app.get("/api/knowledge/stats")
-def knowledge_stats():
-    kb = get_kb(str(PROJECT_ROOT))
-    cases = case_mgr.stats()
-    return {"knowledge": kb.stats(), "cases": cases}
-
-
-@app.get("/api/knowledge/search")
-def knowledge_search(q: str = "", limit: int = 20):
-    kb = get_kb(str(PROJECT_ROOT))
-    g_results = kb.search_guidelines(q) if q else []
-    c_results = case_mgr.search(query=q, limit=limit) if q else []
-    return {"guidelines": g_results[:limit], "cases": c_results[:limit]}
-
+# ── Knowledge API — 已拆分至 haip/api/routes_knowledge.py ──
 
 @app.get("/api/agents/{name}/knowledge")
 def agent_knowledge(name: str):
@@ -1252,62 +1208,7 @@ def process_ui(request: Request, name: str):
 
 
 
-# ── Orthopedic v1 API ──
-
-@app.post("/api/v1/orthopedic/classify")
-def ortho_classify(payload: dict = Body(default_factory=dict)):
-    """骨折分型 (Garden/Evans/AO)"""
-    from modules.orthopedics import assess
-    return assess(**payload)
-
-@app.post("/api/v1/orthopedic/assess")
-def ortho_assess(payload: dict = Body(default_factory=dict)):
-    """术前综合评估"""
-    from modules.orthopedics import evaluate
-    return evaluate(**payload)
-
-@app.post("/api/v1/orthopedic/plan")
-def ortho_plan(payload: dict = Body(default_factory=dict)):
-    """手术方案推荐"""
-    from modules.orthopedics import plan
-    return plan(**payload)
-
-@app.post("/api/v1/orthopedic/timing")
-def ortho_timing(payload: dict = Body(default_factory=dict)):
-    """T2 手术时机决策"""
-    from modules.orthopedics import evaluate_timing
-    return evaluate_timing(**payload)
-
-@app.post("/api/v1/orthopedic/complications")
-def ortho_complications(payload: dict = Body(default_factory=dict)):
-    """并发症风险预测"""
-    from modules.orthopedics import predict_complications
-    return predict_complications(**payload)
-
-@app.post("/api/v1/orthopedic/mdt")
-def ortho_mdt(payload: dict = Body(default_factory=dict)):
-    """MDT 多学科会诊聚合"""
-    from modules.orthopedics.mdt import mdt_aggregate
-    return mdt_aggregate(**payload)
-
-@app.post("/api/v1/orthopedic/pain")
-def ortho_pain(payload: dict = Body(default_factory=dict)):
-    """疼痛评估"""
-    from modules.pain_management import assess_pain
-    return assess_pain(**payload)
-
-@app.post("/api/v1/orthopedic/rehab")
-def ortho_rehab(payload: dict = Body(default_factory=dict)):
-    """康复跟踪"""
-    from modules.orthopedics.extended import rehab_track
-    return rehab_track(**payload)
-
-@app.post("/api/v1/orthopedic/followup")
-def ortho_followup(payload: dict = Body(default_factory=dict)):
-    """随访计划"""
-    from modules.orthopedics import followup_plan
-    return followup_plan(**payload)
-
+# ── Orthopedic v1 API — 已拆分至 haip/api/routes_ortho.py ──
 
 # ── TOGAF Architecture Dashboard ──
 
