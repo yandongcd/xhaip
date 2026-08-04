@@ -9,6 +9,90 @@ from __future__ import annotations
 from haip.a2a.mdt_orchestrator import get_mdt_orchestrator
 from haip.a2a.mdt_protocol import MDTStatus
 
+_LEGACY_AGENT_MAP = {
+    "cardio_eval": "cardiac",
+    "anesthesia_eval": "anesthesia",
+    "ortho_eval": "orthopedic",
+    "orthopedic_eval": "orthopedic",
+    "pain_eval": "pain",
+}
+
+
+def _legacy_opinion(kwargs: dict, session, key: str, agent: str, field: str) -> str:
+    """优先取调用方传入的 eval 原文, 否则从 session 意见提取 (兼容 v1.1 聚合契约)."""
+    ev = kwargs.get(key) or kwargs.get({"cardiac": "cardio_eval", "anesthesia": "anesthesia_eval",
+                                        "orthopedic": "orthopedic_eval", "pain": "pain_eval"}.get(agent)) or {}
+    if ev and ev.get(field):
+        return str(ev[field])
+    for o in session.opinions:
+        if o.agent_name == agent:
+            return o.recommendation or ""
+    return ""
+
+
+def _legacy_diagnosis(kwargs: dict, session) -> str:
+    return _legacy_opinion(kwargs, session, "orthopedic_eval", "orthopedic-surgery", "diagnosis")
+
+
+def _legacy_recommended(kwargs: dict, session) -> str:
+    return _legacy_opinion(kwargs, session, "orthopedic_eval", "orthopedic-surgery", "recommended_surgery")
+
+
+def _legacy_risk_assessment(kwargs: dict, session) -> dict:
+    risk = {}
+    for key, agent in [
+        ("cardio_eval", "cardio-risk"),
+        ("anesthesia_eval", "anesthesia"),
+        ("orthopedic_eval", "orthopedic-surgery"),
+        ("pain_eval", "pain-management"),
+    ]:
+        ev = kwargs.get(key)
+        if ev is None:
+            ev = kwargs.get({"cardio-risk": "cardio_eval", "anesthesia": "anesthesia_eval",
+                             "orthopedic-surgery": "ortho_eval", "pain-management": "pain_eval"}.get(agent))
+        if not ev:
+            ev = None
+        val = ""
+        if ev:
+            val = (
+                ev.get("risk_level")
+                or ev.get("asa_grade")
+                or ev.get("recommendation")
+                or ev.get("recommended_plan")
+                or ev.get("analgesia_plan")
+                or ev.get("vas_score")
+            )
+            if val is not None:
+                val = str(val)
+            else:
+                val = ""
+        if not val:
+            for o in session.opinions:
+                if o.agent_name == agent and not o.recommendation.startswith("[ERROR]"):
+                    val = o.recommendation or ""
+                    break
+        risk[_LEGACY_AGENT_MAP.get(key, agent)] = val or "待补充"
+    return risk
+
+
+def _legacy_degraded(kwargs: dict, session) -> bool:
+    """调用方未提供某专科评估 → 视为降级 (v1.1 语义)."""
+    provided = {
+        "cardio-risk": bool(kwargs.get("cardio_eval")),
+        "anesthesia": bool(kwargs.get("anesthesia_eval")),
+        "orthopedic-surgery": bool(kwargs.get("orthopedic_eval") or kwargs.get("ortho_eval")),
+    }
+    return not all(provided.values())
+
+
+def _legacy_degraded_agents(kwargs: dict, session) -> list[str]:
+    provided = {
+        "cardio-risk": bool(kwargs.get("cardio_eval")),
+        "anesthesia": bool(kwargs.get("anesthesia_eval")),
+        "orthopedic-surgery": bool(kwargs.get("orthopedic_eval") or kwargs.get("ortho_eval")),
+    }
+    return sorted(k for k, v in provided.items() if not v)
+
 
 def mdt_aggregate(**kwargs) -> dict:
     """MDT 多学科会诊聚合 — fan-out to participant agents, detect conflicts, reach consensus."""
@@ -88,6 +172,22 @@ def mdt_aggregate(**kwargs) -> dict:
         "deadlocked": session.status == MDTStatus.DEADLOCKED,
         "needs_human_review": len(session.divergences) > 0 or session.window_escalated,
         "stage_audit": _stage_audit_attached(kwargs),
+        # ── 兼容 v1.1 聚合契约 (workflow/测试依赖) ──
+        "diagnosis": {"primary": _legacy_diagnosis(kwargs, session)},
+        "risk_assessment": _legacy_risk_assessment(kwargs, session),
+        "treatment_plan": {"recommended": _legacy_recommended(kwargs, session)},
+        "disclaimer": "MDT 意见基于各专科评估汇总, 仅供参考, 最终决策须经 MDT 团队审核确认。",
+        "_degraded": _legacy_degraded(kwargs, session),
+        "_degraded_agents": _legacy_degraded_agents(kwargs, session),
+        "controversies": [
+            {
+                "source": d.agent_a if d.agent_a != "orthopedic-surgery" else d.agent_b,
+                "type": d.conflict_type.value,
+                "severity": d.severity,
+                "resolution": d.resolution_strategy,
+            }
+            for d in session.divergences
+        ],
     }
 
 
@@ -108,9 +208,15 @@ def _stage_audit_attached(kwargs: dict) -> dict | None:
     }
 
 
-def mdt_summary(**kwargs) -> dict:
-    """MDT 纪要生成 — format the session results as structured markdown."""
-    result = kwargs.get("mdt_result")
+def mdt_summary(mdt_result: dict | None = None, **kwargs) -> dict:
+    """MDT 纪要生成 — format the session results as structured markdown.
+
+    兼容两种调用: 传 mdt_aggregate 结果 dict (旧契约 mdt_summary(r)),
+    或传与 mdt_aggregate 相同的 kwargs (A2A 契约 mdt_summary(mdt_result=...)).
+    """
+    result = mdt_result
+    if not isinstance(result, dict):
+        result = kwargs.get("mdt_result")
     if not isinstance(result, dict):
         result = mdt_aggregate(**kwargs)
 
@@ -139,11 +245,21 @@ def mdt_summary(**kwargs) -> dict:
 > 本纪要由 AI 辅助生成，需经 MDT 首席组长审核确认
 """
 
+    risk_assessment = result.get("risk_assessment") or {}
+    risk_overall = "待评估"
+    for level in ("高危", "中危", "低危"):
+        if any(level in str(v) for v in risk_assessment.values()):
+            risk_overall = level
+            break
+
     return {
         "status": "ok",
         "agent": "mdt",
         "summary": result.get("summary", ""),
         "markdown": markdown,
+        "summary_markdown": markdown,
+        "mdt_id": result.get("session_id", ""),
+        "risk_overall": risk_overall,
         "needs_human_review": result.get("needs_human_review", False),
     }
 
