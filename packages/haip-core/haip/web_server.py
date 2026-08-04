@@ -219,12 +219,14 @@ app = FastAPI(title="xhaip v1.2 API", version="1.2.0", lifespan=lifespan)
 from haip.api import (
     routes_agents,
     routes_dashboard,
+    routes_intelligence,
     routes_knowledge,
     routes_llm,
     routes_ortho,
     routes_pages,
     routes_sessions,
     routes_signoff,
+    routes_togaf,
 )
 
 app.include_router(routes_ortho.router)
@@ -235,6 +237,8 @@ app.include_router(routes_llm.router)
 app.include_router(routes_agents.router)
 app.include_router(routes_pages.router)
 app.include_router(routes_dashboard.router)
+app.include_router(routes_togaf.router)
+app.include_router(routes_intelligence.router)
 
 
 @app.exception_handler(RequestValidationError)
@@ -333,117 +337,11 @@ app.include_router(tenant_router)
 from haip.licensing.api import license_router
 
 app.include_router(license_router)
-
 # ---- Patient API / Agents API — 已拆分至 haip/api/routes_agents.py ----
-
-# ---- ClinicalHarness 审计 ----
-@app.get("/api/harness")
-def harness_report():
-    from haip.clinical_harness import ClinicalHarness
-    return ClinicalHarness().run()
-
-# ---- MetaHarness 五能力统一自检 ----
-@app.get("/api/meta-harness")
-def meta_harness_report():
-    from haip.meta_harness import get_meta_harness
-    return get_meta_harness().run_full_cycle()
-
-# ---- Autonomous Decision ----
-@app.post("/api/decide/{agent_name}")
-def decide(agent_name: str, payload: dict = Body(default_factory=dict)):
-    """自主决策: POST patient data, get clinical decision."""
-    from haip.decision import get_decision_engine
-    engine = get_decision_engine()
-    return engine.decide(agent_name, payload)
-
-# ---- Intelligent Planning ----
-@app.post("/api/plan/{agent_name}")
-def plan_workflow(agent_name: str, payload: dict = Body(default_factory=dict)):
-    """智能规划: POST patient data, get dynamic workflow plan."""
-    from haip.planner import get_workflow_planner
-    planner = get_workflow_planner()
-    return planner.plan(agent_name, payload)
-
-# ---- Agent Memory & Insights ----
-@app.get("/api/memory/insights/{agent_name}")
-def agent_insights(agent_name: str):
-    """Agent持续探索 — 决策历史洞察."""
-    from haip.memory import get_memory
-    return get_memory().insights(agent_name)
-
-@app.get("/api/memory/global")
-def global_insights():
-    """全量Agent学习洞察 — TOGAF治理用."""
-    from haip.memory import get_memory
-    return get_memory().global_insights()
-
-# ---- TOGAF Architecture Governance ----
-_togaf_cache: dict | None = None
-_togaf_cache_time: float = 0.0
-_togaf_cache_ttl: float = 30.0
-_togaf_cache_lock = threading.Lock()
+# ---- ClinicalHarness / MetaHarness / Decide / Plan / Memory — 已拆分至 routes_intelligence.py ----
 
 
-@app.get("/api/togaf/governance")
-def togaf_governance():
-    """TOGAF架构治理视图 — Agent复用度、架构合规、原则应用 (30s TTL 缓存)."""
-    global _togaf_cache, _togaf_cache_time
-
-    now = time.monotonic()
-    with _togaf_cache_lock:
-        if _togaf_cache is not None and now - _togaf_cache_time < _togaf_cache_ttl:
-            return _togaf_cache
-
-    from collections import Counter
-    from pathlib import Path as _Pth
-
-    import yaml
-
-    defs_dir = _Pth(__file__).resolve().parent.parent.parent.parent / "packages/haip-hospital/agents/definitions"
-
-    # Agent reuse analysis
-    deps_count = Counter()
-    agent_types = Counter()
-    stage_counts = []
-    guard_agents = 0
-
-    for yf in sorted(defs_dir.glob("*.yaml")):
-        if yf.name.startswith("_") or ".deprecated" in yf.name or ".internal" in yf.name:
-            continue
-        with open(yf, encoding="utf-8") as f:
-            a = yaml.safe_load(f)
-        t = a.get("type", "business")
-        agent_types[t] += 1
-        stage_counts.append(len(a.get("stages", [])))
-        if a.get("guard", {}).get("triggers"):
-            guard_agents += 1
-        for dep in a.get("depends_on", []):
-            deps_count[dep.get("agent", "")] += 1
-
-    # TOGAF principles applied
-    principles = [
-        {"id": "P1", "name": "YAML驱动Agent定义", "status": "applied", "metric": f"{len(list(defs_dir.glob('*.yaml')))} 个YAML定义"},
-        {"id": "P2", "name": "引擎独立包", "status": "applied", "metric": "haip-core pip installable"},
-        {"id": "P3", "name": "Guard门控安全", "status": "applied", "metric": f"{guard_agents}/{len(list(defs_dir.glob('*.yaml')))} Agent启用Guard"},
-        {"id": "P4", "name": "Agent可复用", "status": "applied", "metric": f"{len([d for d,c in deps_count.items() if c>1])} 个Agent被多个Agent复用"},
-        {"id": "P5", "name": "知识库SQLite版本化", "status": "applied", "metric": "56 指南 + 184 规则"},
-        {"id": "P6", "name": "自主决策能力", "status": "applied", "metric": "DecisionEngine 规则驱动"},
-        {"id": "P7", "name": "智能规划能力", "status": "applied", "metric": "WorkflowPlanner 动态生成"},
-    ]
-
-    result = {
-        "agents_total": len(list(defs_dir.glob("*.yaml"))),
-        "agent_types": dict(agent_types),
-        "avg_stages": round(sum(stage_counts) / len(stage_counts), 1) if stage_counts else 0,
-        "guard_coverage": f"{guard_agents}/{len(list(defs_dir.glob('*.yaml')))}",
-        "most_reused": deps_count.most_common(5),
-        "principles": principles,
-        "compliance_score": 100,
-    }
-    with _togaf_cache_lock:
-        _togaf_cache = result
-        _togaf_cache_time = now
-    return result
+# ---- TOGAF Architecture Governance — 已拆分至 routes_togaf.py ----
 
 # ---- Health Check ----
 @app.get("/api/health")
@@ -540,33 +438,8 @@ def _init_rag():
     except Exception:
         logger.warning("RAG init failed, running without semantic search", exc_info=True)
 
-# TOGAF template API
-from haip.togaf.templates.engine import get_togaf_engine
+# TOGAF template API — 已拆分至 routes_togaf.py
 
-togaf_engine = get_togaf_engine()
-
-
-@app.get("/api/togaf/templates")
-def list_togaf_templates():
-    """List all available TOGAF architecture templates."""
-    return togaf_engine.list_all()
-
-
-@app.get("/togaf/templates/{template_id}", response_class=HTMLResponse)
-def render_togaf_template(template_id: str):
-    """Render a TOGAF template as HTML."""
-    html = togaf_engine.render(template_id)
-    if html is None:
-        raise HTTPException(status_code=404, detail={"error": f"Template not found: {template_id}"})
-    return HTMLResponse(html)
-
-
-@app.get("/api/leanix/export")
-def leanix_export():
-    """Export LeanIX fact sheets as JSON."""
-    from haip.togaf.leanix import auto_discover
-    exporter = auto_discover()
-    return exporter.to_leanix_json()
 
 # Structured logging — setup on import
 try:
