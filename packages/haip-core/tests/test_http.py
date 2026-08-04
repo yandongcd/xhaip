@@ -1,4 +1,4 @@
-"""HTTP 集成测试 — 启动 FastAPI TestClient, 验证所有端点。
+﻿"""HTTP 集成测试 — 启动 FastAPI TestClient, 验证所有端点。
 
 覆盖历次 HTML 异常:
   1. 端口/路径兼容性
@@ -434,7 +434,7 @@ class TestSessionUserScoping:
     def test_session_isolation_between_users(self, monkeypatch, tmp_path):
         """u2 无法读取/回滚 u1 的会话; 客户端传 user_id 参数被忽略 (仅认 JWT)."""
         monkeypatch.setattr(
-            "haip.web_server._get_session_db_path",
+            "haip.api.routes_sessions._get_session_db_path",
             lambda: str(tmp_path / "sessions.db"),
         )
         os.environ["HAIP_TEST_MODE"] = "false"
@@ -474,7 +474,7 @@ class TestSessionUserScoping:
     def test_create_session_ignores_body_user_id(self, monkeypatch, tmp_path):
         """create_session 忽略 body.user_id — 会话归属 JWT 用户."""
         monkeypatch.setattr(
-            "haip.web_server._get_session_db_path",
+            "haip.api.routes_sessions._get_session_db_path",
             lambda: str(tmp_path / "sessions.db"),
         )
         os.environ["HAIP_TEST_MODE"] = "false"
@@ -501,7 +501,7 @@ class TestSessionUserScoping:
     def test_sessions_anonymous_dev_mode_still_works(self, monkeypatch, tmp_path):
         """匿名 dev 模式 (loopback 免登录) 会话端点仍可用 — 稳定伪用户作用域."""
         monkeypatch.setattr(
-            "haip.web_server._get_session_db_path",
+            "haip.api.routes_sessions._get_session_db_path",
             lambda: str(tmp_path / "sessions.db"),
         )
         os.environ["HAIP_TEST_MODE"] = "false"

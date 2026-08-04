@@ -116,9 +116,18 @@ def test_c5_fetch_paths_registered(path):
     static_fetches = {p for p in FETCH_RE.findall(html) if "'" not in p and "+" not in p}
     if not static_fetches:
         pytest.skip(f"{path} 无静态 fetch")
+    # openapi paths 覆盖所有路由 (含 FastAPI 新版懒加载 _IncludedRouter)
+    try:
+        registered_paths = set(app.openapi()["paths"])
+    except Exception:
+        registered_paths = {
+            getattr(r, "path", None) for r in app.routes if hasattr(r, "path")
+        }
     unmatched = []
     for fp in static_fetches:
         fp_clean = fp.split("?")[0]
+        if fp_clean in registered_paths:
+            continue
         ok = any(
             getattr(r, "path", None) == fp_clean
             or (hasattr(r, "path_regex") and r.path_regex.match(fp_clean))

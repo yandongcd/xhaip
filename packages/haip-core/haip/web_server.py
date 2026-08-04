@@ -216,11 +216,13 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="xhaip v1.2 API", version="1.2.0", lifespan=lifespan)
 
 # ── 按域拆分路由 (P1-6) ──
-from haip.api import routes_knowledge, routes_ortho, routes_signoff
+from haip.api import routes_knowledge, routes_llm, routes_ortho, routes_sessions, routes_signoff
 
 app.include_router(routes_ortho.router)
 app.include_router(routes_signoff.router)
 app.include_router(routes_knowledge.router)
+app.include_router(routes_sessions.router)
+app.include_router(routes_llm.router)
 
 
 @app.exception_handler(RequestValidationError)
@@ -691,173 +693,7 @@ def call_tool(body: CallRequest, request: Request):
     return result
 
 
-# ── SSE 流式端点 (v1.2) ──
-
-@app.get("/api/sse")
-async def stream_get(request: Request):
-    """SSE GET 端点 — 用于浏览器 EventSource.
-
-    Query params: ?agent=antiemetic&query=评估PONV&max_steps=5&session_id=xxx
-    """
-    agent = request.query_params.get("agent", "")
-    query = request.query_params.get("query", "")
-    max_steps = int(request.query_params.get("max_steps", "5"))
-    session_id = request.query_params.get("session_id", "default")
-    user_id = request.query_params.get("user_id", "default")
-
-    if not agent or not query:
-        raise HTTPException(status_code=400, detail={"status": "error", "error": "Missing agent or query"})
-
-    from haip.a2a import permission_context_from_user
-    perm_ctx = permission_context_from_user(
-        getattr(request.state, "current_user", None))
-
-    return StreamingResponse(
-        stream_events(agent, query, max_steps, session_id, user_id, perm_ctx=perm_ctx),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        },
-    )
-
-
-@app.get("/stream-demo", response_class=HTMLResponse)
-def stream_demo():
-    """SSE 流式调试页面 — 实时查看 Agent 推理过程的每个 Event."""
-    return (Path(__file__).parent / "templates" / "stream.html").read_text(encoding="utf-8")
-
-
-# ── API Key 配置 (web 端 DEEPSEEK_API_KEY 管理) ──
-
-@app.get("/api/config/llm")
-def llm_config_status():
-    """LLM 配置状态 (API key 是否已配置, 不暴露实际值)。"""
-    from haip.api_key_store import get_api_key
-    key = get_api_key()
-    return {
-        "configured": bool(key),
-        "provider": "deepseek",
-        "model": "deepseek-chat",
-        "masked_key": (key[:3] + "***" + key[-4:]) if len(key) > 8 else "",
-    }
-
-
-@app.post("/api/config/llm")
-def llm_config_set(body: LLMConfigRequest, _: dict = Depends(require_permission(Permission.ADMIN_CONFIG))):
-    """设置 API key。持久化到 data/llm_key.json。仅 ADMIN_CONFIG 权限。"""
-    from haip.api_key_store import clear_api_key, set_api_key
-    if body.clear:
-        clear_api_key()
-        return {"status": "ok", "configured": False, "message": "API key 已清除"}
-    key = body.api_key.strip()
-    if not key:
-        raise HTTPException(status_code=400, detail={"status": "error", "error": "api_key 不能为空"})
-    set_api_key(key)
-    return {"status": "ok", "configured": True, "masked_key": key[:3] + "***" + key[-4:],
-            "message": "API key 已保存, 下次 LLM 调用生效"}
-
-
-@app.post("/api/stream")
-async def stream_call(body: StreamRequest, request: Request):
-    """SSE 流式 AgentLoop — 每步实时推送 Event。
-
-    POST body: {"agent": "antiemetic", "query": "评估PONV风险", "max_steps": 5}
-    """
-    agent = body.agent
-    query = body.query or body.params.get("query", "")
-    max_steps = body.max_steps
-    session_id = body.session_id
-    # 会话 user 作用域取自 JWT 身份 (body.user_id 保持兼容但不可信, 忽略之)
-    _user = getattr(request.state, "current_user", None)
-    user_id = str(_user["user_id"]) if _user and _user.get("user_id") else "anonymous"
-
-    if not agent or not query:
-        raise HTTPException(status_code=400, detail={"status": "error", "error": "Missing agent or query"})
-
-    from haip.a2a import permission_context_from_user
-    perm_ctx = permission_context_from_user(
-        getattr(request.state, "current_user", None))
-
-    return StreamingResponse(stream_events(agent, query, max_steps, session_id, user_id, perm_ctx=perm_ctx),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        },
-    )
-
-
-# ── Session API (v1.2) ──
-
-def _session_user_id(request: Request) -> str:
-    """从 JWT 身份派生会话 user 作用域 — 客户端参数不可信 (IDOR 修复)。
-
-    匿名/无身份请求 (如 dev 免登录之外的兜底) 归入稳定伪用户 "anonymous",
-    所有匿名用户共享同一作用域, 但认证用户之间完全隔离。
-    """
-    user = getattr(request.state, "current_user", None)
-    if user and user.get("user_id"):
-        return str(user["user_id"])
-    return "anonymous"
-
-
-@app.post("/api/sessions")
-def create_session(request: Request, payload: dict = Body(default_factory=dict)):
-    """创建新会话. POST body: {"state": {...}} — 用户身份取自 JWT, 忽略 body.user_id."""
-    from haip.session.store import SessionService
-    svc = SessionService(_get_session_db_path())
-    s = svc.create_session(
-        user_id=_session_user_id(request),
-        state=payload.get("state"),
-    )
-    return {"session_id": s.id, "created_at": s.last_update}
-
-@app.get("/api/sessions/{session_id}")
-def get_session(session_id: str, request: Request):
-    """获取会话详情（含 events 和 state）— 会话按当前认证用户作用域隔离."""
-    from haip.session.store import SessionService
-    svc = SessionService(_get_session_db_path())
-    s = svc.get_session(session_id, user_id=_session_user_id(request))
-    if s is None:
-        raise HTTPException(status_code=404, detail={"error": "Session not found"})
-    return {
-        "session_id": s.id, "user_id": s.user_id,
-        "state": s.state,
-        "events": [e.to_dict() for e in s.events[-50:]],
-        "last_update": s.last_update,
-        "token_estimate": s.token_estimate(),
-    }
-
-
-@app.get("/api/sessions")
-def list_sessions(request: Request, limit: int = 20):
-    """列出当前认证用户的会话列表 (user 作用域取自 JWT, 忽略客户端参数)."""
-    from haip.session.store import SessionService
-    svc = SessionService(_get_session_db_path())
-    return svc.list_sessions(user_id=_session_user_id(request), limit=limit)
-
-
-@app.post("/api/sessions/{session_id}/rewind")
-def rewind_session(session_id: str, request: Request,
-                   payload: dict = Body(default_factory=dict)):
-    """回滚会话到指定事件数. POST body: {"keep_events": 5} — 会话归属校验同 get_session."""
-    from haip.session.store import SessionService
-    svc = SessionService(_get_session_db_path())
-    s = svc.get_session(session_id, user_id=_session_user_id(request))
-    if s is None:
-        raise HTTPException(status_code=404, detail={"error": "Session not found"})
-    svc.rewind_session(s, payload.get("keep_events", 0))
-    return {"session_id": s.id, "events_remaining": len(s.events)}
-
-
-def _get_session_db_path() -> str:
-    data_dir = PROJECT_ROOT / "data"
-    data_dir.mkdir(parents=True, exist_ok=True)
-    return str(data_dir / "sessions.db")
-
+# ── SSE 流式端点 / LLM 配置 / Session API — 已拆分至 haip/api/routes_llm.py + routes_sessions.py ──
 
 @app.post("/api/loop/demo")
 def loop_demo():
