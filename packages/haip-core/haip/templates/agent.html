@@ -537,6 +537,9 @@ document.addEventListener('alpine:init', function(){
         }
         this.loading = false;
       },
+      callTool: async function(){
+        return this.executeTool();
+      },
       formatResult: function(text){
         if (!text) return '';
         return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');

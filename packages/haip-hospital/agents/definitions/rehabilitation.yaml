@@ -51,6 +51,9 @@ ui:
     label: 治疗师
   - id: nurse
     label: 康复护士
+  - id: head_nurse
+    label: 护士长
+    emoji: 👩‍⚕️
 stages:
 - order: 1
   id: initial-eval

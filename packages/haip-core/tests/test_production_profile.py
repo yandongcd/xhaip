@@ -17,6 +17,9 @@ import pytest
 class TestProductionProfile:
     def test_production_cors_is_restricted(self, monkeypatch):
         monkeypatch.setenv("HAIP_ENV", "production")
+        # production 模式下 jwt.py 模块级强制校验 JWT_SECRET_KEY, 需显式注入
+        monkeypatch.setenv("JWT_SECRET_KEY", "prod-secret-" + "x" * 24)
+        monkeypatch.setenv("ENCRYPTION_KEY", "y" * 32)
         from haip.web_server import _get_cors_origins
         origins = _get_cors_origins()
         assert "*" not in origins
@@ -78,6 +81,7 @@ class TestProductionProfile:
         monkeypatch.setenv("JWT_SECRET_KEY", "prod-secret-" + "x" * 24)
         monkeypatch.setenv("HAIP_ADMIN_PASSWORD", "Pr0d!AdminPass")
         monkeypatch.setenv("HAIP_DOCTOR_PASSWORD", "Pr0d!DoctorPass")
+        monkeypatch.setenv("ENCRYPTION_KEY", "x" * 32)
         from haip.security_baseline import check_security_baseline
         assert check_security_baseline() == []
 

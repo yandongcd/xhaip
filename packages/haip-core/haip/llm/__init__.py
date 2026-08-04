@@ -25,6 +25,7 @@ class ChatResponse:
     input_tokens: int = 0
     output_tokens: int = 0
     finish_reason: str = "stop"
+    reasoning_content: str = ""  # DeepSeek thinking mode: 需回传的思考内容
 
 
 class LLMProvider(ABC):

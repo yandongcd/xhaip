@@ -1,4 +1,4 @@
-# xhaip — HAIP v1.2
+﻿# xhaip — HAIP v1.2
 
 > **Hospital AI Platform** — YAML 驱动的多 Agent 医院智能体平台。  
 > v1.2: 补齐权限/审计/Guard 门控/Transport/Pre-LLM路由/Data Product，达到 PROD-READY。
@@ -54,7 +54,7 @@ xhaip/
 
 | 指标 | 数值 |
 |------|------|
-| 测试 | 320+ |
+| 测试 | 2909 |
 | 覆盖率 (core) | 70% |
 | ruff | 0 errors |
 | mypy | 0 errors |
@@ -73,6 +73,6 @@ xhaip/
 - **Pre-LLM 路由**: KeywordRouter — 关键词匹配零 token 快速通道
 - **HITL 集成**: HITLHook — 高危决策暂停等人工确认
 - **Data Product**: 适配器模式 DataProduct(DataSourceAdapter) 解耦 Agent×数据源
-- **全量测试**: 651 tests / 631 passed
+- **全量测试**: 2909 tests / 全量通过 (CI 6-job 门禁)
 
 详见 `docs/architecture/gap-remediation-strategy.md`

@@ -400,11 +400,21 @@ def _interpolate_env(value: Any) -> Any:
 def _load_llm_config() -> dict[str, Any]:
     """加载 LLM 配置（从 config/llm.yaml, 含环境变量插值, mtime 缓存）。
 
-    env 指纹: DEEPSEEK_API_KEY / HAIP_ENV 变化时立即失效缓存,
-    避免 TTL/mtime 缓存返回旧 env 插值 (测试与运行时切换 key 的 401 根因).
+    API key 统一走 api_key_store (UI 配置优先, env 兜底):
+    避免 config 插值到过期 env key 导致 UI 配置不生效.
+    缓存指纹包含 llm_key.json mtime, 配置 tab 更新后立即失效.
     """
-    env_fp = (os.environ.get("DEEPSEEK_API_KEY", ""), os.environ.get("HAIP_ENV", ""))
-    if env_fp != getattr(_load_llm_config, "_env_fingerprint", ("", "")):
+    # llm_key.json 变更 → 缓存失效 (UI 配置 tab 更新后立即生效)
+    from haip.api_key_store import _PERSIST_FILE as _KEY_FILE
+    try:
+        key_mtime = _KEY_FILE.stat().st_mtime if _KEY_FILE.exists() else 0.0
+    except OSError:
+        key_mtime = 0.0
+    # 无持久文件时 env key 并入指纹 (env 切换后缓存必须失效);
+    # 有持久文件时文件优先, env 变化不触发失效 (UI 配置意图优先)
+    env_key_fp = "" if key_mtime else os.environ.get("DEEPSEEK_API_KEY", "")
+    env_fp = (key_mtime, env_key_fp, os.environ.get("HAIP_ENV", ""))
+    if env_fp != getattr(_load_llm_config, "_env_fingerprint", (0.0, "", "")):
         _load_llm_config._cache = {}  # type: ignore[attr-defined]
         _load_llm_config._file_mtime = 0.0  # type: ignore[attr-defined]
         _load_llm_config._cache_time = 0.0  # type: ignore[attr-defined]
@@ -429,17 +439,17 @@ def _load_llm_config() -> dict[str, Any]:
             except (OSError, yaml.YAMLError) as e:
                 logger.warning("LLM 配置读取失败: %s, 降级 MockProvider", e)
                 return {"provider": "mock", "mock_responses": True}
-            cfg = {k: _interpolate_env(v) for k, v in cfg.items()}
-            if not cfg.get("api_key"):
-                try:
-                    from haip.api_key_store import get_api_key
-                    pk = get_api_key()
-                    if pk:
-                        cfg["api_key"] = pk
-                except ImportError:
-                    pass
-                except Exception:
-                    logger.debug("api_key_store 读取失败", exc_info=True)
+            cfg = {k: _interpolate_env(v) for k, v in cfg.items() if k != "api_key"}
+            # API key: 统一走 api_key_store (UI 配置 > env 默认)
+            try:
+                from haip.api_key_store import get_api_key
+                pk = get_api_key()
+                if pk:
+                    cfg["api_key"] = pk
+            except ImportError:
+                pass
+            except Exception:
+                logger.debug("api_key_store 读取失败", exc_info=True)
             _load_llm_config._cache = cfg
             _load_llm_config._file_mtime = mtime
             _load_llm_config._cache_time = now
@@ -450,7 +460,7 @@ def _load_llm_config() -> dict[str, Any]:
 _load_llm_config._cache: dict[str, Any] = {}  # type: ignore[attr-defined]
 _load_llm_config._cache_time: float = 0.0  # type: ignore[attr-defined]
 _load_llm_config._file_mtime: float = 0.0  # type: ignore[attr-defined]
-_load_llm_config._env_fingerprint = ("", "")  # type: ignore[attr-defined]
+_load_llm_config._env_fingerprint = (0.0, "", "")  # type: ignore[attr-defined]
 
 
 def _build_loop_components(agent: str, perm_ctx: Any = None,
@@ -565,10 +575,15 @@ def call_with_loop(
     """ReAct AgentLoop — LLM 自主规划调用工具，多步推理.
 
     llm_provider: 显式注入 LLMProvider (测试/CI 用; None=走 config).
-    plan_mode: True → Plan-then-Execute (先规划再执行, 层1).
-    plan_template: 临床路径模板 (如 骨科 7 阶段), LLM 只需增删改.
-    memory_injection: True → 推理前检索案例库/KG/历史注入 prompt (层2).
+    plan_mode: True 时 Plan-then-Execute (先规划再执行, L1).
+    plan_template: 临床路径模板 (如 骨科 7 阶段), LLM 只做增删.
+    memory_injection: True 时把记忆/KG/历史注入 prompt (L2).
     """
+    # agent 级权限校验 (reason 模式与 call() 对齐, 防 LLM 额度消耗/Agent 探测)
+    pc = perm_ctx if perm_ctx is not None else _default_permission_context()
+    err = _enforce_permission(pc, agent, "*")
+    if err:
+        return {"status": "error", "error": err}
     try:
         plugin, tools, llm, _a2a_executor = _build_loop_components(agent, perm_ctx, llm_provider)
     except ValueError as e:

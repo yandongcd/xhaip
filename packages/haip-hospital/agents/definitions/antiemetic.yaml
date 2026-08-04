@@ -81,6 +81,12 @@ ui:
     default: true
   - id: clinical_pharmacist
     label: 临床药师
+  - id: attending
+    label: 主治医师
+    emoji: 🩺
+  - id: nurse
+    label: 责任护士
+    emoji: 👩‍⚕️
 rag:
   enabled: true
   top_k: 5

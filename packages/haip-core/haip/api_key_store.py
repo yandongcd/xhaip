@@ -1,6 +1,7 @@
 """API Key Store — web 端配置 API key, 持久化到 data/llm_key.json.
 
-_env_load 优先级: 环境变量 DEEPSEEK_API_KEY > data/llm_key.json 持久值
+_get 优先级: data/llm_key.json 持久值 > 环境变量 DEEPSEEK_API_KEY
+(UI 配置优先于系统 env: 用户显式设置是最明确意图; env 仅作无配置时默认)
 """
 
 from __future__ import annotations
@@ -16,17 +17,20 @@ _PERSIST_FILE = Path(__file__).resolve().parent.parent.parent.parent / "data" / 
 
 
 def get_api_key() -> str:
-    """获取 API key — env 优先, 否则读持久化文件。"""
-    key = os.environ.get("DEEPSEEK_API_KEY", "")
-    if key:
-        return key
+    """获取 API key — 持久化文件优先, env 兜底.
+
+    优先级: data/llm_key.json (UI 配置) > DEEPSEEK_API_KEY (默认值).
+    原因: UI 显式配置是最明确用户意图; 系统 env 可能残留过期 key 堵住配置.
+    """
     try:
         if _PERSIST_FILE.exists():
             data = json.loads(_PERSIST_FILE.read_text(encoding="utf-8"))
-            return data.get("api_key", "")
+            key = data.get("api_key", "").strip()
+            if key:
+                return key
     except Exception:
         logger.debug("API key 文件读取失败", exc_info=True)
-    return ""
+    return os.environ.get("DEEPSEEK_API_KEY", "")
 
 
 def set_api_key(key: str) -> None:

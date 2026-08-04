@@ -611,9 +611,113 @@ def recommend_surgery(
     }
 
 
-def evaluate(patient_id: str = "", **kwargs):
-    return {"patient_id": patient_id, "cleared_for_surgery": True,
-            "risk_factors": [], "required_consults": ["cardio", "anesthesia"]}
+def _get_patient_by_id(patient_id: str) -> dict:
+    """按 patient_id 加载数字患者 (与 haip.patients 契约一致, 失败返回空 dict)."""
+    try:
+        from haip.patients import load_all_patients
+        for p in load_all_patients():
+            if p.get("patient_id") == patient_id:
+                return p
+    except Exception:  # noqa: BLE001 — 数据不可用时返回空, 由调用方按 fail-closed 处理
+        pass
+    return {}
+
+
+def evaluate(
+    patient_id: str = "",
+    labs: dict[str, float] | None = None,
+    conditions: list[str] | None = None,
+    meds: list[str] | None = None,
+    age: int = 0,
+    **kwargs: Any,
+):
+    """术前综合评估 (合并症/检验/用药/营养) — 基于患者数据真实评估.
+
+    无任何可用数据时 fail-closed: 不判"可手术", 返回信息不足.
+    """
+    patient = _get_patient_by_id(patient_id) if patient_id else {}
+    if patient:
+        labs = labs or patient.get("lab_results") or {}
+        conditions = conditions or patient.get("conditions") or []
+        meds = meds or patient.get("medications") or []
+        if not age:
+            age = patient.get("age", 0)
+
+    labs = {k.lower(): v for k, v in (labs or {}).items()}
+    conditions = [c.lower() for c in (conditions or [])]
+    meds = [m.lower() for m in (meds or [])]
+    combined = " ".join(conditions)
+    combined_meds = " ".join(meds)
+
+    risk_factors: list[str] = []
+    required_consults: list[str] = []
+
+    troponin = labs.get("troponin", labs.get("ctni", labs.get("hstni", 0)))
+    if troponin > 0.04:
+        risk_factors.append(f"心肌损伤 (troponin {troponin})")
+        required_consults.append("cardio")
+
+    pulm_keywords = ["肺炎", "肺栓塞", "哮喘发作", "copd加重", "呼衰", "pneumonia", "pe"]
+    if any(k in combined for k in pulm_keywords):
+        risk_factors.append("活动性肺部疾病")
+        required_consults.append("pulmonology")
+
+    if any(k in combined for k in ["心衰", "冠心病", "心律失常", "chf", "cad", "心梗"]):
+        risk_factors.append("心脏病史")
+        required_consults.append("cardio")
+
+    hb = labs.get("hb", labs.get("hemoglobin", 0))
+    if hb and hb < 100:
+        risk_factors.append(f"贫血 (Hb {hb})")
+        required_consults.append("hematology")
+
+    cr = labs.get("cr", labs.get("creatinine", 0))
+    egfr = labs.get("egfr", 0)
+    if (egfr and egfr < 60) or cr > 133:
+        risk_factors.append(f"肾功能异常 (Cr {cr}, eGFR {egfr or '?'})")
+        required_consults.append("nephrology")
+
+    glucose = labs.get("glucose", labs.get("glu", 0))
+    if glucose > 13.9:
+        risk_factors.append(f"血糖控制不佳 (GLU {glucose})")
+        required_consults.append("endocrine")
+
+    wbc = labs.get("wbc", 0)
+    crp = labs.get("crp", 0)
+    if wbc > 12 or crp > 100:
+        risk_factors.append(f"感染/炎症 (WBC {wbc}, CRP {crp})")
+        required_consults.append("infection")
+
+    if any(m in combined_meds for m in ["warfarin", "华法林"]) or any(
+        m in combined_meds for m in ["rivaroxaban", "apixaban", "clopidogrel", "ticagrelor"]
+    ):
+        risk_factors.append("抗凝/抗血小板用药")
+        required_consults.append("anticoagulation")
+
+    if not patient and not labs and not conditions:
+        return {
+            "patient_id": patient_id,
+            "cleared_for_surgery": False,
+            "status": "insufficient_data",
+            "risk_factors": [],
+            "required_consults": ["cardio", "anesthesia"],
+            "recommendation": "缺少患者数据, 无法完成术前评估; 请补充病历/检验信息",
+        }
+
+    cleared = not risk_factors
+    return {
+        "patient_id": patient_id,
+        "cleared_for_surgery": cleared,
+        "status": "cleared" if cleared else "deferred",
+        "risk_factors": risk_factors,
+        "required_consults": sorted(set(required_consults) | {"anesthesia"}),
+        "recommendation": (
+            "术前评估通过, 可择期安排手术"
+            if cleared else
+            f"存在 {len(risk_factors)} 项风险因素, 建议完成相应会诊后再评估: "
+            + "; ".join(risk_factors)
+        ),
+    }
 
 
 def predict(patient_id: str = "", **kwargs):

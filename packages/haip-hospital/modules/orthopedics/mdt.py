@@ -16,10 +16,19 @@ def mdt_aggregate(**kwargs) -> dict:
     question = kwargs.get("chief_complaint", kwargs.get("question", ""))
 
     # Determine participants
+    _EVAL_TO_AGENT = {
+        "cardio": "cardio-risk",
+        "anesthesia": "anesthesia",
+        "ortho": "orthopedic-surgery",
+        "orthopedic": "orthopedic-surgery",
+        "pain": "pain-management",
+    }
     participants = []
-    for key in ["cardio_eval", "anesthesia_eval", "ortho_eval", "pain_eval"]:
+    for key in ["cardio_eval", "anesthesia_eval", "ortho_eval", "orthopedic_eval", "pain_eval"]:
         if kwargs.get(key):
-            participants.append(key.replace("_eval", "").replace("cardio", "cardio-risk"))
+            agent = _EVAL_TO_AGENT[key.replace("_eval", "")]
+            if agent and agent not in participants:
+                participants.append(agent)
 
     if not participants:
         # Default participants based on available eval data
@@ -27,7 +36,7 @@ def mdt_aggregate(**kwargs) -> dict:
             participants.append("cardio-risk")
         if kwargs.get("anesthesia_eval"):
             participants.append("anesthesia")
-        if kwargs.get("ortho_eval"):
+        if kwargs.get("ortho_eval") or kwargs.get("orthopedic_eval"):
             participants.append("orthopedic-surgery")
         if kwargs.get("pain_eval"):
             participants.append("pain-management")
@@ -50,6 +59,7 @@ def mdt_aggregate(**kwargs) -> dict:
     return {
         "status": "ok",
         "agent": "mdt",
+        "patient_id": patient_id,
         "summary": session.consensus or "MDT会诊完成 — 各专科意见已汇总",
         "session_id": session.session_id,
         "participants": session.participants,
@@ -100,7 +110,9 @@ def _stage_audit_attached(kwargs: dict) -> dict | None:
 
 def mdt_summary(**kwargs) -> dict:
     """MDT 纪要生成 — format the session results as structured markdown."""
-    result = mdt_aggregate(**kwargs)
+    result = kwargs.get("mdt_result")
+    if not isinstance(result, dict):
+        result = mdt_aggregate(**kwargs)
 
     opinions_md = ""
     for o in result.get("opinions", []):

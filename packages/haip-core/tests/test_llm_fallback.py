@@ -2,6 +2,17 @@
 
 from __future__ import annotations
 
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def isolated_key_store(tmp_path, monkeypatch):
+    """隔离 api_key_store 持久文件, 避免本机 data/llm_key.json 污染断言."""
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    import haip.api_key_store as store
+    monkeypatch.setattr(store, "_PERSIST_FILE", type(store._PERSIST_FILE)(tmp_path / "llm_key.json"))
+    yield
+
 
 class TestLlmConfigInterpolation:
     def test_env_interpolated(self, monkeypatch):

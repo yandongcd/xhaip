@@ -116,6 +116,7 @@ def ci_decontamination_gate(
     Returns {passed, flagged, warnings, failures}.
     """
     from pathlib import Path
+
     import yaml
 
     # 默认: 指南 + 规则做参考集, 评测场景做被检集

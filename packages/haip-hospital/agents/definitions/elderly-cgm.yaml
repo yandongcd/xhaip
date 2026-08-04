@@ -127,6 +127,12 @@ ui:
     label: 临床药师
   - id: nurse
     label: 糖尿病教育护士
+  - id: resident
+    label: 住院医师
+    emoji: 🩺
+  - id: head_nurse
+    label: 护士长
+    emoji: 👩‍⚕️
 rag:
   enabled: true
   top_k: 5

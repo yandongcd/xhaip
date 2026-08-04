@@ -7,7 +7,6 @@ namespace: xhaip
 resources:
 - base/namespace.yaml
 - base/configmap.yaml
-- base/secret.yaml
 - base/network-policy.yaml
 - portal/deployment.yaml
 - portal/service.yaml

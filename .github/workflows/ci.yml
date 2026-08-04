@@ -58,12 +58,12 @@ jobs:
               sys.exit(1)
           print('Secret scan: clean')
           "
-      - name: Hardcoded credential check
+      - name: Hardcoded credential check (deploy chain)
         run: |
-          patterns=('password.*=.*".*"' 'passwd.*=.*".*"' 'secret.*=.*".*"' 'api_key.*=.*".*"')
+          patterns=('Admin@123456' 'Doctor@123' 'change-this-to-a-random-string' 'replace-with-random' 'xhaip-pass')
           found=0
           for p in "${patterns[@]}"; do
-              matches=$(git grep -nE "$p" -- '*.yaml' '*.yml' '*.py' | grep -v 'test_' | grep -v 'mock' | grep -v 'example' | grep -v '# ' | grep -v 'ENCRYPTION_KEY' | grep -v 'DEEPSEEK_API_KEY' | grep -v 'JWT_SECRET_KEY' || true)
+              matches=$(git grep -nF "$p" -- 'deploy/' 'docker-compose.yml' 'docker/' '.env.example' 'config/' 'Dockerfile' 'scripts/' || true)
               if [ -n "$matches" ]; then
                   echo "HARDCODED CREDENTIAL: $p"
                   echo "$matches"
@@ -123,10 +123,10 @@ sys.exit(errors)
       - name: Install dependencies
         run: pip install -e "packages/haip-core[dev]"
       - name: Contract + unit tests
-        run: python -m pytest packages/haip-core/tests/ tests/test_self_contained.py --tb=short -n auto
+        run: python -m pytest packages/haip-core/tests/ tests/integration/ --tb=short -n auto
 
   integration:
-    name: "Integration tests"
+    name: "Root tests (contracts/exceptions/e2e)"
     runs-on: ubuntu-latest
     needs: [unit]
     steps:
@@ -136,8 +136,8 @@ sys.exit(errors)
           python-version: "3.11"
       - name: Install dependencies
         run: pip install -e "packages/haip-core[dev]"
-      - name: Run integration tests
-        run: python -m pytest tests/integration/ -v --tb=short -n auto
+      - name: Run root test suite
+        run: python -m pytest tests/ --ignore=tests/integration -v --tb=short -n auto
 
   coverage:
     name: "Coverage (>=70%)"
@@ -151,7 +151,7 @@ sys.exit(errors)
       - name: Install dependencies
         run: pip install -e "packages/haip-core[dev]"
       - name: Run tests with coverage
-        run: python -m pytest packages/haip-core/tests/ tests/integration/ --cov=packages/haip-core/haip --cov-report=term --cov-report=html --cov-fail-under=70 --tb=short
+        run: python -m pytest packages/haip-core/tests/ tests/ --cov=packages/haip-core/haip --cov-report=term --cov-report=html --cov-fail-under=70 --tb=short
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         if: always()

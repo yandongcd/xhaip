@@ -126,7 +126,7 @@ class AuthService:
             try:
                 roles = json.loads(row["roles"])
             except (ValueError, TypeError):
-                roles = ["doctor"]
+                roles = ["intern"]
             self._users[row["username"]] = {
                 "id": row["id"],
                 "username": row["username"],
@@ -186,7 +186,8 @@ class AuthService:
             raise ValueError(msg)
 
         user_id = uuid.uuid4().hex[:12]
-        user_roles = roles or ["doctor"]
+        # 默认最低权限 (intern: 无 AGENT_EXECUTE/PATIENT_WRITE) — 注册默认 doctor 属提权漏洞
+        user_roles = roles or ["intern"]
         user_permissions = get_permissions_for_roles(user_roles)
 
         user = {
@@ -385,7 +386,7 @@ def register(
     body: UserCreateRequest,
     auth: AuthService = Depends(get_auth_service),
 ):
-    """Register a new user account."""
+    """Register a new user account (self-service: 强制最低权限 intern 角色)."""
     try:
         user = auth.create_user(
             username=body.username,
@@ -393,6 +394,7 @@ def register(
             email=body.email,
             display_name=body.display_name,
             department=body.department,
+            roles=["intern"],
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

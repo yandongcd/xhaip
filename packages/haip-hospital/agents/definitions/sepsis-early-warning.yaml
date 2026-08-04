@@ -55,6 +55,35 @@ guard:
     required: true
     min_sources: 2
     min_trust: T1
+stages:
+- order: 1
+  id: immune-eval
+  label: 免疫状态评估
+  desc: CD3+/CD4+/CD8+/CD19+/NK 淋巴细胞亚群计数 + NLR 计算
+  role_ids:
+  - technician
+  - resident
+- order: 2
+  id: sepsis-score
+  label: 脓毒症评分
+  desc: qSOFA + SOFA + PCT/CRP 阶梯 + 淋巴细胞时序轨迹
+  role_ids:
+  - resident
+  - icu_doctor
+- order: 3
+  id: mortality-risk
+  label: 死亡风险预测
+  desc: 28天死亡风险多因素模型 (年龄/淋巴细胞轨迹/NLR/SOFA/合并症)
+  role_ids:
+  - icu_doctor
+- order: 4
+  id: warning-escalate
+  label: 分级预警推送
+  desc: 低/中/高危分级 + 逐级升级 (24h→48h→72h 电话通知)
+  role_ids:
+  - icu_doctor
+  - resident
+  - head_nurse
 depends_on:
 - agent: lab-critical-value
   version: '>=1.0'
@@ -62,3 +91,23 @@ depends_on:
 - agent: icu
   version: '>=1.0'
   note: SOFA/APACHE II评分数据
+ui:
+  roles:
+  - id: attending
+    label: 主治医师
+    emoji: 🩺
+  - id: nurse
+    label: 责任护士
+    emoji: 👩‍⚕️
+  - id: technician
+    label: 技师
+    emoji: 🔬
+  - id: resident
+    label: 住院医师
+    emoji: 🩺
+  - id: icu_doctor
+    label: ICU医师
+    emoji: 💚
+  - id: head_nurse
+    label: 护士长
+    emoji: 👩‍⚕️

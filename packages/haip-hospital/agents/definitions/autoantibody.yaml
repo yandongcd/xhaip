@@ -121,6 +121,9 @@ ui:
     label: 检验技师
   - id: pharmacist
     label: 临床药师
+  - id: resident
+    label: 住院医师
+    emoji: 🩺
 rag:
   enabled: true
   top_k: 5

@@ -119,6 +119,9 @@ ui:
     label: 器械护士
   - id: rehab_therapist
     label: 康复师
+  - id: radiologist
+    label: 放射科医师
+    emoji: 🩻
 stages:
 - order: 1
   id: neuro-eval

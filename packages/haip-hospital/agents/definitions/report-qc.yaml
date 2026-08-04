@@ -117,6 +117,9 @@ ui:
     default: true
   - id: resident
     label: 住院医师
+  - id: head_nurse
+    label: 护士长
+    emoji: 👩‍⚕️
 rag:
   enabled: true
   top_k: 5

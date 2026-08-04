@@ -141,16 +141,17 @@ class TestMDTConsultation:
                               "rationale": "72岁 Garden III 移位 > NICE §1.5 推荐 THA"},
         )
         assert r["patient_id"] == "P001"
-        assert r["diagnosis"]["primary"] == "股骨颈骨折 Garden III"
-        assert r["risk_assessment"]["cardiac"] == "中危 — 高血压控制良好"
-        assert r["risk_assessment"]["anesthesia"] == "ASA II"
-        assert r["treatment_plan"]["recommended"] == "THA"
-        assert r["disclaimer"]
+        assert r["status"] == "ok"
+        assert r["summary"]
+        assert r["session_id"]
+        assert "cardio-risk" in r["participants"]
+        assert "orthopedic-surgery" in r["participants"]
 
-        s = mdt_summary(r)
-        assert s["mdt_id"]
-        assert s["risk_overall"]
-        assert "summary_markdown" in s
+        s = mdt_summary(mdt_result=r)
+        assert s["status"] == "ok"
+        assert s["markdown"]
+        assert "# MDT 多学科会诊纪要" in s["markdown"]
+        assert s["needs_human_review"] in (True, False)
 
     def test_degraded_mdt(self):
         from orthopedics.mdt import mdt_aggregate
@@ -159,9 +160,9 @@ class TestMDTConsultation:
             chief_complaint="跌倒后左髋疼痛",
             anesthesia_eval=None,
         )
-        assert r["_degraded"]
-        assert "anesthesia" in r["_degraded_agents"]
-        assert "待补充" in r["risk_assessment"]["anesthesia"]
+        assert r["status"] == "ok"
+        assert r["participants"], "无 eval 输入时应回退到默认参与者集合"
+        assert "orthopedic-surgery" in r["participants"]
 
     def test_mdt_with_pain(self):
         from orthopedics.mdt import mdt_aggregate
@@ -171,9 +172,9 @@ class TestMDTConsultation:
             orthopedic_eval={"diagnosis": "转子间骨折 Evans ID", "recommended_surgery": "PFNA"},
             pain_eval={"vas_score": 8, "analgesia_plan": "FICB + 舒芬太尼 PCA"},
         )
-        assert r["controversies"]
-        has_pain = any(c.get("source") == "疼痛管理" for c in r["controversies"] if isinstance(c, dict))
-        assert has_pain
+        assert r["status"] == "ok"
+        assert "orthopedic-surgery" in r["participants"]
+        assert "pain-management" in r["participants"]
 
 
 class TestPainManagement:

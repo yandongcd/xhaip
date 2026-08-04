@@ -90,3 +90,17 @@ stages:
   desc: 知识要点测试、临床推理能力评估、学习路径进度跟踪
   role_ids:
   - attending
+ui:
+  roles:
+  - id: resident
+    label: 住院医师
+    emoji: 🩺
+  - id: consultant_specialist
+    label: 会诊专家
+    emoji: 🏥
+  - id: attending
+    label: 主治医师
+    emoji: 🩺
+  - id: intern
+    label: 规培医师
+    emoji: 📚

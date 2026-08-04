@@ -82,9 +82,6 @@ spec:
         - name: knowledge
           mountPath: /app/packages/haip-hospital/knowledge
           readOnly: true
-        - name: patient-data
-          mountPath: /app/packages/haip-hospital/data
-          readOnly: true
         - name: config
           mountPath: /app/config
           readOnly: true
@@ -95,9 +92,6 @@ spec:
       - name: knowledge
         configMap:
           name: xhaip-knowledge
-      - name: patient-data
-        configMap:
-          name: xhaip-patient-data
       - name: config
         configMap:
           name: xhaip-config

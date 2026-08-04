@@ -102,3 +102,20 @@ learning:
   - citation_new
   - route_adj
   prompt_a_b: false
+ui:
+  roles:
+  - id: resident
+    label: 住院医师
+    emoji: 🩺
+  - id: consultant_specialist
+    label: 会诊专家
+    emoji: 🏥
+  - id: infection_control
+    label: 院感医师
+    emoji: 🦠
+  - id: microbiologist
+    label: 微生物检验师
+    emoji: 🔬
+  - id: nurse
+    label: 责任护士
+    emoji: 👩‍⚕️

@@ -19,7 +19,8 @@ sys.path.insert(0, str(PROJECT_ROOT / "packages" / "haip-hospital" / "modules"))
 
 from contextlib import asynccontextmanager
 
-from fastapi import Body, FastAPI, HTTPException, Request
+from fastapi import Body, Depends, FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel, Field
@@ -214,6 +215,18 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="xhaip v1.2 API", version="1.2.0", lifespan=lifespan)
 
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Pydantic 校验失败 → 400 (缺必需字段视为客户端错误)."""
+    from fastapi.responses import JSONResponse
+
+    missing = [e["loc"][-1] for e in exc.errors() if e["type"] == "missing"]
+    return JSONResponse(
+        status_code=400,
+        content={"status": "error", "error": f"Missing field(s): {missing}"},
+    )
+
 # Static files (CSS/JS)
 from pathlib import Path as _Path
 
@@ -262,6 +275,8 @@ app.add_middleware(
 # 因此 Auth 最先运行并填充 request.state.current_user, 之后 Audit / RateLimit
 # 读取用户身份时才不会拿到 None (IDOR 无关的 P1-2 中间件顺序修复)。
 from haip.auth.middleware import AuthMiddleware
+from haip.auth.models import Permission
+from haip.auth.rbac import require_permission
 
 app.add_middleware(AuthMiddleware)
 
@@ -720,8 +735,8 @@ def llm_config_status():
 
 
 @app.post("/api/config/llm")
-def llm_config_set(body: LLMConfigRequest):
-    """设置 API key。持久化到 data/llm_key.json。"""
+def llm_config_set(body: LLMConfigRequest, _: dict = Depends(require_permission(Permission.ADMIN_CONFIG))):
+    """设置 API key。持久化到 data/llm_key.json。仅 ADMIN_CONFIG 权限。"""
     from haip.api_key_store import clear_api_key, set_api_key
     if body.clear:
         clear_api_key()
@@ -1013,12 +1028,13 @@ def signoff_by_patient(patient_id: str, limit: int = 100):
 
 
 @app.post("/api/signoff/{signoff_id}/decision")
-def signoff_decide(signoff_id: str, request: Request, payload: dict = Body(default_factory=dict)):
+def signoff_decide(signoff_id: str, request: Request, payload: dict = Body(default_factory=dict),
+                   _: dict = Depends(require_permission(Permission.AGENT_EXECUTE))):
     """签核决定: {"decision": "approved|rejected", "reason": "..."}
 
     签核人身份强制取自认证上下文 (request.state.current_user), 请求体的
     reviewer_id 仅在无认证上下文时 (AUTH_ENABLED=false 的开发模式) 生效 —
-    防止伪造签核人 (商用红线)。
+    防止伪造签核人 (商用红线)。要求 AGENT_EXECUTE 权限 (医生及以上)。
     """
     user = getattr(request.state, "current_user", None) or {}
     reviewer = user.get("user_id") or payload.get("reviewer_id", "")
@@ -1128,7 +1144,7 @@ def stats_legacy():
 
 @app.get("/workflow/{name}", response_class=HTMLResponse)
 def workflow_ui(request: Request, name: str):
-    """工作流感知 UI — DAG 可视化。"""
+    """工作流感知 UI — 三栏工作台 (角色筛选 + 阶段执行 + 数字病人)."""
     p = get_agent(name)
     if not p:
         raise HTTPException(404, detail={"error": f"Agent '{name}' not found"})
@@ -1136,10 +1152,14 @@ def workflow_ui(request: Request, name: str):
     wf = get_workflow(name)
     if not wf:
         raise HTTPException(404, detail={"error": f"No workflow for '{name}'"})
-    layers = wf.get("layers", [])
-    content = templates.env.get_template("workflow.html").render(
-        request=request, wf_name=wf.get("cn_name", name), layers=layers)
-    return HTMLResponse(content)
+    from haip.ui_workflow import build_workflow_ui_context, render_workflow_ui
+    wf_stages, roles = build_workflow_ui_context(p)
+    html = render_workflow_ui(
+        name=p.name, cn_name=p.cn_name, agent_type=p.type, port=p.port,
+        tools=[{"name": t.name, "description": t.description} for t in p.tools],
+        workflow_stages=wf_stages, roles=roles,
+        guard_triggers=p.guard.triggers)
+    return HTMLResponse(html)
 
 
 # ── 专业 Web UI ──
@@ -1213,21 +1233,18 @@ def agent_ui_config(agent_name: str):
 
 @app.get("/process/{name}", response_class=HTMLResponse)
 def process_ui(request: Request, name: str):
-    """诊疗流程 UI — Jinja2 模板渲染。"""
+    """诊疗流程 UI — 三栏工作台 (角色 tab + 阶段执行)."""
     p = get_agent(name)
     if not p:
         raise HTTPException(404, detail={"error": f"Agent '{name}' not found"})
-    stages = p.get_stages() if hasattr(p, 'get_stages') else []
-    default_step = min(1, len(stages) - 1) if stages else 0
-    stage_list = [{"order": s.get("order", i+1), "id": s.get("id", f"s{i}"),
-        "label": s.get("label", f"阶段{i+1}"), "desc": s.get("desc", ""),
-        "role_ids": s.get("role_ids", []), "risk": s.get("risk", "low"),
-        "progress": s.get("progress", 0), "tasks": s.get("tasks", 2)}
-        for i, s in enumerate(stages)]
-    content = templates.env.get_template("process.html").render(
-        request=request, agent={"name": p.name, "cn_name": p.cn_name},
-        stages=stage_list, current_step=default_step)
-    return HTMLResponse(content)
+    from haip.ui_workflow import build_workflow_ui_context, render_workflow_ui
+    wf_stages, roles = build_workflow_ui_context(p)
+    html = render_workflow_ui(
+        name=p.name, cn_name=p.cn_name, agent_type=p.type, port=p.port,
+        tools=[{"name": t.name, "description": t.description} for t in p.tools],
+        workflow_stages=wf_stages, roles=roles,
+        guard_triggers=p.guard.triggers)
+    return HTMLResponse(html)
 
 
 

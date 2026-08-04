@@ -220,6 +220,11 @@ class TestAuthService:
     def test_create_user(self):
         user = self.auth.create_user("doc1", "Doctor@123", display_name="Dr. Smith")
         assert user["username"] == "doc1"
+        assert user["roles"] == ["intern"]
+        assert "agent:execute" not in user["permissions"]
+
+    def test_create_user_with_roles(self):
+        user = self.auth.create_user("doc1", "Doctor@123", roles=["doctor"])
         assert user["roles"] == ["doctor"]
         assert "agent:execute" in user["permissions"]
 

@@ -39,8 +39,8 @@ def evolution_hook(agent: str, tool: str, status: str, result: dict[str, Any] | 
         if not gold:
             return  # 无可对标的金标准 → 跳过
 
-        from haip.evolution.trajectory import EvalTrajectory, ToolCallRecord
         from haip.evolution.engine import evolve_from_eval
+        from haip.evolution.trajectory import EvalTrajectory, ToolCallRecord
 
         trajectory = EvalTrajectory(
             agent=agent,

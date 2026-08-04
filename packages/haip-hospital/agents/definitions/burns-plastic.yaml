@@ -84,6 +84,9 @@ ui:
     label: 器械护士
   - id: rehab_therapist
     label: 康复师
+  - id: emergency_doctor
+    label: 急诊医师
+    emoji: 🚑
 stages:
 - order: 1
   id: burn-eval

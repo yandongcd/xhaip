@@ -129,7 +129,7 @@ class TestToolsMCPCLI:
         with patch("haip.tools.mcp_server.serve_agent") as mock_serve:
             result = runner.invoke(app, ["tools", "mcp-serve", "--agent", "test", "--port", "9876"])
             assert result.exit_code == 0
-            mock_serve.assert_called_once_with("test", port=9876, host="0.0.0.0")
+            mock_serve.assert_called_once_with("test", port=9876, host="0.0.0.0", token="")
 
     def test_mcp_serve_no_agent_no_all(self):
         result = runner.invoke(app, ["tools", "mcp-serve"])

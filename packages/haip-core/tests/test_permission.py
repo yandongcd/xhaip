@@ -130,7 +130,20 @@ class TestA2D:
         pm = PermissionManager(":memory:")
         pm.seed_defaults()
         ctx = PermissionContext(agent_id="orthopedic-surgery", department="orthopedic")
-        # No policy → default allow in dev mode
+        # 无显式 policy → fail-closed 拒绝 (数据访问必须显式授权)
+        allowed, _ = pm.can_access_data(ctx, "DP-HIS-PATIENT", patient_department="orthopedic")
+        assert allowed is False
+        pm.close()
+
+    def test_can_access_with_explicit_policy(self):
+        pm = PermissionManager(":memory:")
+        pm.seed_defaults()
+        pm._db.execute(
+            """INSERT INTO perm_data_policy
+               (agent_id, agent_type, data_product, dept_scope, field_filter)
+               VALUES ('orthopedic-surgery', 'business', 'DP-HIS-PATIENT', 'self', 'null')""")
+        pm._db.commit()
+        ctx = PermissionContext(agent_id="orthopedic-surgery", department="orthopedic")
         allowed, _ = pm.can_access_data(ctx, "DP-HIS-PATIENT", patient_department="orthopedic")
         assert allowed is True
         pm.close()

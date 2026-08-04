@@ -505,18 +505,25 @@ def tha_tka_planning(
                          "PS (后稳定型) — PCL 缺失/严重畸形 >15°; "
                          "CCK (髁限制型) — 内外侧副韧带功能不全")
     else:
-        # Default to hip when unspecified
-        joint_lower = "hip"
-        procedure_type = "THA (人工全髋关节置换)"
-        indications_list = THA_INDICATIONS
-        bone_quality_info = {
-            "normal": "生物型 (cementless) — 多孔涂层 + HA 喷涂",
-            "osteopenia": "生物型 + 大直径股骨头 (36mm+) 降低脱位风险",
-            "osteoporosis": "骨水泥型 (cemented) 或混合固定 (hybrid)",
-        }
-        approach_options = ["后外侧入路 (Moore)", "直接前入路 (DAA / AMIS)", "前外侧入路 (Watson-Jones)"]
-        specific_note = ("髋臼侧: 压配式生物杯 (正常骨量) / 骨水泥杯 (骨质疏松); "
-                         "股骨侧: 锥形柄 (Dorr A-B) / 骨水泥柄 (Dorr C)")
+        if not joint.strip():
+            # 未指定关节 → 默认 hip (向后兼容)
+            joint_lower = "hip"
+            procedure_type = "THA (人工全髋关节置换)"
+            indications_list = THA_INDICATIONS
+            bone_quality_info = {
+                "normal": "生物型 (cementless) — 多孔涂层 + HA 喷涂",
+                "osteopenia": "生物型 + 大直径股骨头 (36mm+) 降低脱位风险",
+                "osteoporosis": "骨水泥型 (cemented) 或混合固定 (hybrid)",
+            }
+            approach_options = ["后外侧入路 (Moore)", "直接前入路 (DAA / AMIS)", "前外侧入路 (Watson-Jones)"]
+            specific_note = ("髋臼侧: 压配式生物杯 (正常骨量) / 骨水泥杯 (骨质疏松); "
+                             "股骨侧: 锥形柄 (Dorr A-B) / 骨水泥柄 (Dorr C)")
+        else:
+            return {
+                "status": "error",
+                "error": f"不支持的关节类型: {joint} — 仅支持 hip(髋)/knee(膝)",
+                "joint": joint,
+            }
 
     matched = []
     for ind in indications_list:

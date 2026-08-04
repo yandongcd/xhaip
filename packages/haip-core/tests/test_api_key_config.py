@@ -31,7 +31,12 @@ class TestApiKeyStore:
         from haip.api_key_store import get_api_key, set_api_key
         set_api_key("sk-persisted")
         monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-env-value")
-        assert get_api_key() == "sk-env-value"
+        assert get_api_key() == "sk-persisted"
+
+    def test_env_fallback_when_no_file(self, clean_api_key, monkeypatch):
+        from haip.api_key_store import get_api_key
+        monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-env-only")
+        assert get_api_key() == "sk-env-only"
 
     def test_clear(self, clean_api_key):
         from haip.api_key_store import clear_api_key, get_api_key, set_api_key

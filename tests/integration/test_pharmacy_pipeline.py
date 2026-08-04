@@ -1,4 +1,4 @@
-"""全链路集成测试 — YAML 定义 → 注册 → A2A 调用 → 业务计算.
+﻿"""全链路集成测试 — YAML 定义 → 注册 → A2A 调用 → 业务计算.
 
 验证药剂科 Agent 从 YAML 到业务函数执行的完整链路。
 """
@@ -34,16 +34,16 @@ class TestPharmacyFullPipeline:
         assert plugin is not None
         assert plugin.name == "pharmacy"
         assert plugin.type == "business"
-        assert plugin.port == 8770
+        assert plugin.port == 8819
 
     def test_tools_available_in_registry(self):
         from haip.agent import get
         load_from_dir(str(YAML_DIR))
         plugin = get("pharmacy")
         tool_names = [t.name for t in plugin.tools]
-        assert "assess_nutrition" in tool_names
+        assert "nutrition_assess" in tool_names
         assert "calculate_tpn" in tool_names
-        assert "review_prescription" in tool_names
+        assert "review_rx" in tool_names
 
     def test_a2a_call_to_nonexistent_module(self):
         """调用不存在的模块应返回明确错误，不 crash。"""

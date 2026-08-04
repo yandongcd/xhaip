@@ -303,7 +303,8 @@ class PermissionManager:
                 # Field filter
                 field_list = json.loads(ff) if ff and ff != "null" else None
                 return True, field_list
-        return True, None  # No policy → allow all (development default)
+        # 无显式 policy → 拒绝 (fail-closed: 数据访问必须显式授权)
+        return False, None
 
     # ── Audit ──
 

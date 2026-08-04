@@ -14,6 +14,7 @@ v1.2: 新增 AsyncAgentLoop — ADK 风格的 async generator + Event + state_de
 from __future__ import annotations
 
 import asyncio
+import json
 import time
 from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
@@ -138,6 +139,9 @@ class AgentLoop:
                 "role": "assistant",
                 "content": resp.content or "",
             }
+            # DeepSeek thinking mode: reasoning_content 必须回传
+            if getattr(resp, "reasoning_content", ""):
+                assistant_msg["reasoning_content"] = resp.reasoning_content
             tc_list = []
             step_summaries = []
 
@@ -147,10 +151,16 @@ class AgentLoop:
                     "type": "function",
                     "function": {
                         "name": tc.name,
-                        "arguments": str(tc.arguments),
+                        "arguments": json.dumps(tc.arguments, ensure_ascii=False),
                     },
                 })
 
+            # DeepSeek 要求 assistant(tool_calls) 在 tool 结果消息之前
+            if tc_list:
+                assistant_msg["tool_calls"] = tc_list
+            messages.append(assistant_msg)
+
+            for tc in resp.tool_calls:
                 if self.tool_executor is not None:
                     raw_result = self.tool_executor(tc.name, tc.arguments)
                     is_success = (
@@ -184,10 +194,6 @@ class AgentLoop:
                     "content": tool_content,
                 })
                 step_summaries.append(f"[Step{step+1}] {tc.name}: {'✓' if is_success else '✗'}")
-
-            if tc_list:
-                assistant_msg["tool_calls"] = tc_list
-            messages.append(assistant_msg)
 
             if step_summaries:
                 result.partial_summaries.append(" | ".join(step_summaries))
@@ -258,6 +264,22 @@ class AgentLoop:
             return result
 
         # Phase 2: EXECUTE — 批量执行计划中的工具
+        # DeepSeek 要求: assistant(tool_calls) 必须先于 tool 结果消息
+        if resp.tool_calls:
+            assistant_msg_planned: dict[str, Any] = {
+                "role": "assistant",
+                "content": resp.content or "",
+            }
+            if getattr(resp, "reasoning_content", ""):
+                assistant_msg_planned["reasoning_content"] = resp.reasoning_content
+            assistant_msg_planned["tool_calls"] = [
+                {"id": tc.id, "type": "function",
+                 "function": {"name": tc.name,
+                              "arguments": json.dumps(tc.arguments, ensure_ascii=False)}}
+                for tc in resp.tool_calls
+            ]
+            messages.append(assistant_msg_planned)
+
         for i, tc in enumerate(resp.tool_calls):
             if result.input_tokens + result.output_tokens > self.max_total_tokens:
                 result.error = "token_budget_exceeded"
@@ -523,8 +545,22 @@ class AsyncAgentLoop:
                 "role": "assistant",
                 "content": llm_response.content or "",
             }
+            # DeepSeek thinking mode: reasoning_content 必须回传
+            if getattr(llm_response, "reasoning_content", ""):
+                assistant_msg["reasoning_content"] = llm_response.reasoning_content
             tc_list = []
             step_summaries = []
+
+            # DeepSeek 要求 assistant(tool_calls) 在 tool 结果消息之前 (与同步循环一致)
+            for tc in llm_response.tool_calls:
+                tc_list.append({
+                    "id": tc.id,
+                    "type": "function",
+                    "function": {"name": tc.name, "arguments": json.dumps(tc.arguments, ensure_ascii=False)},
+                })
+            if tc_list:
+                assistant_msg["tool_calls"] = tc_list
+            messages.append(assistant_msg)
 
             for tc in llm_response.tool_calls:
                 # before_tool hook
@@ -561,12 +597,6 @@ class AsyncAgentLoop:
                 if error_str:
                     tool_content = f"调用失败: {error_str}\n请尝试其他方法或告知用户当前限制。"
 
-                tc_list.append({
-                    "id": tc.id,
-                    "type": "function",
-                    "function": {"name": tc.name, "arguments": str(tc.arguments)},
-                })
-
                 # yield tool result event
                 tool_evt = SessionEvent.tool_result(
                     name=tc.name,
@@ -592,10 +622,6 @@ class AsyncAgentLoop:
                     "output": output_str,
                 })
                 step_summaries.append(f"[Step{step+1}] {tc.name}: {'✓' if is_success else '✗'}")
-
-            if tc_list:
-                assistant_msg["tool_calls"] = tc_list
-            messages.append(assistant_msg)
 
             # yield assistant thought event (step intermediate)
             thought_evt = SessionEvent.assistant_message(

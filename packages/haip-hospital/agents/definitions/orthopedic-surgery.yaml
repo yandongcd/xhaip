@@ -273,22 +273,52 @@ ui:
     label: 康复师
 stages:
 - order: 1
-  id: preop-eval
-  label: 术前评估
-  desc: T2分层时机评估(8因素/48h窗口)、ASA分级、Caprini VTE风险、Harris评分基线、心肺功能
-  role_ids:
-  - attending
-  - resident
-  - anesthesiologist
-- order: 2
-  id: preop-prep
-  label: 术前准备
-  desc: 备血交叉配血、ERAS术前方案(禁食禁饮/预康复)、MDT会诊(≥75岁或≥3合并症触发)、疼痛管理
+  id: triage
+  label: 急诊分诊
+  desc: 11项术前检查清单 + 急症指标触发 + 绿色通道判定
   role_ids:
   - attending
   - resident
   - head_nurse
+- order: 2
+  id: classify
+  label: 骨折分型
+  desc: Garden/Evans/AO-OTA 分型评估 (LLM增强混合分类)
+  role_ids:
+  - attending
+  - resident
 - order: 3
+  id: preop-eval
+  label: 术前评估
+  desc: T2分层时机评估(8因素/48h窗口)、ASA分级、Caprini VTE风险、14项检查完备性、心肺功能
+  role_ids:
+  - attending
+  - resident
+  - anesthesiologist
+- order: 4
+  id: mdt
+  label: MDT 会诊
+  desc: 聚合心内+麻醉+骨科+疼痛 → 结构化纪要 (≥75岁或≥3合并症触发)
+  role_ids:
+  - attending
+  - anesthesiologist
+  - icu_doctor
+- order: 5
+  id: timing
+  label: 手术时机
+  desc: T2 8因素分层裁决 (emergency/urgent/elective) + 48h手术窗口
+  role_ids:
+  - attending
+  - anesthesiologist
+- order: 6
+  id: complications
+  label: 并发症预测
+  desc: DVT/感染/心脏/跌倒谵妄 4维风险预测
+  role_ids:
+  - attending
+  - resident
+  - icu_doctor
+- order: 7
   id: surgery
   label: 手术执行
   desc: THA/HA/PFNA/DHS术式选择、术中监测、假体稳定性评估、出血量控制
@@ -296,29 +326,36 @@ stages:
   - attending
   - surgeon
   - anesthesiologist
-- order: 4
-  id: postop-early
-  label: 术后早期
-  desc: VTE药物+物理预防、感染监测(CRP/WBC/切口)、疼痛管理(多模式镇痛)、电解质管理
+- order: 8
+  id: nursing
+  label: 围术期护理
+  desc: 4阶段25项护理计划 (DVT物理预防/体位/疼痛/康复)
   role_ids:
-  - attending
-  - resident
   - head_nurse
-- order: 5
+  - instrument_nurse
+  - attending
+- order: 9
   id: rehab
   label: 康复训练
-  desc: 术后24h首次下床、Harris髋关节评分(1/3/6月评估)、骨质疏松治疗(FRAX评分)、防跌倒教育
+  desc: 术后24h首次下床、4阶段康复 + Harris髋关节评分、防跌倒教育
   role_ids:
-  - attending
   - rehab_therapist
+  - attending
   - head_nurse
-- order: 6
+- order: 10
   id: followup
   label: 长期随访
-  desc: Harris评分追踪、影像复查(X线/CT)、假体松动/磨损监测、术后1/3/6/12月随访
+  desc: Harris评分追踪、影像复查、术后1/3/6/12月随访 + 红旗症状 + 骨质疏松管理
   role_ids:
   - attending
   - rehab_therapist
+- order: 11
+  id: quality
+  label: 质控审计
+  desc: 6阶段18检查点合规评分 + 全流程质控报告
+  role_ids:
+  - attending
+  - head_nurse
 rag:
   enabled: true
   top_k: 5

@@ -97,3 +97,17 @@ learning:
   - citation_new
   - route_adj
   prompt_a_b: false
+ui:
+  roles:
+  - id: attending
+    label: 主治医师
+    emoji: 🩺
+  - id: nurse
+    label: 责任护士
+    emoji: 👩‍⚕️
+  - id: triage_nurse
+    label: 分诊护士
+    emoji: 🚑
+  - id: emergency_doctor
+    label: 急诊医师
+    emoji: 🚑

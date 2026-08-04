@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import threading
 
+from fastapi import HTTPException, Request
+
 from haip.auth.models import PREDEFINED_ROLES, Permission
 
 # In-memory role-permission store (PostgreSQL-backed in P1)
@@ -75,7 +77,6 @@ def require_permission(permission: Permission):
 
     Returns an async callable suitable for FastAPI Depends.
     """
-    from fastapi import HTTPException, Request
 
     async def _check(request: Request) -> dict:
         user = getattr(request.state, "current_user", None)

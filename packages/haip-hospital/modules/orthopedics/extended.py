@@ -741,11 +741,20 @@ def osteoporosis_mgmt(
 
     risk = "high" if score >= 5 else "moderate" if score >= 3 else "low"
 
+    # 雷洛昔芬 (SERM) 仅适用于绝经后女性且无 VTE 病史 — 男性/未绝经女性/VTE 病史者禁用
+    vte_history = any(c in combined for c in [
+        "血栓", "栓塞", "vte", "dvt", "深静脉", "肺栓塞", "thromb", "thrombo",
+    ])
+    postmenopausal_female = gender == "F" and (age >= 55 or "绝经" in combined)
+
     medication = []
     if risk == "high":
         medication = OSTEO_MEDICATIONS[:2]
     elif risk == "moderate":
-        medication = [OSTEO_MEDICATIONS[-1]]
+        if postmenopausal_female and not vte_history:
+            medication = [OSTEO_MEDICATIONS[-1]]
+        else:
+            medication = [OSTEO_MEDICATIONS[0]]
 
     return {
         "patient_id": patient_id, "frax_risk": risk, "frax_score": score,

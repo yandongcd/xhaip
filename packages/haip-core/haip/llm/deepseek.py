@@ -111,6 +111,7 @@ class DeepSeekProvider(LLMProvider):
             input_tokens=(data.get("usage") or {}).get("prompt_tokens", 0),
             output_tokens=(data.get("usage") or {}).get("completion_tokens", 0),
             finish_reason=choice.get("finish_reason", "stop"),
+            reasoning_content=msg.get("reasoning_content") or "",
         )
 
     def chat_stream(

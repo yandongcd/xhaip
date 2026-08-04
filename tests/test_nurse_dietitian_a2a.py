@@ -18,10 +18,20 @@ import pytest
 from haip.a2a import call, clear_history
 from haip.agent import DomainPlugin, ToolDef, _registry, register
 
+_SAVED_REGISTRY: dict = {}
+
 
 def setup_function():
+    global _SAVED_REGISTRY
+    _SAVED_REGISTRY = dict(_registry)
     _registry.clear()
     clear_history()
+
+
+def teardown_function():
+    """恢复注册表, 避免清空污染同 worker 后续测试 (如 test_ui_contracts)."""
+    _registry.clear()
+    _registry.update(_SAVED_REGISTRY)
 
 
 # ═══════════════════════════════════════════════════════════

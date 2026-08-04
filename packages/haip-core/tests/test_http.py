@@ -96,14 +96,14 @@ class TestCallEndpoint:
     def test_call_valid_tool(self):
         r = client.post("/api/call", json={
             "agent": "pharmacy",
-            "tool": "assess_nutrition",
+            "tool": "nutrition_assess",
             "params": {"patient_id": "P001", "weight_kg": 55, "height_cm": 170,
                        "lab_results": {"albumin": 28}, "age": 78},
         })
         assert r.status_code == 200
         data = r.json()
         assert data["status"] == "ok"
-        assert data["risk_level"] in ("高", "中", "低")
+        assert data["risk_level"] in ("高危", "中危", "低危")
 
     def test_call_unknown_agent(self):
         r = client.post("/api/call", json={"agent": "ghost", "tool": "x"})

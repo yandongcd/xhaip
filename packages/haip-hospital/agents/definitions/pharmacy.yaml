@@ -100,3 +100,18 @@ learning:
   - citation_new
   - route_adj
   prompt_a_b: false
+ui:
+  template: chat-with-role-switcher
+  roles:
+  - id: pharmacist
+    label: 临床药师
+    emoji: 💊
+  - id: clinical_pharmacist
+    label: 临床药师(专科)
+    emoji: 💊
+  - id: review_pharmacist
+    label: 审方药师
+    emoji: 📋
+  - id: attending
+    label: 主治医师
+    emoji: 🩺

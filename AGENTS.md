@@ -31,13 +31,13 @@ xhaip/
 │       └── cli.py       Typer CLI
 │
 ├── haip-hospital/
-│   ├── agents/definitions/      58 个 YAML Agent 定义
-│   ├── modules/                 58 个 Handler 模块 (KnowledgeAgent + RuleEngine 驱动)
-│   ├── knowledge/               19 BP YAML + 70 指南 + 21 规则组 (237 条)
-│   └── data/                    498 位数字病人 (含专科检验字段)
+│   ├── agents/definitions/      83 个 YAML Agent 定义
+│   ├── modules/                 81 个 Handler 模块 (KnowledgeAgent + RuleEngine 驱动)
+│   ├── knowledge/               19 BP YAML + 100 指南 + 22 规则组 (237 条)
+│   └── data/                    10659 位数字病人 (含专科检验字段)
 │
 ├── config/                      YAML 配置 (llm.yaml, haip.yaml)
-├── tests/                       1759 测试 (806 haip-core + 953 root)
+├── tests/                       2909 测试 (1503 haip-core + 1406 root)
 └── .github/workflows/ci.yml    CI: ruff + mypy + pytest + 70% cov
 
 ## 新增 Agent

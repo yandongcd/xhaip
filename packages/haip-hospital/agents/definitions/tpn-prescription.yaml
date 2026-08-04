@@ -57,7 +57,52 @@ guard:
     required: true
     min_sources: 2
     min_trust: T1
+stages:
+- order: 1
+  id: screen
+  label: 营养风险筛查
+  desc: NRS-2002(成人)/MNA-SF(老年)/GLIM诊断/再喂养综合征风险评估
+  role_ids:
+  - pharmacist
+  - dietitian
+- order: 2
+  id: energy
+  label: 能量目标计算
+  desc: Harris-Benedict BEE × 应激系数 × 活动系数 → TEE + 蛋白目标
+  role_ids:
+  - pharmacist
+  - dietitian
+- order: 3
+  id: formula
+  label: 处方配比设计
+  desc: 糖脂比/氨基酸/电解质/维生素/微量元素全合一配方
+  role_ids:
+  - pharmacist
+- order: 4
+  id: safety
+  label: 配伍安全审核
+  desc: 钙磷沉淀/阳离子浓度/渗透压/脂肪乳稳定性/再喂养风险审核
+  role_ids:
+  - pharmacist
+  - quality_director
 depends_on:
 - agent: medical-record
   version: '>=1.0'
   note: 患者病历/检验/过敏史
+ui:
+  roles:
+  - id: resident
+    label: 住院医师
+    emoji: 🩺
+  - id: consultant_specialist
+    label: 会诊专家
+    emoji: 🏥
+  - id: pharmacist
+    label: 临床药师
+    emoji: 💊
+  - id: dietitian
+    label: 营养师
+    emoji: 🥗
+  - id: quality_director
+    label: 质控主任
+    emoji: 📋

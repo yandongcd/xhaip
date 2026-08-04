@@ -17,6 +17,14 @@ from haip.agent import load_from_dir
 load_from_dir(str(ROOT / "packages" / "haip-hospital" / "agents" / "definitions"))
 
 
+def _ensure_agents(*names: str) -> None:
+    """确保指定 agent 已注册 — 注册表可能被其他测试 (如 spine_joint 的 setup) 清空."""
+    from haip.agent import get as get_agent
+    missing = [n for n in names if get_agent(n) is None]
+    if missing:
+        load_from_dir(str(ROOT / "packages" / "haip-hospital" / "agents" / "definitions"))
+
+
 # ── validator — edge cases ──
 
 class TestValidatorEdge:
@@ -29,6 +37,7 @@ class TestValidatorEdge:
 
     def test_validation_report_warnings(self):
         from haip.togaf.validator import validate_agent
+        _ensure_agents('pain-hub')
         r = validate_agent('pain-hub')
         assert r is not None
         # pain-hub has no department — warnings expected
@@ -38,6 +47,7 @@ class TestValidatorEdge:
         # Load a real agent for testing
         from haip.agent import get as get_agent
         from haip.togaf.validator import _check_type_compliance
+        _ensure_agents('orthopedic-surgery')
         agent = get_agent('orthopedic-surgery')
         c = _check_type_compliance(agent)
         assert c.passed
@@ -54,6 +64,7 @@ class TestValidatorEdge:
     def test_check_dependency_graph_empty(self):
         from haip.agent import get as get_agent
         from haip.togaf.validator import _check_dependency_graph
+        _ensure_agents('acute-pain')
         agent = get_agent('acute-pain')
         c = _check_dependency_graph(agent, {})
         assert c.passed  # No deps → passes
@@ -61,6 +72,7 @@ class TestValidatorEdge:
     def test_check_tool_service_empty(self):
         from haip.agent import get as get_agent
         from haip.togaf.validator import _check_tool_service_mapping
+        _ensure_agents('pain-hub')
         agent = get_agent('pain-hub')
         c = _check_tool_service_mapping(agent)
         assert c.passed  # 2 tools with handlers

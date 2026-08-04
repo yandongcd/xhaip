@@ -148,8 +148,8 @@ def revalidate_agents_for_guideline(guideline_id: str) -> list[AgentRevalidation
 
     results: list[AgentRevalidationResult] = []
     try:
-        from haip.agent import list_all
         from haip.a2a import call
+        from haip.agent import list_all
         for agent_name, plugin in list_all().items():
             failed = 0
             passed = 0

@@ -71,6 +71,12 @@ ui:
     label: 器械护士
   - id: rehab_therapist
     label: 康复师
+  - id: cardiologist
+    label: 心内科医师
+    emoji: ❤️
+  - id: perfusionist
+    label: 体外循环灌注师
+    emoji: 🫀
 stages:
 - order: 1
   id: cardiac-eval

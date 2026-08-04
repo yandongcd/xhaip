@@ -3,8 +3,77 @@
 from __future__ import annotations
 
 import json
+import re
+from pathlib import Path
 
 from haip.patients import load_patients
+
+
+def _match_tool(stage_id: str, stage_label: str, tools: list[dict]) -> str:
+    """阶段 → 工具名映射: 精确 id > id 子串 > label 子串 > 首工具兜底."""
+    norm = lambda s: re.sub(r"[^a-z0-9]", "", s.lower())
+    sid, sl = norm(stage_id), norm(stage_label)
+    names = [t["name"] for t in tools]
+    for n in names:
+        if n == stage_id:
+            return n
+    for n in names:
+        if sid and (sid in norm(n) or norm(n) in sid):
+            return n
+    for n in names:
+        tn = norm(n)
+        if sl and (sl in tn or tn in sl):
+            return n
+    return names[0] if names else ""
+
+
+def _guideline_refs(department: str) -> str:
+    """阶段指南引用 — 从知识库 guidelines 目录提取, 无 NICE/卫健委 时用常用指南兜底."""
+    abbrs: list[str] = []
+    try:
+        gdir = (
+            Path(__file__).resolve().parent.parent.parent
+            / "haip-hospital" / "knowledge" / "guidelines"
+        )
+        for f in sorted(gdir.glob("*.yaml"))[:6]:
+            for line in f.read_text(encoding="utf-8").splitlines()[:40]:
+                if line.startswith("abbr:"):
+                    abbrs.append(line.split(":", 1)[1].strip().strip('"'))
+                    break
+    except Exception:
+        pass
+    joined = " · ".join(abbrs)
+    if "NICE" in joined or "卫健委" in joined:
+        return joined
+    return "卫健委2022 · NICE NG37 · AAOS 2022"
+
+
+def build_workflow_ui_context(plugin) -> tuple[list[dict], dict]:
+    """DomainPlugin → (workflow_stages, roles_dict), 供 render_workflow_ui 使用."""
+    stages = plugin.get_stages()
+    tools = [{"name": t.name, "description": t.description} for t in plugin.tools]
+    guide_ref = _guideline_refs(plugin.department)
+    workflow_stages = []
+    for i, s in enumerate(stages):
+        workflow_stages.append({
+            "order": s.get("order", i + 1),
+            "id": s.get("id", f"s{i}"),
+            "label": s.get("label", f"阶段{i + 1}"),
+            "description": s.get("desc", ""),
+            "tool": _match_tool(s.get("id", ""), s.get("label", ""), tools),
+            "guideline_ref": guide_ref,
+            "key_output": "",
+            "role_ids": s.get("role_ids", []),
+        })
+    roles = {}
+    for r in plugin.get_roles():
+        rid = r["id"]
+        roles[rid] = {
+            "name": r.get("label", rid),
+            "icon": r.get("emoji", "👤"),
+            "stages": [s["order"] for s in workflow_stages if rid in s["role_ids"]],
+        }
+    return workflow_stages, roles
 
 
 def _build_role_pills(roles: dict) -> tuple[str, str]:

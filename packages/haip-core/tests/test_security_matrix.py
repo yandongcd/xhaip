@@ -26,6 +26,7 @@ class TestSecurityBaseline:
         monkeypatch.setenv("JWT_SECRET_KEY", "x" * 32)
         monkeypatch.setenv("HAIP_ADMIN_PASSWORD", "Str0ng!Passw0rd")
         monkeypatch.setenv("HAIP_DOCTOR_PASSWORD", "An0ther!Passw0rd")
+        monkeypatch.setenv("ENCRYPTION_KEY", "y" * 32)
         assert check_security_baseline(strict=True) == []
 
     def test_strict_flag_from_env(self, monkeypatch):

@@ -1,4 +1,4 @@
-"""药剂科全链路 E2E — YAML 定义 → 注册 → A2A 调用 → Guard 验证 → Orchestrator 编排.
+﻿"""药剂科全链路 E2E — YAML 定义 → 注册 → A2A 调用 → Guard 验证 → Orchestrator 编排.
 
 参照疼痛科 test_pain_e2e.py 的测试模式:
   - 完整临床路径验证
@@ -42,17 +42,17 @@ class TestPharmacyE2E:
         p = get_agent("pharmacy")
         assert len(p.tools) >= 5
         tool_names = {t.name for t in p.tools}
-        assert "assess_nutrition" in tool_names
+        assert "nutrition_assess" in tool_names
         assert "calculate_tpn" in tool_names
-        assert "review_prescription" in tool_names
-        assert "recommend_nutrition_route" in tool_names
-        assert "list_medications" in tool_names
+        assert "review_rx" in tool_names
+        assert "nutrition_route" in tool_names
+        assert "drug_search" in tool_names
 
     def test_yaml_guard_config(self):
         load_from_dir(str(YAML_DIR))
         p = get_agent("pharmacy")
         assert len(p.guard.triggers) >= 2
-        assert "药物交互" in p.guard.triggers
+        assert "药物相互作用" in p.guard.triggers
         assert len(p.guard.high_risk_scenarios) >= 3
 
     def test_yaml_ui_config(self):

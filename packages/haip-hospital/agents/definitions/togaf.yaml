@@ -93,3 +93,8 @@ stages:
   desc: 架构合规检查(9条TOGAF规则)、技术标准审查、LeanIX导出
   role_ids:
   - architect
+ui:
+  roles:
+  - id: architect
+    label: 架构师
+    emoji: 🏗️

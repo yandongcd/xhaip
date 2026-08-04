@@ -149,6 +149,9 @@ ui:
     label: 主治医师
   - id: pharmacist
     label: 药师
+  - id: nurse
+    label: 责任护士
+    emoji: 👩‍⚕️
   sidebar:
   - category: 营养筛查
     tools:

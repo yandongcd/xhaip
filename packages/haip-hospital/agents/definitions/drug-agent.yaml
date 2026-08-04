@@ -117,6 +117,9 @@ ui:
     label: 临床药师
   - id: nurse
     label: 护士
+  - id: head_nurse
+    label: 护士长
+    emoji: 👩‍⚕️
 rag:
   enabled: true
   top_k: 5

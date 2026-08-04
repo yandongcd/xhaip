@@ -128,6 +128,9 @@ ui:
     label: 麻醉医师
   - id: nurse
     label: 外科护士
+  - id: head_nurse
+    label: 护士长
+    emoji: 👩‍⚕️
 rag:
   enabled: true
   top_k: 5
