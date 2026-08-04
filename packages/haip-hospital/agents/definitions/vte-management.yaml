@@ -89,6 +89,7 @@ stages:
   role_ids:
   - attending
   - nurse
+  tool: assess_vte_risk
 - order: 2
   id: diagnosis
   label: 诊断确认

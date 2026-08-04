@@ -90,6 +90,7 @@ stages:
   role_ids:
   - attending
   - pharmacist
+  tool: eligibility_score
 - order: 4
   id: tmt-vs-rc
   label: 方案对比

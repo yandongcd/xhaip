@@ -165,6 +165,7 @@ stages:
   - attending
   - surgeon
   - head_nurse
+  tool: tha_tka_planning
 - order: 3
   id: surgery
   label: 手术执行

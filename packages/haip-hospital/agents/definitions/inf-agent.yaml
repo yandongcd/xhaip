@@ -109,6 +109,7 @@ stages:
   role_ids:
   - attending
   - pharmacist
+  tool: infection_type
 - order: 4
   id: sepsis-screening
   label: 脓毒症筛查

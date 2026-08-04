@@ -192,6 +192,7 @@ stages:
   desc: 能量蛋白目标(Harris-Benedict)、营养途径决策(EN/PN/SPN)、再喂养风险分级
   role_ids:
   - dietitian
+  tool: nutrition_report
 - order: 3
   id: implement
   label: 营养实施

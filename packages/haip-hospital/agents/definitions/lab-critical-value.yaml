@@ -113,6 +113,7 @@ stages:
   role_ids:
   - technician
   - attending
+  tool: check_critical_value
 - order: 2
   id: notify
   label: 通知处理
@@ -120,6 +121,7 @@ stages:
   role_ids:
   - technician
   - nurse
+  tool: notification_record
 - order: 3
   id: audit
   label: 质量审计

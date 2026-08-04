@@ -91,6 +91,7 @@ stages:
   role_ids:
   - attending
   - head
+  tool: bp_plan
 - order: 5
   id: execution
   label: 治疗执行
@@ -99,6 +100,7 @@ stages:
   - attending
   - resident
   - head_nurse
+  tool: bp_treatment
 - order: 6
   id: followup
   label: 随访管理

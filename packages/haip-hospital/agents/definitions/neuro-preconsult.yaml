@@ -82,6 +82,7 @@ stages:
   - attending
   - resident
   - nurse
+  tool: red_flag_screen
 - order: 3
   id: red-flags
   label: 红旗征筛查
