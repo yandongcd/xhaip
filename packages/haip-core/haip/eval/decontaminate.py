@@ -119,31 +119,39 @@ def ci_decontamination_gate(
 
     import yaml
 
-    # 默认: 指南 + 规则做参考集, 评测场景做被检集
+    # 默认: 指南 + 规则做参考集, 评测场景做被检集 (corpus_paths/ref_paths 可显式注入)
     knowledge_base = Path(__file__).resolve().parents[4] / "packages" / "haip-hospital" / "knowledge"
 
-    # 收集参考文本
-    references: list[str] = []
-    for ref_dir in ["guidelines", "rules"]:
-        rdir = knowledge_base / ref_dir
-        if rdir.is_dir():
-            for f in sorted(rdir.glob("*.yaml")):
+    def _read_files(paths: list[str] | None, default_dir: Path, limit: int) -> list[str]:
+        """读取指定文件; 未指定时回退默认目录内的 *.yaml."""
+        if paths:
+            out = []
+            for p in paths:
+                fp = Path(p)
                 try:
-                    with open(f, encoding="utf-8") as fh:
-                        references.append(fh.read()[:3000])
+                    out.append(fp.read_text(encoding="utf-8")[:limit] if limit else fp.read_text(encoding="utf-8"))
                 except Exception:
                     continue
+            return out
+        if default_dir.is_dir():
+            return [
+                f.read_text(encoding="utf-8")[:limit] if limit else f.read_text(encoding="utf-8")
+                for f in sorted(default_dir.glob("*.yaml"))
+            ]
+        return []
 
-    # 收集被检文本 (评测场景)
-    corpus: list[str] = []
-    task_dir = Path(__file__).resolve().parent / "tasks"
-    if task_dir.is_dir():
-        for f in task_dir.glob("*.yaml"):
-            try:
-                with open(f, encoding="utf-8") as fh:
-                    corpus.append(fh.read())
-            except Exception:
-                continue
+    # 收集参考文本 (默认 guidelines + rules)
+    references: list[str] = []
+    if ref_paths:
+        references = _read_files(ref_paths, Path("."), limit=3000)  # paths 非空, default 不触达
+    else:
+        for ref_dir in ["guidelines", "rules"]:
+            references.extend(_read_files(None, knowledge_base / ref_dir, limit=3000))
+
+    # 收集被检文本 (评测场景, 默认 tasks 目录)
+    corpus: list[str] = _read_files(
+        corpus_paths, default_dir=Path(__file__).resolve().parent / "tasks", limit=0
+    )
 
     flagged = check_corpus_against_refs(corpus, references, threshold=warn_threshold)
     failures = [f for f in flagged if f["jaccard"] >= fail_threshold]

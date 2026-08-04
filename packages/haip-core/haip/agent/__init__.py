@@ -140,6 +140,9 @@ class DomainPlugin:
     guard: GuardConfig = field(default_factory=GuardConfig)
     ui: UIConfig = field(default_factory=UIConfig)
     stages: list[dict[str, Any]] = field(default_factory=list)
+    learning: dict[str, Any] | None = None  # L6 进化配置 (evolution_hook 读取)
+    debate: dict[str, Any] | None = None    # MDT 辩论配置
+    rag: dict[str, Any] | None = None       # RAG 检索配置
 
     def get_roles(self) -> list[dict]:
         """返回角色列表，YAML 定义优先，否则按 type + department 生成默认。"""
@@ -190,6 +193,9 @@ class DomainPlugin:
             guard=guard,
             ui=ui,
             stages=data.get("stages", []),
+            learning=data.get("learning"),
+            debate=data.get("debate"),
+            rag=data.get("rag"),
         )
 
 
