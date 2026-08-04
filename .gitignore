@@ -29,5 +29,8 @@ server.log
 server.err.log
 .openharness/runtime/
 xhaip_memory.db
+xhaip_memory.db-shm
+xhaip_memory.db-wal
 data/*.db-shm
 data/*.db-wal
+eval_report.json
